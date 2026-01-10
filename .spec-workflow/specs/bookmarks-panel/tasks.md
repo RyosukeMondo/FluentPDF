@@ -243,7 +243,7 @@
     8. Log implementation with artifacts documenting extraction algorithm
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 4. Create BookmarksViewModel with panel state management
+- [x] 4. Create BookmarksViewModel with panel state management
   - Files:
     - `src/FluentPDF.App/ViewModels/BookmarksViewModel.cs`
     - `tests/FluentPDF.App.Tests/ViewModels/BookmarksViewModelTests.cs`
