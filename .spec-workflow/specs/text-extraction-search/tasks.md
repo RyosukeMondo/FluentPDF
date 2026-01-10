@@ -132,7 +132,7 @@
   - _Requirements: 6.1-6.8_
   - _Prompt: Role: UI Interaction Developer | Task: Implement text selection with mouse drag and clipboard copy functionality | Restrictions: Must preserve line breaks, use proper clipboard API, handle selection clearing | Success: Can select and copy text from PDF pages_
 
-- [ ] 10. Register text services in DI container
+- [x] 10. Register text services in DI container
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
   - Register ITextExtractionService and implementation

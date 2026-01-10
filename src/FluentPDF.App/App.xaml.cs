@@ -62,6 +62,8 @@ namespace FluentPDF.App
                     services.AddSingleton<IBookmarkService, BookmarkService>();
                     services.AddSingleton<IPdfFormService, PdfFormService>();
                     services.AddSingleton<IFormValidationService, FormValidationService>();
+                    services.AddSingleton<ITextExtractionService, TextExtractionService>();
+                    services.AddSingleton<ITextSearchService, TextSearchService>();
 
                     // Register conversion services
                     services.AddSingleton<Mammoth.IDocumentConverter>(provider => new Mammoth.DocumentConverter());
