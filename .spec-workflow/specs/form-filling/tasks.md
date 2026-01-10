@@ -101,7 +101,7 @@
   - _Requirements: All form requirements_
   - _Prompt: Role: WinUI MVVM Developer specializing in form handling | Task: Create FormFieldViewModel following design.md Component 8, inheriting from ObservableObject, adding observable properties ([ObservableProperty] FormFields, FocusedField, HasFormFields, IsModified, ValidationMessage), implementing relay commands for all form operations (LoadFormFieldsAsync loads fields for page, UpdateFieldValueAsync updates and validates, ToggleCheckboxAsync handles checkbox clicks, SaveFormAsync validates then saves, FocusNextField/FocusPreviousField implement tab order), adding dirty tracking when fields modified, and writing comprehensive tests with mocked services | Restrictions: ViewModel must be UI-agnostic (except WinUI types), do not directly call PDFium, keep ViewModel under 500 lines, all commands must have proper error handling | Success: All observable properties fire PropertyChanged events, commands work correctly, tab order navigation functions, dirty tracking accurate, SaveFormAsync validates before saving, tests run headless without WinUI runtime_
 
-- [ ] 7. Integrate form field overlays into PdfViewerPage
+- [x] 7. Integrate form field overlays into PdfViewerPage
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (modify)
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs` (modify)

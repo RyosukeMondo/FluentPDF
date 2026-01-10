@@ -73,6 +73,12 @@ public partial class FormFieldViewModel : ObservableObject
     private string? _validationMessage;
 
     /// <summary>
+    /// Gets whether there are validation errors to display.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasValidationErrors;
+
+    /// <summary>
     /// Gets whether a form operation is in progress.
     /// </summary>
     [ObservableProperty]
@@ -311,6 +317,7 @@ public partial class FormFieldViewModel : ObservableObject
             if (!validationResult.IsValid)
             {
                 ValidationMessage = validationResult.GetSummaryMessage();
+                HasValidationErrors = true;
                 _logger.LogWarning(
                     "Form validation failed. Errors={Errors}",
                     ValidationMessage);
@@ -325,6 +332,7 @@ public partial class FormFieldViewModel : ObservableObject
             {
                 IsModified = false;
                 ValidationMessage = null;
+                HasValidationErrors = false;
 
                 _logger.LogInformation(
                     "Form saved successfully. OutputPath={OutputPath}",
@@ -333,6 +341,7 @@ public partial class FormFieldViewModel : ObservableObject
             else
             {
                 ValidationMessage = result.Errors[0].Message;
+                HasValidationErrors = true;
                 _logger.LogError(
                     "Failed to save form: {Errors}",
                     result.Errors);
@@ -373,6 +382,7 @@ public partial class FormFieldViewModel : ObservableObject
                 FormFields.ToList());
 
             ValidationMessage = validationResult.GetSummaryMessage();
+            HasValidationErrors = !validationResult.IsValid;
 
             _logger.LogInformation(
                 "Form validation completed. IsValid={IsValid}",
@@ -382,6 +392,7 @@ public partial class FormFieldViewModel : ObservableObject
         {
             _logger.LogError(ex, "Unexpected error validating form");
             ValidationMessage = $"Error validating form: {ex.Message}";
+            HasValidationErrors = true;
         }
     }
 
@@ -488,6 +499,7 @@ public partial class FormFieldViewModel : ObservableObject
         FocusedField = null;
         HasFormFields = false;
         ValidationMessage = null;
+        HasValidationErrors = false;
         _currentDocument = null;
         _currentPageNumber = 1;
     }

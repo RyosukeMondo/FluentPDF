@@ -31,24 +31,32 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     public BookmarksViewModel BookmarksViewModel { get; }
 
     /// <summary>
+    /// Gets the form field view model for form interactions.
+    /// </summary>
+    public FormFieldViewModel FormFieldViewModel { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
     /// </summary>
     /// <param name="documentService">Service for loading PDF documents.</param>
     /// <param name="renderingService">Service for rendering PDF pages.</param>
     /// <param name="editingService">Service for editing PDF documents.</param>
     /// <param name="bookmarksViewModel">View model for the bookmarks panel.</param>
+    /// <param name="formFieldViewModel">View model for form field interactions.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
         IPdfRenderingService renderingService,
         IDocumentEditingService editingService,
         BookmarksViewModel bookmarksViewModel,
+        FormFieldViewModel formFieldViewModel,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
         _editingService = editingService ?? throw new ArgumentNullException(nameof(editingService));
         BookmarksViewModel = bookmarksViewModel ?? throw new ArgumentNullException(nameof(bookmarksViewModel));
+        FormFieldViewModel = formFieldViewModel ?? throw new ArgumentNullException(nameof(formFieldViewModel));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Set up navigation callback for bookmarks
@@ -171,6 +179,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
             // Render first page
             await RenderCurrentPageAsync();
+
+            // Load form fields for first page
+            await FormFieldViewModel.LoadFormFieldsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
         }
         catch (Exception ex)
         {
@@ -343,6 +354,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 _logger.LogInformation(
                     "Page rendered successfully. PageNumber={PageNumber}, ZoomLevel={ZoomLevel}",
                     CurrentPageNumber, ZoomLevel);
+
+                // Reload form fields for the current page
+                await FormFieldViewModel.LoadFormFieldsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
             }
             else
             {

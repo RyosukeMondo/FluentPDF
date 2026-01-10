@@ -224,21 +224,68 @@
 
         <!-- Content Area -->
         <Grid Grid.Row="2">
-            <!-- Page viewer with scrolling -->
+            <Grid.RowDefinitions>
+                <!-- InfoBar for validation errors -->
+                <RowDefinition Height="Auto" />
+                <!-- PDF content area -->
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Validation error InfoBar -->
+            <InfoBar
+                Grid.Row="0"
+                IsOpen="{x:Bind ViewModel.FormFieldViewModel.HasValidationErrors, Mode=OneWay}"
+                Severity="Error"
+                Title="Form Validation Errors"
+                Message="{x:Bind ViewModel.FormFieldViewModel.ValidationMessage, Mode=OneWay}"
+                Margin="12,8,12,0" />
+
+            <!-- Page viewer with scrolling and form field overlays -->
             <ScrollViewer
+                Grid.Row="1"
+                x:Name="PdfScrollViewer"
                 HorizontalScrollBarVisibility="Auto"
                 VerticalScrollBarVisibility="Auto"
-                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-                <Image
-                    Source="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
-                    Stretch="None"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center" />
+                Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                ViewChanged="OnScrollViewerViewChanged">
+                <Grid>
+                    <!-- PDF page image -->
+                    <Image
+                        x:Name="PdfPageImage"
+                        Source="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
+                        Stretch="None"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+
+                    <!-- Form field overlays canvas -->
+                    <Canvas
+                        x:Name="FormFieldCanvas"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.FormFieldViewModel.HasFormFields, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.FormFieldViewModel.FormFields, Mode=OneWay}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:FormFieldControl
+                                        Field="{Binding}"
+                                        ZoomLevel="{Binding ElementName=RootPage, Path=ViewModel.ZoomLevel}"
+                                        IsInErrorState="False" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Canvas>
+                </Grid>
             </ScrollViewer>
 
             <!-- Loading indicator -->
             <ProgressRing
+                Grid.Row="1"
                 IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
                 Width="60"
                 Height="60"
@@ -247,6 +294,7 @@
 
             <!-- Empty state message -->
             <TextBlock
+                Grid.Row="1"
                 Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
