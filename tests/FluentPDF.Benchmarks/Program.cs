@@ -59,7 +59,13 @@ public class Program
                 Console.WriteLine("=== Memory Benchmarks ===");
                 BenchmarkRunner.Run<MemoryBenchmarks>(config);
                 Console.WriteLine();
-                Console.WriteLine("Note: Additional suites (startup, navigation) will be added as they are implemented.");
+                Console.WriteLine("=== Startup Benchmarks ===");
+                BenchmarkRunner.Run<StartupBenchmarks>(config);
+                Console.WriteLine();
+                Console.WriteLine("=== Navigation Benchmarks ===");
+                BenchmarkRunner.Run<NavigationBenchmarks>(config);
+                Console.WriteLine();
+                Console.WriteLine("All benchmark suites completed.");
                 break;
 
             case "--rendering":
@@ -73,11 +79,13 @@ public class Program
                 break;
 
             case "--startup":
-                Console.WriteLine("Startup benchmarks will be added in a future task.");
+                Console.WriteLine("Running startup benchmarks...");
+                BenchmarkRunner.Run<StartupBenchmarks>(config);
                 break;
 
             case "--navigation":
-                Console.WriteLine("Navigation benchmarks will be added in a future task.");
+                Console.WriteLine("Running navigation benchmarks...");
+                BenchmarkRunner.Run<NavigationBenchmarks>(config);
                 break;
 
             default:

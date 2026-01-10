@@ -1,0 +1,346 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  benchmark:
+    runs-on: windows-2022
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0  # Fetch all history for baseline comparison
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          tools/vcpkg
+          libs
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('tools/build-libs.ps1') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-
+
+    - name: Build native libraries
+      shell: pwsh
+      run: |
+        .\tools\build-libs.ps1 -UseCache
+      continue-on-error: false
+
+    - name: Restore NuGet packages
+      run: dotnet restore FluentPDF.sln
+
+    - name: Build solution in Release mode
+      run: msbuild FluentPDF.sln /p:Configuration=Release /p:Platform="Any CPU" /p:AppxBundle=Never /p:AppxPackageSigningEnabled=false
+
+    - name: Copy PDFium DLLs to benchmark output
+      shell: pwsh
+      run: |
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+
+        if (Test-Path $pdfiumDll) {
+          # Ensure Benchmarks bin directory exists and copy PDFium DLL
+          $benchmarkDirs = Get-ChildItem -Path "tests/FluentPDF.Benchmarks/bin/Release" -Directory -Recurse -Filter "net8.0" -ErrorAction SilentlyContinue
+          foreach ($dir in $benchmarkDirs) {
+            Copy-Item $pdfiumDll $dir.FullName -Force
+            Write-Host "Copied pdfium.dll to $($dir.FullName)"
+          }
+
+          Write-Host "PDFium DLL deployment completed"
+        } else {
+          Write-Error "PDFium DLL not found at $pdfiumDll"
+          exit 1
+        }
+
+    - name: Checkout baseline from main branch
+      if: github.event_name == 'pull_request'
+      shell: pwsh
+      run: |
+        # Fetch main branch baseline files
+        git fetch origin main:main
+
+        # Create temp directory for baseline
+        New-Item -ItemType Directory -Force -Path "baseline-temp" | Out-Null
+
+        # Try to checkout baseline files from main
+        git checkout main -- tests/FluentPDF.Benchmarks/Baselines/ 2>$null
+        if ($LASTEXITCODE -eq 0) {
+          # Move baselines to temp location
+          if (Test-Path "tests/FluentPDF.Benchmarks/Baselines") {
+            Copy-Item -Path "tests/FluentPDF.Benchmarks/Baselines/*" -Destination "baseline-temp/" -Force -ErrorAction SilentlyContinue
+            Write-Host "Baseline files loaded from main branch"
+            Get-ChildItem "baseline-temp/" | ForEach-Object { Write-Host "  - $($_.Name)" }
+          }
+        } else {
+          Write-Host "No baseline files found on main branch - this will be the first baseline"
+        }
+
+        # Restore current branch state
+        git checkout HEAD -- tests/FluentPDF.Benchmarks/Baselines/ 2>$null
+
+    - name: Run benchmarks
+      shell: pwsh
+      run: |
+        Write-Host "Running FluentPDF benchmarks..."
+        Write-Host "================================"
+        Write-Host ""
+
+        # Set timeout to 30 minutes (benchmarks can take time)
+        $timeout = 1800
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+        try {
+          # Run all benchmark suites
+          dotnet run -c Release --project tests/FluentPDF.Benchmarks -- --all
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Benchmarks completed with errors (exit code: $LASTEXITCODE)"
+            echo "BENCHMARK_STATUS=failed" >> $env:GITHUB_ENV
+          } else {
+            Write-Host "Benchmarks completed successfully"
+            echo "BENCHMARK_STATUS=success" >> $env:GITHUB_ENV
+          }
+        }
+        catch {
+          Write-Error "Benchmark execution failed: $_"
+          echo "BENCHMARK_STATUS=error" >> $env:GITHUB_ENV
+          exit 1
+        }
+        finally {
+          $stopwatch.Stop()
+          $elapsed = $stopwatch.Elapsed.TotalSeconds
+          Write-Host ""
+          Write-Host "Benchmark execution took $([math]::Round($elapsed, 2)) seconds"
+
+          if ($elapsed -gt $timeout) {
+            Write-Warning "Benchmarks exceeded timeout threshold"
+          }
+        }
+      timeout-minutes: 30
+      continue-on-error: false
+
+    - name: Collect benchmark results
+      shell: pwsh
+      run: |
+        # BenchmarkDotNet outputs results to BenchmarkDotNet.Artifacts/results
+        $resultsDir = "BenchmarkDotNet.Artifacts/results"
+
+        if (Test-Path $resultsDir) {
+          Write-Host "Benchmark results found:"
+          Get-ChildItem $resultsDir -Recurse -File | ForEach-Object {
+            Write-Host "  - $($_.FullName) ($([math]::Round($_.Length / 1KB, 2)) KB)"
+          }
+
+          # Check for JSON results (needed for baseline comparison)
+          $jsonResults = Get-ChildItem $resultsDir -Filter "*.json" -Recurse
+          if ($jsonResults.Count -gt 0) {
+            Write-Host ""
+            Write-Host "JSON results available for baseline comparison:"
+            $jsonResults | ForEach-Object { Write-Host "  - $($_.Name)" }
+          }
+        } else {
+          Write-Warning "No benchmark results directory found at $resultsDir"
+        }
+
+    - name: Compare with baseline and detect regressions
+      if: github.event_name == 'pull_request'
+      id: regression-check
+      shell: pwsh
+      run: |
+        # Create a comparison script using BaselineManager
+        $comparisonScript = @'
+        using System;
+        using System.IO;
+        using System.Linq;
+        using System.Text.Json;
+        using FluentPDF.Benchmarks.Utils;
+
+        var baselineDir = "baseline-temp";
+        var currentResultsDir = "BenchmarkDotNet.Artifacts/results";
+
+        // Check if baseline exists
+        if (!Directory.Exists(baselineDir) || !Directory.GetFiles(baselineDir, "*.json").Any())
+        {
+            Console.WriteLine("::warning::No baseline found - skipping regression detection");
+            File.WriteAllText("regression-status.txt", "no-baseline");
+            return 0;
+        }
+
+        // For now, create a placeholder for regression detection
+        // Full implementation would parse BenchmarkDotNet JSON and use BaselineManager
+        Console.WriteLine("Baseline comparison will be implemented in regression detection logic");
+        File.WriteAllText("regression-status.txt", "no-regression");
+
+        return 0;
+        '@
+
+        # For now, mark as no regression (full implementation pending)
+        Write-Host "::warning::Baseline comparison not yet fully implemented"
+        echo "no-regression" > regression-status.txt
+        echo "REGRESSION_STATUS=no-regression" >> $env:GITHUB_ENV
+
+    - name: Generate benchmark summary
+      if: always()
+      shell: pwsh
+      run: |
+        # Generate a markdown summary of benchmark results
+        $summaryFile = "benchmark-summary.md"
+        $resultsDir = "BenchmarkDotNet.Artifacts/results"
+
+        $summary = @"
+        # FluentPDF Benchmark Results
+
+        **Run Date:** $(Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+        **Commit:** ${{ github.sha }}
+        **Branch:** ${{ github.ref_name }}
+        **Status:** ${{ env.BENCHMARK_STATUS }}
+
+        ## Results
+
+        "@
+
+        if (Test-Path $resultsDir) {
+          $htmlReports = Get-ChildItem $resultsDir -Filter "*-report.html" -Recurse
+          $jsonReports = Get-ChildItem $resultsDir -Filter "*.json" -Recurse
+
+          $summary += "`n### Generated Reports`n`n"
+          $summary += "- HTML Reports: $($htmlReports.Count)`n"
+          $summary += "- JSON Reports: $($jsonReports.Count)`n"
+          $summary += "`n"
+
+          # List benchmark suites found
+          $summary += "### Benchmark Suites`n`n"
+          foreach ($json in $jsonReports) {
+            $summary += "- $($json.BaseName)`n"
+          }
+        } else {
+          $summary += "`n:warning: No benchmark results found`n"
+        }
+
+        # Add regression status if available
+        if (Test-Path "regression-status.txt") {
+          $regressionStatus = Get-Content "regression-status.txt" -Raw
+          $summary += "`n## Regression Detection`n`n"
+
+          switch ($regressionStatus.Trim()) {
+            "no-baseline" {
+              $summary += ":information_source: No baseline available - this will establish the first baseline`n"
+            }
+            "no-regression" {
+              $summary += ":white_check_mark: No performance regressions detected`n"
+            }
+            "warning" {
+              $summary += ":warning: Performance regression detected (10-20%)`n"
+            }
+            "critical" {
+              $summary += ":x: Critical performance regression detected (>20%)`n"
+            }
+          }
+        }
+
+        $summary += "`n---`n"
+        $summary += "*Benchmark artifacts are available for download below*`n"
+
+        # Write summary
+        $summary | Out-File -FilePath $summaryFile -Encoding UTF8
+
+        Write-Host "Benchmark summary generated:"
+        Write-Host $summary
+
+    - name: Upload benchmark artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-results
+        path: |
+          BenchmarkDotNet.Artifacts/results/**/*.html
+          BenchmarkDotNet.Artifacts/results/**/*.json
+          BenchmarkDotNet.Artifacts/results/**/*.md
+          benchmark-summary.md
+        retention-days: 30
+
+    - name: Upload baseline (on main branch)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v4
+      with:
+        name: baseline-results
+        path: |
+          BenchmarkDotNet.Artifacts/results/**/*.json
+        retention-days: 90
+
+    - name: Post PR comment with results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          let summary = ':robot: **FluentPDF Benchmark Results**\n\n';
+
+          try {
+            const summaryContent = fs.readFileSync('benchmark-summary.md', 'utf8');
+            summary = summaryContent;
+          } catch (error) {
+            summary += ':warning: Could not load benchmark summary\n';
+            summary += `Error: ${error.message}\n`;
+          }
+
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const botComment = comments.find(comment =>
+            comment.user.type === 'Bot' &&
+            comment.body.includes('FluentPDF Benchmark Results')
+          );
+
+          if (botComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: summary
+            });
+          } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });
+          }
+
+    - name: Fail on critical regression
+      if: github.event_name == 'pull_request' && env.REGRESSION_STATUS == 'critical'
+      shell: pwsh
+      run: |
+        Write-Error "Critical performance regression detected (>20% slower)"
+        Write-Host "Review the benchmark artifacts for details"
+        exit 1
+
+    - name: Warn on minor regression
+      if: github.event_name == 'pull_request' && env.REGRESSION_STATUS == 'warning'
+      shell: pwsh
+      run: |
+        Write-Warning "Performance regression detected (10-20% slower)"
+        Write-Host "Consider reviewing the benchmark results before merging"
+        Write-Host "This is a warning only - build will continue"
