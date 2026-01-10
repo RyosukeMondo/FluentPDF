@@ -104,7 +104,7 @@
   - _Requirements: 6.3, 6.4, 6.5, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
   - _Prompt: Role: Software Engineer specializing in data persistence and comparison algorithms | Task: Implement BaselineManager utility for storing, loading, and comparing benchmark results. Create methods: SaveBaseline (serialize BenchmarkRunInfo to JSON with commit SHA, date, hardware specs), LoadBaseline (deserialize from file), Compare (calculate percent change between current and baseline), HasRegression (detect regressions at 10%/20% thresholds). Store baselines in tests/FluentPDF.Benchmarks/Baselines/ with naming convention baseline-YYYY-MM-DD-{SHA}.json. Write comprehensive unit tests verifying JSON serialization, comparison logic, and threshold detection. | Restrictions: Use Result<T> for file I/O operations, validate baseline format before loading, handle missing baselines gracefully, do not fail if baseline doesn't exist (treat as new baseline), keep BaselineManager stateless. | Success: BaselineManager saves baselines correctly, loads and deserializes without errors, calculates percent change accurately, detects regressions at thresholds, unit tests cover all methods with edge cases (missing file, corrupted JSON, invalid data)._
 
-- [ ] 8. Create CI benchmark workflow with regression detection
+- [x] 8. Create CI benchmark workflow with regression detection
   - Files:
     - `.github/workflows/benchmark.yml` (create)
   - Create GitHub Actions workflow running on Windows Server 2022
