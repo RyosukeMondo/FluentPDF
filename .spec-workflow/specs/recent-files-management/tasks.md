@@ -27,7 +27,7 @@
   - Requirements: 4.1-4.10, 6.1-6.7
   - Instructions: Add ObservableCollection<TabViewModel>, commands for opening files in tabs, closing tabs, recent files integration. Test tab lifecycle.
 
-- [-] 6. Update MainWindow with TabView UI
+- [x] 6. Update MainWindow with TabView UI
   - Files: `src/FluentPDF.App/Views/MainWindow.xaml`, `src/FluentPDF.App/Views/MainWindow.xaml.cs`
   - Requirements: 4.1-4.10, 6.1-6.7
   - Instructions: Replace content with TabView bound to MainViewModel.Tabs. Add keyboard shortcuts (Ctrl+Tab, Ctrl+W). Test tab switching, closing.
