@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluentpdf.dev/schemas/validation-report.schema.json",
+  "title": "PDF Validation Report",
+  "description": "Comprehensive validation report from FluentPDF validation tools",
+  "type": "object",
+  "required": [
+    "overallStatus",
+    "filePath",
+    "validationDate",
+    "profile",
+    "duration"
+  ],
+  "properties": {
+    "overallStatus": {
+      "type": "string",
+      "enum": ["Pass", "Warn", "Fail"],
+      "description": "Overall validation status"
+    },
+    "filePath": {
+      "type": "string",
+      "description": "Full path to the validated PDF file"
+    },
+    "validationDate": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when validation was performed"
+    },
+    "profile": {
+      "type": "string",
+      "enum": ["Quick", "Standard", "Full"],
+      "description": "Validation profile used"
+    },
+    "duration": {
+      "type": "string",
+      "pattern": "^-?P(?:\\d+Y)?(?:\\d+M)?(?:\\d+D)?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?$",
+      "description": "Total validation duration in ISO 8601 format"
+    },
+    "qpdfResult": {
+      "type": "object",
+      "description": "QPDF structural validation result",
+      "required": ["status", "errors"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["Pass", "Warn", "Fail"]
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of structural errors"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of warnings"
+        },
+        "isValid": {
+          "type": "boolean"
+        }
+      }
+    },
+    "jhoveResult": {
+      "type": "object",
+      "description": "JHOVE format validation result",
+      "required": ["format", "validity", "status"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "PDF version (e.g., '1.7')"
+        },
+        "validity": {
+          "type": "string",
+          "enum": ["Valid", "Well-Formed", "Not-Valid"],
+          "description": "Format validity status"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Pass", "Warn", "Fail"]
+        },
+        "title": {
+          "type": ["string", "null"],
+          "description": "Document title from metadata"
+        },
+        "author": {
+          "type": ["string", "null"],
+          "description": "Document author from metadata"
+        },
+        "creationDate": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Document creation date"
+        },
+        "modificationDate": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "Document modification date"
+        },
+        "pageCount": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of pages"
+        },
+        "isEncrypted": {
+          "type": "boolean",
+          "description": "Whether the PDF is encrypted"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Validation messages"
+        },
+        "isValid": {
+          "type": "boolean"
+        }
+      }
+    },
+    "veraPdfResult": {
+      "type": "object",
+      "description": "VeraPDF PDF/A compliance validation result",
+      "required": ["isCompliant", "flavour", "status", "errors"],
+      "properties": {
+        "isCompliant": {
+          "type": "boolean",
+          "description": "Whether the PDF is PDF/A compliant"
+        },
+        "flavour": {
+          "type": "string",
+          "enum": [
+            "None",
+            "PdfA1a",
+            "PdfA1b",
+            "PdfA2a",
+            "PdfA2b",
+            "PdfA2u",
+            "PdfA3a",
+            "PdfA3b",
+            "PdfA3u"
+          ],
+          "description": "PDF/A conformance level"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Pass", "Warn", "Fail"]
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ruleReference", "description"],
+            "properties": {
+              "ruleReference": {
+                "type": "string",
+                "description": "Validation rule reference (e.g., '6.1.2-1')"
+              },
+              "description": {
+                "type": "string",
+                "description": "Human-readable error description"
+              },
+              "pageNumber": {
+                "type": ["integer", "null"],
+                "minimum": 1,
+                "description": "Page number where error occurred"
+              },
+              "objectReference": {
+                "type": ["string", "null"],
+                "description": "PDF object reference"
+              }
+            }
+          },
+          "description": "List of validation errors"
+        },
+        "totalChecks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of validation checks performed"
+        },
+        "failedChecks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of failed validation checks"
+        }
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "Human-readable summary of validation results"
+    },
+    "isValid": {
+      "type": "boolean",
+      "description": "Whether all validations passed"
+    }
+  }
+}

@@ -16,7 +16,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3_
   - _Prompt: Role: DevOps Engineer specializing in automation and toolchain management | Task: Create PowerShell script tools/validation/install-tools.ps1 to download and install PDF validation tools. Download VeraPDF installer from downloads.verapdf.org (latest stable), JHOVE from GitHub releases (latest stable). Extract to tools/validation/{tool-name}/ directories. Verify executables work (run with --version). Document installation in README.md with tool versions, system requirements (Java for JHOVE), usage instructions. | Restrictions: Must check if tools already installed before downloading, support Windows and cross-platform where possible, verify checksums if available, handle download failures gracefully. | Success: Script downloads and installs tools successfully, verapdf.bat and jhove.jar are executable, README documents process, script is idempotent (safe to run multiple times)._
 
-- [ ] 2. Create FluentPDF.Validation project and define models
+- [x] 2. Create FluentPDF.Validation project and define models
   - Files:
     - `src/FluentPDF.Validation/FluentPDF.Validation.csproj` (create)
     - `src/FluentPDF.Validation/Models/ValidationReport.cs` (create)
