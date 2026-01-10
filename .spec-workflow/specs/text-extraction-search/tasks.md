@@ -143,7 +143,7 @@
   - _Requirements: All integration_
   - _Prompt: Role: Application Integration Engineer | Task: Register text extraction and search services in DI container | Restrictions: Follow existing DI patterns, use appropriate service lifetimes | Success: All text services registered and resolvable_
 
-- [ ] 11. Add integration tests for text extraction and search
+- [x] 11. Add integration tests for text extraction and search
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Integration/TextExtractionIntegrationTests.cs`
     - `tests/Fixtures/sample-with-text.pdf` (add PDF with known text)
