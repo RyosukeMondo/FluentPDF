@@ -17,7 +17,7 @@
   - Requirements: 3.1-3.7
   - Instructions: Use Windows.UI.StartScreen.JumpList API. Update jump list with recent files. Handle errors gracefully.
 
-- [-] 4. Create TabViewModel for per-tab state management
+- [x] 4. Create TabViewModel for per-tab state management
   - Files: `src/FluentPDF.App/ViewModels/TabViewModel.cs`, `tests/FluentPDF.App.Tests/ViewModels/TabViewModelTests.cs`
   - Requirements: 4.1-4.10, 5.1-5.6
   - Instructions: ViewModel wrapping PdfViewerViewModel with tab-specific state (file path, name, active state). Test state preservation.
