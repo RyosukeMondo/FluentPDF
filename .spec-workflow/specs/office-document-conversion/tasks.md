@@ -35,7 +35,7 @@
   - _Requirements: 2.1-2.8_
   - _Prompt: Role: Windows Developer specializing in WebView2 integration | Task: Implement HTML to PDF service using CoreWebView2.PrintToPdfAsync with optimized settings and error handling | Restrictions: Must initialize environment once, queue conversions, handle missing runtime | Success: Generates high-quality PDFs from HTML with proper formatting_
 
-- [ ] 3. Create DOCX to PDF converter orchestrator service
+- [x] 3. Create DOCX to PDF converter orchestrator service
   - Files:
     - `src/FluentPDF.Core/Services/IDocxConverterService.cs`
     - `src/FluentPDF.Core/Models/ConversionOptions.cs`
