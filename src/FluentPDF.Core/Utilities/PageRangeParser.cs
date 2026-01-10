@@ -73,8 +73,7 @@ public static class PageRangeParser
             if (parseResult.IsFailed)
             {
                 // Add context about which part failed
-                var error = parseResult.Errors[0] as PdfError;
-                if (error != null)
+                if (parseResult.Errors[0] is PdfError error)
                 {
                     error = error.WithContext("FullRangeString", rangeString);
                 }

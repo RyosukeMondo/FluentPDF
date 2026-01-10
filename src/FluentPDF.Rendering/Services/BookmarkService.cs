@@ -164,8 +164,14 @@ public sealed class BookmarkService : IBookmarkService
                     // Try to get coordinates (optional)
                     if (PdfiumInterop.GetDestLocationInPage(dest, out var hasX, out var hasY, out _, out var xCoord, out var yCoord, out _))
                     {
-                        if (hasX) x = xCoord;
-                        if (hasY) y = yCoord;
+                        if (hasX)
+                        {
+                            x = xCoord;
+                        }
+                        if (hasY)
+                        {
+                            y = yCoord;
+                        }
                     }
                 }
             }
