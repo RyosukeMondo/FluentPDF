@@ -715,7 +715,7 @@
        - Note keyboard shortcuts
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 8. Register services in DI container and update navigation
+- [x] 8. Register services in DI container and update navigation
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
     - `src/FluentPDF.App/MainWindow.xaml` (modify - add navigation to PdfViewerPage)

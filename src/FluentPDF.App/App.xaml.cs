@@ -3,6 +3,8 @@ using FluentPDF.App.ViewModels;
 using FluentPDF.App.Views;
 using FluentPDF.Core.Logging;
 using FluentPDF.Core.Services;
+using FluentPDF.Rendering.Interop;
+using FluentPDF.Rendering.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -52,12 +54,17 @@ namespace FluentPDF.App
                         builder.AddSerilog(dispose: true);
                     });
 
-                    // Register services
+                    // Register PDF services (PDFium will be initialized lazily on first use)
+                    services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
+                    services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
+
+                    // Register application services
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ITelemetryService, TelemetryService>();
 
                     // Register ViewModels as transient (new instance per resolution)
                     services.AddTransient<MainViewModel>();
+                    services.AddTransient<PdfViewerViewModel>();
                 })
                 .Build();
         }
@@ -80,6 +87,15 @@ namespace FluentPDF.App
         /// <param name="e">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs e)
         {
+            // Initialize PDFium library before starting the application
+            var initialized = PdfiumInterop.Initialize();
+            if (!initialized)
+            {
+                Log.Fatal("Failed to initialize PDFium library");
+                throw new InvalidOperationException("Failed to initialize PDFium. Please ensure pdfium.dll is available.");
+            }
+            Log.Information("PDFium library initialized successfully");
+
             // Start the host
             await _host.StartAsync();
 
@@ -104,7 +120,8 @@ namespace FluentPDF.App
                 }
             }
 
-            _ = rootFrame.Navigate(typeof(MainPage), e.Arguments);
+            // Navigate to PdfViewerPage instead of MainPage
+            _ = rootFrame.Navigate(typeof(PdfViewerPage), e.Arguments);
             _window.Activate();
         }
 
@@ -204,6 +221,11 @@ namespace FluentPDF.App
         internal async Task ShutdownAsync()
         {
             Log.Information("FluentPDF application shutting down");
+
+            // Shutdown PDFium library
+            PdfiumInterop.Shutdown();
+            Log.Information("PDFium library shut down");
+
             await _host.StopAsync();
             _host.Dispose();
             Log.CloseAndFlush();
