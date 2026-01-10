@@ -66,7 +66,7 @@
   - _Requirements: 3, 4_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Performance Engineer with expertise in PDF optimization and compression | Task: Implement OptimizeAsync method following requirements 3 and 4, using QPDF optimization APIs to compress streams, remove unused objects, deduplicate resources, and optionally linearize | Restrictions: Must NOT recompress images or fonts (lossless only), warn user if optimization increases file size, measure and report size reduction percentage, support progress and cancellation | _Leverage: Use OptimizationOptions for configuration, QPDF qpdf_optimize APIs, calculate OptimizationResult metrics | _Requirements: Req 3 (optimize), Req 4 (progress) | Success: Reduces PDF file size through lossless optimization, linearization works for fast web viewing, reports accurate metrics, warns on size increase, no quality degradation | Instructions: Mark in-progress [-]. Log with artifacts (method OptimizeAsync, QPDF optimization integration). Mark complete [x]._
 
-- [ ] 8. Add DI registration for DocumentEditingService
+- [x] 8. Add DI registration for DocumentEditingService
   - File: src/FluentPDF.App/App.xaml.cs (modify existing)
   - Register IDocumentEditingService as singleton in DI container
   - Configure service dependencies (IPdfDocumentService, ITelemetryService)

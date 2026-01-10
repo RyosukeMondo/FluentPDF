@@ -57,6 +57,7 @@ namespace FluentPDF.App
                     // Register PDF services (PDFium will be initialized lazily on first use)
                     services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
                     services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
+                    services.AddSingleton<IDocumentEditingService, DocumentEditingService>();
 
                     // Register application services
                     services.AddSingleton<INavigationService, NavigationService>();
