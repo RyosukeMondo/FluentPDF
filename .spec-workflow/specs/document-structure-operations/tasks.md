@@ -75,7 +75,7 @@
   - _Requirements: All (infrastructure)_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: DevOps Engineer with expertise in dependency injection and service configuration | Task: Register IDocumentEditingService in DI container in App.xaml.cs following existing registration patterns, configuring singleton lifetime and dependencies | Restrictions: Must register as singleton for thread-safety, ensure IPdfDocumentService and ITelemetryService are resolved, do not create circular dependencies | _Leverage: Study existing service registrations in App.xaml.cs ConfigureServices method | _Requirements: Foundation for all features | Success: Service is properly registered and resolvable from DI container, dependencies inject correctly, no registration errors at startup | Instructions: Mark in-progress [-]. Log with artifacts (DI registration code location). Mark complete [x]._
 
-- [ ] 9. Add merge/split/optimize commands to PdfViewerViewModel
+- [-] 9. Add merge/split/optimize commands to PdfViewerViewModel
   - File: src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs (modify existing)
   - Add RelayCommand properties for MergeCommand, SplitCommand, OptimizeCommand
   - Inject IDocumentEditingService via constructor

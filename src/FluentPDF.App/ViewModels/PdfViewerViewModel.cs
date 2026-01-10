@@ -19,23 +19,28 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 {
     private readonly IPdfDocumentService _documentService;
     private readonly IPdfRenderingService _renderingService;
+    private readonly IDocumentEditingService _editingService;
     private readonly ILogger<PdfViewerViewModel> _logger;
     private PdfDocument? _currentDocument;
     private bool _disposed;
+    private CancellationTokenSource? _operationCts;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
     /// </summary>
     /// <param name="documentService">Service for loading PDF documents.</param>
     /// <param name="renderingService">Service for rendering PDF pages.</param>
+    /// <param name="editingService">Service for editing PDF documents.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
         IPdfRenderingService renderingService,
+        IDocumentEditingService editingService,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
+        _editingService = editingService ?? throw new ArgumentNullException(nameof(editingService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         _logger.LogInformation("PdfViewerViewModel initialized");
@@ -77,6 +82,18 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private string _statusMessage = "Open a PDF file to get started";
+
+    /// <summary>
+    /// Gets or sets the operation progress (0-100).
+    /// </summary>
+    [ObservableProperty]
+    private double _operationProgress;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether an operation is in progress (merge, split, optimize).
+    /// </summary>
+    [ObservableProperty]
+    private bool _isOperationInProgress;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -360,6 +377,331 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         await dialog.ShowAsync();
     }
 
+    /// <summary>
+    /// Merges multiple PDF documents into a single file.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExecuteMerge))]
+    private async Task MergeDocumentsAsync()
+    {
+        _logger.LogInformation("MergeDocuments command invoked");
+
+        try
+        {
+            // Create file picker for multiple PDFs
+            var picker = new FileOpenPicker();
+            picker.FileTypeFilter.Add(".pdf");
+            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+            var files = await picker.PickMultipleFilesAsync();
+            if (files == null || files.Count < 2)
+            {
+                _logger.LogInformation("Merge cancelled or insufficient files selected");
+                await ShowErrorDialogAsync("Merge Error", "Please select at least 2 PDF files to merge.");
+                return;
+            }
+
+            // Create save picker for output
+            var savePicker = new FileSavePicker();
+            savePicker.FileTypeChoices.Add("PDF Document", new[] { ".pdf" });
+            savePicker.SuggestedFileName = "merged.pdf";
+            savePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+
+            WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+            var outputFile = await savePicker.PickSaveFileAsync();
+            if (outputFile == null)
+            {
+                _logger.LogInformation("Merge output cancelled");
+                return;
+            }
+
+            IsOperationInProgress = true;
+            OperationProgress = 0;
+            StatusMessage = "Merging PDF documents...";
+            _operationCts = new CancellationTokenSource();
+
+            var progress = new Progress<double>(value =>
+            {
+                OperationProgress = value;
+                StatusMessage = $"Merging PDF documents... {value:F1}%";
+            });
+
+            var sourcePaths = files.Select(f => f.Path).ToList();
+            var result = await _editingService.MergeAsync(
+                sourcePaths,
+                outputFile.Path,
+                progress,
+                _operationCts.Token);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Merge completed successfully. Output={OutputPath}", result.Value);
+                StatusMessage = $"Successfully merged {files.Count} PDFs";
+                await ShowErrorDialogAsync("Success", $"Merged {files.Count} PDFs into:\n{result.Value}");
+            }
+            else
+            {
+                _logger.LogError("Merge failed: {Errors}", result.Errors);
+                StatusMessage = "Merge operation failed";
+                await ShowErrorDialogAsync("Merge Error", result.Errors[0].Message);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Merge operation cancelled by user");
+            StatusMessage = "Merge operation cancelled";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during merge operation");
+            StatusMessage = "Unexpected error during merge";
+            await ShowErrorDialogAsync("Error", $"An unexpected error occurred: {ex.Message}");
+        }
+        finally
+        {
+            IsOperationInProgress = false;
+            OperationProgress = 0;
+            _operationCts?.Dispose();
+            _operationCts = null;
+        }
+    }
+
+    private bool CanExecuteMerge() => !IsLoading && !IsOperationInProgress;
+
+    /// <summary>
+    /// Splits the current PDF document by extracting specified page ranges.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExecuteSplit))]
+    private async Task SplitDocumentAsync()
+    {
+        _logger.LogInformation("SplitDocument command invoked");
+
+        try
+        {
+            if (_currentDocument == null)
+            {
+                await ShowErrorDialogAsync("Split Error", "No document is currently loaded.");
+                return;
+            }
+
+            // Prompt user for page ranges
+            var inputDialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+            {
+                Title = "Split PDF",
+                Content = new Microsoft.UI.Xaml.Controls.TextBox
+                {
+                    PlaceholderText = "Enter page ranges (e.g., 1-5, 10, 15-20)",
+                    AcceptsReturn = false
+                },
+                PrimaryButtonText = "Split",
+                CloseButtonText = "Cancel",
+                XamlRoot = App.MainWindow.Content.XamlRoot
+            };
+
+            var dialogResult = await inputDialog.ShowAsync();
+            if (dialogResult != Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+            {
+                _logger.LogInformation("Split cancelled by user");
+                return;
+            }
+
+            var pageRanges = ((Microsoft.UI.Xaml.Controls.TextBox)inputDialog.Content).Text;
+            if (string.IsNullOrWhiteSpace(pageRanges))
+            {
+                await ShowErrorDialogAsync("Split Error", "Please enter valid page ranges.");
+                return;
+            }
+
+            // Create save picker for output
+            var savePicker = new FileSavePicker();
+            savePicker.FileTypeChoices.Add("PDF Document", new[] { ".pdf" });
+            savePicker.SuggestedFileName = "split.pdf";
+            savePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+            var outputFile = await savePicker.PickSaveFileAsync();
+            if (outputFile == null)
+            {
+                _logger.LogInformation("Split output cancelled");
+                return;
+            }
+
+            IsOperationInProgress = true;
+            OperationProgress = 0;
+            StatusMessage = "Splitting PDF document...";
+            _operationCts = new CancellationTokenSource();
+
+            var progress = new Progress<double>(value =>
+            {
+                OperationProgress = value;
+                StatusMessage = $"Splitting PDF document... {value:F1}%";
+            });
+
+            var result = await _editingService.SplitAsync(
+                _currentDocument.FilePath,
+                pageRanges,
+                outputFile.Path,
+                progress,
+                _operationCts.Token);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Split completed successfully. Output={OutputPath}", result.Value);
+                StatusMessage = "Successfully split PDF";
+                await ShowErrorDialogAsync("Success", $"Split PDF saved to:\n{result.Value}");
+            }
+            else
+            {
+                _logger.LogError("Split failed: {Errors}", result.Errors);
+                StatusMessage = "Split operation failed";
+                await ShowErrorDialogAsync("Split Error", result.Errors[0].Message);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Split operation cancelled by user");
+            StatusMessage = "Split operation cancelled";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during split operation");
+            StatusMessage = "Unexpected error during split";
+            await ShowErrorDialogAsync("Error", $"An unexpected error occurred: {ex.Message}");
+        }
+        finally
+        {
+            IsOperationInProgress = false;
+            OperationProgress = 0;
+            _operationCts?.Dispose();
+            _operationCts = null;
+        }
+    }
+
+    private bool CanExecuteSplit() => !IsLoading && !IsOperationInProgress && _currentDocument != null;
+
+    /// <summary>
+    /// Optimizes the current PDF document to reduce file size.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExecuteOptimize))]
+    private async Task OptimizeDocumentAsync()
+    {
+        _logger.LogInformation("OptimizeDocument command invoked");
+
+        try
+        {
+            if (_currentDocument == null)
+            {
+                await ShowErrorDialogAsync("Optimize Error", "No document is currently loaded.");
+                return;
+            }
+
+            // Create save picker for output
+            var savePicker = new FileSavePicker();
+            savePicker.FileTypeChoices.Add("PDF Document", new[] { ".pdf" });
+            savePicker.SuggestedFileName = "optimized.pdf";
+            savePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+            var outputFile = await savePicker.PickSaveFileAsync();
+            if (outputFile == null)
+            {
+                _logger.LogInformation("Optimize output cancelled");
+                return;
+            }
+
+            IsOperationInProgress = true;
+            OperationProgress = 0;
+            StatusMessage = "Optimizing PDF document...";
+            _operationCts = new CancellationTokenSource();
+
+            var progress = new Progress<double>(value =>
+            {
+                OperationProgress = value;
+                StatusMessage = $"Optimizing PDF document... {value:F1}%";
+            });
+
+            var options = new OptimizationOptions
+            {
+                CompressStreams = true,
+                RemoveUnusedObjects = true,
+                DeduplicateResources = true,
+                Linearize = false,
+                PreserveEncryption = true
+            };
+
+            var result = await _editingService.OptimizeAsync(
+                _currentDocument.FilePath,
+                outputFile.Path,
+                options,
+                progress,
+                _operationCts.Token);
+
+            if (result.IsSuccess)
+            {
+                var optimizationResult = result.Value;
+                _logger.LogInformation(
+                    "Optimization completed. OriginalSize={OriginalSize}, OptimizedSize={OptimizedSize}, Reduction={Reduction}%",
+                    optimizationResult.OriginalSize, optimizationResult.OptimizedSize, optimizationResult.ReductionPercentage);
+
+                StatusMessage = $"Optimization complete - {optimizationResult.ReductionPercentage:F1}% reduction";
+
+                var message = $"Optimized PDF saved to:\n{optimizationResult.OutputPath}\n\n" +
+                              $"Original size: {optimizationResult.OriginalSize / 1024.0:F1} KB\n" +
+                              $"Optimized size: {optimizationResult.OptimizedSize / 1024.0:F1} KB\n" +
+                              $"Reduction: {optimizationResult.ReductionPercentage:F1}%\n" +
+                              $"Processing time: {optimizationResult.ProcessingTime.TotalSeconds:F2}s";
+
+                await ShowErrorDialogAsync("Success", message);
+            }
+            else
+            {
+                _logger.LogError("Optimization failed: {Errors}", result.Errors);
+                StatusMessage = "Optimization operation failed";
+                await ShowErrorDialogAsync("Optimization Error", result.Errors[0].Message);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Optimization operation cancelled by user");
+            StatusMessage = "Optimization operation cancelled";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during optimization operation");
+            StatusMessage = "Unexpected error during optimization";
+            await ShowErrorDialogAsync("Error", $"An unexpected error occurred: {ex.Message}");
+        }
+        finally
+        {
+            IsOperationInProgress = false;
+            OperationProgress = 0;
+            _operationCts?.Dispose();
+            _operationCts = null;
+        }
+    }
+
+    private bool CanExecuteOptimize() => !IsLoading && !IsOperationInProgress && _currentDocument != null;
+
+    /// <summary>
+    /// Cancels the current document editing operation (merge, split, or optimize).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanCancelOperation))]
+    private void CancelOperation()
+    {
+        _logger.LogInformation("CancelOperation command invoked");
+        _operationCts?.Cancel();
+        StatusMessage = "Cancelling operation...";
+    }
+
+    private bool CanCancelOperation() => IsOperationInProgress && _operationCts != null;
+
     /// <inheritdoc/>
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
@@ -381,6 +723,16 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 "Command states updated. Property={PropertyName}, IsLoading={IsLoading}",
                 e.PropertyName, IsLoading);
         }
+
+        // Update document editing command states
+        if (e.PropertyName == nameof(IsLoading) ||
+            e.PropertyName == nameof(IsOperationInProgress))
+        {
+            MergeDocumentsCommand.NotifyCanExecuteChanged();
+            SplitDocumentCommand.NotifyCanExecuteChanged();
+            OptimizeDocumentCommand.NotifyCanExecuteChanged();
+            CancelOperationCommand.NotifyCanExecuteChanged();
+        }
     }
 
     /// <summary>
@@ -400,6 +752,10 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             _documentService.CloseDocument(_currentDocument);
             _currentDocument = null;
         }
+
+        _operationCts?.Cancel();
+        _operationCts?.Dispose();
+        _operationCts = null;
 
         _disposed = true;
     }
