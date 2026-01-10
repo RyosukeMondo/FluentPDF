@@ -164,7 +164,7 @@
   - _Requirements: CI/CD infrastructure_
   - _Prompt: Role: DevOps Engineer | Task: Update CI workflow to support WebView2 runtime for conversion tests | Restrictions: Must install WebView2, verify availability, handle missing runtime gracefully | Success: Conversion tests run successfully in CI with WebView2_
 
-- [ ] 11. Final testing and documentation
+- [x] 11. Final testing and documentation
   - Files:
     - `docs/ARCHITECTURE.md` (update)
     - `docs/CONVERSION.md` (new)
