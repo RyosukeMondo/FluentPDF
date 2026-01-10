@@ -137,6 +137,132 @@
             </summary>
             <returns>Assembly version string.</returns>
         </member>
+        <member name="T:FluentPDF.Core.Models.BookmarkNode">
+            <summary>
+            Represents a single bookmark node in a hierarchical bookmark tree.
+            Bookmarks can have optional page destinations and child bookmarks.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.BookmarkNode.Title">
+            <summary>
+            Gets the title text of the bookmark.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.BookmarkNode.PageNumber">
+            <summary>
+            Gets the 1-based page number this bookmark links to.
+            Null if the bookmark has no destination.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.BookmarkNode.X">
+            <summary>
+            Gets the X coordinate of the destination on the page.
+            Null if no specific location is set.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.BookmarkNode.Y">
+            <summary>
+            Gets the Y coordinate of the destination on the page.
+            Null if no specific location is set.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.BookmarkNode.Children">
+            <summary>
+            Gets the list of child bookmarks.
+            Empty list if this bookmark has no children.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.BookmarkNode.GetTotalNodeCount">
+            <summary>
+            Calculates the total number of nodes in this subtree (including this node).
+            </summary>
+            <returns>Total count of this node plus all descendant nodes.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Models.ConversionOptions">
+            <summary>
+            Configuration options for DOCX to PDF conversion operations.
+            Provides control over conversion behavior, timeouts, and quality validation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionOptions.Timeout">
+            <summary>
+            Gets or initializes the timeout duration for the entire conversion operation.
+            Default is 60 seconds.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionOptions.EnableQualityValidation">
+            <summary>
+            Gets or initializes a value indicating whether to enable quality validation
+            by comparing output against LibreOffice baseline using SSIM metrics.
+            Default is false. Requires LibreOffice to be installed.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionOptions.TempDirectory">
+            <summary>
+            Gets or initializes the directory path for temporary files during conversion.
+            If null, uses the system temp directory.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionOptions.PreserveTempFiles">
+            <summary>
+            Gets or initializes a value indicating whether to preserve temporary files
+            for debugging purposes. Default is false (temp files are cleaned up).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.ConversionResult">
+            <summary>
+            Represents the result of a DOCX to PDF conversion operation.
+            Contains output path, conversion metrics, and optional quality validation results.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.OutputPath">
+            <summary>
+            Gets the full path to the generated PDF file.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.SourcePath">
+            <summary>
+            Gets the full path to the source DOCX file.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.ConversionTime">
+            <summary>
+            Gets the total time taken for the conversion operation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.OutputSizeBytes">
+            <summary>
+            Gets the size of the output PDF file in bytes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.SourceSizeBytes">
+            <summary>
+            Gets the size of the source DOCX file in bytes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.PageCount">
+            <summary>
+            Gets the estimated page count of the generated PDF.
+            May be null if page counting failed.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.QualityScore">
+            <summary>
+            Gets the quality validation score (SSIM) if quality validation was enabled.
+            Range: 0.0 (completely different) to 1.0 (identical).
+            Null if quality validation was not performed.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.CompletedAt">
+            <summary>
+            Gets the timestamp when the conversion completed.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.ConversionResult.QualityValidationPerformed">
+            <summary>
+            Gets a value indicating whether quality validation was performed.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Models.PageRange">
             <summary>
             Represents a range of pages in a PDF document.
@@ -226,6 +352,68 @@
         <member name="P:FluentPDF.Core.Models.PdfPage.AspectRatio">
             <summary>
             Gets the aspect ratio of the page (Width / Height).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.QualityReport">
+            <summary>
+            Represents the result of PDF quality validation comparing FluentPDF output against LibreOffice baseline.
+            Contains SSIM (Structural Similarity Index) scores and paths to comparison images.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.AverageSsimScore">
+            <summary>
+            Gets the average SSIM score across all pages.
+            Range: 0.0 (completely different) to 1.0 (identical).
+            Values above 0.95 typically indicate excellent quality.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.MinimumSsimScore">
+            <summary>
+            Gets the lowest SSIM score among all pages.
+            Identifies the page with the worst quality match.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.MinimumScorePageNumber">
+            <summary>
+            Gets the page number (1-based) with the lowest SSIM score.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.LibreOfficePdfPath">
+            <summary>
+            Gets the full path to the LibreOffice-generated baseline PDF.
+            This file is kept for debugging purposes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.FluentPdfPath">
+            <summary>
+            Gets the full path to the FluentPDF-generated PDF that was validated.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.ComparisonImagePages">
+            <summary>
+            Gets the list of page numbers where comparison images were saved.
+            Only populated for pages with SSIM scores below the threshold.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.ComparisonImagesDirectory">
+            <summary>
+            Gets the directory path where comparison images are stored.
+            Null if no comparison images were generated.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.TotalPagesCompared">
+            <summary>
+            Gets the total number of pages that were compared.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.QualityReport.ValidatedAt">
+            <summary>
+            Gets the timestamp when the validation was performed.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.QualityReport.IsQualityAcceptable(System.Double)">
+            <summary>
+            Gets a value indicating whether the quality meets the specified threshold.
             </summary>
         </member>
         <member name="T:FluentPDF.Core.Placeholder">
@@ -356,6 +544,68 @@
             Total time taken to perform the optimization.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Services.IDocxConverterService">
+            <summary>
+            Service contract for complete DOCX to PDF conversion operations.
+            Orchestrates the conversion pipeline: DOCX parsing → HTML rendering → PDF generation.
+            Optionally performs quality validation against LibreOffice baseline.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDocxConverterService.ConvertDocxToPdfAsync(System.String,System.String,FluentPDF.Core.Models.ConversionOptions,System.Threading.CancellationToken)">
+            <summary>
+            Converts a DOCX document to PDF format with optional quality validation.
+            Orchestrates: file validation → Mammoth parsing → WebView2 rendering → validation → cleanup.
+            </summary>
+            <param name="inputPath">Full path to the source DOCX file.</param>
+            <param name="outputPath">Full path where the PDF file will be saved.</param>
+            <param name="options">Optional conversion settings. Uses defaults if null.</param>
+            <param name="cancellationToken">Cancellation token for async operation.</param>
+            <returns>
+            A Result containing ConversionResult with metrics if successful, or a PdfError if the operation failed.
+            Error codes: DOCX_FILE_NOT_FOUND, DOCX_INVALID_FORMAT, OUTPUT_PATH_INVALID,
+            DOCX_PARSE_FAILED, HTML_TO_PDF_FAILED, CONVERSION_TIMEOUT, VALIDATION_FAILED.
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IDocxParserService">
+            <summary>
+            Service contract for DOCX document parsing operations.
+            Provides methods to parse DOCX files and extract HTML content with embedded images.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDocxParserService.ParseDocxToHtmlAsync(System.String)">
+            <summary>
+            Parses a DOCX document and converts it to HTML with embedded images.
+            Images are embedded as base64 data URIs for self-contained HTML output.
+            </summary>
+            <param name="filePath">Full path to the DOCX file.</param>
+            <returns>
+            A Result containing the HTML string if successful, or a PdfError if the operation failed.
+            Error codes: DOCX_FILE_NOT_FOUND, DOCX_INVALID_FORMAT, DOCX_PARSE_FAILED.
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IHtmlToPdfService">
+            <summary>
+            Service contract for HTML to PDF conversion operations.
+            Provides methods to convert HTML content to PDF files using WebView2 rendering engine.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IHtmlToPdfService.ConvertHtmlToPdfAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Converts HTML content to a PDF file using the Chromium rendering engine.
+            Supports embedded images, CSS styling, and produces high-quality PDF output.
+            </summary>
+            <param name="htmlContent">The HTML content to convert. Must not be null or empty.</param>
+            <param name="outputPath">Full path where the PDF file will be saved.</param>
+            <param name="cancellationToken">Cancellation token for async operation.</param>
+            <returns>
+            A Result containing the output file path if successful, or a PdfError if the operation failed.
+            Error codes: HTML_EMPTY, OUTPUT_PATH_EMPTY, WEBVIEW2_RUNTIME_NOT_FOUND,
+            WEBVIEW2_INIT_FAILED, HTML_TO_PDF_FAILED, CONVERSION_TIMEOUT, CONVERSION_CANCELLED.
+            </returns>
+        </member>
         <member name="T:FluentPDF.Core.Services.IPdfDocumentService">
             <summary>
             Service contract for PDF document loading and management operations.
@@ -409,6 +659,36 @@
             <param name="zoomLevel">The zoom level (1.0 = 100%, 2.0 = 200%, etc.).</param>
             <param name="dpi">The dots per inch for rendering. Default is 96 (standard screen DPI).</param>
             <returns>A result containing a Stream with PNG-encoded image data, or an error if rendering failed.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IQualityValidationService">
+            <summary>
+            Service contract for PDF quality validation against LibreOffice baseline.
+            Compares FluentPDF-generated PDFs with LibreOffice output using SSIM (Structural Similarity Index).
+            Gracefully handles LibreOffice not being installed by skipping validation.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IQualityValidationService.ValidateQualityAsync(System.String,System.String,System.Double,System.Threading.CancellationToken)">
+            <summary>
+            Validates PDF quality by comparing against LibreOffice baseline conversion.
+            Converts the source DOCX to PDF using LibreOffice, renders both PDFs to images,
+            and calculates SSIM score. Saves comparison images if quality is below threshold.
+            </summary>
+            <param name="docxPath">Full path to the source DOCX file.</param>
+            <param name="fluentPdfPath">Full path to the FluentPDF-generated PDF file.</param>
+            <param name="threshold">SSIM threshold below which comparison images are saved (default 0.95).</param>
+            <param name="cancellationToken">Cancellation token for async operation.</param>
+            <returns>
+            A Result containing QualityReport with SSIM score and comparison paths if successful,
+            or a PdfError if validation failed.
+            Returns null QualityReport if LibreOffice is not installed (graceful degradation).
+            Error codes: LIBREOFFICE_CONVERSION_FAILED, PDF_RENDERING_FAILED, SSIM_CALCULATION_FAILED.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IQualityValidationService.IsLibreOfficeAvailableAsync">
+            <summary>
+            Checks if LibreOffice is installed and available for quality validation.
+            </summary>
+            <returns>True if LibreOffice is detected and functional, false otherwise.</returns>
         </member>
         <member name="T:FluentPDF.Core.Services.ITelemetryService">
             <summary>

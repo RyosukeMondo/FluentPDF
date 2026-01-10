@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:FluentPDF.App.Views"
     xmlns:converters="using:FluentPDF.App.Converters"
+    xmlns:controls="using:FluentPDF.App.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     x:Name="RootPage">
@@ -18,18 +19,31 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <!-- Toolbar row -->
-            <RowDefinition Height="Auto" />
-            <!-- Progress bar row -->
-            <RowDefinition Height="Auto" />
-            <!-- Content row -->
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <SplitView
+        IsPaneOpen="{x:Bind ViewModel.BookmarksViewModel.IsPanelVisible, Mode=TwoWay}"
+        OpenPaneLength="{x:Bind ViewModel.BookmarksViewModel.PanelWidth, Mode=TwoWay}"
+        DisplayMode="Inline"
+        PaneBackground="{ThemeResource LayerFillColorDefaultBrush}">
 
-        <!-- Toolbar -->
-        <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
+        <!-- Left Pane: Bookmarks Panel -->
+        <SplitView.Pane>
+            <controls:BookmarksPanel/>
+        </SplitView.Pane>
+
+        <!-- Main Content -->
+        <SplitView.Content>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- Toolbar row -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Progress bar row -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Content row -->
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Toolbar -->
+                <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
             <!-- Open File -->
             <AppBarButton
                 Icon="OpenFile"
@@ -70,6 +84,18 @@
                 Command="{x:Bind ViewModel.GoToNextPageCommand, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="Right" />
+                </AppBarButton.KeyboardAccelerators>
+            </AppBarButton>
+
+            <AppBarSeparator />
+
+            <!-- Toggle Bookmarks -->
+            <AppBarButton
+                Icon="AlignLeft"
+                Label="Bookmarks"
+                Command="{x:Bind ViewModel.BookmarksViewModel.TogglePanelCommand, Mode=OneWay}">
+                <AppBarButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="B" Modifiers="Control" />
                 </AppBarButton.KeyboardAccelerators>
             </AppBarButton>
 
@@ -227,6 +253,8 @@
                 Visibility="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay, Converter={StaticResource InverseNullToVisibilityConverter}}"
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-        </Grid>
-    </Grid>
+                </Grid>
+            </Grid>
+        </SplitView.Content>
+    </SplitView>
 </Page>

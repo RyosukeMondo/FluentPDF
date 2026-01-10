@@ -17,3 +17,12 @@
 /home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/obj/Debug/net8.0/FluentPDF.Rendering.xml
 /home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/obj/Debug/net8.0/FluentPDF.Rendering.pdb
 /home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/obj/Debug/net8.0/ref/FluentPDF.Rendering.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/runtimes/win-x86/native/WebView2Loader.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/runtimes/win-x64/native/WebView2Loader.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/runtimes/win-arm64/native/WebView2Loader.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/Microsoft.Web.WebView2.Core.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/Microsoft.Web.WebView2.WinForms.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/Microsoft.Web.WebView2.Wpf.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/Microsoft.Web.WebView2.Core.xml
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/Microsoft.Web.WebView2.Wpf.xml
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/bin/Debug/net8.0/Microsoft.Web.WebView2.WinForms.xml

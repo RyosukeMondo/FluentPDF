@@ -175,6 +175,58 @@
             Disable the native text output available on some platforms.
             </summary>
         </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetFirstChildBookmark(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr)">
+            <summary>
+            Gets the first child bookmark of a parent bookmark.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="parentBookmark">Handle to the parent bookmark, or IntPtr.Zero to get the first root bookmark.</param>
+            <returns>Handle to the first child bookmark, or IntPtr.Zero if none exists.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetNextSiblingBookmark(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr)">
+            <summary>
+            Gets the next sibling bookmark.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="bookmark">Handle to the current bookmark.</param>
+            <returns>Handle to the next sibling bookmark, or IntPtr.Zero if none exists.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetBookmarkTitle(System.IntPtr)">
+            <summary>
+            Gets the title of a bookmark as a UTF-16LE encoded string.
+            </summary>
+            <param name="bookmark">Handle to the bookmark.</param>
+            <returns>The bookmark title, or "(Untitled)" if the bookmark has no title.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetBookmarkDest(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr)">
+            <summary>
+            Gets the destination of a bookmark.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="bookmark">Handle to the bookmark.</param>
+            <returns>Handle to the destination, or IntPtr.Zero if the bookmark has no destination.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetDestPageIndex(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr)">
+            <summary>
+            Gets the page index of a destination (0-based).
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="dest">Handle to the destination.</param>
+            <returns>Zero-based page index, or -1 if invalid.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetDestLocationInPage(System.IntPtr,System.Boolean@,System.Boolean@,System.Boolean@,System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Gets the location coordinates within a page for a destination.
+            </summary>
+            <param name="dest">Handle to the destination.</param>
+            <param name="hasX">Outputs true if the destination has an X coordinate.</param>
+            <param name="hasY">Outputs true if the destination has a Y coordinate.</param>
+            <param name="hasZoom">Outputs true if the destination has a zoom factor.</param>
+            <param name="x">Outputs the X coordinate.</param>
+            <param name="y">Outputs the Y coordinate.</param>
+            <param name="zoom">Outputs the zoom factor.</param>
+            <returns>True if the operation succeeded; otherwise, false.</returns>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes">
             <summary>
             PDFium error codes.
@@ -462,6 +514,27 @@
             </summary>
             <returns>True if the handle was released successfully; otherwise, false.</returns>
         </member>
+        <member name="T:FluentPDF.Rendering.Services.BookmarkService">
+            <summary>
+            Service for extracting hierarchical bookmark structures from PDF documents using PDFium.
+            Implements iterative tree traversal to avoid stack overflow with deeply nested bookmarks.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.BookmarkService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.BookmarkService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.BookmarkService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.BookmarkService.ExtractBookmarksAsync(FluentPDF.Core.Models.PdfDocument)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.BookmarkService.ExtractBookmarksIterative(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr,System.Collections.Generic.List{FluentPDF.Core.Models.BookmarkNode},System.Guid)">
+            <summary>
+            Extracts bookmarks using an iterative depth-first traversal algorithm.
+            Uses a stack to avoid recursion and prevent stack overflow with deeply nested bookmarks.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Rendering.Services.DocumentEditingService">
             <summary>
             Service for PDF document structure manipulation operations using QPDF.
@@ -483,6 +556,24 @@
         <member name="M:FluentPDF.Rendering.Services.DocumentEditingService.OptimizeAsync(System.String,System.String,FluentPDF.Core.Services.OptimizationOptions,System.IProgress{System.Double},System.Threading.CancellationToken)">
             <inheritdoc />
         </member>
+        <member name="T:FluentPDF.Rendering.Services.DocxConverterService">
+            <summary>
+            Service for complete DOCX to PDF conversion operations.
+            Orchestrates the conversion pipeline: validation → parsing → rendering → validation → cleanup.
+            Implements comprehensive error handling, timeout management, and resource cleanup.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DocxConverterService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.DocxConverterService},FluentPDF.Core.Services.IDocxParserService,FluentPDF.Core.Services.IHtmlToPdfService)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.DocxConverterService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+            <param name="docxParser">Service for parsing DOCX files to HTML.</param>
+            <param name="htmlToPdf">Service for converting HTML to PDF.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DocxConverterService.ConvertDocxToPdfAsync(System.String,System.String,FluentPDF.Core.Models.ConversionOptions,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
         <member name="T:FluentPDF.Rendering.Services.DocxParserService">
             <summary>
             Service for DOCX document parsing using Mammoth.NET library.
@@ -498,6 +589,46 @@
         </member>
         <member name="M:FluentPDF.Rendering.Services.DocxParserService.ParseDocxToHtmlAsync(System.String)">
             <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.HtmlToPdfService">
+            <summary>
+            Service for HTML to PDF conversion using WebView2 (Chromium) rendering engine.
+            Implements asynchronous operations with comprehensive error handling, structured logging,
+            and queuing mechanism for concurrent conversions.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.HtmlToPdfService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.HtmlToPdfService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.HtmlToPdfService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.HtmlToPdfService.ConvertHtmlToPdfAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.HtmlToPdfService.Dispose">
+            <summary>
+            Disposes the service and releases WebView2 resources.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.LibreOfficeValidator">
+            <summary>
+            Validates PDF quality by comparing FluentPDF output against LibreOffice baseline using SSIM.
+            Gracefully handles LibreOffice not being installed by skipping validation.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LibreOfficeValidator.IsLibreOfficeAvailableAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LibreOfficeValidator.ValidateQualityAsync(System.String,System.String,System.Double,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LibreOfficeValidator.CalculateSsim(SixLabors.ImageSharp.Image{SixLabors.ImageSharp.PixelFormats.Rgb24},SixLabors.ImageSharp.Image{SixLabors.ImageSharp.PixelFormats.Rgb24})">
+            <summary>
+            Calculates SSIM (Structural Similarity Index) between two images.
+            This is a simplified implementation that calculates luminance similarity.
+            For production use, consider using a library like OpenCvSharp for full SSIM calculation.
+            </summary>
         </member>
         <member name="T:FluentPDF.Rendering.Services.PdfDocumentService">
             <summary>

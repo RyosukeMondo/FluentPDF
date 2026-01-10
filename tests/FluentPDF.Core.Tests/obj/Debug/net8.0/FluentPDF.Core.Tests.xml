@@ -19,6 +19,11 @@
             Test sink for capturing log events in tests.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Tests.Models.BookmarkNodeTests">
+            <summary>
+            Unit tests for the BookmarkNode model.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Tests.Models.PdfDocumentTests">
             <summary>
             Unit tests for PdfDocument and PdfPage models.

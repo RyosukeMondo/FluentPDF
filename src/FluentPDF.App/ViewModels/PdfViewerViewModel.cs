@@ -26,22 +26,36 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _operationCts;
 
     /// <summary>
+    /// Gets the bookmarks view model for the bookmarks panel.
+    /// </summary>
+    public BookmarksViewModel BookmarksViewModel { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
     /// </summary>
     /// <param name="documentService">Service for loading PDF documents.</param>
     /// <param name="renderingService">Service for rendering PDF pages.</param>
     /// <param name="editingService">Service for editing PDF documents.</param>
+    /// <param name="bookmarksViewModel">View model for the bookmarks panel.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
         IPdfRenderingService renderingService,
         IDocumentEditingService editingService,
+        BookmarksViewModel bookmarksViewModel,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
         _editingService = editingService ?? throw new ArgumentNullException(nameof(editingService));
+        BookmarksViewModel = bookmarksViewModel ?? throw new ArgumentNullException(nameof(bookmarksViewModel));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Set up navigation callback for bookmarks
+        BookmarksViewModel.SetNavigateToPageAction(async (pageNumber) =>
+        {
+            await GoToPageCommand.ExecuteAsync(pageNumber);
+        });
 
         _logger.LogInformation("PdfViewerViewModel initialized");
     }
@@ -151,6 +165,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             _logger.LogInformation(
                 "Document loaded successfully. FilePath={FilePath}, PageCount={PageCount}",
                 _currentDocument.FilePath, _currentDocument.PageCount);
+
+            // Load bookmarks
+            await BookmarksViewModel.LoadBookmarksCommand.ExecuteAsync(_currentDocument);
 
             // Render first page
             await RenderCurrentPageAsync();

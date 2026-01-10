@@ -14,8 +14,8 @@ namespace FluentPDF.App.ViewModels;
 public partial class BookmarksViewModel : ObservableObject
 {
     private readonly IBookmarkService _bookmarkService;
-    private readonly PdfViewerViewModel _pdfViewerViewModel;
     private readonly ILogger<BookmarksViewModel> _logger;
+    private Func<int, Task>? _navigateToPageAction;
 
     /// <summary>
     /// Gets or sets the list of root-level bookmarks for the current document.
@@ -60,20 +60,27 @@ public partial class BookmarksViewModel : ObservableObject
     /// Initializes a new instance of the <see cref="BookmarksViewModel"/> class.
     /// </summary>
     /// <param name="bookmarkService">Service for extracting bookmarks from PDF documents.</param>
-    /// <param name="pdfViewerViewModel">The PDF viewer view model for navigation.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public BookmarksViewModel(
         IBookmarkService bookmarkService,
-        PdfViewerViewModel pdfViewerViewModel,
         ILogger<BookmarksViewModel> logger)
     {
         _bookmarkService = bookmarkService ?? throw new ArgumentNullException(nameof(bookmarkService));
-        _pdfViewerViewModel = pdfViewerViewModel ?? throw new ArgumentNullException(nameof(pdfViewerViewModel));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         LoadPanelState();
         _logger.LogInformation("BookmarksViewModel initialized. PanelVisible={PanelVisible}, PanelWidth={PanelWidth}",
             IsPanelVisible, PanelWidth);
+    }
+
+    /// <summary>
+    /// Sets the navigation action callback that will be invoked when navigating to a bookmark.
+    /// </summary>
+    /// <param name="navigateToPageAction">Function that navigates to a specific page number.</param>
+    public void SetNavigateToPageAction(Func<int, Task> navigateToPageAction)
+    {
+        _navigateToPageAction = navigateToPageAction ?? throw new ArgumentNullException(nameof(navigateToPageAction));
+        _logger.LogDebug("Navigate to page action set");
     }
 
     /// <summary>
@@ -154,8 +161,15 @@ public partial class BookmarksViewModel : ObservableObject
                 bookmark.Title,
                 bookmark.PageNumber.Value);
 
-            await _pdfViewerViewModel.GoToPageCommand.ExecuteAsync(bookmark.PageNumber.Value);
-            SelectedBookmark = bookmark;
+            if (_navigateToPageAction != null)
+            {
+                await _navigateToPageAction(bookmark.PageNumber.Value);
+                SelectedBookmark = bookmark;
+            }
+            else
+            {
+                _logger.LogWarning("Navigate to page action not set");
+            }
         }
         else
         {

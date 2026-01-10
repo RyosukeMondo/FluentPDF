@@ -374,7 +374,7 @@
     7. Log implementation with artifacts documenting ViewModel
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 5. Create BookmarksPanel UI control
+- [x] 5. Create BookmarksPanel UI control
   - Files:
     - `src/FluentPDF.App/Controls/BookmarksPanel.xaml`
     - `src/FluentPDF.App/Controls/BookmarksPanel.xaml.cs`
@@ -486,7 +486,7 @@
     8. Log implementation with artifacts documenting UI control
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 6. Integrate BookmarksPanel into PdfViewerPage
+- [-] 6. Integrate BookmarksPanel into PdfViewerPage
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (modify)
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs` (modify)
