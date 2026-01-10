@@ -85,7 +85,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Frontend Developer specializing in MVVM and WinUI 3 | Task: Add MergeCommand, SplitCommand, OptimizeCommand to PdfViewerViewModel following existing RelayCommand patterns, injecting IDocumentEditingService and implementing handlers with progress UI | Restrictions: Must use CommunityToolkit.Mvvm [RelayCommand] attribute, implement IProgress<double> for progress bars, handle cancellation via CancellationTokenSource, show user-friendly error messages | _Leverage: Study existing LoadDocumentCommand pattern, error handling with ErrorDialog, INavigationService usage | _Requirements: All requirements exposed via UI commands | Success: Commands are properly data-bound, progress updates UI smoothly, cancellation works, errors show user-friendly dialogs | Instructions: Mark in-progress [-]. Log with artifacts (commands added to ViewModel). Mark complete [x]._
 
-- [ ] 10. Create merge/split/optimize UI in PdfViewerPage
+- [x] 10. Create merge/split/optimize UI in PdfViewerPage
   - File: src/FluentPDF.App/Views/PdfViewerPage.xaml (modify existing)
   - Add toolbar buttons for merge, split, optimize operations
   - Add progress bar for long operations

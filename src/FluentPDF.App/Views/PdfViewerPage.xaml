@@ -15,11 +15,14 @@
         <converters:PercentageConverter x:Key="PercentageConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <!-- Toolbar row -->
+            <RowDefinition Height="Auto" />
+            <!-- Progress bar row -->
             <RowDefinition Height="Auto" />
             <!-- Content row -->
             <RowDefinition Height="*" />
@@ -115,10 +118,71 @@
                     <KeyboardAccelerator Key="Number0" Modifiers="Control" />
                 </AppBarButton.KeyboardAccelerators>
             </AppBarButton>
+
+            <AppBarSeparator />
+
+            <!-- Document Editing Operations -->
+            <AppBarButton
+                Label="Merge"
+                Command="{x:Bind ViewModel.MergeDocumentsCommand, Mode=OneWay}"
+                ToolTipService.ToolTip="Merge multiple PDF files">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE8F4;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+
+            <AppBarButton
+                Label="Split"
+                Command="{x:Bind ViewModel.SplitDocumentCommand, Mode=OneWay}"
+                ToolTipService.ToolTip="Split PDF by page ranges">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE8F5;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+
+            <AppBarButton
+                Label="Optimize"
+                Command="{x:Bind ViewModel.OptimizeDocumentCommand, Mode=OneWay}"
+                ToolTipService.ToolTip="Optimize PDF to reduce file size">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE74E;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
         </CommandBar>
 
+        <!-- Progress Bar and Cancel Button -->
+        <Grid
+            Grid.Row="1"
+            Padding="12,8"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            Visibility="{x:Bind ViewModel.IsOperationInProgress, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock
+                    Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                    Style="{StaticResource BodyTextBlockStyle}" />
+                <ProgressBar
+                    Value="{x:Bind ViewModel.OperationProgress, Mode=OneWay}"
+                    Maximum="100"
+                    IsIndeterminate="False"
+                    ShowError="False"
+                    ShowPaused="False" />
+            </StackPanel>
+
+            <Button
+                Grid.Column="1"
+                Content="Cancel"
+                Command="{x:Bind ViewModel.CancelOperationCommand, Mode=OneWay}"
+                VerticalAlignment="Center"
+                Margin="12,0,0,0" />
+        </Grid>
+
         <!-- Content Area -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <!-- Page viewer with scrolling -->
             <ScrollViewer
                 HorizontalScrollBarVisibility="Auto"
