@@ -571,7 +571,7 @@
        - Include test classes in artifacts
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 8. Set up CommunityToolkit.Mvvm with sample ViewModel
+- [x] 8. Set up CommunityToolkit.Mvvm with sample ViewModel
   - Files:
     - `src/FluentPDF.App/ViewModels/MainViewModel.cs`
     - `src/FluentPDF.App/MainWindow.xaml` (modify - add ViewModel binding)
