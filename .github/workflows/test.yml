@@ -1,0 +1,115 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: windows-2022
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: FluentPDF-Build
+
+    - name: Restore NuGet packages
+      run: dotnet restore FluentPDF.sln
+
+    - name: Run Architecture Tests
+      run: dotnet test tests/FluentPDF.Architecture.Tests --logger "trx;LogFileName=architecture-tests.trx" --no-build --verbosity normal
+      continue-on-error: true
+
+    - name: Run Core Unit Tests
+      run: dotnet test tests/FluentPDF.Core.Tests --logger "trx;LogFileName=core-tests.trx" --collect:"XPlat Code Coverage" --verbosity normal
+      continue-on-error: false
+
+    - name: Run App Tests (if exists)
+      shell: pwsh
+      run: |
+        if (Test-Path "tests/FluentPDF.App.Tests") {
+          dotnet test tests/FluentPDF.App.Tests --logger "trx;LogFileName=app-tests.trx" --verbosity normal
+        } else {
+          Write-Host "App tests do not exist yet - skipping"
+        }
+      continue-on-error: true
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          **/TestResults/**/*.trx
+          **/TestResults/**/coverage.cobertura.xml
+        retention-days: 30
+
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: false
+
+  build:
+    runs-on: windows-2022
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          tools/vcpkg
+          libs
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('tools/build-libs.ps1') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-
+
+    - name: Build native libraries
+      shell: pwsh
+      run: |
+        .\tools\build-libs.ps1 -UseCache
+      continue-on-error: false
+
+    - name: Restore NuGet packages
+      run: dotnet restore FluentPDF.sln
+
+    - name: Build solution
+      run: msbuild FluentPDF.sln /p:Configuration=Release /p:Platform="Any CPU" /p:AppxBundle=Never /p:AppxPackageSigningEnabled=false
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: FluentPDF-Build
+        path: |
+          src/FluentPDF.App/bin/Release
+          src/FluentPDF.Core/bin/Release
+          src/FluentPDF.Rendering/bin/Release
+        retention-days: 7

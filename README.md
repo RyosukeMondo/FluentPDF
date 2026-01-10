@@ -2,8 +2,9 @@
 
 High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 
-[![Build Status](../../actions/workflows/build.yml/badge.svg)](../../actions/workflows/build.yml)
-[![Tests](../../actions/workflows/test.yml/badge.svg)](../../actions/workflows/test.yml)
+[![Build Status](https://github.com/rmondo/FluentPDF/actions/workflows/build.yml/badge.svg)](https://github.com/rmondo/FluentPDF/actions/workflows/build.yml)
+[![Tests](https://github.com/rmondo/FluentPDF/actions/workflows/test.yml/badge.svg)](https://github.com/rmondo/FluentPDF/actions/workflows/test.yml)
+[![Quality Analysis](https://github.com/rmondo/FluentPDF/actions/workflows/quality-analysis.yml/badge.svg)](https://github.com/rmondo/FluentPDF/actions/workflows/quality-analysis.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Features

@@ -772,7 +772,7 @@
        - Include paths where DLLs are placed
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 10. Create GitHub Actions CI/CD workflows (build, test, quality-analysis)
+- [x] 10. Create GitHub Actions CI/CD workflows (build, test, quality-analysis)
   - Files:
     - `.github/workflows/build.yml`
     - `.github/workflows/test.yml`
