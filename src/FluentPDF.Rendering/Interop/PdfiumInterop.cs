@@ -558,6 +558,132 @@ public static class PdfiumInterop
 
     #endregion
 
+    #region Text Extraction Functions
+
+    /// <summary>
+    /// Loads text page information from a PDF page.
+    /// </summary>
+    /// <param name="page">Handle to the PDF page.</param>
+    /// <returns>A safe handle to the text page, or an invalid handle if loading failed.</returns>
+    public static SafePdfTextPageHandle LoadTextPage(SafePdfPageHandle page)
+    {
+        if (page == null || page.IsInvalid)
+        {
+            throw new ArgumentException("Invalid page handle.", nameof(page));
+        }
+
+        var handle = FPDFText_LoadPage(page);
+        return handle;
+    }
+
+    /// <summary>
+    /// Gets the number of characters in a text page.
+    /// </summary>
+    /// <param name="textPage">Handle to the text page.</param>
+    /// <returns>The number of characters, or 0 if the text page is invalid.</returns>
+    public static int GetTextCharCount(SafePdfTextPageHandle textPage)
+    {
+        if (textPage == null || textPage.IsInvalid)
+        {
+            return 0;
+        }
+
+        return FPDFText_CountChars(textPage);
+    }
+
+    /// <summary>
+    /// Extracts text from a text page.
+    /// </summary>
+    /// <param name="textPage">Handle to the text page.</param>
+    /// <param name="startIndex">Zero-based index of the first character.</param>
+    /// <param name="count">Number of characters to extract.</param>
+    /// <returns>The extracted text, or an empty string if extraction failed.</returns>
+    public static string GetText(SafePdfTextPageHandle textPage, int startIndex, int count)
+    {
+        if (textPage == null || textPage.IsInvalid)
+        {
+            return string.Empty;
+        }
+
+        if (count <= 0)
+        {
+            return string.Empty;
+        }
+
+        // Buffer size in bytes (UTF-16 uses 2 bytes per character + null terminator)
+        var bufferSize = (count + 1) * 2;
+        var buffer = new byte[bufferSize];
+
+        // Extract text (returns number of characters including null terminator)
+        var extractedCount = FPDFText_GetText(textPage, startIndex, count, buffer);
+        if (extractedCount <= 0)
+        {
+            return string.Empty;
+        }
+
+        // Decode UTF-16LE to string and trim null terminators
+        return System.Text.Encoding.Unicode.GetString(buffer, 0, (extractedCount - 1) * 2);
+    }
+
+    /// <summary>
+    /// Gets the bounding box of a character.
+    /// </summary>
+    /// <param name="textPage">Handle to the text page.</param>
+    /// <param name="charIndex">Zero-based character index.</param>
+    /// <param name="left">Outputs the left coordinate.</param>
+    /// <param name="top">Outputs the top coordinate.</param>
+    /// <param name="right">Outputs the right coordinate.</param>
+    /// <param name="bottom">Outputs the bottom coordinate.</param>
+    /// <returns>True if the operation succeeded; otherwise, false.</returns>
+    public static bool GetCharBox(
+        SafePdfTextPageHandle textPage,
+        int charIndex,
+        out double left,
+        out double top,
+        out double right,
+        out double bottom)
+    {
+        left = 0;
+        top = 0;
+        right = 0;
+        bottom = 0;
+
+        if (textPage == null || textPage.IsInvalid)
+        {
+            return false;
+        }
+
+        return FPDFText_GetCharBox(textPage, charIndex, out left, out top, out right, out bottom);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern SafePdfTextPageHandle FPDFText_LoadPage(SafePdfPageHandle page);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void FPDFText_ClosePage(IntPtr text_page);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FPDFText_CountChars(SafePdfTextPageHandle text_page);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FPDFText_GetText(
+        SafePdfTextPageHandle text_page,
+        int start_index,
+        int count,
+        [Out] byte[] result);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool FPDFText_GetCharBox(
+        SafePdfTextPageHandle text_page,
+        int index,
+        out double left,
+        out double top,
+        out double right,
+        out double bottom);
+
+    #endregion
+
     #region Error Codes
 
     /// <summary>

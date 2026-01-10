@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Extend PdfiumInterop with text extraction P/Invoke declarations
+- [-] 1. Extend PdfiumInterop with text extraction P/Invoke declarations
   - Files:
     - `src/FluentPDF.Rendering/Interop/PdfiumInterop.cs` (extend)
     - `src/FluentPDF.Rendering/Interop/SafePdfTextPageHandle.cs`
