@@ -111,7 +111,7 @@
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
   - _Prompt: Role: QA Engineer specializing in test data creation | Task: Create validation test fixtures in tests/Fixtures/validation/. Add valid PDFs: PDF 1.7 (standard document), PDF/A-1b (archival-compliant), PDF/A-2u (archival with Unicode). Create invalid PDFs: corrupted structure (damaged cross-reference table), invalid PDF/A (claims PDF/A but violates rules). Document each fixture in README.md (what it is, expected validation results). Keep files small (< 1MB). | Restrictions: PDFs must be redistributable, files small enough to commit, must trigger expected validation results (valid PDFs pass, invalid PDFs fail with specific errors). | Success: 5 PDF fixtures created, README documents each file, valid PDFs pass validation, invalid PDFs fail with expected errors, files under 1MB each._
 
-- [ ] 8. Integration tests with real validation tools
+- [x] 8. Integration tests with real validation tools
   - Files:
     - `tests/FluentPDF.Validation.Tests/Integration/ValidationIntegrationTests.cs` (create)
   - Create integration tests using real validation tools (not mocked)
