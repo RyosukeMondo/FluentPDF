@@ -57,5 +57,11 @@
             <typeparam name="T">The type to mock (must be an interface or abstract class).</typeparam>
             <returns>A Mock instance configured with loose behavior.</returns>
         </member>
+        <member name="T:FluentPDF.Core.Tests.Utilities.PageRangeParserTests">
+            <summary>
+            Comprehensive tests for PageRangeParser covering all valid formats and edge cases.
+            Tests validate parsing of single pages, ranges, multiple ranges, and error scenarios.
+            </summary>
+        </member>
     </members>
 </doc>

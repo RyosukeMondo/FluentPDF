@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FluentPDF.Core.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b682d3f02e02af05d3416c2f729003db545796d9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+61483fbaefe9191ef72138b805700f430a4d4952")]
 [assembly: System.Reflection.AssemblyProductAttribute("FluentPDF.Core.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FluentPDF.Core.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
