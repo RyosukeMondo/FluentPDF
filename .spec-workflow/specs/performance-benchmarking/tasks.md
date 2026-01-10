@@ -17,7 +17,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7_
   - _Prompt: Role: Performance Engineer specializing in .NET benchmarking and BenchmarkDotNet | Task: Create FluentPDF.Benchmarks console project with BenchmarkDotNet configured for statistical analysis, memory profiling (managed + native), and multiple export formats (JSON, HTML, Markdown). Configure shared BenchmarkConfig class with MemoryDiagnoser, NativeMemoryProfiler, warmup/iteration counts, and Release-only execution. Set up Program.cs to run benchmarks using BenchmarkRunner.Run<T>(config). | Restrictions: Must enforce Release configuration, do not allow Debug mode benchmarks, include JitOptimizationsValidator.FailOnError, use Core 8.0 runtime and x64 platform. | Success: Project builds successfully, BenchmarkDotNet runs without errors, configuration includes all required diagnosers and exporters, Program.cs can execute benchmark suites via command-line arguments._
 
-- [ ] 2. Create sample PDF fixtures for benchmarking
+- [x] 2. Create sample PDF fixtures for benchmarking
   - Files:
     - `tests/FluentPDF.Benchmarks/Fixtures/text-heavy.pdf` (add)
     - `tests/FluentPDF.Benchmarks/Fixtures/image-heavy.pdf` (add)
