@@ -1,3 +1,4 @@
+using FluentPDF.App.Services;
 using FluentPDF.App.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -28,6 +29,15 @@ public sealed partial class PdfViewerPage : Page, IDisposable
 
         // Set DataContext for runtime binding (x:Bind doesn't need this, but good practice)
         this.DataContext = ViewModel;
+    }
+
+    /// <summary>
+    /// Handles navigation to the DOCX conversion page.
+    /// </summary>
+    private void OnConvertDocxClick(object sender, RoutedEventArgs e)
+    {
+        var navigationService = ((App)Application.Current).GetService<INavigationService>();
+        navigationService.NavigateTo(typeof(ConversionPage));
     }
 
     /// <summary>

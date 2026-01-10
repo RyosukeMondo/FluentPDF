@@ -5,6 +5,7 @@ using FluentPDF.Core.Logging;
 using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
 using FluentPDF.Rendering.Services;
+using Mammoth;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -59,6 +60,13 @@ namespace FluentPDF.App
                     services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
                     services.AddSingleton<IDocumentEditingService, DocumentEditingService>();
 
+                    // Register conversion services
+                    services.AddSingleton<Mammoth.IDocumentConverter>(provider => new Mammoth.DocumentConverter());
+                    services.AddSingleton<IDocxParserService, DocxParserService>();
+                    services.AddSingleton<IHtmlToPdfService, HtmlToPdfService>();
+                    services.AddSingleton<IQualityValidationService, LibreOfficeValidator>();
+                    services.AddSingleton<IDocxConverterService, DocxConverterService>();
+
                     // Register application services
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ITelemetryService, TelemetryService>();
@@ -66,6 +74,7 @@ namespace FluentPDF.App
                     // Register ViewModels as transient (new instance per resolution)
                     services.AddTransient<MainViewModel>();
                     services.AddTransient<PdfViewerViewModel>();
+                    services.AddTransient<ConversionViewModel>();
                 })
                 .Build();
         }

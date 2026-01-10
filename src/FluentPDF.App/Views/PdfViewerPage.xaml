@@ -148,6 +148,21 @@
                     <FontIcon Glyph="&#xE74E;" />
                 </AppBarButton.Icon>
             </AppBarButton>
+
+            <AppBarSeparator />
+
+            <!-- DOCX Conversion -->
+            <AppBarButton
+                Label="Convert DOCX"
+                Click="OnConvertDocxClick"
+                ToolTipService.ToolTip="Convert DOCX files to PDF">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE8B7;" />
+                </AppBarButton.Icon>
+                <AppBarButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="C" Modifiers="Control,Shift" />
+                </AppBarButton.KeyboardAccelerators>
+            </AppBarButton>
         </CommandBar>
 
         <!-- Progress Bar and Cancel Button -->

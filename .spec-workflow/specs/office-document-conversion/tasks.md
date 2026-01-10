@@ -108,7 +108,7 @@
   - _Requirements: 5.1-5.8_
   - _Prompt: Role: WinUI Frontend Developer | Task: Create ConversionPage UI with file selection, progress tracking, and results display | Restrictions: Must use data binding, follow Fluent Design, ensure accessibility | Success: Complete conversion workflow from file selection to viewing converted PDF_
 
-- [ ] 7. Register conversion services in DI container and add navigation
+- [-] 7. Register conversion services in DI container and add navigation
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
     - `src/FluentPDF.App/MainWindow.xaml` (add navigation option)
