@@ -140,7 +140,7 @@
   - _Requirements: All functional requirements_
   - _Prompt: Role: QA Integration Engineer | Task: Create integration tests for DOCX conversion using real Mammoth and WebView2 | Restrictions: Must test with real dependencies, verify PDF validity, check resource cleanup | Success: Integration tests pass with real conversion pipeline_
 
-- [-] 9. Add ArchUnitNET rules for conversion services
+- [x] 9. Add ArchUnitNET rules for conversion services
   - Files:
     - `tests/FluentPDF.Architecture.Tests/ConversionArchitectureTests.cs`
   - Add rule: Conversion services must implement interfaces
