@@ -130,7 +130,7 @@
   - _Requirements: All service requirements_
   - _Prompt: Role: Application Integration Engineer specializing in dependency injection | Task: Modify App.xaml.cs ConfigureServices to register form services (AddSingleton<IPdfFormService, PdfFormService>, AddSingleton<IFormValidationService, FormValidationService>, AddTransient<FormFieldViewModel>), initialize form environment when document loads, add cleanup in OnExit to dispose form handles, and verify all services resolve correctly | Restrictions: Follow existing DI registration patterns, do not skip service registration, ensure proper cleanup, log initialization and shutdown | Success: All form services registered and resolvable, FormFieldViewModel gets dependencies injected, form environment initializes on document load, cleanup occurs on app exit, DI container resolves all types correctly_
 
-- [ ] 9. Add ArchUnitNET rules for form layer
+- [x] 9. Add ArchUnitNET rules for form layer
   - Files:
     - `tests/FluentPDF.Architecture.Tests/FormArchitectureTests.cs`
   - Create architecture test file for form layer rules
