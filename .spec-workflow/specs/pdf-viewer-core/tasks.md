@@ -570,7 +570,7 @@
        - Note MVVM pattern with source generators
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 7. Create PdfViewerPage UI with toolbar and content area
+- [-] 7. Create PdfViewerPage UI with toolbar and content area
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml`
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs`
