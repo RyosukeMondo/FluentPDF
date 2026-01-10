@@ -95,7 +95,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: UI/UX Designer with expertise in WinUI 3 and XAML | Task: Add toolbar buttons for merge, split, optimize operations to PdfViewerPage.xaml following existing toolbar patterns, with progress bar and cancellation support | Restrictions: Must follow Fluent Design System, use existing icon fonts, bind to ViewModel commands via x:Bind, show progress bar only during operations, match existing toolbar styling | _Leverage: Study existing toolbar CommandBar, button styles, ProgressBar usage patterns | _Requirements: Req 4 (progress UI), all operations accessible | Success: UI is intuitive and follows design system, buttons are properly enabled/disabled based on document state, progress bar updates smoothly, cancellation button works | Instructions: Mark in-progress [-]. Log with artifacts (UI components added to XAML). Mark complete [x]._
 
-- [ ] 11. Add unit tests for PageRangeParser
+- [x] 11. Add unit tests for PageRangeParser
   - File: tests/FluentPDF.Core.Tests/Utilities/PageRangeParserTests.cs
   - Write tests for valid range parsing ("1-5", "1-5, 10", "1-5, 10, 15-20")
   - Test edge cases (empty, null, invalid formats, negative, zero, overlapping)
