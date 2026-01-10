@@ -44,7 +44,7 @@
   - _Requirements: 3.1-3.8, 4.1-4.7_
   - _Prompt: Role: Native Interop Developer | Task: Add PDFium search P/Invoke declarations with proper flag handling | Restrictions: Must handle search handles, use correct flags, follow interop patterns | Success: Can search for text using PDFium search APIs_
 
-- [ ] 4. Create SearchMatch model and SearchOptions
+- [x] 4. Create SearchMatch model and SearchOptions
   - Files:
     - `src/FluentPDF.Core/Models/SearchMatch.cs`
     - `src/FluentPDF.Core/Models/SearchOptions.cs`
