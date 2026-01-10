@@ -1,0 +1,48 @@
+# Iteration 4
+# Started 2026-01-10T08:54:18.383473+00:00
+# Spec project-foundation
+# Command
+claude -p 'Work on the single next task for spec project-foundation. When you complete a logical unit of work, you MUST run '"'"'git add'"'"' followed by '"'"'git commit'"'"' with a clear message. DO NOT just stage files - you must actually commit them. DO NOT ask permission - just commit immediately when work is done. Make atomic commits for each semantic group of changes.' --model sonnet --dangerously-skip-permissions
+
+# Prompt
+Work on the single next task for spec project-foundation. When you complete a logical unit of work, you MUST run 'git add' followed by 'git commit' with a clear message. DO NOT just stage files - you must actually commit them. DO NOT ask permission - just commit immediately when work is done. Make atomic commits for each semantic group of changes.
+
+# Output (stdout + stderr)
+Perfect! I have successfully completed Task 4 for the project-foundation spec. Here's a summary of what was implemented:
+
+## Task 4 Summary: Dependency Injection with IHost
+
+### What was implemented:
+
+1. **Microsoft.Extensions.Hosting Package**: Added to FluentPDF.App for IHost support
+
+2. **INavigationService & NavigationService**: 
+   - Interface in `src/FluentPDF.App/Services/INavigationService.cs`
+   - Implementation in `src/FluentPDF.App/Services/NavigationService.cs`
+   - Provides testable navigation with `NavigateTo()`, `GoBack()`, and `CanGoBack` property
+   - Wraps WinUI Frame for mockability in unit tests
+
+3. **ITelemetryService & TelemetryService**:
+   - Interface in `src/FluentPDF.Core/Services/ITelemetryService.cs`
+   - Implementation in `src/FluentPDF.Core/Services/TelemetryService.cs`
+   - Tracks events and exceptions with structured logging
+   - Currently logs to Debug output and ILogger (real telemetry can be added later)
+
+4. **App.xaml.cs Modifications**:
+   - Configured IHost with dependency injection container
+   - Registered NavigationService and TelemetryService as singletons
+   - Added `GetService<T>()` method for service resolution
+   - Updated `OnLaunched` to start the host and wire up NavigationService with Frame
+   - Made OnLaunched async to properly await host startup
+
+### Key Benefits:
+- ✅ Constructor injection enabled throughout the application
+- ✅ Services are abstracted behind interfaces for testability
+- ✅ No circular dependencies
+- ✅ NavigationService can be mocked in unit tests
+- ✅ TelemetryService provides observability foundation
+
+The implementation has been logged with detailed artifacts and committed to git. The next task in the spec would be Task 5: Implementing Serilog + OpenTelemetry logging infrastructure.
+
+# Exit Code
+0

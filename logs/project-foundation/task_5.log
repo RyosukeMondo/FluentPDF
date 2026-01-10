@@ -1,0 +1,13 @@
+# Iteration 5
+# Started 2026-01-10T08:57:19.922271+00:00
+# Spec project-foundation
+# Command
+claude -p 'Work on the single next task for spec project-foundation. When you complete a logical unit of work, you MUST run '"'"'git add'"'"' followed by '"'"'git commit'"'"' with a clear message. DO NOT just stage files - you must actually commit them. DO NOT ask permission - just commit immediately when work is done. Make atomic commits for each semantic group of changes.' --model sonnet --dangerously-skip-permissions
+
+# Prompt
+Work on the single next task for spec project-foundation. When you complete a logical unit of work, you MUST run 'git add' followed by 'git commit' with a clear message. DO NOT just stage files - you must actually commit them. DO NOT ask permission - just commit immediately when work is done. Make atomic commits for each semantic group of changes.
+
+# Output (stdout + stderr)
+
+An update to our Consumer Terms and Privacy Policy will take effect on October 8, 2025. Run `claude` to review the updated terms.
+
