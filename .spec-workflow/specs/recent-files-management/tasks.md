@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Create RecentFileEntry model and IRecentFilesService interface
+- [x] 1. Create RecentFileEntry model and IRecentFilesService interface
   - Files: `src/FluentPDF.Core/Models/RecentFileEntry.cs`, `src/FluentPDF.Core/Services/IRecentFilesService.cs`
   - Requirements: 1.1-1.8
   - Instructions: Define simple model with FilePath, LastAccessed. Define service interface with Get, Add, Remove, Clear methods.
