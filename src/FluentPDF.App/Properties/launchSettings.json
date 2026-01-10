@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FluentPDF.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "FluentPDF.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

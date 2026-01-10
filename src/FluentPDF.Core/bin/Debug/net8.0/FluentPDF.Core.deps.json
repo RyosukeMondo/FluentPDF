@@ -1,0 +1,209 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "FluentPDF.Core/1.0.0": {
+        "dependencies": {
+          "FluentResults": "4.0.0",
+          "Serilog.Extensions.Logging": "10.0.0"
+        },
+        "runtime": {
+          "FluentPDF.Core.dll": {}
+        }
+      },
+      "FluentResults/4.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
+          "System.Threading.Tasks.Extensions": "4.5.4"
+        },
+        "runtime": {
+          "lib/net8.0/FluentResults.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.0.0"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection/10.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.0": {
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging/10.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection": "10.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Options": "10.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.Logging.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions/10.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "System.Diagnostics.DiagnosticSource": "10.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "Microsoft.Extensions.Options/10.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "Microsoft.Extensions.Primitives": "10.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.Options.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "Microsoft.Extensions.Primitives/10.0.0": {
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.Primitives.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "Serilog/4.2.0": {
+        "runtime": {
+          "lib/net8.0/Serilog.dll": {
+            "assemblyVersion": "4.2.0.0",
+            "fileVersion": "4.2.0.0"
+          }
+        }
+      },
+      "Serilog.Extensions.Logging/10.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging": "10.0.0",
+          "Serilog": "4.2.0"
+        },
+        "runtime": {
+          "lib/net8.0/Serilog.Extensions.Logging.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.0.0"
+          }
+        }
+      },
+      "System.Diagnostics.DiagnosticSource/10.0.0": {
+        "runtime": {
+          "lib/net8.0/System.Diagnostics.DiagnosticSource.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.25.52411"
+          }
+        }
+      },
+      "System.Threading.Tasks.Extensions/4.5.4": {}
+    }
+  },
+  "libraries": {
+    "FluentPDF.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FluentResults/4.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wKfdLvDnDVhXlSreU7u/NFNHH6EfoOhAloEID4ePAyk+ZliowKZJvX+aCL4hxhFc9Jj74t62amS4LyOYTjXGCg==",
+      "path": "fluentresults/4.0.0",
+      "hashPath": "fluentresults.4.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-f0RBabswJq+gRu5a+hWIobrLWiUYPKMhCD9WO3sYBAdSy3FFH14LMvLVFZc2kPSCimBLxSuitUhsd6tb0TAY6A==",
+      "path": "microsoft.extensions.dependencyinjection/10.0.0",
+      "hashPath": "microsoft.extensions.dependencyinjection.10.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-L3AdmZ1WOK4XXT5YFPEwyt0ep6l8lGIPs7F5OOBZc77Zqeo01Of7XXICy47628sdVl0v/owxYJTe86DTgFwKCA==",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/10.0.0",
+      "hashPath": "microsoft.extensions.dependencyinjection.abstractions.10.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-BStFkd5CcnEtarlcgYDBcFzGYCuuNMzPs02wN3WBsOFoYIEmYoUdAiU+au6opzoqfTYJsMTW00AeqDdnXH2CvA==",
+      "path": "microsoft.extensions.logging/10.0.0",
+      "hashPath": "microsoft.extensions.logging.10.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Abstractions/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-FU/IfjDfwaMuKr414SSQNTIti/69bHEMb+QKrskRb26oVqpx3lNFXMjs/RC9ZUuhBhcwDM2BwOgoMw+PZ+beqQ==",
+      "path": "microsoft.extensions.logging.abstractions/10.0.0",
+      "hashPath": "microsoft.extensions.logging.abstractions.10.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Options/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8oCAgXOow5XDrY9HaXX1QmH3ORsyZO/ANVHBlhLyCeWTH5Sg4UuqZeOTWJi6484M+LqSx0RqQXDJtdYy2BNiLQ==",
+      "path": "microsoft.extensions.options/10.0.0",
+      "hashPath": "microsoft.extensions.options.10.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Primitives/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-inRnbpCS0nwO/RuoZIAqxQUuyjaknOOnCEZB55KSMMjRhl0RQDttSmLSGsUJN3RQ3ocf5NDLFd2mOQViHqMK5w==",
+      "path": "microsoft.extensions.primitives/10.0.0",
+      "hashPath": "microsoft.extensions.primitives.10.0.0.nupkg.sha512"
+    },
+    "Serilog/4.2.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gmoWVOvKgbME8TYR+gwMf7osROiWAURterc6Rt2dQyX7wtjZYpqFiA/pY6ztjGQKKV62GGCyOcmtP1UKMHgSmA==",
+      "path": "serilog/4.2.0",
+      "hashPath": "serilog.4.2.0.nupkg.sha512"
+    },
+    "Serilog.Extensions.Logging/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vx0kABKl2dWbBhhqAfTOk53/i8aV/5VaT3a6il9gn72Wqs2pM7EK2OB6No6xdqK2IaY6Zf9gdjLuK9BVa2rT+Q==",
+      "path": "serilog.extensions.logging/10.0.0",
+      "hashPath": "serilog.extensions.logging.10.0.0.nupkg.sha512"
+    },
+    "System.Diagnostics.DiagnosticSource/10.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0KdBK+h7G13PuOSC2R/DalAoFMvdYMznvGRuICtkdcUMXgl/gYXsG6z4yUvTxHSMACorWgHCU1Faq0KUHU6yAQ==",
+      "path": "system.diagnostics.diagnosticsource/10.0.0",
+      "hashPath": "system.diagnostics.diagnosticsource.10.0.0.nupkg.sha512"
+    },
+    "System.Threading.Tasks.Extensions/4.5.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zteT+G8xuGu6mS+mzDzYXbzS7rd3K6Fjb9RiZlYlJPam2/hU7JCBZBVEcywNuR+oZ1ncTvc/cq0faRr3P01OVg==",
+      "path": "system.threading.tasks.extensions/4.5.4",
+      "hashPath": "system.threading.tasks.extensions.4.5.4.nupkg.sha512"
+    }
+  }
+}

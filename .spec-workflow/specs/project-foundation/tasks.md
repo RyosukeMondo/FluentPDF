@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Create solution structure and core projects
+- [x] 1. Create solution structure and core projects
   - Files:
     - `FluentPDF.sln`
     - `Directory.Build.props`

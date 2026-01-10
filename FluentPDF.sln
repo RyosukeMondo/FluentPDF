@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{24867AF2-E34D-49AC-9EB3-80D0EC9618F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentPDF.Core", "src\FluentPDF.Core\FluentPDF.Core.csproj", "{93034C97-C71C-423D-86AE-268BDC7D8706}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentPDF.Rendering", "src\FluentPDF.Rendering\FluentPDF.Rendering.csproj", "{81A413EE-BFB3-4F63-859D-F6FE56B5A17B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentPDF.App", "src\FluentPDF.App\FluentPDF.App.csproj", "{FDB9EEC9-3C86-4609-A5E9-D73AEF03A855}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{93034C97-C71C-423D-86AE-268BDC7D8706}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93034C97-C71C-423D-86AE-268BDC7D8706}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93034C97-C71C-423D-86AE-268BDC7D8706}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93034C97-C71C-423D-86AE-268BDC7D8706}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81A413EE-BFB3-4F63-859D-F6FE56B5A17B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81A413EE-BFB3-4F63-859D-F6FE56B5A17B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81A413EE-BFB3-4F63-859D-F6FE56B5A17B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81A413EE-BFB3-4F63-859D-F6FE56B5A17B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDB9EEC9-3C86-4609-A5E9-D73AEF03A855}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{FDB9EEC9-3C86-4609-A5E9-D73AEF03A855}.Debug|Any CPU.Build.0 = Debug|x86
+		{FDB9EEC9-3C86-4609-A5E9-D73AEF03A855}.Release|Any CPU.ActiveCfg = Release|x86
+		{FDB9EEC9-3C86-4609-A5E9-D73AEF03A855}.Release|Any CPU.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{93034C97-C71C-423D-86AE-268BDC7D8706} = {24867AF2-E34D-49AC-9EB3-80D0EC9618F3}
+		{81A413EE-BFB3-4F63-859D-F6FE56B5A17B} = {24867AF2-E34D-49AC-9EB3-80D0EC9618F3}
+		{FDB9EEC9-3C86-4609-A5E9-D73AEF03A855} = {24867AF2-E34D-49AC-9EB3-80D0EC9618F3}
+	EndGlobalSection
+EndGlobal

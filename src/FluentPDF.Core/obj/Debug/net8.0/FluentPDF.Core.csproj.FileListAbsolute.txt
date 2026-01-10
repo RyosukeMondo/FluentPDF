@@ -1,0 +1,15 @@
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/bin/Debug/net8.0/FluentPDF.Core.deps.json
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/bin/Debug/net8.0/FluentPDF.Core.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/bin/Debug/net8.0/FluentPDF.Core.pdb
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/bin/Debug/net8.0/FluentPDF.Core.xml
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.csproj.AssemblyReference.cache
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.GeneratedMSBuildEditorConfig.editorconfig
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.AssemblyInfoInputs.cache
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.AssemblyInfo.cs
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.csproj.CoreCompileInputs.cache
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.sourcelink.json
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/refint/FluentPDF.Core.dll
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.xml
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/FluentPDF.Core.pdb
+/home/rmondo/repos/FluentPDF/src/FluentPDF.Core/obj/Debug/net8.0/ref/FluentPDF.Core.dll

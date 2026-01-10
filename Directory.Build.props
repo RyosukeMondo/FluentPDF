@@ -1,0 +1,31 @@
+<Project>
+  <PropertyGroup>
+    <!-- Language Settings -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Code Quality -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningLevel>5</WarningLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+
+    <!-- Build Output -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn> <!-- Missing XML comment for publicly visible type or member -->
+
+    <!--
+      Code Quality Metrics (from CLAUDE.md):
+      - Maximum 500 lines per file (excluding comments/blank lines)
+      - Maximum 50 lines per function
+      - 80% test coverage minimum (90% for critical paths)
+
+      These metrics are enforced through:
+      - Manual code review
+      - Architecture tests (ArchUnitNET)
+      - Test coverage reports
+    -->
+  </PropertyGroup>
+</Project>
