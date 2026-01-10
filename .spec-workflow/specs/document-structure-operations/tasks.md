@@ -18,7 +18,7 @@
   - _Requirements: All (memory safety)_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer specializing in unmanaged memory management and SafeHandle patterns | Task: Create SafeQpdfJobHandle class extending SafeHandle for automatic QPDF job handle cleanup, following patterns from SafePdfDocumentHandle.cs and SafePdfPageHandle.cs | Restrictions: Must call qpdf_cleanup in ReleaseHandle, must handle invalid handles gracefully, do not expose IntPtr publicly, must be thread-safe | _Leverage: Study SafePdfDocumentHandle.cs implementation, error handling for invalid handles | _Requirements: Memory safety for all operations | Success: SafeHandle properly releases QPDF resources, no memory leaks under stress testing (100+ operations), handles invalid/null pointers without crashing, thread-safe | Instructions: Mark task in-progress [-] in tasks.md. After implementation, log with artifacts (class name, methods, location). Mark complete [x]._
 
-- [ ] 3. Create IDocumentEditingService interface
+- [x] 3. Create IDocumentEditingService interface
   - File: src/FluentPDF.Core/Services/IDocumentEditingService.cs
   - Define service contract with MergeAsync, SplitAsync, OptimizeAsync methods
   - Add OptimizationOptions and OptimizationResult record types
