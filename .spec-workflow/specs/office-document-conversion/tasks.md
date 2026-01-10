@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [-] 1. Add Mammoth.NET NuGet package and create DOCX parser wrapper
+- [x] 1. Add Mammoth.NET NuGet package and create DOCX parser wrapper
   - Files:
     - `src/FluentPDF.Rendering/FluentPDF.Rendering.csproj` (add package reference)
     - `src/FluentPDF.Rendering/Services/DocxParserService.cs`
