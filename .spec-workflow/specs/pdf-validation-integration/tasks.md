@@ -63,7 +63,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
   - _Prompt: Role: C# Developer with expertise in JSON parsing and CLI integration | Task: Implement JhoveWrapper executing JHOVE CLI for format validation. Create IJhoveWrapper interface with ValidateAsync method. Implement wrapper executing "java -jar {jhoveJarPath} -m PDF-hul -h json {filePath}", capturing stdout JSON. Deserialize JSON to JhoveResult with format (PDF version), validity (Well-Formed/Valid/Not Valid), metadata (title, author, creation date, page count). Handle JSON parsing errors, timeouts. Write unit tests with sample JHOVE JSON outputs (valid PDF, invalid format, corrupted). | Restrictions: Verify Java is installed (check JAVA_HOME or PATH), parse JSON robustly (handle missing fields), log execution with structured data, timeout after 30 seconds. | Success: Wrapper executes JHOVE successfully, parses JSON output, extracts metadata, returns Result<JhoveResult>, handles errors, unit tests verify with sample JSON._
 
-- [ ] 5. Implement VeraPdfWrapper for PDF/A compliance
+- [x] 5. Implement VeraPdfWrapper for PDF/A compliance
   - Files:
     - `src/FluentPDF.Validation/Wrappers/IVeraPdfWrapper.cs` (create)
     - `src/FluentPDF.Validation/Wrappers/VeraPdfWrapper.cs` (create)
