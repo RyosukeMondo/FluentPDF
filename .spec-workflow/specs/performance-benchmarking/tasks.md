@@ -60,7 +60,7 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   - _Prompt: Role: Memory Profiling Specialist with expertise in managed and native memory management | Task: Implement MemoryBenchmarks suite measuring memory allocations and detecting leaks. Create benchmarks for document load/dispose, page render/dispose, and 100-page stress test. Use [MemoryDiagnoser] and [NativeMemoryProfiler] attributes to track managed and native allocations. Verify SafeHandles are disposed by checking handle counts before/after operations. Track Gen0/1/2 GC collections and flag operations allocating > 1MB on LOH or > 100MB for single page. | Restrictions: Must properly dispose all resources, measure realistic workloads, do not artificially suppress GC (measure natural behavior), verify no handle leaks. | Success: Benchmarks report Gen0/1/2 collections, total allocated bytes (managed + native), operations properly dispose resources with no leaks detected, stress test completes without OOM errors._
 
-- [ ] 5. Implement StartupBenchmarks suite
+- [x] 5. Implement StartupBenchmarks suite
   - Files:
     - `tests/FluentPDF.Benchmarks/Suites/StartupBenchmarks.cs` (create)
   - Create benchmark class measuring initialization performance
