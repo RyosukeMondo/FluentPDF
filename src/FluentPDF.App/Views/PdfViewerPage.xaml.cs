@@ -158,6 +158,55 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles Ctrl+C keyboard accelerator to copy selected text.
+    /// </summary>
+    private void OnCopyKeyboardAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.HasSelectedText)
+        {
+            _ = ViewModel.CopyToClipboardCommand.ExecuteAsync(null);
+            args.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer pressed event to begin text selection.
+    /// </summary>
+    private void OnImagePointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        var point = e.GetCurrentPoint(PdfPageImage).Position;
+        ViewModel.BeginTextSelectionCommand.Execute(point);
+        PdfPageImage.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles pointer moved event to update text selection.
+    /// </summary>
+    private void OnImagePointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (ViewModel.IsSelecting)
+        {
+            var point = e.GetCurrentPoint(PdfPageImage).Position;
+            ViewModel.UpdateTextSelectionCommand.Execute(point);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer released event to end text selection.
+    /// </summary>
+    private void OnImagePointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (ViewModel.IsSelecting)
+        {
+            PdfPageImage.ReleasePointerCapture(e.Pointer);
+            _ = ViewModel.EndTextSelectionCommand.ExecuteAsync(null);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
     /// Updates the search highlight overlays on the current page.
     /// Renders rectangles for all search matches on the current page.
     /// </summary>

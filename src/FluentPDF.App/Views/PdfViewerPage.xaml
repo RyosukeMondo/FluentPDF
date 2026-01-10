@@ -22,6 +22,7 @@
 
     <Page.KeyboardAccelerators>
         <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="OnSearchKeyboardAccelerator" />
+        <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="OnCopyKeyboardAccelerator" />
     </Page.KeyboardAccelerators>
 
     <SplitView
@@ -372,7 +373,24 @@
                         Visibility="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
                         Stretch="None"
                         HorizontalAlignment="Center"
-                        VerticalAlignment="Center" />
+                        VerticalAlignment="Center"
+                        PointerPressed="OnImagePointerPressed"
+                        PointerMoved="OnImagePointerMoved"
+                        PointerReleased="OnImagePointerReleased">
+                        <Image.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyout.Items>
+                                    <MenuFlyoutItem
+                                        Text="Copy"
+                                        Command="{x:Bind ViewModel.CopyToClipboardCommand, Mode=OneWay}">
+                                        <MenuFlyoutItem.KeyboardAccelerators>
+                                            <KeyboardAccelerator Key="C" Modifiers="Control" />
+                                        </MenuFlyoutItem.KeyboardAccelerators>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout.Items>
+                            </MenuFlyout>
+                        </Image.ContextFlyout>
+                    </Image>
 
                     <!-- Search highlight overlays canvas -->
                     <Canvas

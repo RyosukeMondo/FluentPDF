@@ -22,6 +22,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly IPdfRenderingService _renderingService;
     private readonly IDocumentEditingService _editingService;
     private readonly ITextSearchService _searchService;
+    private readonly ITextExtractionService _textExtractionService;
     private readonly ILogger<PdfViewerViewModel> _logger;
     private PdfDocument? _currentDocument;
     private bool _disposed;
@@ -46,6 +47,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="renderingService">Service for rendering PDF pages.</param>
     /// <param name="editingService">Service for editing PDF documents.</param>
     /// <param name="searchService">Service for searching text in PDF documents.</param>
+    /// <param name="textExtractionService">Service for extracting text from PDF pages.</param>
     /// <param name="bookmarksViewModel">View model for the bookmarks panel.</param>
     /// <param name="formFieldViewModel">View model for form field interactions.</param>
     /// <param name="logger">Logger for tracking operations.</param>
@@ -54,6 +56,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         IPdfRenderingService renderingService,
         IDocumentEditingService editingService,
         ITextSearchService searchService,
+        ITextExtractionService textExtractionService,
         BookmarksViewModel bookmarksViewModel,
         FormFieldViewModel formFieldViewModel,
         ILogger<PdfViewerViewModel> logger)
@@ -62,6 +65,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
         _editingService = editingService ?? throw new ArgumentNullException(nameof(editingService));
         _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
+        _textExtractionService = textExtractionService ?? throw new ArgumentNullException(nameof(textExtractionService));
         BookmarksViewModel = bookmarksViewModel ?? throw new ArgumentNullException(nameof(bookmarksViewModel));
         FormFieldViewModel = formFieldViewModel ?? throw new ArgumentNullException(nameof(formFieldViewModel));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -166,6 +170,36 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private double _currentPageHeight;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether text is currently being selected.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSelecting;
+
+    /// <summary>
+    /// Gets or sets the selection start point in screen coordinates.
+    /// </summary>
+    [ObservableProperty]
+    private Windows.Foundation.Point _selectionStartPoint;
+
+    /// <summary>
+    /// Gets or sets the selection end point in screen coordinates.
+    /// </summary>
+    [ObservableProperty]
+    private Windows.Foundation.Point _selectionEndPoint;
+
+    /// <summary>
+    /// Gets or sets the selected text.
+    /// </summary>
+    [ObservableProperty]
+    private string _selectedText = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether there is selected text available for copying.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasSelectedText;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -1007,6 +1041,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             GoToPreviousMatchCommand.NotifyCanExecuteChanged();
         }
 
+        // Update copy command state
+        if (e.PropertyName == nameof(HasSelectedText))
+        {
+            CopyToClipboardCommand.NotifyCanExecuteChanged();
+        }
+
         // Trigger search when query or case sensitivity changes
         if (e.PropertyName == nameof(SearchQuery) ||
             e.PropertyName == nameof(CaseSensitive))
@@ -1043,6 +1083,131 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         {
             _logger.LogWarning(ex, "Failed to get page dimensions for page {PageNumber}", CurrentPageNumber);
         }
+    }
+
+    /// <summary>
+    /// Begins text selection at the specified point.
+    /// </summary>
+    /// <param name="point">The starting point in screen coordinates.</param>
+    [RelayCommand]
+    private void BeginTextSelection(Windows.Foundation.Point point)
+    {
+        _logger.LogInformation("BeginTextSelection invoked at ({X}, {Y})", point.X, point.Y);
+
+        IsSelecting = true;
+        SelectionStartPoint = point;
+        SelectionEndPoint = point;
+        SelectedText = string.Empty;
+        HasSelectedText = false;
+    }
+
+    /// <summary>
+    /// Updates the text selection endpoint as the user drags.
+    /// </summary>
+    /// <param name="point">The current point in screen coordinates.</param>
+    [RelayCommand]
+    private void UpdateTextSelection(Windows.Foundation.Point point)
+    {
+        if (!IsSelecting)
+        {
+            return;
+        }
+
+        SelectionEndPoint = point;
+    }
+
+    /// <summary>
+    /// Completes text selection and extracts the selected text.
+    /// </summary>
+    [RelayCommand]
+    private async Task EndTextSelectionAsync()
+    {
+        if (!IsSelecting || _currentDocument == null)
+        {
+            IsSelecting = false;
+            return;
+        }
+
+        _logger.LogInformation("EndTextSelection invoked");
+
+        try
+        {
+            // For now, extract all text from the current page
+            // In a more sophisticated implementation, we would extract only the text within the selection bounds
+            var result = await _textExtractionService.ExtractTextAsync(_currentDocument, CurrentPageNumber);
+
+            if (result.IsSuccess)
+            {
+                SelectedText = result.Value;
+                HasSelectedText = !string.IsNullOrWhiteSpace(SelectedText);
+
+                _logger.LogInformation(
+                    "Text extraction completed. Length={Length}, HasText={HasText}",
+                    SelectedText.Length, HasSelectedText);
+            }
+            else
+            {
+                _logger.LogError("Failed to extract text: {Errors}", result.Errors);
+                SelectedText = string.Empty;
+                HasSelectedText = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during text extraction");
+            SelectedText = string.Empty;
+            HasSelectedText = false;
+        }
+        finally
+        {
+            IsSelecting = false;
+        }
+    }
+
+    /// <summary>
+    /// Copies the selected text to the clipboard.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanCopyToClipboard))]
+    private async Task CopyToClipboardAsync()
+    {
+        _logger.LogInformation("CopyToClipboard command invoked");
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(SelectedText))
+            {
+                var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                dataPackage.SetText(SelectedText);
+                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+
+                _logger.LogInformation("Text copied to clipboard. Length={Length}", SelectedText.Length);
+
+                // Clear selection after copying
+                ClearSelection();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to copy text to clipboard");
+            await ShowErrorDialogAsync("Copy Error", $"Failed to copy text: {ex.Message}");
+        }
+    }
+
+    private bool CanCopyToClipboard() => HasSelectedText;
+
+    /// <summary>
+    /// Clears the current text selection.
+    /// </summary>
+    [RelayCommand]
+    private void ClearSelection()
+    {
+        _logger.LogInformation("ClearSelection invoked");
+
+        IsSelecting = false;
+        SelectedText = string.Empty;
+        HasSelectedText = false;
+        SelectionStartPoint = new Windows.Foundation.Point();
+        SelectionEndPoint = new Windows.Foundation.Point();
     }
 
     /// <summary>
