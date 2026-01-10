@@ -1,3 +1,4 @@
+using FluentPDF.App.Services;
 using FluentPDF.App.ViewModels;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -17,13 +18,17 @@ public sealed partial class MainWindow : Window
     /// </summary>
     public MainViewModel ViewModel { get; }
 
+    private readonly JumpListService _jumpListService;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindow"/> class.
     /// </summary>
     /// <param name="viewModel">The main view model.</param>
-    public MainWindow(MainViewModel viewModel)
+    /// <param name="jumpListService">Service for Windows Jump List integration.</param>
+    public MainWindow(MainViewModel viewModel, JumpListService jumpListService)
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _jumpListService = jumpListService ?? throw new ArgumentNullException(nameof(jumpListService));
 
         this.InitializeComponent();
 
@@ -31,6 +36,9 @@ public sealed partial class MainWindow : Window
 
         // Set up keyboard shortcuts
         SetupKeyboardAccelerators();
+
+        // Populate Recent Files menu
+        PopulateRecentFilesMenu();
     }
 
     /// <summary>
@@ -143,6 +151,9 @@ public sealed partial class MainWindow : Window
     private async void OnOpenFileClick(object sender, RoutedEventArgs? e)
     {
         await ViewModel.OpenFileInNewTabCommand.ExecuteAsync(null);
+        // Refresh Recent Files menu and Jump List
+        PopulateRecentFilesMenu();
+        await UpdateJumpListAsync();
     }
 
     /// <summary>
@@ -159,6 +170,9 @@ public sealed partial class MainWindow : Window
     private async void OnAddTabClick(TabView sender, object args)
     {
         await ViewModel.OpenFileInNewTabCommand.ExecuteAsync(null);
+        // Refresh Recent Files menu and Jump List
+        PopulateRecentFilesMenu();
+        await UpdateJumpListAsync();
     }
 
     /// <summary>
@@ -170,5 +184,84 @@ public sealed partial class MainWindow : Window
         {
             ViewModel.CloseTabCommand.Execute(tab);
         }
+    }
+
+    /// <summary>
+    /// Populates the Recent Files submenu with recent file entries.
+    /// </summary>
+    private void PopulateRecentFilesMenu()
+    {
+        RecentFilesSubMenu.Items.Clear();
+
+        var recentFiles = ViewModel.GetRecentFiles();
+
+        if (recentFiles.Count == 0)
+        {
+            var noFilesItem = new MenuFlyoutItem
+            {
+                Text = "No recent files",
+                IsEnabled = false
+            };
+            RecentFilesSubMenu.Items.Add(noFilesItem);
+        }
+        else
+        {
+            foreach (var file in recentFiles)
+            {
+                var menuItem = new MenuFlyoutItem
+                {
+                    Text = file.DisplayName
+                };
+
+                // Add tooltip with full path
+                ToolTipService.SetToolTip(menuItem, file.FilePath);
+
+                // Handle click to open the recent file
+                menuItem.Click += async (sender, e) =>
+                {
+                    await ViewModel.OpenRecentFileCommand.ExecuteAsync(file.FilePath);
+                    // Refresh menu and Jump List after opening
+                    PopulateRecentFilesMenu();
+                    await UpdateJumpListAsync();
+                };
+
+                RecentFilesSubMenu.Items.Add(menuItem);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles the Clear Recent Files menu item click.
+    /// </summary>
+    private async void OnClearRecentFilesClick(object sender, RoutedEventArgs e)
+    {
+        // Show confirmation dialog
+        var dialog = new ContentDialog
+        {
+            Title = "Clear Recent Files",
+            Content = "Are you sure you want to clear all recent files?",
+            PrimaryButtonText = "Clear",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.Content.XamlRoot
+        };
+
+        var result = await dialog.ShowAsync();
+
+        if (result == ContentDialogResult.Primary)
+        {
+            ViewModel.ClearRecentFilesCommand.Execute(null);
+            PopulateRecentFilesMenu();
+            await _jumpListService.ClearJumpListAsync();
+        }
+    }
+
+    /// <summary>
+    /// Updates the Windows Jump List with current recent files.
+    /// </summary>
+    private async Task UpdateJumpListAsync()
+    {
+        var recentFiles = ViewModel.GetRecentFiles();
+        await _jumpListService.UpdateJumpListAsync(recentFiles);
     }
 }

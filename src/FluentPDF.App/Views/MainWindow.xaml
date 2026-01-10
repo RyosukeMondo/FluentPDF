@@ -26,7 +26,16 @@
         <!-- Menu Bar -->
         <MenuBar Grid.Row="0">
             <MenuBarItem Title="File">
-                <MenuFlyoutItem Text="Open..." Click="OnOpenFileClick" />
+                <MenuFlyoutItem Text="Open..." Click="OnOpenFileClick">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="O" Modifiers="Control" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutSubItem x:Name="RecentFilesSubMenu" Text="Recent Files">
+                    <!-- Dynamic recent files items will be added in code-behind -->
+                </MenuFlyoutSubItem>
+                <MenuFlyoutItem Text="Clear Recent Files..." Click="OnClearRecentFilesClick" />
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem Text="Exit" Click="OnExitClick" />
             </MenuBarItem>
