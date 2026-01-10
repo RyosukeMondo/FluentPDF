@@ -125,7 +125,7 @@
   - _Requirements: All functional requirements_
   - _Prompt: Role: QA Integration Engineer with expertise in end-to-end testing | Task: Create integration tests for validation system in ValidationIntegrationTests.cs. Use real PdfValidationService with real wrappers (not mocked) and real CLI tools. Test Quick profile (QPDF only) with valid PDF, verify pass. Test Standard profile (QPDF+JHOVE) with valid PDF, verify format detection. Test Full profile (all tools) with valid PDF/A, verify compliance. Test with invalid PDFs, verify failures with expected errors. Test parallel execution timing (Full profile should be faster than sequential). Add [Trait("Category", "Integration")], require tools installed. | Restrictions: Tests must run with real CLI tools, require tool installation (skip if not available), use test fixtures, verify JSON output structure, check that parallel execution works. | Success: Integration tests pass with real tools, valid PDFs verified correctly, invalid PDFs fail as expected, Full profile executes tools in parallel, all validation profiles work correctly._
 
-- [ ] 9. Integrate validation into PDF generation tests
+- [-] 9. Integrate validation into PDF generation tests
   - Files:
     - `tests/FluentPDF.Core.Tests/Integration/MergeValidationTests.cs` (create)
     - `tests/FluentPDF.Core.Tests/Integration/SplitValidationTests.cs` (create)
