@@ -1,110 +1,271 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FluentPDF.Core.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Windows.Storage.Pickers;
 
 namespace FluentPDF.App.ViewModels;
 
 /// <summary>
 /// Main view model for the FluentPDF application.
-/// Demonstrates MVVM pattern with CommunityToolkit source generators.
+/// Manages tab collection and coordinates between tabs and recent files service.
 /// </summary>
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly ILogger<MainViewModel> _logger;
+    private readonly IRecentFilesService _recentFilesService;
+    private readonly IServiceProvider _serviceProvider;
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MainViewModel"/> class.
     /// </summary>
     /// <param name="logger">Logger for tracking view model operations.</param>
-    public MainViewModel(ILogger<MainViewModel> logger)
+    /// <param name="recentFilesService">Service for managing recent files.</param>
+    /// <param name="serviceProvider">Service provider for creating tab dependencies.</param>
+    public MainViewModel(
+        ILogger<MainViewModel> logger,
+        IRecentFilesService recentFilesService,
+        IServiceProvider serviceProvider)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _recentFilesService = recentFilesService ?? throw new ArgumentNullException(nameof(recentFilesService));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+
+        Tabs = new ObservableCollection<TabViewModel>();
+
         _logger.LogInformation("MainViewModel initialized");
     }
 
     /// <summary>
-    /// Gets or sets the application title.
+    /// Gets the collection of open tabs.
     /// </summary>
-    [ObservableProperty]
-    private string _title = "FluentPDF";
+    public ObservableCollection<TabViewModel> Tabs { get; }
 
     /// <summary>
-    /// Gets or sets the current status message displayed to the user.
+    /// Gets or sets the currently active tab.
     /// </summary>
     [ObservableProperty]
-    private string _statusMessage = "Ready";
+    private TabViewModel? _activeTab;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the application is currently loading.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isLoading;
-
-    /// <summary>
-    /// Command to load a document asynchronously.
-    /// Simulates document loading with a delay.
+    /// Opens a file picker and creates a new tab with the selected PDF.
     /// </summary>
     [RelayCommand]
-    private async Task LoadDocumentAsync()
+    private async Task OpenFileInNewTabAsync()
     {
-        _logger.LogInformation("LoadDocumentAsync command invoked");
-
-        IsLoading = true;
-        StatusMessage = "Loading...";
+        _logger.LogInformation("OpenFileInNewTab command invoked");
 
         try
         {
-            // Simulate document loading
-            await Task.Delay(1000);
+            var picker = new FileOpenPicker();
+            picker.FileTypeFilter.Add(".pdf");
+            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
 
-            StatusMessage = "Ready";
-            _logger.LogInformation("Document loaded successfully");
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+            var file = await picker.PickSingleFileAsync();
+            if (file == null)
+            {
+                _logger.LogInformation("File picker cancelled");
+                return;
+            }
+
+            await OpenFileInTabAsync(file.Path);
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error loading document";
-            _logger.LogError(ex, "Failed to load document");
-        }
-        finally
-        {
-            IsLoading = false;
+            _logger.LogError(ex, "Failed to open file in new tab");
         }
     }
 
     /// <summary>
-    /// Command to save the current document.
-    /// Disabled when the application is loading.
+    /// Opens a file in a new tab or activates existing tab if file is already open.
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanSave))]
-    private void Save()
+    /// <param name="filePath">Path to the PDF file to open.</param>
+    private async Task OpenFileInTabAsync(string filePath)
     {
-        _logger.LogInformation("Save command invoked");
-        StatusMessage = "Saved!";
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException("File path cannot be null or whitespace.", nameof(filePath));
+        }
 
-        // Reset status after a short delay
-        Task.Delay(2000).ContinueWith(_ => StatusMessage = "Ready");
+        _logger.LogInformation("Opening file in tab: {FilePath}", filePath);
+
+        // Check if file is already open in a tab
+        var existingTab = Tabs.FirstOrDefault(t =>
+            string.Equals(t.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+
+        if (existingTab != null)
+        {
+            _logger.LogInformation("File already open in tab, activating existing tab");
+            ActivateTab(existingTab);
+            return;
+        }
+
+        try
+        {
+            // Create PdfViewerViewModel for the new tab
+            var viewerViewModel = _serviceProvider.GetRequiredService<PdfViewerViewModel>();
+
+            // Create TabViewModel
+            var tabLogger = _serviceProvider.GetRequiredService<ILogger<TabViewModel>>();
+            var tabViewModel = new TabViewModel(filePath, viewerViewModel, tabLogger);
+
+            // Add tab and activate it
+            Tabs.Add(tabViewModel);
+            ActivateTab(tabViewModel);
+
+            // Load the document
+            await viewerViewModel.OpenDocumentAsync();
+
+            // Add to recent files
+            _recentFilesService.AddRecentFile(filePath);
+
+            _logger.LogInformation("Successfully opened file in new tab: {FilePath}", filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open file in tab: {FilePath}", filePath);
+            throw;
+        }
     }
 
     /// <summary>
-    /// Determines whether the Save command can execute.
+    /// Opens a file from the recent files list.
     /// </summary>
-    /// <returns>true if save is allowed; otherwise, false.</returns>
-    private bool CanSave() => !IsLoading;
+    /// <param name="filePath">Path to the file to open.</param>
+    [RelayCommand]
+    private async Task OpenRecentFileAsync(string filePath)
+    {
+        _logger.LogInformation("OpenRecentFile command invoked for: {FilePath}", filePath);
+
+        try
+        {
+            if (!File.Exists(filePath))
+            {
+                _logger.LogWarning("Recent file no longer exists: {FilePath}", filePath);
+                _recentFilesService.RemoveRecentFile(filePath);
+                return;
+            }
+
+            await OpenFileInTabAsync(filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open recent file: {FilePath}", filePath);
+        }
+    }
 
     /// <summary>
-    /// Called when a property value changes.
-    /// Overridden to provide logging for property changes.
+    /// Closes the specified tab.
     /// </summary>
-    /// <param name="e">The property changed event arguments.</param>
-    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    /// <param name="tab">The tab to close.</param>
+    [RelayCommand]
+    private void CloseTab(TabViewModel tab)
     {
-        base.OnPropertyChanged(e);
-
-        if (e.PropertyName == nameof(IsLoading))
+        if (tab == null)
         {
-            // Notify that CanSave may have changed
-            SaveCommand.NotifyCanExecuteChanged();
-            _logger.LogDebug("IsLoading changed to {IsLoading}, SaveCommand CanExecute updated", IsLoading);
+            throw new ArgumentNullException(nameof(tab));
         }
+
+        _logger.LogInformation("CloseTab command invoked for: {FilePath}", tab.FilePath);
+
+        try
+        {
+            // Deactivate if this was the active tab
+            if (ActiveTab == tab)
+            {
+                // Find another tab to activate
+                var index = Tabs.IndexOf(tab);
+                if (Tabs.Count > 1)
+                {
+                    // Activate the next tab, or previous if this was the last
+                    var nextTab = index < Tabs.Count - 1 ? Tabs[index + 1] : Tabs[index - 1];
+                    ActivateTab(nextTab);
+                }
+                else
+                {
+                    ActiveTab = null;
+                }
+            }
+
+            // Remove and dispose
+            Tabs.Remove(tab);
+            tab.Dispose();
+
+            _logger.LogInformation("Tab closed successfully: {FilePath}", tab.FilePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to close tab: {FilePath}", tab.FilePath);
+        }
+    }
+
+    /// <summary>
+    /// Activates the specified tab.
+    /// </summary>
+    /// <param name="tab">The tab to activate.</param>
+    private void ActivateTab(TabViewModel tab)
+    {
+        if (tab == null)
+        {
+            throw new ArgumentNullException(nameof(tab));
+        }
+
+        _logger.LogInformation("Activating tab: {FilePath}", tab.FilePath);
+
+        // Deactivate current active tab
+        if (ActiveTab != null && ActiveTab != tab)
+        {
+            ActiveTab.Deactivate();
+        }
+
+        // Activate new tab
+        ActiveTab = tab;
+        tab.Activate();
+    }
+
+    /// <summary>
+    /// Gets the list of recent files for binding in UI.
+    /// </summary>
+    public IReadOnlyList<Core.Models.RecentFileEntry> GetRecentFiles()
+    {
+        return _recentFilesService.GetRecentFiles();
+    }
+
+    /// <summary>
+    /// Clears all recent files.
+    /// </summary>
+    [RelayCommand]
+    private void ClearRecentFiles()
+    {
+        _logger.LogInformation("ClearRecentFiles command invoked");
+        _recentFilesService.ClearRecentFiles();
+    }
+
+    /// <summary>
+    /// Disposes resources used by the MainViewModel.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _logger.LogInformation("Disposing MainViewModel");
+
+        foreach (var tab in Tabs)
+        {
+            tab.Dispose();
+        }
+
+        Tabs.Clear();
+
+        _disposed = true;
     }
 }

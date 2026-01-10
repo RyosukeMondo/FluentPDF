@@ -22,7 +22,7 @@
   - Requirements: 4.1-4.10, 5.1-5.6
   - Instructions: ViewModel wrapping PdfViewerViewModel with tab-specific state (file path, name, active state). Test state preservation.
 
-- [ ] 5. Extend MainViewModel with tab management
+- [x] 5. Extend MainViewModel with tab management
   - Files: `src/FluentPDF.App/ViewModels/MainViewModel.cs`, `tests/FluentPDF.App.Tests/ViewModels/MainViewModelTests.cs`
   - Requirements: 4.1-4.10, 6.1-6.7
   - Instructions: Add ObservableCollection<TabViewModel>, commands for opening files in tabs, closing tabs, recent files integration. Test tab lifecycle.
