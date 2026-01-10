@@ -175,7 +175,7 @@
   - _Requirements: 4.3-4.10_
   - _Prompt: Role: UX Developer specializing in error display | Task: Create ValidationErrorPanel WinUI control (InfoBar-based) for displaying form validation errors, adding ValidationErrorToStringConverter to format error messages (RequiredFieldEmpty -> "Field '{name}' is required", MaxLengthExceeded -> "Field '{name}' exceeds maximum length", etc.), integrating panel into PdfViewerPage XAML (top of page, bound to FormFieldViewModel.ValidationMessage), implementing show/hide based on validation state, and adding "Go to field" buttons to jump to invalid fields | Restrictions: Follow Fluent Design error display patterns, use InfoBar.Severity for error types, keep error messages concise and actionable, ensure accessibility (screen reader support) | Success: Validation errors display clearly, error messages are user-friendly, "Go to field" buttons work, panel appears/disappears correctly, accessible to screen readers_
 
-- [ ] 12. End-to-end testing and documentation
+- [-] 12. End-to-end testing and documentation
   - Files:
     - `tests/FluentPDF.App.Tests/E2E/FormFillingE2ETests.cs`
     - `docs/ARCHITECTURE.md` (update)
