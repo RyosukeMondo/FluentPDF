@@ -815,7 +815,7 @@
        - Include navigation setup
     9. Edit tasks.md: change to `[x]`
 
-- [-] 9. Add ArchUnitNET rules for P/Invoke and rendering layer
+- [x] 9. Add ArchUnitNET rules for P/Invoke and rendering layer
   - Files:
     - `tests/FluentPDF.Architecture.Tests/PdfRenderingArchitectureTests.cs`
   - Create new architecture test file for PDF rendering rules
