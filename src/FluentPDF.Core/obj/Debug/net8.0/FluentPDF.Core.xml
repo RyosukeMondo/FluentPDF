@@ -113,11 +113,91 @@
             <param name="value">Context value.</param>
             <returns>The current PdfError instance for fluent chaining.</returns>
         </member>
+        <member name="T:FluentPDF.Core.Logging.SerilogConfiguration">
+            <summary>
+            Configures Serilog with structured logging, file output, and OpenTelemetry integration.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Logging.SerilogConfiguration.CreateLogger">
+            <summary>
+            Creates and configures a Serilog ILogger instance with JSON file sink and OpenTelemetry sink.
+            </summary>
+            <returns>Configured ILogger instance ready for use.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Logging.SerilogConfiguration.GetLogPath">
+            <summary>
+            Gets the log file path, using ApplicationData.LocalFolder when available (MSIX sandbox).
+            Falls back to temp directory for headless testing scenarios.
+            </summary>
+            <returns>Full path to the log file with rolling date suffix.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Logging.SerilogConfiguration.GetVersion">
+            <summary>
+            Gets the application version from the executing assembly.
+            </summary>
+            <returns>Assembly version string.</returns>
+        </member>
         <member name="T:FluentPDF.Core.Placeholder">
             <summary>
             Temporary placeholder class for initial project setup.
             Will be removed when actual domain classes are implemented.
             </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Services.ITelemetryService">
+            <summary>
+            Provides telemetry tracking capabilities for events and exceptions.
+            </summary>
+            <remarks>
+            This abstraction enables application insights, diagnostics, and usage analytics.
+            Implementations should track events, exceptions, and custom metrics for observability.
+            </remarks>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITelemetryService.TrackEvent(System.String,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Tracks a custom event with optional properties.
+            </summary>
+            <param name="eventName">The name of the event to track.</param>
+            <param name="properties">Optional dictionary of custom properties associated with the event.</param>
+            <remarks>
+            Use this method to track user actions, feature usage, or application state changes.
+            Properties are structured data that can be queried and aggregated in telemetry systems.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Thrown when eventName is null.</exception>
+            <exception cref="T:System.ArgumentException">Thrown when eventName is empty or whitespace.</exception>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITelemetryService.TrackException(System.Exception,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Tracks an exception with optional properties.
+            </summary>
+            <param name="exception">The exception to track.</param>
+            <param name="properties">Optional dictionary of custom properties associated with the exception.</param>
+            <remarks>
+            Use this method to track exceptions for error monitoring and diagnostics.
+            Properties can include context such as user ID, operation ID, or component name.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Thrown when exception is null.</exception>
+        </member>
+        <member name="T:FluentPDF.Core.Services.TelemetryService">
+            <summary>
+            Default implementation of ITelemetryService using structured logging.
+            </summary>
+            <remarks>
+            This implementation logs telemetry events to the configured ILogger.
+            Future implementations can send data to Application Insights, OpenTelemetry, or other platforms.
+            For now, events are logged to Debug output and structured logs for analysis.
+            </remarks>
+        </member>
+        <member name="M:FluentPDF.Core.Services.TelemetryService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Core.Services.TelemetryService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Core.Services.TelemetryService"/> class.
+            </summary>
+            <param name="logger">Logger for telemetry events.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Services.TelemetryService.TrackEvent(System.String,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <inheritdoc/>
+        </member>
+        <member name="M:FluentPDF.Core.Services.TelemetryService.TrackException(System.Exception,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <inheritdoc/>
         </member>
     </members>
 </doc>
