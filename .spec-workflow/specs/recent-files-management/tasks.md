@@ -32,7 +32,7 @@
   - Requirements: 4.1-4.10, 6.1-6.7
   - Instructions: Replace content with TabView bound to MainViewModel.Tabs. Add keyboard shortcuts (Ctrl+Tab, Ctrl+W). Test tab switching, closing.
 
-- [ ] 7. Add Recent Files menu and Jump List integration
+- [x] 7. Add Recent Files menu and Jump List integration
   - Files: `src/FluentPDF.App/Views/MainWindow.xaml` (modify menu)
   - Requirements: 2.1-2.8, 3.1-3.7
   - Instructions: Add File menu with Recent Files submenu (dynamic items). Add Clear Recent Files button. Integrate Jump List updates.
