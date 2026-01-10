@@ -44,6 +44,23 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 - **Testable architecture** with dependency injection and interface-based design
 - **Memory-safe P/Invoke** with SafeHandle pattern for native interop
 
+## Performance
+
+FluentPDF is designed for high performance and low memory usage:
+
+- **Fast Application Launch**: Cold start < 2 seconds (P99)
+- **Responsive Rendering**: Page render < 1 second (P99) for text-heavy documents at 100% zoom
+- **Efficient Memory Usage**: < 200MB for single document, no memory leaks in sustained operation
+- **Smooth Navigation**: Page navigation < 1 second (P99), zoom changes < 2 seconds (P99)
+
+**Performance Monitoring**:
+- Comprehensive benchmark suite using BenchmarkDotNet
+- Automated regression detection in CI (fails build if > 20% slower)
+- Baseline tracking for historical performance trends
+- Detailed performance reports with P50/P95/P99 latencies
+
+See [PERFORMANCE.md](docs/PERFORMANCE.md) for detailed performance characteristics and [Benchmarks README](tests/FluentPDF.Benchmarks/README.md) for running benchmarks locally.
+
 ## Prerequisites
 
 - **Windows 10 (version 1809 or later)** or **Windows 11**
