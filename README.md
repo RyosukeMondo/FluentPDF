@@ -11,6 +11,7 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 
 ### PDF Viewing
 - **High-Quality Rendering**: View PDF documents using Google's PDFium rendering engine
+- **Bookmark Navigation**: Hierarchical bookmark panel with TreeView for quick document navigation
 - **Page Navigation**: Navigate through documents with previous/next buttons or arrow keys
 - **Zoom Controls**: Zoom in/out with preset levels (50% to 200%) or keyboard shortcuts
 - **File Picker Integration**: Open PDF files with native Windows file picker
@@ -109,6 +110,15 @@ dotnet build FluentPDF.sln
 - **Previous Page**: Click the **Previous** button or press **Left Arrow**
 - **Page Indicator**: The toolbar shows your current position (e.g., "Page 2 of 10")
 
+### Using Bookmarks
+
+- **Toggle Panel**: Click the **Bookmarks** button in the toolbar or press **Ctrl+B**
+- **Navigate**: Click any bookmark to jump directly to that page
+- **Expand/Collapse**: Click the arrow icon to expand or collapse nested bookmarks
+- **Resize Panel**: Drag the panel edge to adjust width (150-600px)
+- **Panel State**: Visibility and width are saved automatically and restored on next launch
+- **Empty State**: If a PDF has no bookmarks, the panel displays "No bookmarks in this document"
+
 ### Zoom Controls
 
 - **Zoom In**: Click the **Zoom In** button or press **Ctrl+Plus** (increases by 25%)
@@ -122,6 +132,7 @@ dotnet build FluentPDF.sln
 | Shortcut | Action |
 |----------|--------|
 | **Ctrl+O** | Open PDF file |
+| **Ctrl+B** | Toggle bookmarks panel |
 | **Right Arrow** | Next page |
 | **Left Arrow** | Previous page |
 | **Ctrl+Plus** | Zoom in |
