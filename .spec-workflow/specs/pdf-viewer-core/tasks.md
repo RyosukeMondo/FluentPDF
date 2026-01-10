@@ -151,7 +151,7 @@
        - Note SafeHandle types for automatic cleanup
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 3. Create PDF domain models (PdfDocument, PdfPage)
+- [x] 3. Create PDF domain models (PdfDocument, PdfPage)
   - Files:
     - `src/FluentPDF.Core/Models/PdfDocument.cs`
     - `src/FluentPDF.Core/Models/PdfPage.cs`
