@@ -28,12 +28,60 @@ jobs:
     - name: Restore NuGet packages
       run: dotnet restore FluentPDF.sln
 
+    - name: Ensure PDFium DLLs are in test directories
+      shell: pwsh
+      run: |
+        # Ensure PDFium DLL is available for all test projects
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+
+        if (Test-Path $pdfiumDll) {
+          # Copy to Rendering test bin directories
+          $renderingTestDirs = Get-ChildItem -Path "tests/FluentPDF.Rendering.Tests/bin" -Directory -Recurse -Filter "net8.0" -ErrorAction SilentlyContinue
+          foreach ($dir in $renderingTestDirs) {
+            Copy-Item $pdfiumDll $dir.FullName -Force -ErrorAction SilentlyContinue
+            Write-Host "Ensured pdfium.dll in $($dir.FullName)"
+          }
+
+          # Copy to App test bin directories (if exists)
+          if (Test-Path "tests/FluentPDF.App.Tests") {
+            $appTestDirs = Get-ChildItem -Path "tests/FluentPDF.App.Tests/bin" -Directory -Recurse -Filter "net8.0-windows*" -ErrorAction SilentlyContinue
+            foreach ($dir in $appTestDirs) {
+              Copy-Item $pdfiumDll $dir.FullName -Force -ErrorAction SilentlyContinue
+              Write-Host "Ensured pdfium.dll in $($dir.FullName)"
+            }
+          }
+
+          Write-Host "PDFium DLL deployment completed"
+        } else {
+          Write-Warning "PDFium DLL not found at $pdfiumDll - integration tests may fail"
+        }
+
     - name: Run Architecture Tests
       run: dotnet test tests/FluentPDF.Architecture.Tests --logger "trx;LogFileName=architecture-tests.trx" --no-build --verbosity normal
       continue-on-error: true
 
     - name: Run Core Unit Tests
       run: dotnet test tests/FluentPDF.Core.Tests --logger "trx;LogFileName=core-tests.trx" --collect:"XPlat Code Coverage" --verbosity normal
+      continue-on-error: false
+
+    - name: Run Rendering Unit Tests
+      shell: pwsh
+      run: |
+        if (Test-Path "tests/FluentPDF.Rendering.Tests") {
+          dotnet test tests/FluentPDF.Rendering.Tests --filter "Category!=Integration" --logger "trx;LogFileName=rendering-tests.trx" --collect:"XPlat Code Coverage" --verbosity normal
+        } else {
+          Write-Host "Rendering tests do not exist yet - skipping"
+        }
+      continue-on-error: false
+
+    - name: Run Integration Tests
+      shell: pwsh
+      run: |
+        if (Test-Path "tests/FluentPDF.Rendering.Tests") {
+          dotnet test tests/FluentPDF.Rendering.Tests --filter "Category=Integration" --logger "trx;LogFileName=integration-tests.trx" --verbosity normal
+        } else {
+          Write-Host "Integration tests do not exist yet - skipping"
+        }
       continue-on-error: false
 
     - name: Run App Tests (if exists)
@@ -64,52 +112,3 @@ jobs:
         path: '**/TestResults/**/*.trx'
         reporter: dotnet-trx
         fail-on-error: false
-
-  build:
-    runs-on: windows-2022
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Cache vcpkg
-      uses: actions/cache@v4
-      with:
-        path: |
-          tools/vcpkg
-          libs
-        key: ${{ runner.os }}-vcpkg-${{ hashFiles('tools/build-libs.ps1') }}
-        restore-keys: |
-          ${{ runner.os }}-vcpkg-
-
-    - name: Build native libraries
-      shell: pwsh
-      run: |
-        .\tools\build-libs.ps1 -UseCache
-      continue-on-error: false
-
-    - name: Restore NuGet packages
-      run: dotnet restore FluentPDF.sln
-
-    - name: Build solution
-      run: msbuild FluentPDF.sln /p:Configuration=Release /p:Platform="Any CPU" /p:AppxBundle=Never /p:AppxPackageSigningEnabled=false
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: FluentPDF-Build
-        path: |
-          src/FluentPDF.App/bin/Release
-          src/FluentPDF.Core/bin/Release
-          src/FluentPDF.Rendering/bin/Release
-        retention-days: 7

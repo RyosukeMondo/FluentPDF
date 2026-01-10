@@ -46,6 +46,40 @@ jobs:
     - name: Build solution
       run: msbuild FluentPDF.sln /p:Configuration=Release /p:Platform="Any CPU" /p:AppxBundle=Never /p:AppxPackageSigningEnabled=false
 
+    - name: Copy PDFium DLLs to build output
+      shell: pwsh
+      run: |
+        # Copy PDFium DLL to App and Rendering test output directories
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+
+        if (Test-Path $pdfiumDll) {
+          # Copy to App bin (WinUI)
+          $appDirs = Get-ChildItem -Path "src/FluentPDF.App/bin/Release" -Directory -Recurse -Filter "net8.0-windows*"
+          foreach ($dir in $appDirs) {
+            Copy-Item $pdfiumDll $dir.FullName -Force
+            Write-Host "Copied pdfium.dll to $($dir.FullName)"
+          }
+
+          # Copy to Rendering test bin
+          $renderingTestDirs = Get-ChildItem -Path "tests/FluentPDF.Rendering.Tests/bin/Release" -Directory -Recurse -Filter "net8.0"
+          foreach ($dir in $renderingTestDirs) {
+            Copy-Item $pdfiumDll $dir.FullName -Force
+            Write-Host "Copied pdfium.dll to $($dir.FullName)"
+          }
+
+          # Copy to App test bin (if exists)
+          if (Test-Path "tests/FluentPDF.App.Tests") {
+            $appTestDirs = Get-ChildItem -Path "tests/FluentPDF.App.Tests/bin/Release" -Directory -Recurse -Filter "net8.0-windows*"
+            foreach ($dir in $appTestDirs) {
+              Copy-Item $pdfiumDll $dir.FullName -Force
+              Write-Host "Copied pdfium.dll to $($dir.FullName)"
+            }
+          }
+        } else {
+          Write-Error "PDFium DLL not found at $pdfiumDll"
+          exit 1
+        }
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -54,4 +88,5 @@ jobs:
           src/FluentPDF.App/bin/Release
           src/FluentPDF.Core/bin/Release
           src/FluentPDF.Rendering/bin/Release
+          libs/x64/bin/pdfium.dll
         retention-days: 7

@@ -981,7 +981,7 @@
        - Include sample PDF fixtures
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 11. Update CI/CD workflows to copy PDFium DLLs for tests
+- [x] 11. Update CI/CD workflows to copy PDFium DLLs for tests
   - Files:
     - `.github/workflows/build.yml` (modify)
     - `.github/workflows/test.yml` (modify)
