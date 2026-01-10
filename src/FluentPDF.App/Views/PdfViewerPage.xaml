@@ -17,7 +17,12 @@
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter" />
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:MatchCounterConverter x:Key="MatchCounterConverter" />
     </Page.Resources>
+
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="OnSearchKeyboardAccelerator" />
+    </Page.KeyboardAccelerators>
 
     <SplitView
         IsPaneOpen="{x:Bind ViewModel.BookmarksViewModel.IsPanelVisible, Mode=TwoWay}"
@@ -35,6 +40,8 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <!-- Toolbar row -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Search panel row -->
                     <RowDefinition Height="Auto" />
                     <!-- Progress bar row -->
                     <RowDefinition Height="Auto" />
@@ -96,6 +103,16 @@
                 Command="{x:Bind ViewModel.BookmarksViewModel.TogglePanelCommand, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="B" Modifiers="Control" />
+                </AppBarButton.KeyboardAccelerators>
+            </AppBarButton>
+
+            <!-- Toggle Search -->
+            <AppBarButton
+                Icon="Find"
+                Label="Search"
+                Command="{x:Bind ViewModel.ToggleSearchPanelCommand, Mode=OneWay}">
+                <AppBarButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="F" Modifiers="Control" />
                 </AppBarButton.KeyboardAccelerators>
             </AppBarButton>
 
@@ -191,9 +208,108 @@
             </AppBarButton>
         </CommandBar>
 
-        <!-- Progress Bar and Cancel Button -->
+        <!-- Search Panel -->
         <Grid
             Grid.Row="1"
+            Padding="12,8"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            Visibility="{x:Bind ViewModel.IsSearchPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Search TextBox -->
+            <TextBox
+                x:Name="SearchTextBox"
+                Grid.Column="0"
+                PlaceholderText="Search..."
+                Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                Width="300"
+                VerticalAlignment="Center"
+                Margin="0,0,8,0">
+                <TextBox.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="Escape" Invoked="OnSearchEscapePressed" />
+                </TextBox.KeyboardAccelerators>
+            </TextBox>
+
+            <!-- Match Counter -->
+            <TextBlock
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Margin="8,0"
+                Style="{StaticResource BodyTextBlockStyle}">
+                <Run Text="{x:Bind ViewModel.CurrentMatchIndex, Mode=OneWay, Converter={StaticResource MatchCounterConverter}}" />
+                <Run Text=" of " />
+                <Run Text="{x:Bind ViewModel.SearchMatches.Count, Mode=OneWay}" />
+            </TextBlock>
+
+            <!-- Navigation Buttons -->
+            <StackPanel
+                Grid.Column="2"
+                Orientation="Horizontal"
+                Spacing="4"
+                Margin="8,0">
+                <Button
+                    Content="Previous"
+                    Command="{x:Bind ViewModel.GoToPreviousMatchCommand, Mode=OneWay}"
+                    ToolTipService.ToolTip="Previous match (Shift+F3)"
+                    Style="{StaticResource AccentButtonStyle}"
+                    MinWidth="90">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F3" Modifiers="Shift" />
+                    </Button.KeyboardAccelerators>
+                </Button>
+                <Button
+                    Content="Next"
+                    Command="{x:Bind ViewModel.GoToNextMatchCommand, Mode=OneWay}"
+                    ToolTipService.ToolTip="Next match (F3)"
+                    Style="{StaticResource AccentButtonStyle}"
+                    MinWidth="90">
+                    <Button.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="F3" />
+                    </Button.KeyboardAccelerators>
+                </Button>
+            </StackPanel>
+
+            <!-- Case Sensitive Checkbox -->
+            <CheckBox
+                Grid.Column="3"
+                Content="Case sensitive"
+                IsChecked="{x:Bind ViewModel.CaseSensitive, Mode=TwoWay}"
+                VerticalAlignment="Center"
+                Margin="8,0" />
+
+            <!-- Close Button -->
+            <Button
+                Grid.Column="4"
+                Content="&#xE711;"
+                FontFamily="Segoe MDL2 Assets"
+                Command="{x:Bind ViewModel.ToggleSearchPanelCommand, Mode=OneWay}"
+                ToolTipService.ToolTip="Close search (Escape)"
+                Style="{StaticResource SubtleButtonStyle}"
+                Width="32"
+                Height="32"
+                Margin="8,0,0,0" />
+
+            <!-- Search Progress Indicator -->
+            <ProgressRing
+                Grid.Column="0"
+                Grid.ColumnSpan="5"
+                IsActive="{x:Bind ViewModel.IsSearching, Mode=OneWay}"
+                Width="24"
+                Height="24"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="0,0,48,0" />
+        </Grid>
+
+        <!-- Progress Bar and Cancel Button -->
+        <Grid
+            Grid.Row="2"
             Padding="12,8"
             Background="{ThemeResource LayerFillColorDefaultBrush}"
             Visibility="{x:Bind ViewModel.IsOperationInProgress, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -223,7 +339,7 @@
         </Grid>
 
         <!-- Content Area -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <Grid.RowDefinitions>
                 <!-- InfoBar for validation errors -->
                 <RowDefinition Height="Auto" />

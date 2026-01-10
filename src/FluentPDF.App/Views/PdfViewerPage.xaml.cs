@@ -34,6 +34,25 @@ public sealed partial class PdfViewerPage : Page, IDisposable
 
         // Hook up keyboard handlers for form field navigation
         this.KeyDown += OnPageKeyDown;
+
+        // Hook up event handler for search panel visibility changes
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    /// <summary>
+    /// Handles ViewModel property changes to manage search TextBox focus.
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.IsSearchPanelVisible) && ViewModel.IsSearchPanelVisible)
+        {
+            // Focus the search TextBox when panel becomes visible
+            _ = SearchTextBox.DispatcherQueue.TryEnqueue(() =>
+            {
+                SearchTextBox.Focus(FocusState.Programmatic);
+                SearchTextBox.SelectAll();
+            });
+        }
     }
 
     /// <summary>
@@ -100,11 +119,36 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles Ctrl+F keyboard accelerator to toggle search panel.
+    /// </summary>
+    private void OnSearchKeyboardAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        ViewModel.ToggleSearchPanelCommand.Execute(null);
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Escape key in search TextBox to close search panel.
+    /// </summary>
+    private void OnSearchEscapePressed(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.IsSearchPanelVisible)
+        {
+            ViewModel.ToggleSearchPanelCommand.Execute(null);
+            args.Handled = true;
+        }
+    }
+
+    /// <summary>
     /// Disposes resources used by the page.
     /// </summary>
     public void Dispose()
     {
         this.KeyDown -= OnPageKeyDown;
-        ViewModel?.Dispose();
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            ViewModel.Dispose();
+        }
     }
 }

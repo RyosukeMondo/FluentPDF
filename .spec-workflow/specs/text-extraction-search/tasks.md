@@ -90,7 +90,7 @@
   - _Requirements: 5.1-5.12_
   - _Prompt: Role: WinUI MVVM Developer | Task: Extend PdfViewerViewModel with search state and commands including debounced search and match navigation | Restrictions: Must follow MVVM, be UI-agnostic, handle async properly | Success: ViewModel provides complete search workflow with navigation_
 
-- [ ] 7. Create search panel UI in PdfViewerPage
+- [x] 7. Create search panel UI in PdfViewerPage
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (extend)
   - Add search panel with TextBox, Previous/Next buttons, match counter, case-sensitive checkbox
