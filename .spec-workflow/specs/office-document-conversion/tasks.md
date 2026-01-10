@@ -152,7 +152,7 @@
   - _Requirements: Architecture integrity_
   - _Prompt: Role: Software Architect | Task: Add ArchUnitNET tests enforcing conversion service architecture rules | Restrictions: Must catch violations, use descriptive Because clauses | Success: Architecture tests enforce clean boundaries for conversion components_
 
-- [ ] 10. Update CI/CD to support WebView2 runtime in tests
+- [x] 10. Update CI/CD to support WebView2 runtime in tests
   - Files:
     - `.github/workflows/test.yml` (modify)
   - Add step to install WebView2 runtime in CI environment
