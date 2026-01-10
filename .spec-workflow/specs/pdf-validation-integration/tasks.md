@@ -94,7 +94,7 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7_
   - _Prompt: Role: Backend Service Developer with expertise in service orchestration and async patterns | Task: Implement PdfValidationService orchestrating validation tools. Create IPdfValidationService interface with ValidateAsync(filePath, profile) and VerifyToolsInstalled() methods. Implement service with constructor taking IQpdfWrapper, IJhoveWrapper, IVeraPdfWrapper. Based on ValidationProfile enum (Quick=QPDF, Standard=QPDF+JHOVE, Full=All), execute tools in parallel using Task.WhenAll. Aggregate results into ValidationReport with OverallStatus (Pass if all pass, Warn if warnings, Fail if any fail). Add logging with correlation ID, timeout handling. Write unit tests mocking wrappers, testing all profiles, verifying parallel execution. | Restrictions: Tools must run in parallel for performance, handle individual tool failures gracefully (continue with other tools), log all operations, validate file exists before executing tools. | Success: Service executes validation correctly for all profiles, runs tools in parallel, aggregates results, determines overall status, handles errors, unit tests verify logic with mocked wrappers._
 
-- [ ] 7. Create validation test fixtures (valid and invalid PDFs)
+- [x] 7. Create validation test fixtures (valid and invalid PDFs)
   - Files:
     - `tests/Fixtures/validation/valid-pdf17.pdf` (add)
     - `tests/Fixtures/validation/valid-pdfa-1b.pdf` (add)
