@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Extend PdfiumInterop with bookmark P/Invoke declarations
+- [x] 1. Extend PdfiumInterop with bookmark P/Invoke declarations
   - Files:
     - `src/FluentPDF.Rendering/Interop/PdfiumInterop.cs` (modify - add bookmark functions)
     - `tests/FluentPDF.Rendering.Tests/Interop/PdfiumBookmarkInteropTests.cs`
