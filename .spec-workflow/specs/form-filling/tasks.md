@@ -86,7 +86,7 @@
   - _Requirements: 2.1-2.10, 3.1-3.9, 7.1-7.8_
   - _Prompt: Role: WinUI Frontend Developer specializing in custom controls | Task: Create FormFieldControl custom WinUI control following design.md Component 7, implementing XAML templates for Text (TextBox with border), Checkbox (CheckBox with styling), and RadioButton types, adding visual states (Normal, Hover, Focused, Error, ReadOnly) with appropriate styling, creating dependency properties (Field, ZoomLevel, IsInErrorState), implementing position calculation from PdfRectangle and zoom level, wiring up ValueChanged and FocusChanged events, and writing UI tests | Restrictions: Use WinUI 3 controls only, follow Fluent Design guidelines, ensure keyboard accessibility, keep XAML readable with comments, do not add business logic in control (only view logic) | Success: Control renders correctly for all field types, visual states work, positioning aligns with PDF content at all zoom levels, events fire correctly, tests verify control behavior_
 
-- [ ] 6. Create FormFieldViewModel with form interaction logic
+- [x] 6. Create FormFieldViewModel with form interaction logic
   - Files:
     - `src/FluentPDF.App/ViewModels/FormFieldViewModel.cs`
     - `tests/FluentPDF.App.Tests/ViewModels/FormFieldViewModelTests.cs`
