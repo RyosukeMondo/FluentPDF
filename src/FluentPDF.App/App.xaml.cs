@@ -78,7 +78,11 @@ namespace FluentPDF.App
             // Start the host
             await _host.StartAsync();
 
-            _window ??= new Window();
+            if (_window is null)
+            {
+                _window = new Window();
+                _window.Closed += async (s, e) => await ShutdownAsync();
+            }
 
             if (_window.Content is not Frame rootFrame)
             {
@@ -175,7 +179,7 @@ namespace FluentPDF.App
         /// <summary>
         /// Handles unhandled exceptions on non-UI threads.
         /// </summary>
-        private void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private void OnDomainUnhandledException(object sender, System.UnhandledExceptionEventArgs e)
         {
             var correlationId = Guid.NewGuid();
             var exception = e.ExceptionObject as Exception;
@@ -188,15 +192,15 @@ namespace FluentPDF.App
         }
 
         /// <summary>
-        /// Invoked when the application exits. Ensures proper disposal of Serilog.
+        /// Ensures proper cleanup when the application host stops.
+        /// This is called from the Window.Closed event.
         /// </summary>
-        /// <param name="sender">The application instance.</param>
-        /// <param name="e">Event arguments.</param>
-        protected override void OnExit(ExitEventArgs e)
+        internal async Task ShutdownAsync()
         {
             Log.Information("FluentPDF application shutting down");
+            await _host.StopAsync();
+            _host.Dispose();
             Log.CloseAndFlush();
-            base.OnExit(e);
         }
     }
 }

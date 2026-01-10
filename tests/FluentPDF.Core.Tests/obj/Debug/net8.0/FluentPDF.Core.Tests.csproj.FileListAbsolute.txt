@@ -1,5 +1,4 @@
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/CoverletSourceRootsMapping_FluentPDF.Core.Tests
-/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/xunit.runner.visualstudio.dotnetcore.testadapter.dll
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/xunit.runner.reporters.netcoreapp10.dll
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/xunit.runner.utility.netcoreapp10.dll
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/FluentPDF.Core.Tests.deps.json
@@ -124,3 +123,14 @@
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/obj/Debug/net8.0/FluentPDF.Core.Tests.pdb
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/obj/Debug/net8.0/FluentPDF.Core.Tests.genruntimeconfig.cache
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/obj/Debug/net8.0/ref/FluentPDF.Core.Tests.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Google.Protobuf.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Grpc.Core.Api.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Grpc.Net.Client.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Grpc.Net.Common.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Serilog.Enrichers.Environment.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Serilog.Enrichers.Thread.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Serilog.Formatting.Compact.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Serilog.Sinks.Async.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Serilog.Sinks.File.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Serilog.Sinks.OpenTelemetry.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/xunit.runner.visualstudio.testadapter.dll

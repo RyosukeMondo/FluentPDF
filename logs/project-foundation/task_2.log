@@ -1,5 +1,5 @@
 # Iteration 2
-# Started 2026-01-10T08:46:20.742057+00:00
+# Started 2026-01-10T09:12:06.225097+00:00
 # Spec project-foundation
 # Command
 claude -p 'Work on the single next task for spec project-foundation. When you complete a logical unit of work, you MUST run '"'"'git add'"'"' followed by '"'"'git commit'"'"' with a clear message. DO NOT just stage files - you must actually commit them. DO NOT ask permission - just commit immediately when work is done. Make atomic commits for each semantic group of changes.' --model sonnet --dangerously-skip-permissions
@@ -8,39 +8,34 @@ claude -p 'Work on the single next task for spec project-foundation. When you co
 Work on the single next task for spec project-foundation. When you complete a logical unit of work, you MUST run 'git add' followed by 'git commit' with a clear message. DO NOT just stage files - you must actually commit them. DO NOT ask permission - just commit immediately when work is done. Make atomic commits for each semantic group of changes.
 
 # Output (stdout + stderr)
-Perfect! I've successfully completed Task 2 for the project-foundation spec. Here's a summary of what was accomplished:
+Excellent! Task 6 has been completed successfully. Let me provide a summary of what was implemented:
 
-## Task 2 Completed: Set up test projects with xUnit and ArchUnitNET
+## Task 6 Complete: Global Exception Handlers
 
-### Created Test Projects:
+Successfully implemented comprehensive error handling infrastructure with three-layer crash protection:
 
-1. **FluentPDF.Architecture.Tests** (tests/FluentPDF.Architecture.Tests/)
-   - Target Framework: net8.0
-   - NuGet Packages: ArchUnitNET.xUnit, xUnit, xunit.runner.visualstudio
-   - Project References: All three src projects (App, Core, Rendering)
-   - Base Class: ArchitectureTestBase with Architecture object initialization
+### Created Files:
+- **ErrorDialog.xaml** - User-friendly error dialog with Fluent Design, displaying error messages and correlation IDs
+- **ErrorDialog.xaml.cs** - Code-behind that logs dialog display and user interactions
 
-2. **FluentPDF.Core.Tests** (tests/FluentPDF.Core.Tests/)
-   - Target Framework: net8.0
-   - NuGet Packages: xUnit, FluentAssertions, Moq, AutoFixture
-   - Project Reference: FluentPDF.Core only (headless, no UI dependencies)
-   - Base Class: TestBase with AutoFixture and Moq helper methods
-
-3. **FluentPDF.App.Tests** (tests/FluentPDF.App.Tests/)
-   - Target Framework: net8.0-windows10.0.19041.0
-   - NuGet Packages: xUnit, FlaUI.Core, FlaUI.UIA3, Verify.Xunit
-   - Project Reference: FluentPDF.App
-   - Base Class: UITestBase with FlaUI lifecycle management
+### Modified Files:
+- **App.xaml.cs** - Added three global exception handlers:
+  1. **UnhandledException** (UI thread) - Catches UI exceptions, logs with correlation ID, shows ErrorDialog, marks as handled to prevent crash
+  2. **UnobservedTaskException** (background tasks) - Catches async task exceptions, logs with correlation ID, marks as observed to prevent crash
+  3. **DomainUnhandledException** (non-UI threads) - Catches domain exceptions, logs with correlation ID before termination
 
 ### Key Features:
+- ✅ All exceptions logged with Serilog including full context and correlation IDs
+- ✅ Correlation IDs displayed to users for support tracking
+- ✅ Exceptions marked as handled/observed where possible to maintain app stability
+- ✅ User-friendly error messages instead of technical stack traces
+- ✅ Full observability for debugging and AI analysis
 
-- All test projects successfully compile
-- Test infrastructure verified with `dotnet test` (0 tests, as expected)
-- Base classes provide useful utilities for future test implementation
-- Projects follow the exact specifications from the design document
-- All changes committed to git with clear message
+The implementation provides robust error handling that prevents crashes while ensuring complete visibility into all errors through structured logging.
 
-The test infrastructure is now ready for implementing actual tests in subsequent tasks.
+**Commits made:**
+1. `3f6d278` - Implement global exception handlers with three-layer protection
+2. `2dd2197` - Mark task 6 as complete
 
 # Exit Code
 0

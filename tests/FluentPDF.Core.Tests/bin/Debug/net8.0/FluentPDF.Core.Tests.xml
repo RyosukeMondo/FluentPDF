@@ -9,6 +9,16 @@
             Tests for PdfError class to verify error creation, metadata population, and context handling.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Tests.Logging.SerilogConfigurationTests">
+            <summary>
+            Tests for Serilog configuration.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Tests.Logging.SerilogConfigurationTests.TestSink">
+            <summary>
+            Test sink for capturing log events in tests.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Tests.TestBase">
             <summary>
             Base class for unit tests providing common test utilities and helpers.
