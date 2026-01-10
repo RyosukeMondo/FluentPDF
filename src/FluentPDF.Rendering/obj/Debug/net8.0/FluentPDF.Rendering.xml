@@ -389,6 +389,41 @@
             <param name="zoom">Outputs the zoom factor.</param>
             <returns>True if the operation succeeded; otherwise, false.</returns>
         </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.LoadTextPage(FluentPDF.Rendering.Interop.SafePdfPageHandle)">
+            <summary>
+            Loads text page information from a PDF page.
+            </summary>
+            <param name="page">Handle to the PDF page.</param>
+            <returns>A safe handle to the text page, or an invalid handle if loading failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetTextCharCount(FluentPDF.Rendering.Interop.SafePdfTextPageHandle)">
+            <summary>
+            Gets the number of characters in a text page.
+            </summary>
+            <param name="textPage">Handle to the text page.</param>
+            <returns>The number of characters, or 0 if the text page is invalid.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetText(FluentPDF.Rendering.Interop.SafePdfTextPageHandle,System.Int32,System.Int32)">
+            <summary>
+            Extracts text from a text page.
+            </summary>
+            <param name="textPage">Handle to the text page.</param>
+            <param name="startIndex">Zero-based index of the first character.</param>
+            <param name="count">Number of characters to extract.</param>
+            <returns>The extracted text, or an empty string if extraction failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetCharBox(FluentPDF.Rendering.Interop.SafePdfTextPageHandle,System.Int32,System.Double@,System.Double@,System.Double@,System.Double@)">
+            <summary>
+            Gets the bounding box of a character.
+            </summary>
+            <param name="textPage">Handle to the text page.</param>
+            <param name="charIndex">Zero-based character index.</param>
+            <param name="left">Outputs the left coordinate.</param>
+            <param name="top">Outputs the top coordinate.</param>
+            <param name="right">Outputs the right coordinate.</param>
+            <param name="bottom">Outputs the bottom coordinate.</param>
+            <returns>True if the operation succeeded; otherwise, false.</returns>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes">
             <summary>
             PDFium error codes.
@@ -666,6 +701,23 @@
             </summary>
             <returns>True if the handle was released successfully; otherwise, false.</returns>
         </member>
+        <member name="T:FluentPDF.Rendering.Interop.SafePdfTextPageHandle">
+            <summary>
+            Safe handle for PDFium text page pointers (FPDF_TEXTPAGE).
+            Automatically releases the text page when disposed.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfTextPageHandle.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Interop.SafePdfTextPageHandle"/> class.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfTextPageHandle.ReleaseHandle">
+            <summary>
+            Releases the PDFium text page handle by calling FPDFText_ClosePage.
+            </summary>
+            <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.SafeQpdfJobHandle">
             <summary>
             Safe handle for QPDF job pointers (qpdf_data).
@@ -889,6 +941,24 @@
             <param name="logger">Logger for structured logging and performance monitoring.</param>
         </member>
         <member name="M:FluentPDF.Rendering.Services.PdfRenderingService.RenderPageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Double,System.Double)">
+            <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.TextExtractionService">
+            <summary>
+            Service for extracting text from PDF documents using PDFium.
+            Implements text extraction with caching and performance monitoring.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextExtractionService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.TextExtractionService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.TextExtractionService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextExtractionService.ExtractTextAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextExtractionService.ExtractAllTextAsync(FluentPDF.Core.Models.PdfDocument,System.Threading.CancellationToken)">
             <inheritdoc />
         </member>
     </members>

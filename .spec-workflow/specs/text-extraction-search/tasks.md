@@ -16,7 +16,7 @@
   - _Requirements: 1.1-1.7_
   - _Prompt: Role: Native Interop Developer | Task: Extend PdfiumInterop with text extraction P/Invoke using SafeHandle pattern | Restrictions: Must handle UTF-16 encoding, use SafeHandle, follow existing interop patterns | Success: Can extract text from PDF pages using PDFium text APIs_
 
-- [ ] 2. Implement TextExtractionService for page text extraction
+- [x] 2. Implement TextExtractionService for page text extraction
   - Files:
     - `src/FluentPDF.Core/Services/ITextExtractionService.cs`
     - `src/FluentPDF.Rendering/Services/TextExtractionService.cs`

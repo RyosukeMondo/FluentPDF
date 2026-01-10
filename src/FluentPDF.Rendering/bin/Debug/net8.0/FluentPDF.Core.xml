@@ -1145,6 +1145,36 @@
             </remarks>
             <exception cref="T:System.ArgumentNullException">Thrown when exception is null.</exception>
         </member>
+        <member name="T:FluentPDF.Core.Services.ITextExtractionService">
+            <summary>
+            Service contract for extracting text from PDF documents.
+            Provides methods to extract text from individual pages or entire documents with caching support.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextExtractionService.ExtractTextAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <summary>
+            Extracts text from a specific page in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="pageNumber">1-based page number to extract text from.</param>
+            <returns>
+            A Result containing the extracted text if successful, or a PdfError if the operation failed.
+            Error codes: PDF_PAGE_INVALID, PDF_TEXT_EXTRACTION_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextExtractionService.ExtractAllTextAsync(FluentPDF.Core.Models.PdfDocument,System.Threading.CancellationToken)">
+            <summary>
+            Extracts text from all pages in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="cancellationToken">Token to cancel the operation.</param>
+            <returns>
+            A Result containing a dictionary mapping page numbers to extracted text if successful,
+            or a PdfError if the operation failed.
+            Error codes: PDF_TEXT_EXTRACTION_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
+            </returns>
+        </member>
         <member name="T:FluentPDF.Core.Services.TelemetryService">
             <summary>
             Default implementation of ITelemetryService using structured logging.

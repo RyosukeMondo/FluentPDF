@@ -1,0 +1,105 @@
+{
+   "Title":"FluentPDF.Benchmarks.Suites.MemoryBenchmarks-20260111-061337",
+   "HostEnvironmentInfo":{
+      "BenchmarkDotNetCaption":"BenchmarkDotNet",
+      "BenchmarkDotNetVersion":"0.14.0",
+      "OsVersion":"Ubuntu 24.04.3 LTS (Noble Numbat)",
+      "ProcessorName":"AMD Ryzen 5 5600X",
+      "PhysicalProcessorCount":1,
+      "PhysicalCoreCount":6,
+      "LogicalCoreCount":12,
+      "RuntimeVersion":".NET 8.0.22 (8.0.2225.52707)",
+      "Architecture":"X64",
+      "HasAttachedDebugger":false,
+      "HasRyuJit":true,
+      "Configuration":"RELEASE",
+      "DotNetCliVersion":"8.0.122",
+      "ChronometerFrequency":{
+         "Hertz":1000000000
+      },
+      "HardwareTimerKind":"Unknown"
+   },
+   "Benchmarks":[
+      {
+         "DisplayInfo":"MemoryBenchmarks.LoadAndDispose_Document: Job-AXZLFX(Platform=X64, IterationCount=10, WarmupCount=3)",
+         "Namespace":"FluentPDF.Benchmarks.Suites",
+         "Type":"MemoryBenchmarks",
+         "Method":"LoadAndDispose_Document",
+         "MethodTitle":"LoadAndDispose_Document",
+         "Parameters":"",
+         "FullName":"FluentPDF.Benchmarks.Suites.MemoryBenchmarks.LoadAndDispose_Document",
+         "HardwareIntrinsics":"AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256",
+         "Statistics":null,
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":0,
+            "BytesAllocatedPerOperation":null
+         },
+         "Measurements":[
+            
+         ]
+      },{
+         "DisplayInfo":"MemoryBenchmarks.RenderAndDispose_Page: Job-AXZLFX(Platform=X64, IterationCount=10, WarmupCount=3)",
+         "Namespace":"FluentPDF.Benchmarks.Suites",
+         "Type":"MemoryBenchmarks",
+         "Method":"RenderAndDispose_Page",
+         "MethodTitle":"RenderAndDispose_Page",
+         "Parameters":"",
+         "FullName":"FluentPDF.Benchmarks.Suites.MemoryBenchmarks.RenderAndDispose_Page",
+         "HardwareIntrinsics":"AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256",
+         "Statistics":null,
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":0,
+            "BytesAllocatedPerOperation":null
+         },
+         "Measurements":[
+            
+         ]
+      },{
+         "DisplayInfo":"MemoryBenchmarks.LoadRender_100Pages: Job-AXZLFX(Platform=X64, IterationCount=10, WarmupCount=3)",
+         "Namespace":"FluentPDF.Benchmarks.Suites",
+         "Type":"MemoryBenchmarks",
+         "Method":"LoadRender_100Pages",
+         "MethodTitle":"LoadRender_100Pages",
+         "Parameters":"",
+         "FullName":"FluentPDF.Benchmarks.Suites.MemoryBenchmarks.LoadRender_100Pages",
+         "HardwareIntrinsics":"AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256",
+         "Statistics":null,
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":0,
+            "BytesAllocatedPerOperation":null
+         },
+         "Measurements":[
+            
+         ]
+      },{
+         "DisplayInfo":"MemoryBenchmarks.LoadDocument_Baseline: Job-AXZLFX(Platform=X64, IterationCount=10, WarmupCount=3)",
+         "Namespace":"FluentPDF.Benchmarks.Suites",
+         "Type":"MemoryBenchmarks",
+         "Method":"LoadDocument_Baseline",
+         "MethodTitle":"LoadDocument_Baseline",
+         "Parameters":"",
+         "FullName":"FluentPDF.Benchmarks.Suites.MemoryBenchmarks.LoadDocument_Baseline",
+         "HardwareIntrinsics":"AVX2,AES,BMI1,BMI2,FMA,LZCNT,PCLMUL,POPCNT VectorSize=256",
+         "Statistics":null,
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":0,
+            "BytesAllocatedPerOperation":null
+         },
+         "Measurements":[
+            
+         ]
+      }
+   ]
+}
