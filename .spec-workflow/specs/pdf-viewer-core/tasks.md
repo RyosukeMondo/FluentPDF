@@ -227,7 +227,7 @@
        - Note IDisposable pattern for resource cleanup
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 4. Implement IPdfDocumentService and PdfDocumentService
+- [x] 4. Implement IPdfDocumentService and PdfDocumentService
   - Files:
     - `src/FluentPDF.Core/Services/IPdfDocumentService.cs`
     - `src/FluentPDF.Rendering/Services/PdfDocumentService.cs`
