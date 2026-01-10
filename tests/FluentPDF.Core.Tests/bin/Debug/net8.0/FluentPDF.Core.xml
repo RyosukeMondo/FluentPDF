@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>FluentPDF.Core</name>
+    </assembly>
+    <members>
+        <member name="T:FluentPDF.Core.Placeholder">
+            <summary>
+            Temporary placeholder class for initial project setup.
+            Will be removed when actual domain classes are implemented.
+            </summary>
+        </member>
+    </members>
+</doc>

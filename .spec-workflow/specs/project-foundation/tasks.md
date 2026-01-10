@@ -74,7 +74,7 @@
        - Include statistics (lines added, files changed)
     6. After successful logging, edit tasks.md and change this task's status from `[-]` to `[x]` (completed)
 
-- [ ] 2. Set up test projects with xUnit and ArchUnitNET
+- [x] 2. Set up test projects with xUnit and ArchUnitNET
   - Files:
     - `tests/FluentPDF.Architecture.Tests/FluentPDF.Architecture.Tests.csproj`
     - `tests/FluentPDF.Core.Tests/FluentPDF.Core.Tests.csproj`
