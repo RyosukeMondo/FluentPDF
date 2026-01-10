@@ -75,7 +75,7 @@
   - _Requirements: 4.1-4.8_
   - _Prompt: Role: Quality Engineer specializing in image comparison | Task: Implement quality validation comparing FluentPDF output to LibreOffice baseline using SSIM metrics | Restrictions: Must handle LibreOffice not installed, save comparison images, calculate SSIM correctly | Success: Can compare PDFs and report quality scores with visual difference analysis_
 
-- [ ] 5. Create ConversionViewModel with file selection and progress tracking
+- [x] 5. Create ConversionViewModel with file selection and progress tracking
   - Files:
     - `src/FluentPDF.App/ViewModels/ConversionViewModel.cs`
     - `tests/FluentPDF.App.Tests/ViewModels/ConversionViewModelTests.cs`
