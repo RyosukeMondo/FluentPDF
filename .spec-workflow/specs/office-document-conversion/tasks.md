@@ -124,7 +124,7 @@
   - _Requirements: All integration_
   - _Prompt: Role: Application Integration Engineer | Task: Register all conversion services in DI container and add navigation to ConversionPage | Restrictions: Follow existing DI patterns, ensure proper service lifetimes | Success: All services registered and ConversionPage accessible from app_
 
-- [ ] 8. Add integration tests with real Mammoth and WebView2
+- [x] 8. Add integration tests with real Mammoth and WebView2
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Integration/DocxConversionIntegrationTests.cs`
     - `tests/Fixtures/sample.docx` (add sample DOCX)
