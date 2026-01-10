@@ -118,7 +118,7 @@
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8_
   - _Prompt: Role: DevOps Engineer specializing in CI/CD and performance testing automation | Task: Create .github/workflows/benchmark.yml workflow for automated benchmark execution and regression detection. Configure workflow to run on Windows Server 2022 on push to PR and main branch. Steps: checkout code, setup .NET 8, build native libraries (PDFium), run benchmarks (dotnet run -c Release --project tests/FluentPDF.Benchmarks), load baseline from main branch using BaselineManager, compare results and detect regressions (> 20% fail, 10-20% warn), upload HTML report and JSON results as artifacts, post PR comment with benchmark summary table showing regressions. | Restrictions: Must use consistent hardware for reliable results, ensure PDFium DLLs are available, run benchmarks in Release mode only, handle missing baseline gracefully, do not fail workflow if benchmarks timeout (mark as inconclusive). | Success: Workflow runs on PR and main pushes, benchmarks execute successfully, baseline comparison works, regressions are detected and reported, HTML report is uploaded as artifact, PR comment shows clear summary with regression details, build fails if critical regression (>20%)._
 
-- [ ] 9. Implement performance report generation
+- [-] 9. Implement performance report generation
   - Files:
     - `tests/FluentPDF.Benchmarks/Reporting/ReportGenerator.cs` (create)
     - `tests/FluentPDF.Benchmarks/Reporting/Templates/report.html` (create)
