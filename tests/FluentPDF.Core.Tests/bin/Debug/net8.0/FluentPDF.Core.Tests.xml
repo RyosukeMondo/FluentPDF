@@ -4,6 +4,11 @@
         <name>FluentPDF.Core.Tests</name>
     </assembly>
     <members>
+        <member name="T:FluentPDF.Core.Tests.ErrorHandling.PdfErrorTests">
+            <summary>
+            Tests for PdfError class to verify error creation, metadata population, and context handling.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Tests.TestBase">
             <summary>
             Base class for unit tests providing common test utilities and helpers.

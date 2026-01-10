@@ -225,7 +225,7 @@
        - Document that this enables AI-analyzable error metadata
     7. Edit tasks.md: change to `[x]` status
 
-- [ ] 4. Configure dependency injection with IHost and service registration
+- [x] 4. Configure dependency injection with IHost and service registration
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
     - `src/FluentPDF.App/Services/INavigationService.cs`

@@ -4,5 +4,120 @@
         <name>FluentPDF.Core</name>
     </assembly>
     <members>
+        <member name="T:FluentPDF.Core.ErrorHandling.ErrorCategory">
+            <summary>
+            Categorizes PDF-related errors for classification and routing.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorCategory.Validation">
+            <summary>
+            Validation errors from input data or user input (e.g., invalid file path, malformed PDF).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorCategory.System">
+            <summary>
+            System-level errors such as out of memory, thread pool exhaustion, or runtime failures.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorCategory.Security">
+            <summary>
+            Security-related errors including permission denied, encryption failures, or unauthorized access.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorCategory.IO">
+            <summary>
+            Input/Output errors such as file not found, disk full, or network failures.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorCategory.Rendering">
+            <summary>
+            PDF rendering errors from PDFium or graphics subsystem failures.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorCategory.Conversion">
+            <summary>
+            Conversion errors when transforming PDF documents or manipulating content.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.ErrorHandling.ErrorSeverity">
+            <summary>
+            Indicates the severity level of an error for prioritization and handling decisions.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorSeverity.Critical">
+            <summary>
+            Critical errors that prevent the application from functioning (e.g., corrupted state, fatal crashes).
+            Requires immediate attention and typically results in application termination.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorSeverity.Error">
+            <summary>
+            Error conditions that prevent a specific operation from completing but don't crash the app.
+            User action may be blocked, but the application remains functional.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorSeverity.Warning">
+            <summary>
+            Warning conditions that indicate potential issues but allow operations to continue.
+            May result in degraded functionality or unexpected behavior.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.ErrorHandling.ErrorSeverity.Info">
+            <summary>
+            Informational messages about non-critical issues or expected failure conditions.
+            Used for audit trails and debugging purposes.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.ErrorHandling.PdfError">
+            <summary>
+            Represents a structured PDF-related error with categorization and context for AI analysis.
+            Extends FluentResults.Error to provide type-safe error handling with rich metadata.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.ErrorHandling.PdfError.ErrorCode">
+            <summary>
+            Gets the unique error code identifying the specific error condition.
+            Format: {COMPONENT}_{OPERATION}_{CONDITION} (e.g., "PDF_LOAD_FILE_NOT_FOUND").
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.ErrorHandling.PdfError.Category">
+            <summary>
+            Gets the error category for classification and routing.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.ErrorHandling.PdfError.Severity">
+            <summary>
+            Gets the severity level for prioritization and handling decisions.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.ErrorHandling.PdfError.Context">
+            <summary>
+            Gets additional context data specific to this error instance.
+            Used to capture runtime information such as file paths, page numbers, or user actions.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.ErrorHandling.PdfError.#ctor(System.String,System.String,FluentPDF.Core.ErrorHandling.ErrorCategory,FluentPDF.Core.ErrorHandling.ErrorSeverity)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Core.ErrorHandling.PdfError"/> class.
+            </summary>
+            <param name="errorCode">Unique error code identifying the error condition.</param>
+            <param name="message">Human-readable error message.</param>
+            <param name="category">Error category for classification.</param>
+            <param name="severity">Severity level for prioritization.</param>
+        </member>
+        <member name="M:FluentPDF.Core.ErrorHandling.PdfError.WithContext(System.String,System.Object)">
+            <summary>
+            Adds contextual information to the error.
+            </summary>
+            <param name="key">Context key.</param>
+            <param name="value">Context value.</param>
+            <returns>The current PdfError instance for fluent chaining.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Placeholder">
+            <summary>
+            Temporary placeholder class for initial project setup.
+            Will be removed when actual domain classes are implemented.
+            </summary>
+        </member>
     </members>
 </doc>

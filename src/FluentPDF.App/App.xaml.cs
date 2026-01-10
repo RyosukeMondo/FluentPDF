@@ -1,3 +1,7 @@
+using FluentPDF.App.Services;
+using FluentPDF.Core.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace FluentPDF.App
@@ -7,7 +11,8 @@ namespace FluentPDF.App
     /// </summary>
     public partial class App : Application
     {
-        private Window window = Window.Current;
+        private readonly IHost _host;
+        private Window? _window;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -16,6 +21,30 @@ namespace FluentPDF.App
         public App()
         {
             this.InitializeComponent();
+
+            // Configure dependency injection container
+            _host = Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) =>
+                {
+                    // Register services
+                    services.AddSingleton<INavigationService, NavigationService>();
+                    services.AddSingleton<ITelemetryService, TelemetryService>();
+
+                    // ViewModels will be registered here when created
+                    // Example: services.AddTransient<MainViewModel>();
+                })
+                .Build();
+        }
+
+        /// <summary>
+        /// Gets a service from the dependency injection container.
+        /// </summary>
+        /// <typeparam name="T">The type of service to retrieve.</typeparam>
+        /// <returns>The service instance.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
+        public T GetService<T>() where T : notnull
+        {
+            return _host.Services.GetRequiredService<T>();
         }
 
         /// <summary>
@@ -23,19 +52,29 @@ namespace FluentPDF.App
         /// will be used such as when the application is launched to open a specific file.
         /// </summary>
         /// <param name="e">Details about the launch request and process.</param>
-        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        protected override async void OnLaunched(LaunchActivatedEventArgs e)
         {
-            window ??= new Window();
+            // Start the host
+            await _host.StartAsync();
 
-            if (window.Content is not Frame rootFrame)
+            _window ??= new Window();
+
+            if (_window.Content is not Frame rootFrame)
             {
                 rootFrame = new Frame();
                 rootFrame.NavigationFailed += OnNavigationFailed;
-                window.Content = rootFrame;
+                _window.Content = rootFrame;
+
+                // Configure NavigationService with the frame
+                var navigationService = GetService<INavigationService>() as NavigationService;
+                if (navigationService is not null)
+                {
+                    navigationService.Frame = rootFrame;
+                }
             }
 
             _ = rootFrame.Navigate(typeof(MainPage), e.Arguments);
-            window.Activate();
+            _window.Activate();
         }
 
         /// <summary>
