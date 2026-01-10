@@ -7,7 +7,7 @@
   - Requirements: 1.1-1.8
   - Instructions: Define simple model with FilePath, LastAccessed. Define service interface with Get, Add, Remove, Clear methods.
 
-- [ ] 2. Implement RecentFilesService with persistence
+- [x] 2. Implement RecentFilesService with persistence
   - Files: `src/FluentPDF.App/Services/RecentFilesService.cs`, `tests/FluentPDF.App.Tests/Services/RecentFilesServiceTests.cs`
   - Requirements: 1.1-1.8
   - Instructions: Implement service using ApplicationData.LocalSettings for JSON storage. Max 10 items, MRU ordering. Test persistence, validation, edge cases.
