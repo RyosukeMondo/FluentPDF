@@ -11,6 +11,7 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 
 ### PDF Viewing
 - **High-Quality Rendering**: View PDF documents using Google's PDFium rendering engine
+- **Text Extraction and Search**: Extract text from PDF pages and search within documents with visual highlighting
 - **Bookmark Navigation**: Hierarchical bookmark panel with TreeView for quick document navigation
 - **Page Navigation**: Navigate through documents with previous/next buttons or arrow keys
 - **Zoom Controls**: Zoom in/out with preset levels (50% to 200%) or keyboard shortcuts
@@ -145,6 +146,42 @@ dotnet build FluentPDF.sln
 - **Panel State**: Visibility and width are saved automatically and restored on next launch
 - **Empty State**: If a PDF has no bookmarks, the panel displays "No bookmarks in this document"
 
+### Text Extraction and Search
+
+FluentPDF provides powerful text extraction and search capabilities using PDFium's text APIs:
+
+**Opening Search**:
+1. Press **Ctrl+F** to open the search panel
+2. Type your search query in the search box
+3. Search automatically begins after you stop typing (300ms delay)
+
+**Navigating Matches**:
+- **Next Match**: Press **F3** or click the down arrow button
+- **Previous Match**: Press **Shift+F3** or click the up arrow button
+- **Match Counter**: Shows "X of Y matches" in the search panel
+- **Auto-Scroll**: Automatically scrolls to show the current match
+
+**Search Options**:
+- **Case Sensitive**: Check the "Aa" checkbox to match exact case
+- **Close Search**: Press **Escape** or click the X button to close
+
+**Visual Highlighting**:
+- All matches are highlighted in semi-transparent blue
+- Current match is highlighted in yellow
+- Highlights update automatically when zooming or changing pages
+
+**Text Selection and Copy** (coming soon):
+- Click and drag to select text on PDF pages
+- Press **Ctrl+C** to copy selected text to clipboard
+- Right-click for context menu with Copy option
+
+**Performance**:
+- Text extraction: < 500ms per page
+- Full document search: < 5 seconds for 100-page documents
+- Real-time highlighting with no frame rate impact
+
+See [TEXT-SEARCH.md](docs/TEXT-SEARCH.md) for detailed text extraction and search documentation.
+
 ### Zoom Controls
 
 - **Zoom In**: Click the **Zoom In** button or press **Ctrl+Plus** (increases by 25%)
@@ -188,6 +225,10 @@ When you open a PDF with form fields, FluentPDF automatically detects and displa
 | **Ctrl+O** | Open PDF file |
 | **Ctrl+S** | Save filled form data |
 | **Ctrl+B** | Toggle bookmarks panel |
+| **Ctrl+F** | Open search panel |
+| **F3** | Next search match |
+| **Shift+F3** | Previous search match |
+| **Escape** | Close search panel |
 | **Right Arrow** | Next page |
 | **Left Arrow** | Previous page |
 | **Ctrl+Plus** | Zoom in |
