@@ -75,7 +75,7 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
   - _Prompt: Role: Performance Engineer specializing in application startup optimization | Task: Implement StartupBenchmarks suite measuring initialization performance. Create benchmarks for PDFium initialization (FPDF_InitLibrary), DI container setup (service registration + BuildServiceProvider), and full application cold start (PDFium + DI + first window render simulation). Run each benchmark 10 times and report median, P95, P99. Verify PDFium < 100ms, DI < 50ms, full cold start P99 < 2 seconds. | Restrictions: Must measure realistic initialization (no mocks), include all required services in DI setup, properly dispose resources between iterations, fail benchmark if P99 exceeds thresholds. | Success: PDFium initializes in < 100ms, DI container setup < 50ms, full cold start P99 < 2 seconds, benchmarks report statistical significance, results show consistent timing across iterations._
 
-- [ ] 6. Implement NavigationBenchmarks suite
+- [x] 6. Implement NavigationBenchmarks suite
   - Files:
     - `tests/FluentPDF.Benchmarks/Suites/NavigationBenchmarks.cs` (create)
   - Create benchmark class measuring navigation and zoom operations
