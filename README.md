@@ -18,6 +18,15 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 - **Loading Indicators**: Visual feedback during document loading and page rendering
 - **Error Handling**: Graceful error handling for corrupted or invalid PDF files
 
+### PDF Form Filling
+- **Interactive Form Fields**: Fill PDF forms with text fields, checkboxes, and radio buttons
+- **Overlay Controls**: Form fields rendered as WinUI controls overlaid on PDF pages
+- **Keyboard Navigation**: Tab through form fields in document-defined tab order
+- **Real-Time Validation**: Validate required fields, max length, and format masks as you type
+- **Visual Feedback**: Clear visual states for hover, focus, error, and read-only fields
+- **Form Data Persistence**: Save filled form data back to PDF using PDFium's native save API
+- **Error Display**: InfoBar shows validation errors with clear, actionable messages
+
 ### Office Document Conversion
 - **DOCX to PDF Conversion**: Convert Microsoft Word documents to PDF with high quality
 - **Semantic Parsing**: Uses Mammoth.NET to preserve document structure and formatting
@@ -127,17 +136,48 @@ dotnet build FluentPDF.sln
 - **Zoom Levels**: 50%, 75%, 100%, 125%, 150%, 175%, 200%
 - **Current Zoom**: Displayed in toolbar (e.g., "150%")
 
+### Filling PDF Forms
+
+When you open a PDF with form fields, FluentPDF automatically detects and displays interactive overlay controls:
+
+1. **Automatic Detection**: Form fields appear as interactive controls overlaid on the PDF
+2. **Fill Fields**: Click on a field or tab to it, then type your input
+3. **Tab Navigation**: Press **Tab** to move to the next field, **Shift+Tab** for previous field
+4. **Validation**: Real-time validation shows errors immediately (required fields, max length, format)
+5. **Fix Errors**: Red borders indicate validation errors - fix them before saving
+6. **Save Form**: Click **Save** or press **Ctrl+S** to save filled form data
+
+**Supported Field Types**:
+- **Text Fields**: Single-line and multi-line text input with max length validation
+- **Checkboxes**: Check/uncheck with mouse or spacebar
+- **Radio Buttons**: Select one option from a group
+
+**Validation**:
+- Required fields must be filled before saving
+- Max length enforced for text fields
+- Format masks validate patterns (phone numbers, dates, etc.)
+- Validation errors shown in InfoBar at top of page
+
+**Tips**:
+- Use Tab key for faster navigation through fields
+- Validation happens as you type - fix errors immediately
+- Save frequently to avoid losing your work
+- Original PDF remains unchanged - saves to new file
+
 ### Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
 | **Ctrl+O** | Open PDF file |
+| **Ctrl+S** | Save filled form data |
 | **Ctrl+B** | Toggle bookmarks panel |
 | **Right Arrow** | Next page |
 | **Left Arrow** | Previous page |
 | **Ctrl+Plus** | Zoom in |
 | **Ctrl+Minus** | Zoom out |
 | **Ctrl+0** | Reset zoom to 100% |
+| **Tab** | Next form field |
+| **Shift+Tab** | Previous form field |
 | **Ctrl+Shift+C** | Convert DOCX to PDF |
 
 ### Converting DOCX to PDF
