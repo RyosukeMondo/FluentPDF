@@ -45,6 +45,7 @@
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.*" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="8.*" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
 
         <Manifest Include="$(ApplicationManifest)" />
     </ItemGroup>
