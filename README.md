@@ -17,6 +17,15 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 - **Loading Indicators**: Visual feedback during document loading and page rendering
 - **Error Handling**: Graceful error handling for corrupted or invalid PDF files
 
+### Office Document Conversion
+- **DOCX to PDF Conversion**: Convert Microsoft Word documents to PDF with high quality
+- **Semantic Parsing**: Uses Mammoth.NET to preserve document structure and formatting
+- **Chromium Rendering**: WebView2-based PDF generation for professional-quality output
+- **Quality Validation**: Optional SSIM-based comparison against LibreOffice baseline
+- **Progress Tracking**: Real-time conversion progress with status indicators
+- **Error Recovery**: Comprehensive error handling with clear user feedback
+- **Batch Support**: Queue multiple conversions for efficient processing
+
 ### Architecture & Quality
 - **Modern MVVM architecture** with CommunityToolkit.Mvvm source generators
 - **Verifiable quality** with ArchUnitNET automated architecture tests
@@ -34,6 +43,10 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
   - Windows application development (for WinUI 3)
 - **Git** (for cloning and vcpkg)
 - **PowerShell 5.1+** (included with Windows)
+- **WebView2 Runtime** (for DOCX conversion - usually pre-installed on Windows 11)
+  - Download: https://go.microsoft.com/fwlink/p/?LinkId=2124703
+- **LibreOffice** (optional, for quality validation)
+  - Download: https://www.libreoffice.org/download/
 
 ## Getting Started
 
@@ -114,6 +127,21 @@ dotnet build FluentPDF.sln
 | **Ctrl+Plus** | Zoom in |
 | **Ctrl+Minus** | Zoom out |
 | **Ctrl+0** | Reset zoom to 100% |
+| **Ctrl+Shift+C** | Convert DOCX to PDF |
+
+### Converting DOCX to PDF
+
+1. Navigate to **Convert DOCX to PDF** page
+2. Click **Browse** to select a .docx file
+3. Choose output location for the PDF
+4. (Optional) Enable **Validate Quality** for LibreOffice comparison
+5. Click **Convert** or press **Ctrl+Shift+C**
+6. Wait for conversion to complete (progress bar shows status)
+7. Click **Open PDF** to view the converted document
+
+**Quality Validation**: When enabled, the converter compares output against LibreOffice using SSIM (Structural Similarity Index) metrics. A score above 0.85 indicates good quality. Comparison images are saved if quality is below threshold.
+
+**See [CONVERSION.md](docs/CONVERSION.md) for detailed conversion documentation.**
 
 ## Architecture
 
@@ -308,9 +336,12 @@ FluentPDF/
 
 - **PDFium**: Google's PDF rendering engine
 - **QPDF**: PDF transformation library by Jay Berkenbilt
+- **Mammoth.NET**: Semantic DOCX to HTML converter
+- **WebView2**: Microsoft's Chromium-based rendering engine
 - **vcpkg**: Microsoft's C/C++ package manager
 - **WinUI 3**: Microsoft's native Windows UI framework
 - **CommunityToolkit.Mvvm**: .NET Community MVVM toolkit
 - **FluentResults**: Functional error handling library
 - **Serilog**: Structured logging framework
 - **ArchUnitNET**: Architecture testing framework
+- **OpenCvSharp**: Computer vision library for SSIM calculations

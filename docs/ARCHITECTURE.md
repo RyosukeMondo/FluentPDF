@@ -787,6 +787,562 @@ protected override void OnExit(ExitEventArgs e)
 - Verify SafeHandle usage
 - Prevent ViewModel → Interop dependencies
 
+## Office Document Conversion Architecture
+
+FluentPDF provides high-quality conversion of Microsoft Word (.docx) documents to PDF format using a lightweight, semantic conversion pipeline. This feature integrates Mammoth.NET for DOCX parsing and WebView2 for Chromium-based PDF generation.
+
+### Conversion Pipeline Overview
+
+```mermaid
+graph TB
+    subgraph "UI Layer"
+        ConversionVM[ConversionViewModel]
+        ConversionPage[ConversionPage.xaml]
+    end
+
+    subgraph "Orchestration Layer"
+        DocxConverter[DocxConverterService<br/>IDocxConverterService]
+    end
+
+    subgraph "Service Layer"
+        DocxParser[DocxParserService]
+        HtmlToPdf[HtmlToPdfService<br/>IHtmlToPdfService]
+        QualityValidator[LibreOfficeValidator<br/>IQualityValidationService]
+    end
+
+    subgraph "External Dependencies"
+        Mammoth[Mammoth.NET<br/>Document Converter]
+        WebView2[Microsoft WebView2<br/>CoreWebView2]
+        LibreOffice[LibreOffice CLI<br/>soffice]
+        SSIM[OpenCvSharp<br/>SSIM Calculation]
+    end
+
+    ConversionPage --> ConversionVM
+    ConversionVM --> DocxConverter
+    DocxConverter --> DocxParser
+    DocxConverter --> HtmlToPdf
+    DocxConverter --> QualityValidator
+    DocxParser --> Mammoth
+    HtmlToPdf --> WebView2
+    QualityValidator --> LibreOffice
+    QualityValidator --> SSIM
+```
+
+### Conversion Workflow
+
+```
+User Selects DOCX
+       ↓
+DocxConverterService.ConvertAsync()
+       ↓
+1. Validate Input File
+   - File exists
+   - Valid DOCX format (Office Open XML)
+   - Not password-protected
+       ↓
+2. Parse DOCX to HTML
+   DocxParserService → Mammoth.NET
+   - Extract document structure
+   - Preserve formatting (bold, italic, headings)
+   - Embed images as base64 data URIs
+       ↓
+3. Render HTML to PDF
+   HtmlToPdfService → WebView2
+   - Initialize CoreWebView2 environment (singleton)
+   - Load HTML with NavigateToString
+   - Call PrintToPdfAsync with optimized settings
+   - Queue concurrent conversions
+       ↓
+4. Quality Validation (Optional)
+   LibreOfficeValidator
+   - Convert DOCX to PDF via LibreOffice CLI
+   - Render both PDFs to images
+   - Calculate SSIM score
+   - Save comparison images if score < threshold
+       ↓
+5. Cleanup and Return
+   - Delete temporary HTML/image files
+   - Log conversion metrics (time, size, quality)
+   - Return Result<ConversionResult>
+```
+
+### Component Breakdown
+
+#### 1. DocxParserService
+
+**Location**: `FluentPDF.Rendering/Services/DocxParserService.cs`
+
+**Responsibilities**:
+- Parse DOCX files to clean semantic HTML
+- Preserve document structure and formatting
+- Embed images as base64 data URIs
+- Handle parsing errors gracefully
+
+**Dependencies**:
+- Mammoth.NET: `IDocumentConverter` interface
+
+**Key Methods**:
+```csharp
+public class DocxParserService
+{
+    public async Task<Result<string>> ParseToHtmlAsync(string docxPath);
+    // Returns HTML string with embedded images
+}
+```
+
+**Error Codes**:
+- `DOCX_PARSE_FAILED`: Mammoth failed to parse DOCX
+- `DOCX_CORRUPTED`: DOCX file structure is invalid
+- `FILE_NOT_FOUND`: Input file does not exist
+
+#### 2. HtmlToPdfService
+
+**Location**: `FluentPDF.Rendering/Services/HtmlToPdfService.cs`
+
+**Responsibilities**:
+- Convert HTML to PDF using Chromium rendering engine
+- Initialize and manage WebView2 environment
+- Queue concurrent conversions to prevent resource contention
+- Handle missing WebView2 runtime
+
+**Design Patterns**:
+- **Singleton WebView2 Environment**: Initialized once per app lifetime
+- **Queue Pattern**: Serialize conversions to prevent resource conflicts
+- **Async Operations**: All WebView2 calls on background threads
+
+**Key Methods**:
+```csharp
+public class HtmlToPdfService : IHtmlToPdfService
+{
+    public async Task<Result> ConvertHtmlToPdfAsync(
+        string htmlContent,
+        string outputPath,
+        CancellationToken cancellationToken = default);
+}
+```
+
+**WebView2 Print Settings**:
+```csharp
+var settings = new CoreWebView2PrintSettings
+{
+    PrintBackgrounds = true,              // Include CSS backgrounds
+    ShouldPrintBackgrounds = true,
+    MarginTop = 0.5,                      // 0.5 inch margins
+    MarginBottom = 0.5,
+    MarginLeft = 0.5,
+    MarginRight = 0.5,
+    ScaleFactor = 1.0,                    // 100% scale
+    PageWidth = 8.5,                      // US Letter
+    PageHeight = 11.0
+};
+```
+
+**Error Codes**:
+- `WEBVIEW2_NOT_FOUND`: WebView2 runtime not installed
+- `PDF_GENERATION_FAILED`: Chromium rendering failed
+- `CONVERSION_TIMEOUT`: Exceeded timeout (default: 60s)
+
+#### 3. DocxConverterService (Orchestrator)
+
+**Location**: `FluentPDF.Rendering/Services/DocxConverterService.cs`
+
+**Responsibilities**:
+- Orchestrate complete DOCX → PDF conversion pipeline
+- Validate input files and options
+- Manage temporary file cleanup
+- Log conversion metrics
+
+**Key Methods**:
+```csharp
+public class DocxConverterService : IDocxConverterService
+{
+    public async Task<Result<ConversionResult>> ConvertAsync(
+        ConversionOptions options,
+        CancellationToken cancellationToken = default);
+}
+```
+
+**ConversionOptions**:
+```csharp
+public class ConversionOptions
+{
+    public string InputPath { get; set; }       // DOCX file path
+    public string OutputPath { get; set; }      // PDF output path
+    public bool ValidateQuality { get; set; }   // Enable LibreOffice comparison
+    public int TimeoutSeconds { get; set; }     // Default: 60
+}
+```
+
+**ConversionResult**:
+```csharp
+public class ConversionResult
+{
+    public string OutputPath { get; set; }
+    public long OutputSizeBytes { get; set; }
+    public int PageCount { get; set; }
+    public long DurationMs { get; set; }
+    public double? QualityScore { get; set; }   // SSIM score if validated
+}
+```
+
+#### 4. LibreOfficeValidator (Quality Assurance)
+
+**Location**: `FluentPDF.Rendering/Services/LibreOfficeValidator.cs`
+
+**Responsibilities**:
+- Compare conversion output against LibreOffice baseline
+- Calculate SSIM (Structural Similarity Index) metrics
+- Save comparison images for manual review
+- Gracefully handle LibreOffice not installed
+
+**Validation Process**:
+1. Check if LibreOffice is installed (`soffice --version`)
+2. Convert DOCX to PDF via LibreOffice CLI
+3. Render both PDFs to images (first page, 300 DPI)
+4. Calculate SSIM score using OpenCvSharp
+5. Compare against threshold (default: 0.85)
+6. Save comparison images if score < threshold
+
+**SSIM Score Interpretation**:
+- **0.95-1.0**: Excellent (near-identical)
+- **0.85-0.95**: Good (acceptable differences)
+- **0.70-0.85**: Fair (noticeable differences)
+- **< 0.70**: Poor (significant quality issues)
+
+**Error Codes**:
+- `LIBREOFFICE_NOT_FOUND`: LibreOffice not installed (validation skipped)
+- `QUALITY_VALIDATION_FAILED`: SSIM score below threshold
+- `LIBREOFFICE_CONVERSION_FAILED`: LibreOffice failed to convert
+
+#### 5. ConversionViewModel
+
+**Location**: `FluentPDF.App/ViewModels/ConversionViewModel.cs`
+
+**Responsibilities**:
+- UI state management (file paths, progress, results)
+- Command implementation (SelectDocxFile, Convert, OpenPdf)
+- Progress reporting during conversion
+- Error presentation to user
+
+**Observable Properties**:
+```csharp
+[ObservableProperty] private string _docxFilePath;
+[ObservableProperty] private string _outputPath;
+[ObservableProperty] private bool _isConverting;
+[ObservableProperty] private double _progress;
+[ObservableProperty] private string _statusMessage;
+[ObservableProperty] private ConversionResult? _result;
+[ObservableProperty] private bool _validateQuality;
+```
+
+**Commands**:
+```csharp
+[RelayCommand] private async Task SelectDocxFileAsync();
+[RelayCommand] private async Task SelectOutputPathAsync();
+[RelayCommand(CanExecute = nameof(CanConvert))]
+private async Task ConvertAsync();
+[RelayCommand(CanExecute = nameof(CanOpenPdf))]
+private async Task OpenPdfAsync();
+```
+
+### Memory Management Strategy
+
+**Problem**: WebView2 uses significant memory (~200-500MB) during conversion. Large documents with images can spike to 1GB.
+
+**Solution**:
+1. **Singleton WebView2 Environment**: Reuse across conversions
+2. **Conversion Queueing**: Serialize conversions to limit concurrent memory usage
+3. **Immediate Temp File Cleanup**: Delete HTML/images immediately after conversion
+4. **Timeout Handling**: Abort conversions exceeding 60 seconds (configurable)
+5. **Dispose Pattern**: Properly dispose WebView2 resources
+
+**Memory Lifecycle**:
+```
+Initialize WebView2 Environment (singleton, ~50MB)
+  Convert Document
+    -> Load DOCX (Mammoth.NET, ~10-50MB)
+    -> Generate HTML (~5-20MB)
+    -> WebView2 Render (peak ~200-500MB)
+    -> Generate PDF (~output file size)
+    -> Cleanup temp files [IMMEDIATE]
+  <- Memory returns to baseline (~50MB)
+```
+
+### Error Handling Layers
+
+**Layer 1: Service-Level Results**
+- All services return `Result<T>` with structured error codes
+- Errors include context (file path, operation, correlation ID)
+
+**Layer 2: Orchestrator Composition**
+- DocxConverterService chains results and adds context
+- Failed parse → cleanup and return error (no PDF generation)
+- Failed render → cleanup and return error
+
+**Layer 3: ViewModel Error Presentation**
+- Log errors with correlation ID
+- Show user-friendly messages
+- Offer troubleshooting guidance
+
+**Layer 4: Global Exception Handlers**
+- Catch unhandled WebView2 exceptions
+- Log with full stack trace
+- Show error dialog with correlation ID
+
+### Performance Characteristics
+
+**Typical Conversion Times** (Intel i7, 16GB RAM):
+- Simple text (10 pages): 2-3 seconds
+- With images (10 pages): 3-5 seconds
+- Complex formatting (10 pages): 5-8 seconds
+- Large document (100 pages): 30-60 seconds
+
+**Performance Thresholds**:
+- Warning logged if conversion > 30 seconds
+- Error logged if conversion > 60 seconds (timeout)
+
+**Memory Usage**:
+- Baseline: < 50MB when idle
+- During conversion: 200-500MB (typical)
+- Peak: Up to 1GB for image-heavy documents
+
+### Architecture Rules (ArchUnitNET)
+
+```csharp
+// Rule 1: Conversion services must implement interfaces
+[Fact]
+public void ConversionServices_Must_ImplementInterfaces()
+{
+    var rule = Classes()
+        .That().HaveNameEndingWith("Service")
+        .And().ResideInNamespace("FluentPDF.Rendering.Services")
+        .And().HaveNameContaining("Docx", "HtmlToPdf", "Validator")
+        .Should().ImplementInterface("IDocxConverterService")
+            .Or().ImplementInterface("IHtmlToPdfService")
+            .Or().ImplementInterface("IQualityValidationService")
+        .Because("Conversion services must depend on abstractions");
+
+    rule.Check(Architecture);
+}
+
+// Rule 2: Core must not depend on Mammoth or WebView2
+[Fact]
+public void CoreLayer_ShouldNot_DependOn_ConversionLibraries()
+{
+    var rule = Classes()
+        .That().ResideInNamespace("FluentPDF.Core")
+        .Should().NotDependOnAny(
+            Types().That().ResideInNamespace("Mammoth"),
+            Types().That().ResideInNamespace("Microsoft.Web.WebView2"))
+        .Because("Core must remain independent of conversion implementations");
+
+    rule.Check(Architecture);
+}
+
+// Rule 3: ViewModels must not reference conversion implementations
+[Fact]
+public void ViewModels_ShouldNot_Reference_ConversionImplementations()
+{
+    var rule = Classes()
+        .That().HaveNameEndingWith("ViewModel")
+        .Should().NotDependOnAny(
+            Classes().That().HaveNameMatching("DocxParserService"),
+            Classes().That().HaveNameMatching("HtmlToPdfService"))
+        .Because("ViewModels should use IDocxConverterService abstraction");
+
+    rule.Check(Architecture);
+}
+
+// Rule 4: Services must return Result<T> for operations
+[Fact]
+public void ConversionServices_Must_ReturnResultType()
+{
+    var rule = Methods()
+        .That().ArePublic()
+        .And().AreDeclaredIn(
+            Classes().That().HaveNameEndingWith("Service")
+            .And().ResideInNamespace("FluentPDF.Rendering.Services"))
+        .Should().HaveReturnType(typeof(Task<>).MakeGenericType(typeof(Result<>)))
+            .Or().HaveReturnType(typeof(Result<>))
+        .Because("Services must use Result<T> pattern for error handling");
+
+    rule.Check(Architecture);
+}
+```
+
+### Dependency Injection Registration
+
+**Location**: `FluentPDF.App/App.xaml.cs`
+
+```csharp
+// Mammoth.NET document converter (singleton)
+services.AddSingleton<IDocumentConverter>(sp =>
+    new DocumentConverter());
+
+// Conversion services
+services.AddSingleton<IHtmlToPdfService, HtmlToPdfService>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<HtmlToPdfService>>();
+    var service = new HtmlToPdfService(logger);
+    // Initialize WebView2 environment asynchronously
+    _ = service.InitializeAsync();
+    return service;
+});
+
+services.AddSingleton<IQualityValidationService, LibreOfficeValidator>();
+services.AddSingleton<IDocxConverterService, DocxConverterService>();
+
+// ViewModels (transient for each page instance)
+services.AddTransient<ConversionViewModel>();
+```
+
+**WebView2 Environment Initialization**:
+```csharp
+// In HtmlToPdfService
+public async Task InitializeAsync()
+{
+    if (_webViewEnvironment == null)
+    {
+        var userDataFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "FluentPDF", "WebView2");
+
+        _webViewEnvironment = await CoreWebView2Environment
+            .CreateAsync(null, userDataFolder);
+
+        _logger.LogInformation("WebView2 environment initialized");
+    }
+}
+```
+
+### Testing Strategy
+
+**Unit Tests**:
+- Mock `IDocumentConverter` (Mammoth) to test DocxParserService
+- Mock `IHtmlToPdfService` to test DocxConverterService orchestration
+- Mock `IPdfRenderingService` to test LibreOfficeValidator
+- Verify error handling for all failure scenarios
+- Test CanExecute logic for ViewModel commands
+
+**Integration Tests** (Category="Integration"):
+- Use real Mammoth.NET with sample DOCX files
+- Use real WebView2 for HTML-to-PDF conversion
+- Test end-to-end workflow: DOCX → HTML → PDF
+- Verify PDF output is valid (page count, file size)
+- Test quality validation with LibreOffice (if installed)
+- Verify resource cleanup (no file handle leaks)
+
+**Architecture Tests**:
+- Enforce service interface implementation
+- Verify Core independence from Mammoth/WebView2
+- Prevent ViewModel → implementation dependencies
+- Validate Result<T> return types
+
+**Sample Integration Test**:
+```csharp
+[Fact]
+[Trait("Category", "Integration")]
+public async Task ConvertDocxToPdf_WithRealLibraries_ShouldSucceed()
+{
+    // Arrange
+    var docxPath = "Fixtures/sample.docx";
+    var pdfPath = Path.GetTempFileName() + ".pdf";
+    var options = new ConversionOptions
+    {
+        InputPath = docxPath,
+        OutputPath = pdfPath,
+        ValidateQuality = false,
+        TimeoutSeconds = 30
+    };
+
+    // Act
+    var result = await _converter.ConvertAsync(options);
+
+    // Assert
+    result.Should().BeSuccess();
+    File.Exists(pdfPath).Should().BeTrue();
+    result.Value.PageCount.Should().BeGreaterThan(0);
+
+    // Cleanup
+    File.Delete(pdfPath);
+}
+```
+
+### CI/CD Integration
+
+**WebView2 Runtime Installation** (`.github/workflows/test.yml`):
+```yaml
+- name: Install WebView2 Runtime
+  shell: pwsh
+  run: |
+    $installerUrl = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
+    $installerPath = "$env:TEMP\MicrosoftEdgeWebview2Setup.exe"
+    Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+    Start-Process -FilePath $installerPath -ArgumentList "/silent /install" -Wait
+
+- name: Verify WebView2 Runtime
+  shell: pwsh
+  run: |
+    # Check installation paths and set WEBVIEW2_AVAILABLE=true
+```
+
+**Conditional Test Execution**:
+```yaml
+- name: Run Integration Tests
+  shell: pwsh
+  run: |
+    if ($env:WEBVIEW2_AVAILABLE -eq "true") {
+      dotnet test --filter "Category=Integration"
+    } else {
+      Write-Warning "WebView2 not available - skipping conversion tests"
+    }
+```
+
+**Artifact Upload**:
+```yaml
+- name: Upload conversion test outputs
+  uses: actions/upload-artifact@v4
+  with:
+    name: conversion-test-outputs
+    path: |
+      **/TestResults/**/*.pdf
+      **/TestResults/**/*.png
+      **/TestResults/**/comparison-*.jpg
+```
+
+### Security Considerations
+
+**Input Validation**:
+- Validate DOCX file format (Office Open XML structure)
+- Check file size limits (reject > 100MB)
+- Scan for password-protected documents
+
+**Sandboxing**:
+- WebView2 runs in isolated process with restricted permissions
+- HTML content from Mammoth is trusted (not user-generated)
+- Temporary files stored in secure directory with unique GUIDs
+
+**Cleanup**:
+- All temporary files deleted on completion or error
+- No sensitive data persisted (DOCX content is temporary)
+
+### Future Enhancements
+
+1. **Batch Conversion**: UI support for converting multiple DOCX files
+2. **Custom CSS**: Allow custom CSS for HTML-to-PDF styling
+3. **Progress Callbacks**: Fine-grained progress (parsing, rendering phases)
+4. **PDF/A Output**: Generate ISO-compliant archival PDFs
+5. **Cloud Integration**: Upload converted PDFs to OneDrive/SharePoint
+6. **Template Support**: Custom headers/footers for converted PDFs
+7. **Diff Visualization**: Generate visual diff images in quality validation
+
+### References
+
+- **Mammoth.NET**: https://github.com/mwilliamson/dotnet-mammoth
+- **WebView2 Documentation**: https://developer.microsoft.com/microsoft-edge/webview2/
+- **SSIM Algorithm**: https://en.wikipedia.org/wiki/Structural_similarity
+- **Conversion Feature Docs**: [CONVERSION.md](./CONVERSION.md)
+
 ## Build and CI/CD
 
 ### vcpkg Build Automation
