@@ -705,6 +705,103 @@
             Gets a value indicating whether the quality meets the specified threshold.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.SearchMatch">
+            <summary>
+            Represents a single text match found during a PDF search operation.
+            Contains the match location, text content, and bounding box coordinates.
+            </summary>
+            <param name="PageNumber">The zero-based page number where the match was found.</param>
+            <param name="CharIndex">The character index within the page where the match starts.</param>
+            <param name="Length">The length of the matched text in characters.</param>
+            <param name="Text">The actual matched text content.</param>
+            <param name="BoundingBox">The bounding rectangle of the match in PDF coordinates.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchMatch.#ctor(System.Int32,System.Int32,System.Int32,System.String,FluentPDF.Core.Models.PdfRectangle)">
+            <summary>
+            Represents a single text match found during a PDF search operation.
+            Contains the match location, text content, and bounding box coordinates.
+            </summary>
+            <param name="PageNumber">The zero-based page number where the match was found.</param>
+            <param name="CharIndex">The character index within the page where the match starts.</param>
+            <param name="Length">The length of the matched text in characters.</param>
+            <param name="Text">The actual matched text content.</param>
+            <param name="BoundingBox">The bounding rectangle of the match in PDF coordinates.</param>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.PageNumber">
+            <summary>The zero-based page number where the match was found.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.CharIndex">
+            <summary>The character index within the page where the match starts.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.Length">
+            <summary>The length of the matched text in characters.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.Text">
+            <summary>The actual matched text content.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.BoundingBox">
+            <summary>The bounding rectangle of the match in PDF coordinates.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.EndIndex">
+            <summary>
+            Gets the character index immediately after the match.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchMatch.IsValid">
+            <summary>
+            Validates that the search match has valid properties.
+            </summary>
+            <returns>True if all properties are within valid ranges.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchMatch.OverlapsWith(FluentPDF.Core.Models.SearchMatch)">
+            <summary>
+            Determines if this match overlaps with another match on the same page.
+            </summary>
+            <param name="other">The other search match to compare with.</param>
+            <returns>True if both matches are on the same page and their character ranges overlap.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Models.SearchOptions">
+            <summary>
+            Configuration options for PDF text search operations.
+            Controls search behavior such as case sensitivity and whole word matching.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchOptions.CaseSensitive">
+            <summary>
+            Gets or initializes a value indicating whether the search should be case-sensitive.
+            Default is false (case-insensitive search).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchOptions.WholeWord">
+            <summary>
+            Gets or initializes a value indicating whether to match whole words only.
+            When true, matches must be bounded by word boundaries (spaces, punctuation, etc.).
+            Default is false (partial word matches allowed).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchOptions.Default">
+            <summary>
+            Gets the default search options (case-insensitive, partial word matching).
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchOptions.CaseSensitiveSearch">
+            <summary>
+            Creates search options for case-sensitive search.
+            </summary>
+            <returns>SearchOptions with CaseSensitive set to true.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchOptions.WholeWordSearch">
+            <summary>
+            Creates search options for whole word search.
+            </summary>
+            <returns>SearchOptions with WholeWord set to true.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchOptions.CaseSensitiveWholeWordSearch">
+            <summary>
+            Creates search options for case-sensitive whole word search.
+            </summary>
+            <returns>SearchOptions with both CaseSensitive and WholeWord set to true.</returns>
+        </member>
         <member name="T:FluentPDF.Core.Placeholder">
             <summary>
             Temporary placeholder class for initial project setup.
@@ -1173,6 +1270,39 @@
             A Result containing a dictionary mapping page numbers to extracted text if successful,
             or a PdfError if the operation failed.
             Error codes: PDF_TEXT_EXTRACTION_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.ITextSearchService">
+            <summary>
+            Service contract for searching text within PDF documents.
+            Provides methods to search for text with various options and returns matches with location information.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextSearchService.SearchAsync(FluentPDF.Core.Models.PdfDocument,System.String,FluentPDF.Core.Models.SearchOptions,System.Threading.CancellationToken)">
+            <summary>
+            Searches for text across all pages in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="query">The text to search for.</param>
+            <param name="options">Search options controlling case sensitivity and word matching.</param>
+            <param name="cancellationToken">Token to cancel the operation.</param>
+            <returns>
+            A Result containing a list of SearchMatch objects if successful, or a PdfError if the operation failed.
+            Error codes: PDF_SEARCH_FAILED, PDF_TEXT_PAGE_LOAD_FAILED, PDF_SEARCH_CANCELLED.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextSearchService.SearchPageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.String,FluentPDF.Core.Models.SearchOptions)">
+            <summary>
+            Searches for text on a specific page in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="pageNumber">1-based page number to search.</param>
+            <param name="query">The text to search for.</param>
+            <param name="options">Search options controlling case sensitivity and word matching.</param>
+            <returns>
+            A Result containing a list of SearchMatch objects for the page if successful, or a PdfError if the operation failed.
+            Error codes: PDF_PAGE_INVALID, PDF_SEARCH_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
             </returns>
         </member>
         <member name="T:FluentPDF.Core.Services.TelemetryService">

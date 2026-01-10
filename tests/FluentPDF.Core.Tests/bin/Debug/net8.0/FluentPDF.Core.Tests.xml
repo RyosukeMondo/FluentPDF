@@ -34,6 +34,11 @@
             Unit tests for the PdfFormField, PdfRectangle, and FormFieldType models.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Tests.Models.SearchMatchTests">
+            <summary>
+            Unit tests for the SearchMatch and SearchOptions models.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Tests.TestBase">
             <summary>
             Base class for unit tests providing common test utilities and helpers.

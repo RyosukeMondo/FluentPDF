@@ -58,7 +58,7 @@
   - _Requirements: 3.4, 4.1-4.7_
   - _Prompt: Role: Domain Modeling Developer | Task: Create SearchMatch and SearchOptions models with proper validation | Restrictions: Keep models immutable, add coordinate helpers | Success: Models represent search results with location and bounding boxes_
 
-- [ ] 5. Implement TextSearchService with PDFium search APIs
+- [-] 5. Implement TextSearchService with PDFium search APIs
   - Files:
     - `src/FluentPDF.Core/Services/ITextSearchService.cs`
     - `src/FluentPDF.Rendering/Services/TextSearchService.cs`

@@ -424,6 +424,75 @@
             <param name="bottom">Outputs the bottom coordinate.</param>
             <returns>True if the operation succeeded; otherwise, false.</returns>
         </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.StartTextSearch(FluentPDF.Rendering.Interop.SafePdfTextPageHandle,System.String,FluentPDF.Rendering.Interop.PdfiumInterop.SearchFlags,System.Int32)">
+            <summary>
+            Starts a text search on a text page.
+            </summary>
+            <param name="textPage">Handle to the text page.</param>
+            <param name="query">The search query string (UTF-16LE encoded).</param>
+            <param name="flags">Search flags (case sensitivity, whole word, etc.).</param>
+            <param name="startIndex">Zero-based character index to start the search.</param>
+            <returns>Handle to the search context, or IntPtr.Zero if the search failed to start.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.FindNext(System.IntPtr)">
+            <summary>
+            Finds the next search match.
+            </summary>
+            <param name="searchHandle">Handle to the search context.</param>
+            <returns>True if a match was found; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.FindPrev(System.IntPtr)">
+            <summary>
+            Finds the previous search match.
+            </summary>
+            <param name="searchHandle">Handle to the search context.</param>
+            <returns>True if a match was found; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetSearchResultIndex(System.IntPtr)">
+            <summary>
+            Gets the character index of the current search match.
+            </summary>
+            <param name="searchHandle">Handle to the search context.</param>
+            <returns>Zero-based character index of the match, or -1 if no match.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetSearchResultCount(System.IntPtr)">
+            <summary>
+            Gets the number of characters in the current search match.
+            </summary>
+            <param name="searchHandle">Handle to the search context.</param>
+            <returns>Number of characters in the match, or 0 if no match.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.CloseSearch(System.IntPtr)">
+            <summary>
+            Closes a search context and releases its resources.
+            </summary>
+            <param name="searchHandle">Handle to the search context.</param>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.SearchFlags">
+            <summary>
+            Search flags for text search operations.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.SearchFlags.None">
+            <summary>
+            Default search (case-insensitive, partial word matching).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.SearchFlags.MatchCase">
+            <summary>
+            Match case when searching.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.SearchFlags.MatchWholeWord">
+            <summary>
+            Match whole word only.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.SearchFlags.Consecutive">
+            <summary>
+            Search consecutively (used internally by PDFium).
+            </summary>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes">
             <summary>
             PDFium error codes.
@@ -960,6 +1029,35 @@
         </member>
         <member name="M:FluentPDF.Rendering.Services.TextExtractionService.ExtractAllTextAsync(FluentPDF.Core.Models.PdfDocument,System.Threading.CancellationToken)">
             <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.TextSearchService">
+            <summary>
+            Service for searching text within PDF documents using PDFium.
+            Implements text search with match location tracking and performance monitoring.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextSearchService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.TextSearchService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.TextSearchService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextSearchService.SearchAsync(FluentPDF.Core.Models.PdfDocument,System.String,FluentPDF.Core.Models.SearchOptions,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextSearchService.SearchPageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.String,FluentPDF.Core.Models.SearchOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextSearchService.ConvertSearchOptions(FluentPDF.Core.Models.SearchOptions)">
+            <summary>
+            Converts SearchOptions to PDFium SearchFlags.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.TextSearchService.CalculateBoundingBox(FluentPDF.Rendering.Interop.SafePdfTextPageHandle,System.Int32,System.Int32)">
+            <summary>
+            Calculates the bounding box for a text match by combining character boxes.
+            Handles multi-line matches by encompassing all character positions.
+            </summary>
         </member>
     </members>
 </doc>

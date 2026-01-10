@@ -263,6 +263,62 @@
             Gets a value indicating whether quality validation was performed.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.FieldValidationError">
+            <summary>
+            Represents a validation error for a specific form field.
+            Contains the field name, error type, and user-friendly error message.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.FieldName">
+            <summary>
+            Gets the name of the field that failed validation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.ErrorType">
+            <summary>
+            Gets the type of validation error.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.Message">
+            <summary>
+            Gets the user-friendly error message describing the validation failure.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.AttemptedValue">
+            <summary>
+            Gets the current value that failed validation (if applicable).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.ValidationErrorType">
+            <summary>
+            Defines the types of validation errors that can occur.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.RequiredFieldEmpty">
+            <summary>
+            A required field was left empty.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.MaxLengthExceeded">
+            <summary>
+            The field value exceeds the maximum allowed length.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.InvalidFormat">
+            <summary>
+            The field value does not match the required format/pattern.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.ReadOnlyFieldModified">
+            <summary>
+            Attempted to modify a read-only field.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.InvalidValue">
+            <summary>
+            The field value is invalid for the field type.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Models.FormFieldType">
             <summary>
             Represents the type of a form field in a PDF document.
@@ -307,6 +363,50 @@
         <member name="F:FluentPDF.Core.Models.FormFieldType.Signature">
             <summary>
             Signature field.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.FormValidationResult">
+            <summary>
+            Represents the result of validating one or more form fields.
+            Contains a flag indicating overall validity and a collection of validation errors.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FormValidationResult.IsValid">
+            <summary>
+            Gets whether all validated fields passed validation.
+            True if no errors were found; false otherwise.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FormValidationResult.Errors">
+            <summary>
+            Gets the collection of validation errors.
+            Empty if all fields are valid.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.Success">
+            <summary>
+            Creates a successful validation result with no errors.
+            </summary>
+            <returns>A validation result indicating success.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.Failure(FluentPDF.Core.Models.FieldValidationError[])">
+            <summary>
+            Creates a failed validation result with the specified errors.
+            </summary>
+            <param name="errors">The validation errors that occurred.</param>
+            <returns>A validation result containing the errors.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.Failure(System.Collections.Generic.IEnumerable{FluentPDF.Core.Models.FieldValidationError})">
+            <summary>
+            Creates a failed validation result with the specified errors.
+            </summary>
+            <param name="errors">The validation errors that occurred.</param>
+            <returns>A validation result containing the errors.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.GetSummaryMessage">
+            <summary>
+            Gets a summary message describing all validation errors.
+            Returns null if validation succeeded.
             </summary>
         </member>
         <member name="T:FluentPDF.Core.Models.PageRange">
@@ -605,6 +705,103 @@
             Gets a value indicating whether the quality meets the specified threshold.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.SearchMatch">
+            <summary>
+            Represents a single text match found during a PDF search operation.
+            Contains the match location, text content, and bounding box coordinates.
+            </summary>
+            <param name="PageNumber">The zero-based page number where the match was found.</param>
+            <param name="CharIndex">The character index within the page where the match starts.</param>
+            <param name="Length">The length of the matched text in characters.</param>
+            <param name="Text">The actual matched text content.</param>
+            <param name="BoundingBox">The bounding rectangle of the match in PDF coordinates.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchMatch.#ctor(System.Int32,System.Int32,System.Int32,System.String,FluentPDF.Core.Models.PdfRectangle)">
+            <summary>
+            Represents a single text match found during a PDF search operation.
+            Contains the match location, text content, and bounding box coordinates.
+            </summary>
+            <param name="PageNumber">The zero-based page number where the match was found.</param>
+            <param name="CharIndex">The character index within the page where the match starts.</param>
+            <param name="Length">The length of the matched text in characters.</param>
+            <param name="Text">The actual matched text content.</param>
+            <param name="BoundingBox">The bounding rectangle of the match in PDF coordinates.</param>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.PageNumber">
+            <summary>The zero-based page number where the match was found.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.CharIndex">
+            <summary>The character index within the page where the match starts.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.Length">
+            <summary>The length of the matched text in characters.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.Text">
+            <summary>The actual matched text content.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.BoundingBox">
+            <summary>The bounding rectangle of the match in PDF coordinates.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchMatch.EndIndex">
+            <summary>
+            Gets the character index immediately after the match.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchMatch.IsValid">
+            <summary>
+            Validates that the search match has valid properties.
+            </summary>
+            <returns>True if all properties are within valid ranges.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchMatch.OverlapsWith(FluentPDF.Core.Models.SearchMatch)">
+            <summary>
+            Determines if this match overlaps with another match on the same page.
+            </summary>
+            <param name="other">The other search match to compare with.</param>
+            <returns>True if both matches are on the same page and their character ranges overlap.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Models.SearchOptions">
+            <summary>
+            Configuration options for PDF text search operations.
+            Controls search behavior such as case sensitivity and whole word matching.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchOptions.CaseSensitive">
+            <summary>
+            Gets or initializes a value indicating whether the search should be case-sensitive.
+            Default is false (case-insensitive search).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchOptions.WholeWord">
+            <summary>
+            Gets or initializes a value indicating whether to match whole words only.
+            When true, matches must be bounded by word boundaries (spaces, punctuation, etc.).
+            Default is false (partial word matches allowed).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.SearchOptions.Default">
+            <summary>
+            Gets the default search options (case-insensitive, partial word matching).
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchOptions.CaseSensitiveSearch">
+            <summary>
+            Creates search options for case-sensitive search.
+            </summary>
+            <returns>SearchOptions with CaseSensitive set to true.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchOptions.WholeWordSearch">
+            <summary>
+            Creates search options for whole word search.
+            </summary>
+            <returns>SearchOptions with WholeWord set to true.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.SearchOptions.CaseSensitiveWholeWordSearch">
+            <summary>
+            Creates search options for case-sensitive whole word search.
+            </summary>
+            <returns>SearchOptions with both CaseSensitive and WholeWord set to true.</returns>
+        </member>
         <member name="T:FluentPDF.Core.Placeholder">
             <summary>
             Temporary placeholder class for initial project setup.
@@ -793,6 +990,44 @@
             Error codes: DOCX_FILE_NOT_FOUND, DOCX_INVALID_FORMAT, DOCX_PARSE_FAILED.
             </returns>
         </member>
+        <member name="T:FluentPDF.Core.Services.IFormValidationService">
+            <summary>
+            Service contract for validating PDF form field values against their constraints.
+            Provides validation for required fields, length limits, format patterns, and read-only restrictions.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IFormValidationService.ValidateField(FluentPDF.Core.Models.PdfFormField)">
+            <summary>
+            Validates a single form field against its constraints.
+            Checks for required field empty, max length exceeded, format violations, and read-only modifications.
+            </summary>
+            <param name="field">The form field to validate.</param>
+            <returns>
+            A validation result indicating success or containing validation errors.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IFormValidationService.ValidateAllFields(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Models.PdfFormField})">
+            <summary>
+            Validates all form fields in a collection.
+            Aggregates all validation errors from individual fields.
+            </summary>
+            <param name="fields">The collection of form fields to validate.</param>
+            <returns>
+            A validation result indicating success or containing all validation errors.
+            Returns success if all fields are valid.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IFormValidationService.ValidateProposedValue(FluentPDF.Core.Models.PdfFormField,System.String)">
+            <summary>
+            Validates that a proposed value is acceptable for a form field.
+            Does not modify the field; only checks if the value would be valid.
+            </summary>
+            <param name="field">The form field to validate against.</param>
+            <param name="proposedValue">The value to validate.</param>
+            <returns>
+            A validation result indicating whether the proposed value is valid.
+            </returns>
+        </member>
         <member name="T:FluentPDF.Core.Services.IHtmlToPdfService">
             <summary>
             Service contract for HTML to PDF conversion operations.
@@ -850,6 +1085,81 @@
             <param name="document">The PDF document to close.</param>
             <returns>
             A Result indicating success or failure of the close operation.
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IPdfFormService">
+            <summary>
+            Service contract for PDF form field detection, manipulation, and persistence.
+            Provides methods for reading form metadata, updating field values, and saving form data.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.GetFormFieldsAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <summary>
+            Gets all form fields on a specific page of the PDF document.
+            Fields are returned sorted by tab order for keyboard navigation.
+            </summary>
+            <param name="document">The PDF document to query.</param>
+            <param name="pageNumber">The 1-based page number.</param>
+            <returns>
+            A result containing a read-only list of form fields, or an error if the operation fails.
+            Returns an empty list if the page has no form fields.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.GetFormFieldAtPointAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Double,System.Double)">
+            <summary>
+            Finds the form field at the specified page coordinates (hit testing).
+            Useful for mouse hover and click interactions.
+            </summary>
+            <param name="document">The PDF document to query.</param>
+            <param name="pageNumber">The 1-based page number.</param>
+            <param name="x">X coordinate in page coordinate system.</param>
+            <param name="y">Y coordinate in page coordinate system.</param>
+            <returns>
+            A result containing the form field at the point, or null if no field exists there.
+            Returns an error if the operation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.SetFieldValueAsync(FluentPDF.Core.Models.PdfFormField,System.String)">
+            <summary>
+            Updates the text value of a form field.
+            Validates against max length, read-only status, and format constraints.
+            </summary>
+            <param name="field">The form field to update.</param>
+            <param name="value">The new value to set.</param>
+            <returns>
+            A successful result if the value was set, or an error if validation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.SetCheckboxStateAsync(FluentPDF.Core.Models.PdfFormField,System.Boolean)">
+            <summary>
+            Sets the checked state of a checkbox or radio button.
+            For radio buttons, automatically unchecks other buttons in the same group.
+            </summary>
+            <param name="field">The form field (checkbox or radio button) to update.</param>
+            <param name="isChecked">True to check the field; false to uncheck.</param>
+            <returns>
+            A successful result if the state was updated, or an error if the operation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.SaveFormDataAsync(FluentPDF.Core.Models.PdfDocument,System.String)">
+            <summary>
+            Saves the PDF document with all form field modifications persisted.
+            Uses PDFium's save API to write the updated document to disk.
+            </summary>
+            <param name="document">The PDF document with modified form fields.</param>
+            <param name="outputPath">The file path where the document should be saved.</param>
+            <returns>
+            A successful result if the document was saved, or an error if the save operation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.GetFieldsInTabOrder(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Models.PdfFormField})">
+            <summary>
+            Sorts form fields by their tab order for keyboard navigation.
+            Falls back to spatial ordering (top-to-bottom, left-to-right) if tab order is not defined.
+            </summary>
+            <param name="fields">The collection of form fields to sort.</param>
+            <returns>
+            A result containing the sorted list of fields, or an error if the operation fails.
             </returns>
         </member>
         <member name="T:FluentPDF.Core.Services.IPdfRenderingService">
@@ -931,6 +1241,69 @@
             Properties can include context such as user ID, operation ID, or component name.
             </remarks>
             <exception cref="T:System.ArgumentNullException">Thrown when exception is null.</exception>
+        </member>
+        <member name="T:FluentPDF.Core.Services.ITextExtractionService">
+            <summary>
+            Service contract for extracting text from PDF documents.
+            Provides methods to extract text from individual pages or entire documents with caching support.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextExtractionService.ExtractTextAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <summary>
+            Extracts text from a specific page in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="pageNumber">1-based page number to extract text from.</param>
+            <returns>
+            A Result containing the extracted text if successful, or a PdfError if the operation failed.
+            Error codes: PDF_PAGE_INVALID, PDF_TEXT_EXTRACTION_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextExtractionService.ExtractAllTextAsync(FluentPDF.Core.Models.PdfDocument,System.Threading.CancellationToken)">
+            <summary>
+            Extracts text from all pages in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="cancellationToken">Token to cancel the operation.</param>
+            <returns>
+            A Result containing a dictionary mapping page numbers to extracted text if successful,
+            or a PdfError if the operation failed.
+            Error codes: PDF_TEXT_EXTRACTION_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.ITextSearchService">
+            <summary>
+            Service contract for searching text within PDF documents.
+            Provides methods to search for text with various options and returns matches with location information.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextSearchService.SearchAsync(FluentPDF.Core.Models.PdfDocument,System.String,FluentPDF.Core.Models.SearchOptions,System.Threading.CancellationToken)">
+            <summary>
+            Searches for text across all pages in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="query">The text to search for.</param>
+            <param name="options">Search options controlling case sensitivity and word matching.</param>
+            <param name="cancellationToken">Token to cancel the operation.</param>
+            <returns>
+            A Result containing a list of SearchMatch objects if successful, or a PdfError if the operation failed.
+            Error codes: PDF_SEARCH_FAILED, PDF_TEXT_PAGE_LOAD_FAILED, PDF_SEARCH_CANCELLED.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ITextSearchService.SearchPageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.String,FluentPDF.Core.Models.SearchOptions)">
+            <summary>
+            Searches for text on a specific page in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="pageNumber">1-based page number to search.</param>
+            <param name="query">The text to search for.</param>
+            <param name="options">Search options controlling case sensitivity and word matching.</param>
+            <returns>
+            A Result containing a list of SearchMatch objects for the page if successful, or a PdfError if the operation failed.
+            Error codes: PDF_PAGE_INVALID, PDF_SEARCH_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
+            </returns>
         </member>
         <member name="T:FluentPDF.Core.Services.TelemetryService">
             <summary>
