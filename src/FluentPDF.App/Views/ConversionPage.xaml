@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Page
+    x:Class="FluentPDF.App.Views.ConversionPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluentPDF.App.Views"
+    xmlns:converters="using:FluentPDF.App.Converters"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="RootPage">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock
+            Grid.Row="0"
+            Text="DOCX to PDF Conversion"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Margin="0,0,0,24" />
+
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="24" MaxWidth="800">
+                <!-- File Selection Section -->
+                <StackPanel Spacing="12">
+                    <TextBlock
+                        Text="File Selection"
+                        Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <!-- Input File Selection -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox
+                            Grid.Column="0"
+                            Header="Input DOCX File"
+                            Text="{x:Bind ViewModel.DocxFilePath, Mode=OneWay}"
+                            IsReadOnly="True"
+                            PlaceholderText="No file selected" />
+
+                        <Button
+                            Grid.Column="1"
+                            Content="Browse..."
+                            Command="{x:Bind ViewModel.SelectDocxFileCommand}"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Bottom" />
+                    </Grid>
+
+                    <!-- Output File Selection -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox
+                            Grid.Column="0"
+                            Header="Output PDF File"
+                            Text="{x:Bind ViewModel.OutputFilePath, Mode=OneWay}"
+                            IsReadOnly="True"
+                            PlaceholderText="No output location selected" />
+
+                        <Button
+                            Grid.Column="1"
+                            Content="Browse..."
+                            Command="{x:Bind ViewModel.SelectOutputPathCommand}"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Bottom" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- Conversion Options Section -->
+                <StackPanel Spacing="12">
+                    <TextBlock
+                        Text="Conversion Options"
+                        Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <CheckBox
+                        Content="Enable Quality Validation (Compare with LibreOffice)"
+                        IsChecked="{x:Bind ViewModel.EnableQualityValidation, Mode=TwoWay}" />
+
+                    <TextBlock
+                        Text="Quality validation compares the generated PDF with LibreOffice output using SSIM (Structural Similarity Index)."
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Margin="28,0,0,0" />
+                </StackPanel>
+
+                <!-- Conversion Controls Section -->
+                <StackPanel Spacing="12">
+                    <TextBlock
+                        Text="Conversion"
+                        Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <!-- Status Message -->
+                    <InfoBar
+                        Severity="Informational"
+                        IsOpen="True"
+                        IsClosable="False"
+                        Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+
+                    <!-- Progress Bar -->
+                    <ProgressBar
+                        Value="{x:Bind ViewModel.ConversionProgress, Mode=OneWay}"
+                        Maximum="100"
+                        IsIndeterminate="False"
+                        ShowError="False"
+                        ShowPaused="False"
+                        Visibility="{x:Bind ViewModel.IsConverting, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Content="Convert to PDF"
+                            Command="{x:Bind ViewModel.ConvertCommand}"
+                            Style="{StaticResource AccentButtonStyle}">
+                            <Button.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="C" Modifiers="Control,Shift" />
+                            </Button.KeyboardAccelerators>
+                        </Button>
+
+                        <Button
+                            Content="Cancel"
+                            Command="{x:Bind ViewModel.CancelConversionCommand}"
+                            Visibility="{x:Bind ViewModel.IsConverting, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Results Section -->
+                <StackPanel
+                    Spacing="12"
+                    Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock
+                        Text="Conversion Results"
+                        Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <Border
+                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="16">
+                        <Grid RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Output File -->
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Text="Output File:"
+                                FontWeight="SemiBold"
+                                Margin="0,0,12,0" />
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Text="{x:Bind ViewModel.Result.OutputPath, Mode=OneWay}"
+                                TextWrapping="Wrap" />
+
+                            <!-- File Size -->
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Text="File Size:"
+                                FontWeight="SemiBold"
+                                Margin="0,0,12,0" />
+                            <TextBlock Grid.Row="1" Grid.Column="1">
+                                <Run Text="{x:Bind FormatFileSize(ViewModel.Result.OutputSizeBytes), Mode=OneWay}" />
+                                <Run Text=" KB" />
+                            </TextBlock>
+
+                            <!-- Conversion Time -->
+                            <TextBlock
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Text="Conversion Time:"
+                                FontWeight="SemiBold"
+                                Margin="0,0,12,0" />
+                            <TextBlock Grid.Row="2" Grid.Column="1">
+                                <Run Text="{x:Bind FormatTime(ViewModel.Result.ConversionTime), Mode=OneWay}" />
+                                <Run Text=" seconds" />
+                            </TextBlock>
+
+                            <!-- Page Count (if available) -->
+                            <TextBlock
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                Text="Pages:"
+                                FontWeight="SemiBold"
+                                Margin="0,0,12,0"
+                                Visibility="{x:Bind HasPageCount(ViewModel.Result.PageCount), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <TextBlock
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Text="{x:Bind ViewModel.Result.PageCount, Mode=OneWay}"
+                                Visibility="{x:Bind HasPageCount(ViewModel.Result.PageCount), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                            <!-- Quality Score (if available) -->
+                            <TextBlock
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Text="Quality Score (SSIM):"
+                                FontWeight="SemiBold"
+                                Margin="0,0,12,0"
+                                Visibility="{x:Bind HasQualityScore(ViewModel.Result.QualityScore), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <TextBlock
+                                Grid.Row="4"
+                                Grid.Column="1"
+                                Visibility="{x:Bind HasQualityScore(ViewModel.Result.QualityScore), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <Run Text="{x:Bind FormatQualityScore(ViewModel.Result.QualityScore), Mode=OneWay}" />
+                                <Run Text=" " />
+                                <Run Text="{x:Bind GetQualityRating(ViewModel.Result.QualityScore), Mode=OneWay}" Foreground="{x:Bind GetQualityColor(ViewModel.Result.QualityScore), Mode=OneWay}" />
+                            </TextBlock>
+
+                            <!-- Open PDF Button -->
+                            <Button
+                                Grid.Row="5"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Content="Open PDF"
+                                Command="{x:Bind ViewModel.OpenPdfCommand}"
+                                HorizontalAlignment="Stretch"
+                                Margin="0,8,0,0">
+                                <Button.Icon>
+                                    <SymbolIcon Symbol="OpenFile" />
+                                </Button.Icon>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

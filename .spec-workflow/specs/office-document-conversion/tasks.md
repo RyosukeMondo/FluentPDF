@@ -91,7 +91,7 @@
   - _Requirements: 5.1-5.8_
   - _Prompt: Role: WinUI MVVM Developer | Task: Create ConversionViewModel with file selection, progress tracking, and conversion orchestration | Restrictions: Must be UI-agnostic, follow MVVM strictly, handle all error scenarios | Success: ViewModel provides complete conversion workflow with progress and error handling_
 
-- [ ] 6. Create ConversionPage UI with file selection and conversion controls
+- [x] 6. Create ConversionPage UI with file selection and conversion controls
   - Files:
     - `src/FluentPDF.App/Views/ConversionPage.xaml`
     - `src/FluentPDF.App/Views/ConversionPage.xaml.cs`
