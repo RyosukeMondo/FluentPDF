@@ -20,6 +20,12 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Setup Java (for JHOVE validation)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Install WebView2 Runtime
       shell: pwsh
       run: |
@@ -72,6 +78,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: FluentPDF-Build
+
+    - name: Install PDF validation tools
+      shell: pwsh
+      run: |
+        Write-Host "Installing PDF validation tools for integration tests..."
+        .\tools\validation\install-tools.ps1
+      continue-on-error: false
 
     - name: Restore NuGet packages
       run: dotnet restore FluentPDF.sln
@@ -148,6 +161,43 @@ jobs:
         }
       continue-on-error: true
 
+    - name: Run Validation Integration Tests
+      shell: pwsh
+      run: |
+        if (Test-Path "tests/FluentPDF.Validation.Tests") {
+          Write-Host "Running validation integration tests with real tools..."
+          dotnet test tests/FluentPDF.Validation.Tests --filter "Category=Integration" --logger "trx;LogFileName=validation-integration-tests.trx" --verbosity normal
+        } else {
+          Write-Host "Validation tests do not exist yet - skipping"
+        }
+      continue-on-error: false
+
+    - name: Run PDF Generation Validation Tests
+      shell: pwsh
+      run: |
+        Write-Host "Running PDF generation validation tests..."
+        $validationTests = @(
+          "tests/FluentPDF.Core.Tests/Integration/MergeValidationTests.cs",
+          "tests/FluentPDF.Core.Tests/Integration/SplitValidationTests.cs",
+          "tests/FluentPDF.Core.Tests/Integration/OptimizeValidationTests.cs"
+        )
+
+        $hasValidationTests = $false
+        foreach ($testFile in $validationTests) {
+          if (Test-Path $testFile) {
+            $hasValidationTests = $true
+            break
+          }
+        }
+
+        if ($hasValidationTests) {
+          # Run integration tests with validation
+          dotnet test tests/FluentPDF.Core.Tests --filter "FullyQualifiedName~Validation&Category=Integration" --logger "trx;LogFileName=pdf-generation-validation-tests.trx" --verbosity normal
+        } else {
+          Write-Host "PDF generation validation tests do not exist yet - skipping"
+        }
+      continue-on-error: false
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -168,6 +218,17 @@ jobs:
           **/TestResults/**/*.png
           **/TestResults/**/comparison-*.jpg
         retention-days: 7
+        if-no-files-found: ignore
+
+    - name: Upload validation reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: validation-reports
+        path: |
+          **/TestResults/**/validation-report-*.json
+          **/validation-reports/**/*.json
+        retention-days: 30
         if-no-files-found: ignore
 
     - name: Publish test results

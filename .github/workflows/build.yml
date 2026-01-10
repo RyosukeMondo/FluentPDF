@@ -40,6 +40,56 @@ jobs:
         .\tools\build-libs.ps1 -UseCache
       continue-on-error: false
 
+    - name: Setup Java (for JHOVE)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install PDF validation tools
+      shell: pwsh
+      run: |
+        Write-Host "Installing PDF validation tools..."
+        .\tools\validation\install-tools.ps1
+      continue-on-error: false
+
+    - name: Verify validation tools
+      shell: pwsh
+      run: |
+        Write-Host "Verifying validation tool installations..."
+
+        # Verify VeraPDF
+        $veraPdfExe = "tools\validation\verapdf\verapdf.bat"
+        if (Test-Path $veraPdfExe) {
+          $veraPdfVersion = & $veraPdfExe --version 2>&1 | Select-Object -First 1
+          Write-Host "VeraPDF: $veraPdfVersion"
+        } else {
+          Write-Error "VeraPDF not found at $veraPdfExe"
+          exit 1
+        }
+
+        # Verify JHOVE
+        $jhoveJar = "tools\validation\jhove\jhove.jar"
+        if (Test-Path $jhoveJar) {
+          $jhoveVersion = java -jar $jhoveJar -v 2>&1 | Select-Object -First 1
+          Write-Host "JHOVE: $jhoveVersion"
+        } else {
+          Write-Error "JHOVE not found at $jhoveJar"
+          exit 1
+        }
+
+        # Verify QPDF
+        $qpdfExe = "tools\validation\qpdf\bin\qpdf.exe"
+        if (Test-Path $qpdfExe) {
+          $qpdfVersion = & $qpdfExe --version 2>&1 | Select-Object -First 1
+          Write-Host "QPDF: $qpdfVersion"
+        } else {
+          Write-Error "QPDF not found at $qpdfExe"
+          exit 1
+        }
+
+        Write-Host "All validation tools verified successfully!"
+
     - name: Restore NuGet packages
       run: dotnet restore FluentPDF.sln
 
