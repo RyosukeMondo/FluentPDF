@@ -249,5 +249,42 @@
             </summary>
             <returns>True if the handle was released successfully; otherwise, false.</returns>
         </member>
+        <member name="T:FluentPDF.Rendering.Services.PdfDocumentService">
+            <summary>
+            Service for PDF document loading and management operations using PDFium.
+            Implements asynchronous operations with comprehensive error handling and structured logging.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfDocumentService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.PdfDocumentService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.PdfDocumentService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfDocumentService.LoadDocumentAsync(System.String,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfDocumentService.GetPageInfoAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfDocumentService.CloseDocument(FluentPDF.Core.Models.PdfDocument)">
+            <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.PdfRenderingService">
+            <summary>
+            Service for rendering PDF pages to PNG streams using PDFium.
+            Implements asynchronous rendering with performance monitoring and comprehensive error handling.
+            Returns cross-platform streams that can be converted to platform-specific image types by the consuming code.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfRenderingService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.PdfRenderingService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.PdfRenderingService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging and performance monitoring.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfRenderingService.RenderPageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Double,System.Double)">
+            <inheritdoc />
+        </member>
     </members>
 </doc>

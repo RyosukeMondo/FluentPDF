@@ -137,11 +137,128 @@
             </summary>
             <returns>Assembly version string.</returns>
         </member>
+        <member name="T:FluentPDF.Core.Models.PdfDocument">
+            <summary>
+            Represents a loaded PDF document with its metadata and native handle.
+            Implements IDisposable to ensure proper cleanup of native resources.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfDocument.FilePath">
+            <summary>
+            Gets the full file path to the PDF document.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfDocument.PageCount">
+            <summary>
+            Gets the total number of pages in the PDF document.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfDocument.Handle">
+            <summary>
+            Gets the native PDFium document handle.
+            This handle is automatically cleaned up when the object is disposed.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfDocument.LoadedAt">
+            <summary>
+            Gets the timestamp when the document was loaded.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfDocument.FileSizeBytes">
+            <summary>
+            Gets the file size in bytes.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfDocument.Dispose">
+            <summary>
+            Releases the native PDFium document handle and associated resources.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.PdfPage">
+            <summary>
+            Represents metadata about a single PDF page.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfPage.PageNumber">
+            <summary>
+            Gets the 1-based page number.
+            </summary>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when page number is less than 1.</exception>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfPage.Width">
+            <summary>
+            Gets the page width in points (1/72 inch).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfPage.Height">
+            <summary>
+            Gets the page height in points (1/72 inch).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfPage.AspectRatio">
+            <summary>
+            Gets the aspect ratio of the page (Width / Height).
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Placeholder">
             <summary>
             Temporary placeholder class for initial project setup.
             Will be removed when actual domain classes are implemented.
             </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IPdfDocumentService">
+            <summary>
+            Service contract for PDF document loading and management operations.
+            Provides methods to load PDF documents, retrieve page information, and close documents.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfDocumentService.LoadDocumentAsync(System.String,System.String)">
+            <summary>
+            Loads a PDF document from the specified file path.
+            </summary>
+            <param name="filePath">Full path to the PDF file.</param>
+            <param name="password">Optional password for encrypted PDFs. Pass null for unencrypted documents.</param>
+            <returns>
+            A Result containing the loaded PdfDocument if successful, or a PdfError if the operation failed.
+            Error codes: PDF_FILE_NOT_FOUND, PDF_INVALID_FORMAT, PDF_CORRUPTED, PDF_REQUIRES_PASSWORD, PDF_LOAD_FAILED.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfDocumentService.GetPageInfoAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <summary>
+            Gets metadata information about a specific page in the PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="pageNumber">1-based page number to retrieve information for.</param>
+            <returns>
+            A Result containing the PdfPage metadata if successful, or a PdfError if the operation failed.
+            Error codes: PDF_PAGE_INVALID, PDF_PAGE_LOAD_FAILED.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfDocumentService.CloseDocument(FluentPDF.Core.Models.PdfDocument)">
+            <summary>
+            Closes a PDF document and releases all associated resources.
+            </summary>
+            <param name="document">The PDF document to close.</param>
+            <returns>
+            A Result indicating success or failure of the close operation.
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IPdfRenderingService">
+            <summary>
+            Service contract for rendering PDF pages to images.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfRenderingService.RenderPageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Double,System.Double)">
+            <summary>
+            Renders a PDF page to an image stream at the specified zoom level and DPI.
+            The stream contains PNG-encoded image data that can be converted to platform-specific image types.
+            </summary>
+            <param name="document">The PDF document containing the page.</param>
+            <param name="pageNumber">The 1-based page number to render.</param>
+            <param name="zoomLevel">The zoom level (1.0 = 100%, 2.0 = 200%, etc.).</param>
+            <param name="dpi">The dots per inch for rendering. Default is 96 (standard screen DPI).</param>
+            <returns>A result containing a Stream with PNG-encoded image data, or an error if rendering failed.</returns>
         </member>
         <member name="T:FluentPDF.Core.Services.ITelemetryService">
             <summary>
