@@ -4,5 +4,250 @@
         <name>FluentPDF.Rendering</name>
     </assembly>
     <members>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop">
+            <summary>
+            P/Invoke declarations for PDFium native library.
+            Provides managed wrappers for PDFium document and page rendering functions.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.Initialize">
+            <summary>
+            Initializes the PDFium library.
+            Must be called once before any other PDFium functions.
+            </summary>
+            <returns>True if initialization succeeded; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.Shutdown">
+            <summary>
+            Shuts down the PDFium library.
+            Should be called once when the application exits.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.LoadDocument(System.String,System.String)">
+            <summary>
+            Loads a PDF document from a file.
+            </summary>
+            <param name="filePath">Path to the PDF file.</param>
+            <param name="password">Password for encrypted PDFs. Pass null for unencrypted files.</param>
+            <returns>A safe handle to the PDF document, or an invalid handle if loading failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetPageCount(FluentPDF.Rendering.Interop.SafePdfDocumentHandle)">
+            <summary>
+            Gets the number of pages in a PDF document.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <returns>The number of pages, or 0 if the document is invalid.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.LoadPage(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.Int32)">
+            <summary>
+            Loads a page from a PDF document.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="pageIndex">Zero-based page index.</param>
+            <returns>A safe handle to the page, or an invalid handle if loading failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetPageWidth(FluentPDF.Rendering.Interop.SafePdfPageHandle)">
+            <summary>
+            Gets the width of a page in points (1/72 inch).
+            </summary>
+            <param name="page">Handle to the page.</param>
+            <returns>The page width in points.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetPageHeight(FluentPDF.Rendering.Interop.SafePdfPageHandle)">
+            <summary>
+            Gets the height of a page in points (1/72 inch).
+            </summary>
+            <param name="page">Handle to the page.</param>
+            <returns>The page height in points.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.CreateBitmap(System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Creates a bitmap for rendering.
+            </summary>
+            <param name="width">Width of the bitmap in pixels.</param>
+            <param name="height">Height of the bitmap in pixels.</param>
+            <param name="hasAlpha">True to include an alpha channel; otherwise, false.</param>
+            <returns>Handle to the bitmap, or IntPtr.Zero if creation failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.DestroyBitmap(System.IntPtr)">
+            <summary>
+            Destroys a bitmap and frees its memory.
+            </summary>
+            <param name="bitmap">Handle to the bitmap.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetBitmapBuffer(System.IntPtr)">
+            <summary>
+            Gets the buffer pointer for a bitmap.
+            </summary>
+            <param name="bitmap">Handle to the bitmap.</param>
+            <returns>Pointer to the bitmap buffer.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetBitmapStride(System.IntPtr)">
+            <summary>
+            Gets the stride (bytes per row) of a bitmap.
+            </summary>
+            <param name="bitmap">Handle to the bitmap.</param>
+            <returns>The bitmap stride in bytes.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.FillBitmap(System.IntPtr,System.UInt32)">
+            <summary>
+            Fills a bitmap with a color.
+            </summary>
+            <param name="bitmap">Handle to the bitmap.</param>
+            <param name="color">ARGB color value.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.RenderPageBitmap(System.IntPtr,FluentPDF.Rendering.Interop.SafePdfPageHandle,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Renders a page to a bitmap.
+            </summary>
+            <param name="bitmap">Handle to the bitmap.</param>
+            <param name="page">Handle to the page.</param>
+            <param name="startX">Left pixel position of the display area in bitmap coordinates.</param>
+            <param name="startY">Top pixel position of the display area in bitmap coordinates.</param>
+            <param name="sizeX">Horizontal size (in pixels) for displaying the page.</param>
+            <param name="sizeY">Vertical size (in pixels) for displaying the page.</param>
+            <param name="rotate">Page rotation: 0 (normal), 1 (90 degrees), 2 (180 degrees), 3 (270 degrees).</param>
+            <param name="flags">Rendering flags (0 for normal rendering with antialiasing).</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetLastError">
+            <summary>
+            Gets the last error code from PDFium.
+            </summary>
+            <returns>The error code.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags">
+            <summary>
+            Rendering flags for FPDF_RenderPageBitmap.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.Normal">
+            <summary>
+            Normal rendering with antialiasing.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.Annotations">
+            <summary>
+            Set to render annotations.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.LcdText">
+            <summary>
+            Set to use LCD text optimization.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.NoTextSmooth">
+            <summary>
+            Disable anti-aliasing on text.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.NoImageSmooth">
+            <summary>
+            Disable anti-aliasing on images.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.NoPathSmooth">
+            <summary>
+            Disable anti-aliasing on paths.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.Grayscale">
+            <summary>
+            Grayscale output.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.LimitImageCache">
+            <summary>
+            Limit image cache size.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.ForceHalftone">
+            <summary>
+            Always use halftone for image stretching.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.Printing">
+            <summary>
+            Render for printing.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.RenderFlags.NoNativeText">
+            <summary>
+            Disable the native text output available on some platforms.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes">
+            <summary>
+            PDFium error codes.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes.Success">
+            <summary>
+            No error.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes.Unknown">
+            <summary>
+            Unknown error.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes.File">
+            <summary>
+            File not found or could not be opened.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes.Format">
+            <summary>
+            File not in PDF format or corrupted.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes.Password">
+            <summary>
+            Password required or incorrect password.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes.Security">
+            <summary>
+            Unsupported security scheme.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes.Page">
+            <summary>
+            Page not found or content error.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.SafePdfDocumentHandle">
+            <summary>
+            Safe handle for PDFium document pointers (FPDF_DOCUMENT).
+            Automatically releases the document when disposed.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfDocumentHandle.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Interop.SafePdfDocumentHandle"/> class.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfDocumentHandle.ReleaseHandle">
+            <summary>
+            Releases the PDFium document handle by calling FPDF_CloseDocument.
+            </summary>
+            <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.SafePdfPageHandle">
+            <summary>
+            Safe handle for PDFium page pointers (FPDF_PAGE).
+            Automatically releases the page when disposed.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfPageHandle.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Interop.SafePdfPageHandle"/> class.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfPageHandle.ReleaseHandle">
+            <summary>
+            Releases the PDFium page handle by calling FPDF_ClosePage.
+            </summary>
+            <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
     </members>
 </doc>

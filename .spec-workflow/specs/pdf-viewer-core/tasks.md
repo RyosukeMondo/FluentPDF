@@ -68,7 +68,7 @@
        - Note PDFium version installed
     7. After successful logging, edit tasks.md and change this task's status from `[-]` to `[x]` (completed)
 
-- [ ] 2. Implement PDFium P/Invoke declarations with SafeHandle
+- [x] 2. Implement PDFium P/Invoke declarations with SafeHandle
   - Files:
     - `src/FluentPDF.Rendering/Interop/PdfiumInterop.cs`
     - `src/FluentPDF.Rendering/Interop/SafePdfDocumentHandle.cs`
