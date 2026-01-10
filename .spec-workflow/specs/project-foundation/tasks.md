@@ -401,7 +401,7 @@
        - Note MSIX sandbox compatibility
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 6. Add global exception handlers to App.xaml.cs
+- [x] 6. Add global exception handlers to App.xaml.cs
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify - add exception handlers)
     - `src/FluentPDF.App/Views/ErrorDialog.xaml`
