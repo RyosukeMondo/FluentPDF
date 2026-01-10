@@ -169,7 +169,7 @@
   - _Requirements: Architecture integrity_
   - _Prompt: Role: Software Architect | Task: Add ArchUnitNET tests enforcing text service architecture rules | Restrictions: Must catch violations, verify SafeHandle usage | Success: Architecture tests enforce clean boundaries for text components_
 
-- [ ] 13. Final testing and documentation
+- [x] 13. Final testing and documentation
   - Files:
     - `docs/ARCHITECTURE.md` (update)
     - `docs/TEXT-SEARCH.md` (new)
