@@ -32,7 +32,7 @@
   - _Requirements: Design Component 2_
   - _Prompt: Role: C# Developer specializing in domain modeling | Task: Create PdfFormField model with properties (Name, Type, PageNumber, Bounds, TabOrder, Value, IsChecked, IsRequired, IsReadOnly, MaxLength, FormatMask, GroupName, NativeHandle) following design.md Component 2, implement FormFieldType enum, create PdfRectangle record, add validation for required properties, and write comprehensive unit tests | Restrictions: Keep models immutable except Value and IsChecked properties, do not add business logic to models, follow structure.md code organization | Success: Models compile without errors, properties are properly typed, validation works correctly, tests verify model behavior_
 
-- [ ] 3. Implement IPdfFormService and PdfFormService
+- [-] 3. Implement IPdfFormService and PdfFormService
   - Files:
     - `src/FluentPDF.Core/Services/IPdfFormService.cs`
     - `src/FluentPDF.Rendering/Services/PdfFormService.cs`
