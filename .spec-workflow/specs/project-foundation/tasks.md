@@ -309,7 +309,7 @@
        - Note that this enables testable architecture
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 5. Implement Serilog + OpenTelemetry logging infrastructure
+- [x] 5. Implement Serilog + OpenTelemetry logging infrastructure
   - Files:
     - `src/FluentPDF.Core/Logging/SerilogConfiguration.cs`
     - `src/FluentPDF.App/App.xaml.cs` (modify - add logging setup)

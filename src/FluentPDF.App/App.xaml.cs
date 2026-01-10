@@ -1,8 +1,11 @@
 using FluentPDF.App.Services;
+using FluentPDF.Core.Logging;
 using FluentPDF.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Navigation;
+using Serilog;
 
 namespace FluentPDF.App
 {
@@ -22,10 +25,22 @@ namespace FluentPDF.App
         {
             this.InitializeComponent();
 
+            // Initialize Serilog before anything else
+            Log.Logger = SerilogConfiguration.CreateLogger();
+
+            Log.Information("FluentPDF application starting");
+
             // Configure dependency injection container
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
+                    // Configure logging with Serilog
+                    services.AddLogging(builder =>
+                    {
+                        builder.ClearProviders();
+                        builder.AddSerilog(dispose: true);
+                    });
+
                     // Register services
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ITelemetryService, TelemetryService>();
@@ -84,7 +99,22 @@ namespace FluentPDF.App
         /// <param name="e">Details about the navigation failure</param>
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
-            throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
+            var correlationId = Guid.NewGuid();
+            Log.Fatal(e.Exception, "Navigation failed to {PageType} [CorrelationId: {CorrelationId}]",
+                e.SourcePageType.FullName, correlationId);
+            throw new Exception($"Failed to load Page {e.SourcePageType.FullName}. CorrelationId: {correlationId}");
+        }
+
+        /// <summary>
+        /// Invoked when the application exits. Ensures proper disposal of Serilog.
+        /// </summary>
+        /// <param name="sender">The application instance.</param>
+        /// <param name="e">Event arguments.</param>
+        protected override void OnExit(ExitEventArgs e)
+        {
+            Log.Information("FluentPDF application shutting down");
+            Log.CloseAndFlush();
+            base.OnExit(e);
         }
     }
 }
