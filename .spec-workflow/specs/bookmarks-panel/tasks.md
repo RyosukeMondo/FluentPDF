@@ -677,7 +677,7 @@
     7. Log implementation with artifacts documenting test coverage
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 9. Add ArchUnitNET rules for bookmark architecture
+- [x] 9. Add ArchUnitNET rules for bookmark architecture
   - Files:
     - `tests/FluentPDF.Architecture.Tests/BookmarksArchitectureTests.cs`
   - Create architecture tests for bookmark components
