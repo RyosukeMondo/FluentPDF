@@ -133,7 +133,7 @@
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   - _Prompt: Role: Frontend Developer with expertise in data visualization and reporting | Task: Implement ReportGenerator to create HTML performance reports from benchmark results. Design HTML template with sections: Summary (benchmark name, P50/P95/P99, mean, stddev in table format), Memory Profile (Gen0/1/2 collections, allocated bytes, native memory), Comparison (baseline vs current with % change, highlight regressions in red and improvements in green), Charts (latency distribution histogram using Chart.js or similar). Read benchmark results from BenchmarkDotNet JSON export and baseline data, populate template, write to output file. | Restrictions: Report must be standalone HTML (no external dependencies except CDN for charting library), must be accessible without specialized tools, charts must be responsive, use semantic HTML and WCAG-compliant colors. | Success: Report generates successfully from benchmark results, HTML is well-formatted and readable, comparison section correctly highlights regressions and improvements, charts render correctly, report opens in any browser without errors._
 
-- [-] 10. Integration testing of full benchmark suite
+- [x] 10. Integration testing of full benchmark suite
   - Files:
     - `tests/FluentPDF.Benchmarks.Tests/Integration/BenchmarkSuiteTests.cs` (create)
   - Create integration tests verifying benchmark suite execution
