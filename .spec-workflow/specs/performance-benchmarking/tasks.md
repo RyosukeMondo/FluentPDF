@@ -46,7 +46,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9_
   - _Prompt: Role: Performance Engineer with expertise in rendering pipeline optimization | Task: Implement RenderingBenchmarks suite measuring PDF page rendering performance. Create benchmark methods for each PDF type (text-heavy, image-heavy, vector, complex) at multiple zoom levels (50%, 100%, 150%, 200%). Use [Arguments] attribute for parameterized benchmarks. Initialize services in GlobalSetup using DI container, load all sample PDFs. Implement GlobalCleanup to dispose resources. Track P50/P95/P99 latencies and memory allocations via MemoryDiagnoser. | Restrictions: Must use same service initialization as main app, do not mock services (measure real performance), ensure resources are properly disposed, keep benchmark methods focused (one operation per method). | Success: Benchmarks run successfully, P99 latency for text-heavy 100% zoom < 1 second, all PDF types render without errors, memory profiling shows allocations, results exported to JSON/HTML._
 
-- [ ] 4. Implement MemoryBenchmarks suite
+- [x] 4. Implement MemoryBenchmarks suite
   - Files:
     - `tests/FluentPDF.Benchmarks/Suites/MemoryBenchmarks.cs` (create)
   - Create benchmark class with [MemoryDiagnoser] and [NativeMemoryProfiler] attributes
