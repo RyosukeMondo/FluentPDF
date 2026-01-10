@@ -1,0 +1,193 @@
+# Tasks Document
+
+## Implementation Tasks
+
+- [ ] 1. Add Mammoth.NET NuGet package and create DOCX parser wrapper
+  - Files:
+    - `src/FluentPDF.Rendering/FluentPDF.Rendering.csproj` (add package reference)
+    - `src/FluentPDF.Rendering/Services/DocxParserService.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/DocxParserServiceTests.cs`
+  - Add Mammoth.NET NuGet package (latest stable version)
+  - Create wrapper service for Mammoth document converter
+  - Implement HTML extraction with image embedding (base64 data URIs)
+  - Add error handling for parsing failures
+  - Write unit tests with sample DOCX files
+  - Purpose: Provide semantic DOCX parsing with clean HTML output
+  - _Leverage: Mammoth.NET library, Result<T> pattern, Serilog logging_
+  - _Requirements: 1.1-1.7_
+  - _Prompt: Role: .NET Developer specializing in document parsing | Task: Integrate Mammoth.NET for DOCX to HTML conversion, implementing DocxParserService with error handling and tests | Restrictions: Must handle embedded images, validate DOCX format, follow Result<T> pattern | Success: Can parse sample DOCX files to well-formed HTML with embedded images_
+
+- [ ] 2. Implement WebView2 HTML to PDF service
+  - Files:
+    - `src/FluentPDF.Core/Services/IHtmlToPdfService.cs`
+    - `src/FluentPDF.Rendering/Services/HtmlToPdfService.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/HtmlToPdfServiceTests.cs`
+  - Create IHtmlToPdfService interface in Core
+  - Implement HtmlToPdfService using CoreWebView2
+  - Initialize WebView2 environment as singleton
+  - Implement NavigateToString and PrintToPdfAsync workflow
+  - Add optimized print settings (backgrounds, margins, scale)
+  - Handle WebView2 runtime detection and errors
+  - Add queuing mechanism for concurrent conversions
+  - Write unit tests with mocked WebView2
+  - Purpose: Convert HTML to PDF using Chromium rendering engine
+  - _Leverage: WebView2 SDK, CoreWebView2.PrintToPdfAsync, Result<T> pattern_
+  - _Requirements: 2.1-2.8_
+  - _Prompt: Role: Windows Developer specializing in WebView2 integration | Task: Implement HTML to PDF service using CoreWebView2.PrintToPdfAsync with optimized settings and error handling | Restrictions: Must initialize environment once, queue conversions, handle missing runtime | Success: Generates high-quality PDFs from HTML with proper formatting_
+
+- [ ] 3. Create DOCX to PDF converter orchestrator service
+  - Files:
+    - `src/FluentPDF.Core/Services/IDocxConverterService.cs`
+    - `src/FluentPDF.Core/Models/ConversionOptions.cs`
+    - `src/FluentPDF.Core/Models/ConversionResult.cs`
+    - `src/FluentPDF.Rendering/Services/DocxConverterService.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/DocxConverterServiceTests.cs`
+  - Create IDocxConverterService interface
+  - Create ConversionOptions and ConversionResult models
+  - Implement DocxConverterService orchestrating: parse → render → validate
+  - Add input file validation (exists, valid DOCX format)
+  - Implement timeout handling (default 60 seconds)
+  - Add temporary file cleanup logic
+  - Log conversion metrics (time, file size, page count)
+  - Write comprehensive unit tests with mocked dependencies
+  - Purpose: Orchestrate complete DOCX to PDF conversion pipeline
+  - _Leverage: DocxParserService, HtmlToPdfService, Result<T> pattern_
+  - _Requirements: 3.1-3.9_
+  - _Prompt: Role: Backend Service Developer | Task: Implement DocxConverterService orchestrating Mammoth parsing and WebView2 rendering with validation, timeout, and cleanup | Restrictions: Must handle all error scenarios, clean up temp files, follow async patterns | Success: End-to-end conversion pipeline with comprehensive error handling and logging_
+
+- [ ] 4. Implement LibreOffice quality validation service
+  - Files:
+    - `src/FluentPDF.Core/Services/IQualityValidationService.cs`
+    - `src/FluentPDF.Core/Models/QualityReport.cs`
+    - `src/FluentPDF.Rendering/Services/LibreOfficeValidator.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/LibreOfficeValidatorTests.cs`
+  - Create IQualityValidationService interface
+  - Create QualityReport model with SSIM score and comparison paths
+  - Implement LibreOffice CLI detection (soffice --version)
+  - Implement DOCX to PDF conversion via LibreOffice CLI
+  - Integrate PdfRenderingService to render both PDFs to images
+  - Implement SSIM calculation using OpenCvSharp
+  - Save comparison images when score < threshold
+  - Handle LibreOffice not installed gracefully (skip validation)
+  - Write unit tests with mocked rendering service
+  - Purpose: Validate conversion quality against LibreOffice baseline
+  - _Leverage: PdfRenderingService, OpenCvSharp SSIM, Process class for CLI_
+  - _Requirements: 4.1-4.8_
+  - _Prompt: Role: Quality Engineer specializing in image comparison | Task: Implement quality validation comparing FluentPDF output to LibreOffice baseline using SSIM metrics | Restrictions: Must handle LibreOffice not installed, save comparison images, calculate SSIM correctly | Success: Can compare PDFs and report quality scores with visual difference analysis_
+
+- [ ] 5. Create ConversionViewModel with file selection and progress tracking
+  - Files:
+    - `src/FluentPDF.App/ViewModels/ConversionViewModel.cs`
+    - `tests/FluentPDF.App.Tests/ViewModels/ConversionViewModelTests.cs`
+  - Implement ViewModel with CommunityToolkit.Mvvm source generators
+  - Add observable properties for file paths, progress, status, results
+  - Add commands: SelectDocxFile, SelectOutputPath, Convert, OpenPdf
+  - Implement progress reporting during conversion
+  - Add error handling with user-friendly messages
+  - Implement navigation to PdfViewerPage after conversion
+  - Write headless unit tests with mocked services
+  - Purpose: Provide presentation logic for conversion UI
+  - _Leverage: ObservableObject, RelayCommand, IDocxConverterService, INavigationService_
+  - _Requirements: 5.1-5.8_
+  - _Prompt: Role: WinUI MVVM Developer | Task: Create ConversionViewModel with file selection, progress tracking, and conversion orchestration | Restrictions: Must be UI-agnostic, follow MVVM strictly, handle all error scenarios | Success: ViewModel provides complete conversion workflow with progress and error handling_
+
+- [ ] 6. Create ConversionPage UI with file selection and conversion controls
+  - Files:
+    - `src/FluentPDF.App/Views/ConversionPage.xaml`
+    - `src/FluentPDF.App/Views/ConversionPage.xaml.cs`
+  - Design XAML layout with file selection, options, conversion controls
+  - Add file path displays with browse buttons
+  - Add quality validation checkbox
+  - Add conversion button with progress bar
+  - Add results panel with metrics (size, time, quality score)
+  - Add "Open PDF" button to view converted document
+  - Bind all controls to ViewModel commands and properties
+  - Add keyboard shortcut Ctrl+Shift+C for conversion
+  - Purpose: Provide conversion UI following Fluent Design
+  - _Leverage: WinUI 3 controls, ConversionViewModel, FileOpenPicker, FileSavePicker_
+  - _Requirements: 5.1-5.8_
+  - _Prompt: Role: WinUI Frontend Developer | Task: Create ConversionPage UI with file selection, progress tracking, and results display | Restrictions: Must use data binding, follow Fluent Design, ensure accessibility | Success: Complete conversion workflow from file selection to viewing converted PDF_
+
+- [ ] 7. Register conversion services in DI container and add navigation
+  - Files:
+    - `src/FluentPDF.App/App.xaml.cs` (modify)
+    - `src/FluentPDF.App/MainWindow.xaml` (add navigation option)
+  - Register Mammoth.IDocumentConverter as singleton
+  - Register IHtmlToPdfService and implementation
+  - Register IQualityValidationService and implementation
+  - Register IDocxConverterService and implementation
+  - Register ConversionViewModel as transient
+  - Add navigation to ConversionPage from MainWindow
+  - Test service resolution and dependencies
+  - Purpose: Wire up all conversion components
+  - _Leverage: Existing IHost DI container, INavigationService_
+  - _Requirements: All integration_
+  - _Prompt: Role: Application Integration Engineer | Task: Register all conversion services in DI container and add navigation to ConversionPage | Restrictions: Follow existing DI patterns, ensure proper service lifetimes | Success: All services registered and ConversionPage accessible from app_
+
+- [ ] 8. Add integration tests with real Mammoth and WebView2
+  - Files:
+    - `tests/FluentPDF.Rendering.Tests/Integration/DocxConversionIntegrationTests.cs`
+    - `tests/Fixtures/sample.docx` (add sample DOCX)
+  - Create integration test class with [Trait("Category", "Integration")]
+  - Add sample DOCX files (simple, with images, complex formatting)
+  - Test end-to-end conversion with real libraries
+  - Verify PDF output is valid and has correct page count
+  - Test quality validation with LibreOffice (if installed)
+  - Verify resource cleanup (no WebView2 or file handle leaks)
+  - Test error scenarios (invalid DOCX, missing WebView2 mock)
+  - Purpose: Verify conversion pipeline with real dependencies
+  - _Leverage: Mammoth.NET, WebView2, LibreOfficeValidator_
+  - _Requirements: All functional requirements_
+  - _Prompt: Role: QA Integration Engineer | Task: Create integration tests for DOCX conversion using real Mammoth and WebView2 | Restrictions: Must test with real dependencies, verify PDF validity, check resource cleanup | Success: Integration tests pass with real conversion pipeline_
+
+- [ ] 9. Add ArchUnitNET rules for conversion services
+  - Files:
+    - `tests/FluentPDF.Architecture.Tests/ConversionArchitectureTests.cs`
+  - Add rule: Conversion services must implement interfaces
+  - Add rule: Core must not depend on Mammoth or WebView2
+  - Add rule: ViewModels must not reference conversion implementations
+  - Add rule: Services must return Result<T> for operations
+  - Purpose: Enforce architectural rules for conversion components
+  - _Leverage: Existing ArchUnitNET tests_
+  - _Requirements: Architecture integrity_
+  - _Prompt: Role: Software Architect | Task: Add ArchUnitNET tests enforcing conversion service architecture rules | Restrictions: Must catch violations, use descriptive Because clauses | Success: Architecture tests enforce clean boundaries for conversion components_
+
+- [ ] 10. Update CI/CD to support WebView2 runtime in tests
+  - Files:
+    - `.github/workflows/test.yml` (modify)
+  - Add step to install WebView2 runtime in CI environment
+  - Verify WebView2 availability before running conversion tests
+  - Add conditional test execution if WebView2 unavailable
+  - Update test artifacts to include conversion outputs
+  - Purpose: Enable conversion tests in CI/CD pipeline
+  - _Leverage: Existing GitHub Actions workflows_
+  - _Requirements: CI/CD infrastructure_
+  - _Prompt: Role: DevOps Engineer | Task: Update CI workflow to support WebView2 runtime for conversion tests | Restrictions: Must install WebView2, verify availability, handle missing runtime gracefully | Success: Conversion tests run successfully in CI with WebView2_
+
+- [ ] 11. Final testing and documentation
+  - Files:
+    - `docs/ARCHITECTURE.md` (update)
+    - `docs/CONVERSION.md` (new)
+    - `README.md` (update)
+  - Perform end-to-end testing of conversion feature
+  - Test with various DOCX files (simple, complex, images)
+  - Verify quality validation works with LibreOffice
+  - Update architecture documentation with conversion components
+  - Create CONVERSION.md documenting usage and quality validation
+  - Update README with conversion feature description
+  - Verify all requirements met
+  - Purpose: Ensure feature is complete and documented
+  - _Leverage: All previous tasks_
+  - _Requirements: All requirements_
+  - _Prompt: Role: Technical Writer and QA Lead | Task: Complete final validation and documentation for DOCX conversion feature | Restrictions: Must verify all requirements, ensure documentation accuracy | Success: Feature is production-ready with complete documentation_
+
+## Summary
+
+This spec implements DOCX to PDF conversion:
+- Mammoth.NET for semantic DOCX parsing
+- WebView2 for high-quality PDF generation
+- LibreOffice quality validation with SSIM comparison
+- Complete UI for file selection and conversion
+- Comprehensive error handling and logging
+- Integration tests with real dependencies
+- Architecture enforcement with ArchUnitNET

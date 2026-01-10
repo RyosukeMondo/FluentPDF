@@ -137,6 +137,34 @@
             </summary>
             <returns>Assembly version string.</returns>
         </member>
+        <member name="T:FluentPDF.Core.Models.PageRange">
+            <summary>
+            Represents a range of pages in a PDF document.
+            Pages are 1-based (first page is 1, not 0).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PageRange.StartPage">
+            <summary>
+            Gets the starting page number (inclusive, 1-based).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PageRange.EndPage">
+            <summary>
+            Gets the ending page number (inclusive, 1-based).
+            For single page ranges, EndPage equals StartPage.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PageRange.PageCount">
+            <summary>
+            Gets the total number of pages in this range.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PageRange.IsValid">
+            <summary>
+            Validates that the page range is valid (positive numbers, StartPage &lt;= EndPage).
+            </summary>
+            <returns>True if the range is valid, false otherwise.</returns>
+        </member>
         <member name="T:FluentPDF.Core.Models.PdfDocument">
             <summary>
             Represents a loaded PDF document with its metadata and native handle.
@@ -204,6 +232,128 @@
             <summary>
             Temporary placeholder class for initial project setup.
             Will be removed when actual domain classes are implemented.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IDocumentEditingService">
+            <summary>
+            Service contract for PDF document structure manipulation operations.
+            Provides methods for merging, splitting, and optimizing PDF documents using lossless operations.
+            All operations return Result&lt;T&gt; for consistent error handling and support progress reporting and cancellation.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDocumentEditingService.MergeAsync(System.Collections.Generic.IEnumerable{System.String},System.String,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>
+            Merges multiple PDF documents into a single output file.
+            All source documents are combined in the order provided, preserving page dimensions and quality.
+            </summary>
+            <param name="sourcePaths">Paths to PDF files to merge (minimum 2 files required).</param>
+            <param name="outputPath">Full path where the merged PDF will be saved.</param>
+            <param name="progress">Optional progress reporter for operations (reports percentage 0-100).</param>
+            <param name="ct">Cancellation token to abort the operation.</param>
+            <returns>
+            A Result containing the output file path if successful, or a PdfError if the operation failed.
+            Error codes: PDF_FILE_NOT_FOUND, PDF_INVALID_FORMAT, PDF_CORRUPTED, PDF_REQUIRES_PASSWORD,
+            PDF_MERGE_FAILED, PDF_INSUFFICIENT_DISK_SPACE.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDocumentEditingService.SplitAsync(System.String,System.String,System.String,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>
+            Splits a PDF document by extracting specified page ranges into a new document.
+            Page ranges are specified using comma-separated notation (e.g., "1-5, 10, 15-20").
+            </summary>
+            <param name="sourcePath">Path to the PDF file to split.</param>
+            <param name="pageRanges">Page range specification (e.g., "1-5, 10, 15-20"). Pages are 1-based.</param>
+            <param name="outputPath">Full path where the split PDF will be saved.</param>
+            <param name="progress">Optional progress reporter for operations (reports percentage 0-100).</param>
+            <param name="ct">Cancellation token to abort the operation.</param>
+            <returns>
+            A Result containing the output file path if successful, or a PdfError if the operation failed.
+            Error codes: PDF_FILE_NOT_FOUND, PDF_INVALID_FORMAT, PDF_PAGE_INVALID, PDF_SPLIT_FAILED,
+            PDF_VALIDATION_FAILED (for invalid page range syntax).
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDocumentEditingService.OptimizeAsync(System.String,System.String,FluentPDF.Core.Services.OptimizationOptions,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <summary>
+            Optimizes a PDF document to reduce file size through lossless compression and structure optimization.
+            Does NOT recompress images or fonts. Optionally linearizes for fast web viewing.
+            </summary>
+            <param name="sourcePath">Path to the PDF file to optimize.</param>
+            <param name="outputPath">Full path where the optimized PDF will be saved.</param>
+            <param name="options">Optimization settings (compression, linearization, etc.).</param>
+            <param name="progress">Optional progress reporter for operations (reports percentage 0-100).</param>
+            <param name="ct">Cancellation token to abort the operation.</param>
+            <returns>
+            A Result containing OptimizationResult with metrics if successful, or a PdfError if the operation failed.
+            Error codes: PDF_FILE_NOT_FOUND, PDF_INVALID_FORMAT, PDF_OPTIMIZE_FAILED,
+            PDF_SIZE_INCREASED (warning if optimization increased file size).
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.OptimizationOptions">
+            <summary>
+            Configuration options for PDF optimization operations.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationOptions.CompressStreams">
+            <summary>
+            Compress content streams using lossless compression. Default: true.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationOptions.RemoveUnusedObjects">
+            <summary>
+            Remove unused objects from the PDF structure. Default: true.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationOptions.DeduplicateResources">
+            <summary>
+            Deduplicate duplicate resources (fonts, images, etc.). Default: true.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationOptions.Linearize">
+            <summary>
+            Linearize the PDF for fast web viewing (byte-serving). Default: false.
+            Linearization reorganizes the PDF structure so the first page can be displayed before the entire file downloads.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationOptions.PreserveEncryption">
+            <summary>
+            Preserve encryption settings from the source document. Default: true.
+            If false, encryption will be removed from the output.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Services.OptimizationResult">
+            <summary>
+            Results and metrics from a PDF optimization operation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationResult.OutputPath">
+            <summary>
+            Path to the optimized output file.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationResult.OriginalSize">
+            <summary>
+            Original file size in bytes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationResult.OptimizedSize">
+            <summary>
+            Optimized file size in bytes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationResult.ReductionPercentage">
+            <summary>
+            Percentage reduction in file size. Negative if file size increased.
+            Calculated as: 100.0 * (1.0 - OptimizedSize / OriginalSize)
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationResult.WasLinearized">
+            <summary>
+            Indicates whether the output was linearized for fast web viewing.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.OptimizationResult.ProcessingTime">
+            <summary>
+            Total time taken to perform the optimization.
             </summary>
         </member>
         <member name="T:FluentPDF.Core.Services.IPdfDocumentService">
@@ -315,6 +465,43 @@
         </member>
         <member name="M:FluentPDF.Core.Services.TelemetryService.TrackException(System.Exception,System.Collections.Generic.Dictionary{System.String,System.Object})">
             <inheritdoc/>
+        </member>
+        <member name="T:FluentPDF.Core.Utilities.PageRangeParser">
+            <summary>
+            Utility for parsing page range strings into structured PageRange objects.
+            Supports formats like "1-5", "10", "1-5, 10, 15-20".
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Utilities.PageRangeParser.Parse(System.String)">
+             <summary>
+             Parses a page range string into a list of PageRange objects.
+             </summary>
+             <param name="rangeString">
+             Page range specification using comma-separated values.
+             Examples: "1-5", "10", "1-5, 10, 15-20", "1-3,7,10-15"
+             Whitespace is ignored. Pages are 1-based.
+             </param>
+             <returns>
+             A Result containing a list of PageRange objects if successful,
+             or a PdfError with ErrorCategory.Validation if the format is invalid.
+             </returns>
+             <remarks>
+             Valid formats:
+             - Single page: "5" → [(5,5)]
+             - Range: "1-5" → [(1,5)]
+             - Multiple ranges: "1-5, 10, 15-20" → [(1,5), (10,10), (15,20)]
+            
+             Invalid formats return validation errors:
+             - Null or empty string
+             - Negative or zero page numbers
+             - Invalid syntax (missing numbers, extra dashes, etc.)
+             - Reverse ranges where start > end
+             </remarks>
+        </member>
+        <member name="M:FluentPDF.Core.Utilities.PageRangeParser.ParseSingleRange(System.String)">
+            <summary>
+            Parses a single range part (either "5" or "1-5").
+            </summary>
         </member>
     </members>
 </doc>

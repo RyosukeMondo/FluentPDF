@@ -1,0 +1,215 @@
+# Tasks Document
+
+## Implementation Tasks
+
+- [ ] 1. Implement PDFium form P/Invoke declarations with SafeHandle
+  - Files:
+    - `src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs`
+    - `src/FluentPDF.Rendering/Interop/SafePdfFormHandle.cs`
+    - `tests/FluentPDF.Rendering.Tests/Interop/PdfiumFormInteropTests.cs`
+  - Create P/Invoke declarations for PDFium form API functions
+  - Implement SafePdfFormHandle for automatic resource cleanup
+  - Add error code checking for all form API calls
+  - Write unit tests for form P/Invoke layer
+  - Purpose: Provide safe managed wrapper for PDFium form API
+  - _Leverage: Existing SafeHandle patterns, PdfiumInterop structure_
+  - _Requirements: 1.1, 1.2_
+  - _Prompt: Role: Native Interop Developer specializing in P/Invoke and form APIs | Task: Create PDFium form P/Invoke declarations (FPDFDOC_InitFormFillEnvironment, FPDFPage_GetFormFieldCount, FPDFFormField_GetType, FPDFFormField_GetValue, FPDFFormField_SetValue, etc.) following design.md Component 1, implementing SafePdfFormHandle for resource cleanup, adding comprehensive error checking, and writing unit tests with sample form PDF | Restrictions: Must use SafeHandle for form environment handle, do not skip error checking, follow existing P/Invoke patterns, keep file under 500 lines | Success: All form API functions have P/Invoke declarations, SafeHandle automatically disposes resources, tests verify basic form operations work with sample PDF_
+
+- [ ] 2. Create form field domain models (PdfFormField, FormFieldType)
+  - Files:
+    - `src/FluentPDF.Core/Models/PdfFormField.cs`
+    - `src/FluentPDF.Core/Models/FormFieldType.cs`
+    - `src/FluentPDF.Core/Models/PdfRectangle.cs`
+    - `tests/FluentPDF.Core.Tests/Models/PdfFormFieldTests.cs`
+  - Implement PdfFormField model with all metadata properties
+  - Implement FormFieldType enum (Text, Checkbox, RadioButton, etc.)
+  - Implement PdfRectangle record for field bounds
+  - Add validation and error handling
+  - Write unit tests for models
+  - Purpose: Provide domain models for form field entities
+  - _Leverage: Existing model patterns from Core project_
+  - _Requirements: Design Component 2_
+  - _Prompt: Role: C# Developer specializing in domain modeling | Task: Create PdfFormField model with properties (Name, Type, PageNumber, Bounds, TabOrder, Value, IsChecked, IsRequired, IsReadOnly, MaxLength, FormatMask, GroupName, NativeHandle) following design.md Component 2, implement FormFieldType enum, create PdfRectangle record, add validation for required properties, and write comprehensive unit tests | Restrictions: Keep models immutable except Value and IsChecked properties, do not add business logic to models, follow structure.md code organization | Success: Models compile without errors, properties are properly typed, validation works correctly, tests verify model behavior_
+
+- [ ] 3. Implement IPdfFormService and PdfFormService
+  - Files:
+    - `src/FluentPDF.Core/Services/IPdfFormService.cs`
+    - `src/FluentPDF.Rendering/Services/PdfFormService.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/PdfFormServiceTests.cs`
+  - Create service interface with form detection and manipulation methods
+  - Implement GetFormFieldsAsync to enumerate all fields on a page
+  - Implement GetFormFieldAtPointAsync for mouse hit testing
+  - Implement SetFieldValueAsync and SetCheckboxStateAsync
+  - Implement SaveFormDataAsync for persisting form data
+  - Implement GetFieldsInTabOrder for keyboard navigation
+  - Add comprehensive error handling with PdfFormError codes
+  - Write unit tests with mocked PdfiumFormInterop
+  - Purpose: Provide business logic for form field operations
+  - _Leverage: PdfiumFormInterop, PdfError, Result<T>, Serilog logging_
+  - _Requirements: 1.1-1.7, 2.1-2.10, 6.1-6.10, 7.1-7.8_
+  - _Prompt: Role: Backend Service Developer specializing in form processing | Task: Implement IPdfFormService interface with methods (GetFormFieldsAsync, GetFormFieldAtPointAsync, SetFieldValueAsync, SetCheckboxStateAsync, SaveFormDataAsync, GetFieldsInTabOrder) following design.md Component 3 and 4, using PdfiumFormInterop for all PDFium calls, implementing comprehensive error handling with error codes (FORM_NO_FIELDS, FORM_FIELD_NOT_FOUND, FORM_INVALID_VALUE, FORM_SAVE_FAILED, FORM_READONLY_FIELD), adding structured logging for all operations, and writing thorough unit tests with mocked dependencies | Restrictions: Do not skip error checking, log all form operations with correlation IDs, follow Result<T> pattern consistently, keep service methods under 50 lines each | Success: Service implements interface contract exactly, all error scenarios return appropriate error codes, logging includes field metadata, tests verify all operations, tab order sorting works correctly_
+
+- [ ] 4. Implement IFormValidationService and FormValidationService
+  - Files:
+    - `src/FluentPDF.Core/Services/IFormValidationService.cs`
+    - `src/FluentPDF.Rendering/Services/FormValidationService.cs`
+    - `src/FluentPDF.Core/Models/FormValidationResult.cs`
+    - `src/FluentPDF.Core/Models/FieldValidationError.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/FormValidationServiceTests.cs`
+  - Create validation service interface
+  - Implement ValidateField for single field validation
+  - Implement ValidateAllFields for form-wide validation
+  - Add validation rules: required fields, max length, format masks, read-only
+  - Create FormValidationResult and FieldValidationError models
+  - Write comprehensive validation tests
+  - Purpose: Validate form field values against constraints
+  - _Leverage: PdfFormField model, PdfError, Result<T>_
+  - _Requirements: 4.1-4.10_
+  - _Prompt: Role: Validation Engineer specializing in data validation | Task: Implement IFormValidationService with methods (ValidateField, ValidateAllFields) following design.md Component 5 and 6, creating FormValidationResult and FieldValidationError models, implementing validation rules (required field empty, max length exceeded, invalid format via regex, read-only field modification), adding clear error messages for each validation type, and writing comprehensive tests covering all validation scenarios | Restrictions: Keep validation logic pure (no side effects), use regex for format mask validation, do not skip any validation rules, ensure error messages are user-friendly | Success: All validation rules work correctly, error messages are clear and actionable, ValidateAllFields aggregates all errors, tests cover edge cases (empty strings, special characters, boundary values)_
+
+- [ ] 5. Create FormFieldControl WinUI custom control
+  - Files:
+    - `src/FluentPDF.App/Controls/FormFieldControl.xaml`
+    - `src/FluentPDF.App/Controls/FormFieldControl.xaml.cs`
+    - `src/FluentPDF.App/Controls/FormFieldControlTemplates.xaml` (resource dictionary)
+    - `tests/FluentPDF.App.Tests/Controls/FormFieldControlTests.cs`
+  - Create custom WinUI control for form field overlay
+  - Implement control templates for Text, Checkbox, RadioButton types
+  - Add visual states: Normal, Hover, Focused, Error, ReadOnly
+  - Add dependency properties: Field, ZoomLevel, IsInErrorState
+  - Implement positioning based on PdfRectangle and zoom
+  - Wire up ValueChanged and FocusChanged events
+  - Write UI tests
+  - Purpose: Provide WinUI control for form field input overlays
+  - _Leverage: WinUI 3 TextBox, CheckBox, RadioButton, Visual State Manager_
+  - _Requirements: 2.1-2.10, 3.1-3.9, 7.1-7.8_
+  - _Prompt: Role: WinUI Frontend Developer specializing in custom controls | Task: Create FormFieldControl custom WinUI control following design.md Component 7, implementing XAML templates for Text (TextBox with border), Checkbox (CheckBox with styling), and RadioButton types, adding visual states (Normal, Hover, Focused, Error, ReadOnly) with appropriate styling, creating dependency properties (Field, ZoomLevel, IsInErrorState), implementing position calculation from PdfRectangle and zoom level, wiring up ValueChanged and FocusChanged events, and writing UI tests | Restrictions: Use WinUI 3 controls only, follow Fluent Design guidelines, ensure keyboard accessibility, keep XAML readable with comments, do not add business logic in control (only view logic) | Success: Control renders correctly for all field types, visual states work, positioning aligns with PDF content at all zoom levels, events fire correctly, tests verify control behavior_
+
+- [ ] 6. Create FormFieldViewModel with form interaction logic
+  - Files:
+    - `src/FluentPDF.App/ViewModels/FormFieldViewModel.cs`
+    - `tests/FluentPDF.App.Tests/ViewModels/FormFieldViewModelTests.cs`
+  - Implement ViewModel with CommunityToolkit.Mvvm source generators
+  - Add observable properties: FormFields, FocusedField, HasFormFields, IsModified
+  - Add relay commands: LoadFormFieldsAsync, UpdateFieldValueAsync, ToggleCheckboxAsync, SaveFormAsync, ValidateFormAsync, FocusNextField, FocusPreviousField
+  - Implement tab order navigation logic
+  - Add dirty tracking (IsModified flag)
+  - Write comprehensive headless unit tests
+  - Purpose: Provide presentation logic for form field interactions
+  - _Leverage: ObservableObject, RelayCommand, IPdfFormService, IFormValidationService_
+  - _Requirements: All form requirements_
+  - _Prompt: Role: WinUI MVVM Developer specializing in form handling | Task: Create FormFieldViewModel following design.md Component 8, inheriting from ObservableObject, adding observable properties ([ObservableProperty] FormFields, FocusedField, HasFormFields, IsModified, ValidationMessage), implementing relay commands for all form operations (LoadFormFieldsAsync loads fields for page, UpdateFieldValueAsync updates and validates, ToggleCheckboxAsync handles checkbox clicks, SaveFormAsync validates then saves, FocusNextField/FocusPreviousField implement tab order), adding dirty tracking when fields modified, and writing comprehensive tests with mocked services | Restrictions: ViewModel must be UI-agnostic (except WinUI types), do not directly call PDFium, keep ViewModel under 500 lines, all commands must have proper error handling | Success: All observable properties fire PropertyChanged events, commands work correctly, tab order navigation functions, dirty tracking accurate, SaveFormAsync validates before saving, tests run headless without WinUI runtime_
+
+- [ ] 7. Integrate form field overlays into PdfViewerPage
+  - Files:
+    - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (modify)
+    - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs` (modify)
+    - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (modify - add FormFieldViewModel)
+  - Add Canvas for form field overlays in PdfViewerPage XAML
+  - Add ItemsControl bound to FormFieldViewModel.FormFields
+  - Create DataTemplate for FormFieldControl with positioning
+  - Add Tab key handling in code-behind for field navigation
+  - Add InfoBar for validation error display
+  - Update PdfViewerViewModel to include FormFieldViewModel
+  - Update form field positions on zoom/scroll changes
+  - Purpose: Integrate form functionality into PDF viewer UI
+  - _Leverage: Existing PdfViewerPage, FormFieldControl, FormFieldViewModel_
+  - _Requirements: 2.1-2.10, 5.1-5.9, 7.1-7.8_
+  - _Prompt: Role: WinUI Integration Engineer specializing in UI composition | Task: Modify PdfViewerPage to integrate form field overlays following design.md Component 9, adding Canvas overlay layer above Image control for form fields, adding ItemsControl bound to FormFieldViewModel.FormFields with DataTemplate for FormFieldControl instances, implementing positioning calculation (Canvas.Left = field.Bounds.Left * ZoomLevel, Canvas.Top = field.Bounds.Top * ZoomLevel), adding Tab/Shift+Tab key handlers in code-behind to call FormFieldViewModel navigation commands, adding InfoBar at top for validation errors, and updating form positions when zoom or scroll changes | Restrictions: Do not add business logic in code-behind (only view logic), use data binding for all dynamic content, ensure keyboard navigation works correctly, maintain separation between form overlays and page content | Success: Form field overlays render at correct positions, overlays move/scale with zoom and scroll, Tab navigation works, validation errors display in InfoBar, forms integrate seamlessly with PDF viewer_
+
+- [ ] 8. Register form services in DI container
+  - Files:
+    - `src/FluentPDF.App/App.xaml.cs` (modify)
+  - Register IPdfFormService and IFormValidationService in DI container
+  - Register FormFieldViewModel as transient
+  - Initialize form environment on PDF load
+  - Handle form cleanup on app exit
+  - Purpose: Wire up form services in application
+  - _Leverage: Existing IHost DI container_
+  - _Requirements: All service requirements_
+  - _Prompt: Role: Application Integration Engineer specializing in dependency injection | Task: Modify App.xaml.cs ConfigureServices to register form services (AddSingleton<IPdfFormService, PdfFormService>, AddSingleton<IFormValidationService, FormValidationService>, AddTransient<FormFieldViewModel>), initialize form environment when document loads, add cleanup in OnExit to dispose form handles, and verify all services resolve correctly | Restrictions: Follow existing DI registration patterns, do not skip service registration, ensure proper cleanup, log initialization and shutdown | Success: All form services registered and resolvable, FormFieldViewModel gets dependencies injected, form environment initializes on document load, cleanup occurs on app exit, DI container resolves all types correctly_
+
+- [ ] 9. Add ArchUnitNET rules for form layer
+  - Files:
+    - `tests/FluentPDF.Architecture.Tests/FormArchitectureTests.cs`
+  - Create architecture test file for form layer rules
+  - Add rule: Form P/Invoke methods must be in Rendering.Interop namespace
+  - Add rule: FormFieldControl must be in App/Controls
+  - Add rule: FormFieldViewModel uses service interfaces, not direct PDFium
+  - Add rule: Form services implement interfaces
+  - Purpose: Enforce architectural rules for form components
+  - _Leverage: Existing ArchUnitNET tests_
+  - _Requirements: Architecture integrity_
+  - _Prompt: Role: Software Architect specializing in architecture testing | Task: Create FormArchitectureTests.cs following design.md testing strategy, implementing ArchUnitNET rules (FormPInvoke_ShouldOnly_ExistIn_RenderingInterop checks form P/Invoke in correct namespace, FormControls_Should_BeIn_AppControls checks FormFieldControl location, ViewModels_ShouldNot_Reference_FormInterop checks ViewModels use interfaces, FormServices_Should_ImplementInterfaces checks all services have interfaces), adding descriptive .Because() clauses, and verifying tests catch violations | Restrictions: Do not skip architecture rules, test all violations by intentionally breaking rules, use clear error messages, keep test file under 500 lines | Success: All architecture tests pass, tests catch violations when rules broken, rules enforce clean architecture boundaries, test output clearly explains violations_
+
+- [ ] 10. Integration testing with real PDFium and sample form PDFs
+  - Files:
+    - `tests/FluentPDF.Rendering.Tests/Integration/FormFillingIntegrationTests.cs`
+    - `tests/Fixtures/sample-form.pdf` (add sample form PDF - IRS 1040 or W-4 form)
+  - Create integration tests using real PDFium (not mocked)
+  - Add sample form PDF files to test fixtures
+  - Test form field detection and enumeration
+  - Test filling text fields and persisting data
+  - Test checkbox and radio button toggling
+  - Test form validation with required fields
+  - Test save and reload workflow
+  - Verify memory cleanup (no handle leaks)
+  - Purpose: Verify all form components work together with real PDFium
+  - _Leverage: PDFium, PdfFormService, FormValidationService_
+  - _Requirements: All functional requirements_
+  - _Prompt: Role: QA Integration Engineer specializing in form testing | Task: Create FormFillingIntegrationTests.cs following design.md testing strategy, adding sample form PDF (IRS 1040 or W-4) to fixtures, implementing tests (LoadFormPdf_DetectsFields verifies field enumeration, FillTextField_AndSave_Persists verifies text input and save, ToggleCheckbox_Updates verifies checkbox state, SelectRadioButton_DeselectsOthers verifies radio groups, ValidateRequiredFields_Fails verifies validation, SaveAndReload_PreservesData verifies persistence, MemoryCleanup_NoLeaks verifies resource cleanup), using real PDFium (not mocked), and ensuring tests run reliably in CI | Restrictions: Do not mock PDFium in integration tests, ensure test PDFs committed to repo (small files), tests must clean up resources, add [Trait("Category", "Integration")] | Success: All integration tests pass with real PDFium, form PDF loads and fields detected, text fields fill correctly, checkboxes toggle, validation works, save/reload preserves data, no resource leaks_
+
+- [ ] 11. Add form validation error display in UI
+  - Files:
+    - `src/FluentPDF.App/Controls/ValidationErrorPanel.xaml`
+    - `src/FluentPDF.App/Controls/ValidationErrorPanel.xaml.cs`
+    - `src/FluentPDF.App/Converters/ValidationErrorToStringConverter.cs`
+  - Create ValidationErrorPanel control for displaying validation errors
+  - Add value converter for formatting validation errors
+  - Integrate panel into PdfViewerPage (InfoBar at top)
+  - Show/hide panel based on validation state
+  - Add "Go to field" functionality to jump to invalid fields
+  - Purpose: Provide clear visual feedback for validation errors
+  - _Leverage: WinUI InfoBar, FormValidationResult_
+  - _Requirements: 4.3-4.10_
+  - _Prompt: Role: UX Developer specializing in error display | Task: Create ValidationErrorPanel WinUI control (InfoBar-based) for displaying form validation errors, adding ValidationErrorToStringConverter to format error messages (RequiredFieldEmpty -> "Field '{name}' is required", MaxLengthExceeded -> "Field '{name}' exceeds maximum length", etc.), integrating panel into PdfViewerPage XAML (top of page, bound to FormFieldViewModel.ValidationMessage), implementing show/hide based on validation state, and adding "Go to field" buttons to jump to invalid fields | Restrictions: Follow Fluent Design error display patterns, use InfoBar.Severity for error types, keep error messages concise and actionable, ensure accessibility (screen reader support) | Success: Validation errors display clearly, error messages are user-friendly, "Go to field" buttons work, panel appears/disappears correctly, accessible to screen readers_
+
+- [ ] 12. End-to-end testing and documentation
+  - Files:
+    - `tests/FluentPDF.App.Tests/E2E/FormFillingE2ETests.cs`
+    - `docs/ARCHITECTURE.md` (update)
+    - `docs/FEATURES.md` (update)
+    - `README.md` (update with form filling features)
+  - Create E2E tests with FlaUI
+  - Test complete form filling workflow
+  - Update architecture documentation with form layer
+  - Update features documentation with form capabilities
+  - Update README with form filling usage instructions
+  - Verify all requirements met
+  - Purpose: Ensure feature is complete and documented
+  - _Leverage: FlaUI, all previous tasks_
+  - _Requirements: All requirements_
+  - _Prompt: Role: QA Lead and Technical Writer performing final validation | Task: Create E2E tests using FlaUI following design.md testing strategy (complete workflow: open form PDF, tab through fields, fill text fields, check checkboxes, select radio buttons, attempt save with validation errors, fix errors, save successfully, reopen and verify), update ARCHITECTURE.md with form layer documentation (PDFium form API integration, form service architecture, form field overlay design), update FEATURES.md with form filling capabilities, update README.md with usage instructions (how to fill forms, keyboard shortcuts, validation), and verify all requirements met by checking each acceptance criteria | Restrictions: Do not approve if critical features missing, ensure documentation accurate and comprehensive, all links must work, no broken functionality | Success: E2E tests cover complete user journey, documentation is comprehensive, README clearly explains form filling, all requirements verified, feature is production-ready_
+
+## Summary
+
+This spec implements comprehensive PDF form filling functionality:
+- PDFium form API integration with SafeHandle
+- Form field detection and metadata extraction
+- Text field input with validation
+- Checkbox and radio button support
+- Tab order keyboard navigation
+- Form validation (required fields, max length, format masks)
+- Form data persistence using PDFium save API
+- Form field overlay controls in WinUI 3
+- MVVM architecture with CommunityToolkit
+- Result pattern error handling
+- Structured logging of form interactions
+- Comprehensive testing (unit, integration, E2E, architecture)
+
+**Next steps after completion:**
+- Implement combo box and list box support
+- Add auto-fill from user profile
+- Implement form templates (FDF format)
+- Add digital signature support for signed forms

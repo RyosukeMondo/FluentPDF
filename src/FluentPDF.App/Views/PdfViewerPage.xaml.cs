@@ -1,4 +1,6 @@
 using FluentPDF.App.ViewModels;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace FluentPDF.App.Views;
 

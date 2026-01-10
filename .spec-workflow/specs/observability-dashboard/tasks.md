@@ -1,0 +1,248 @@
+# Tasks Document
+
+## Implementation Tasks
+
+- [ ] 1. Create observability domain models (PerformanceMetrics, LogEntry, LogFilterCriteria)
+  - Files:
+    - `src/FluentPDF.Core/Observability/PerformanceMetrics.cs`
+    - `src/FluentPDF.Core/Observability/LogEntry.cs`
+    - `src/FluentPDF.Core/Observability/LogFilterCriteria.cs`
+    - `tests/FluentPDF.Core.Tests/Observability/PerformanceMetricsTests.cs`
+  - Implement PerformanceMetrics model with performance level calculation
+  - Implement LogEntry model with structured log properties
+  - Implement LogFilterCriteria with Matches logic
+  - Add enums: PerformanceLevel, LogLevel, ExportFormat
+  - Write unit tests for models
+  - Purpose: Provide domain models for observability data
+  - _Leverage: Existing model patterns from Core project_
+  - _Requirements: Design Component 1 and 2_
+  - _Prompt: Role: C# Developer specializing in domain modeling | Task: Create observability models following design.md Component 1 and 2, implementing PerformanceMetrics with properties (CurrentFPS, ManagedMemoryMB, NativeMemoryMB, LastRenderTimeMs, Timestamp, Level) and CalculateLevel static method, LogEntry with properties (Timestamp, Level, Message, CorrelationId, Component, Context, Exception, StackTrace), LogFilterCriteria with filter properties and Matches method, adding enums (PerformanceLevel, LogLevel, ExportFormat), and writing comprehensive unit tests | Restrictions: Keep models immutable with init properties, do not add business logic beyond CalculateLevel and Matches, follow structure.md code organization | Success: Models compile correctly, CalculateLevel returns correct performance levels for edge cases, Matches filters logs correctly, tests verify all model behavior_
+
+- [ ] 2. Implement IMetricsCollectionService and MetricsCollectionService
+  - Files:
+    - `src/FluentPDF.Core/Services/IMetricsCollectionService.cs`
+    - `src/FluentPDF.Rendering/Services/MetricsCollectionService.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/MetricsCollectionServiceTests.cs`
+  - Create metrics collection service interface
+  - Implement MetricsCollectionService with OpenTelemetry instruments (gauges, histograms)
+  - Add methods: RecordFPS, RecordRenderTime, RecordMemoryUsage, GetCurrentMetrics, GetMetricsHistory, ExportMetricsAsync
+  - Implement circular buffer for metrics history (1000 samples)
+  - Add JSON and CSV export formats
+  - Write comprehensive unit tests
+  - Purpose: Collect and export performance metrics using OpenTelemetry
+  - _Leverage: OpenTelemetry SDK, IMeterFactory, Serilog logging_
+  - _Requirements: 3.1-3.10, 6.1-6.9, 9.1-9.8_
+  - _Prompt: Role: Observability Engineer specializing in OpenTelemetry metrics | Task: Implement IMetricsCollectionService interface with methods (RecordFPS, RecordRenderTime, RecordMemoryUsage, GetCurrentMetrics, GetMetricsHistory, ExportMetricsAsync) following design.md Component 3 and 4, using IMeterFactory to create Meter and instruments (ObservableGauge for FPS and memory, Histogram for render times), implementing circular buffer for metrics history (array-based, 1000 samples, O(1) insertion), adding JSON export (System.Text.Json) and CSV export (manual CSV formatting), and writing unit tests with mocked IMeterFactory | Restrictions: Keep metrics overhead < 2% CPU, use async for export operations, log all metrics operations with structured data, follow Result<T> pattern for exports | Success: Service collects metrics correctly, OpenTelemetry instruments work, circular buffer handles overflow, exports produce valid JSON/CSV, tests verify all operations_
+
+- [ ] 3. Implement ILogExportService and LogExportService
+  - Files:
+    - `src/FluentPDF.Core/Services/ILogExportService.cs`
+    - `src/FluentPDF.Rendering/Services/LogExportService.cs`
+    - `tests/FluentPDF.Rendering.Tests/Services/LogExportServiceTests.cs`
+  - Create log export service interface
+  - Implement LogExportService to read Serilog JSON log files
+  - Add methods: GetRecentLogsAsync, FilterLogsAsync, ExportLogsAsync
+  - Implement log file reading from ApplicationData.LocalFolder/logs
+  - Implement filtering logic (level, correlation ID, component, time range, search)
+  - Add LRU cache for parsed logs (max 10,000 entries)
+  - Write unit tests with mock log files
+  - Purpose: Read and filter Serilog logs for in-app log viewer
+  - _Leverage: Serilog JSON format, System.Text.Json, Result<T>_
+  - _Requirements: 4.1-4.10, 5.1-5.9, 7.1-7.9_
+  - _Prompt: Role: Backend Developer specializing in log processing | Task: Implement ILogExportService interface with methods (GetRecentLogsAsync, FilterLogsAsync, ExportLogsAsync) following design.md Component 5 and 6, reading Serilog JSON log files from ApplicationData.LocalFolder/logs directory, parsing JSON using System.Text.Json, implementing LogFilterCriteria filtering logic (level >= MinimumLevel, correlation ID exact match, component StartsWith, time range between start/end, search case-insensitive Contains), adding LRU cache (Dictionary + LinkedList, max 10,000 entries), and writing unit tests with temp directory mock log files | Restrictions: Do not load entire log file into memory at once (stream in chunks), handle corrupted JSON gracefully (skip invalid entries, log warning), keep file under 500 lines, follow async best practices | Success: Service reads logs correctly, filters work accurately, export preserves Serilog format, LRU cache improves performance, tests verify all scenarios including corrupted JSON_
+
+- [ ] 4. Configure OpenTelemetry with OTLP exporters for Aspire Dashboard
+  - Files:
+    - `src/FluentPDF.App/App.xaml.cs` (modify ConfigureServices)
+    - `tools/docker-compose-aspire.yml` (new)
+    - `docs/DEVELOPMENT.md` (update with Aspire setup)
+  - Add OpenTelemetry SDK packages (OpenTelemetry.Exporter.OpenTelemetryProtocol, OpenTelemetry.Extensions.Hosting)
+  - Configure MeterProvider with OTLP exporter to localhost:4317
+  - Configure TracerProvider with OTLP exporter to localhost:4317
+  - Add Serilog OpenTelemetry sink for log export to Aspire
+  - Create docker-compose.yml for running Aspire Dashboard
+  - Add graceful fallback if Aspire not running
+  - Document Aspire setup in development docs
+  - Purpose: Enable development-time observability with .NET Aspire Dashboard
+  - _Leverage: OpenTelemetry SDK, existing Serilog configuration_
+  - _Requirements: 1.1-1.8_
+  - _Prompt: Role: DevOps Engineer specializing in OpenTelemetry and containerization | Task: Configure OpenTelemetry in App.xaml.cs ConfigureServices following design.md Component 11, adding MeterProvider with AddMeter("FluentPDF.Rendering") and AddOtlpExporter(localhost:4317), adding TracerProvider with AddSource("FluentPDF.Rendering") and resource builder, modifying Serilog configuration to add WriteTo.OpenTelemetry OTLP sink, creating docker-compose-aspire.yml with Aspire Dashboard container (mcr.microsoft.com/dotnet/aspire-dashboard:8.0, ports 4317 and 18888), adding try-catch around OTLP configuration for graceful fallback, and documenting Aspire setup in DEVELOPMENT.md (docker-compose up, access at localhost:18888) | Restrictions: Do not fail app startup if Aspire unavailable, use gRPC protocol for OTLP, add resource attributes (service.name, service.version), keep configuration under 100 lines | Success: OpenTelemetry configured correctly, OTLP export works when Aspire running, app continues without errors when Aspire not running, docker-compose starts Aspire Dashboard, documentation is clear_
+
+- [ ] 5. Instrument PdfRenderingService with distributed tracing
+  - Files:
+    - `src/FluentPDF.Rendering/Services/PdfRenderingService.cs` (modify)
+    - `tests/FluentPDF.Rendering.Tests/Services/PdfRenderingServiceTracingTests.cs`
+  - Add ActivitySource field to PdfRenderingService
+  - Wrap RenderPageAsync in activity span
+  - Add child spans for LoadPage, RenderBitmap, ConvertToImage steps
+  - Add span tags: page.number, zoom.level, correlation.id, render.time.ms
+  - Add exception recording on failures
+  - Write tests verifying spans created correctly
+  - Purpose: Provide distributed tracing visibility into rendering pipeline
+  - _Leverage: System.Diagnostics.ActivitySource, OpenTelemetry TracerProvider_
+  - _Requirements: 10.1-10.8_
+  - _Prompt: Role: Performance Engineer specializing in distributed tracing | Task: Instrument PdfRenderingService.RenderPageAsync following design.md Component 12, adding ActivitySource field ("FluentPDF.Rendering"), wrapping entire RenderPageAsync in StartActivity("RenderPage"), creating child activities for each step (LoadPage, RenderBitmap, ConvertToImage), adding tags (page.number, zoom.level, correlation.id, render.time.ms), recording exceptions with activity.RecordException(ex), setting activity status to Error on failures, and writing tests that verify activity creation and tags (mock ActivityListener) | Restrictions: Do not add tracing overhead if tracing disabled, keep span names consistent, ensure correlation ID included in all spans, dispose activities properly | Success: Activities created for all rendering operations, parent-child relationships correct, tags include relevant metadata, exception recording works, tests verify span creation_
+
+- [ ] 6. Create DiagnosticsPanelControl WinUI custom control
+  - Files:
+    - `src/FluentPDF.App/Controls/DiagnosticsPanelControl.xaml`
+    - `src/FluentPDF.App/Controls/DiagnosticsPanelControl.xaml.cs`
+    - `tests/FluentPDF.App.Tests/Controls/DiagnosticsPanelControlTests.cs`
+  - Create custom WinUI control for diagnostics overlay
+  - Add Border with acrylic background and corner radius
+  - Add metrics display: FPS with color coding, Memory (managed/native), Render time, Page number
+  - Add action buttons: Export Metrics, View Logs
+  - Add dependency property: IsVisible (two-way binding)
+  - Implement color coding logic (green/yellow/red based on thresholds)
+  - Write UI tests
+  - Purpose: Provide in-app diagnostics overlay showing real-time metrics
+  - _Leverage: WinUI 3 Border, StackPanel, TextBlock, FontIcon, Button_
+  - _Requirements: 2.1-2.10, 3.1-3.10_
+  - _Prompt: Role: WinUI Frontend Developer specializing in custom controls | Task: Create DiagnosticsPanelControl following design.md Component 7, implementing XAML layout (Border with AcrylicBackgroundFillColorDefaultBrush, StackPanel for vertical layout, metrics display with FontIcon and TextBlock, action buttons), adding dependency property IsVisible (DependencyProperty.Register), implementing color coding converters (FPSColor: Green >= 30, Yellow 15-30, Red < 15), positioning as overlay (HorizontalAlignment Right, VerticalAlignment Top, Margin 16), and writing UI tests verifying color changes and button commands | Restrictions: Use WinUI 3 controls only, follow Fluent Design acrylic guidelines, ensure overlay doesn't block content, keep XAML readable with comments | Success: Control renders correctly as overlay, metrics display with color coding, buttons fire commands, IsVisible property toggles visibility, tests verify control behavior_
+
+- [ ] 7. Create DiagnosticsPanelViewModel with periodic metric updates
+  - Files:
+    - `src/FluentPDF.App/ViewModels/DiagnosticsPanelViewModel.cs`
+    - `tests/FluentPDF.App.Tests/ViewModels/DiagnosticsPanelViewModelTests.cs`
+  - Implement ViewModel with CommunityToolkit.Mvvm source generators
+  - Add observable properties: CurrentFPS, ManagedMemoryMB, NativeMemoryMB, TotalMemoryMB, LastRenderTimeMs, CurrentPageNumber, FPSColor, IsVisible
+  - Add relay commands: ExportMetricsAsync, OpenLogViewer, ToggleVisibility
+  - Implement DispatcherTimer with 500ms interval for periodic updates
+  - Add color calculation based on performance level
+  - Write comprehensive headless unit tests
+  - Purpose: Provide presentation logic for diagnostics panel with auto-refresh
+  - _Leverage: ObservableObject, RelayCommand, IMetricsCollectionService, DispatcherTimer_
+  - _Requirements: 2.1-2.10, 3.1-3.10_
+  - _Prompt: Role: WinUI MVVM Developer specializing in real-time data display | Task: Create DiagnosticsPanelViewModel following design.md Component 8, inheriting from ObservableObject, adding observable properties for all metrics, implementing DispatcherTimer with 500ms interval calling UpdateMetrics method, calculating FPSColor based on CurrentFPS (Green >= 30, Yellow 15-30, Red < 15), implementing ExportMetricsAsync command (show file picker, call IMetricsCollectionService.ExportMetricsAsync), implementing ToggleVisibility command, and writing tests with mocked IMetricsCollectionService and time-based verification | Restrictions: ViewModel must be UI-agnostic (except WinUI types), do not block UI thread with updates, dispose timer on ViewModel disposal, keep ViewModel under 500 lines | Success: Observable properties update every 500ms, color calculation works correctly, ExportMetricsAsync shows file picker and exports, tests verify timer behavior and property updates_
+
+- [ ] 8. Create LogViewerControl WinUI custom control with filtering
+  - Files:
+    - `src/FluentPDF.App/Controls/LogViewerControl.xaml`
+    - `src/FluentPDF.App/Controls/LogViewerControl.xaml.cs`
+    - `src/FluentPDF.App/Converters/LogLevelToIconConverter.cs`
+    - `src/FluentPDF.App/Converters/LogLevelToBackgroundConverter.cs`
+    - `tests/FluentPDF.App.Tests/Controls/LogViewerControlTests.cs`
+  - Create custom WinUI control for structured log viewer
+  - Add filter controls: Severity ComboBox, Correlation ID TextBox, Component TextBox, Search TextBox, Time range DatePickers
+  - Add ListView with ItemTemplate showing timestamp, level icon, message, correlation ID
+  - Add details panel (expands on row click) showing full context, exception, stack trace
+  - Add toolbar: Refresh, Export, Clear Filters buttons
+  - Create value converters for log level to icon/background
+  - Write UI tests
+  - Purpose: Provide in-app log viewer with comprehensive filtering
+  - _Leverage: WinUI 3 ListView, ComboBox, TextBox, DatePicker, Expander_
+  - _Requirements: 4.1-4.10, 5.1-5.9_
+  - _Prompt: Role: WinUI Frontend Developer specializing in data grids and filtering | Task: Create LogViewerControl following design.md Component 9, implementing XAML layout (Grid with StackPanel for filters at top, ListView in middle with ItemTemplate, Expander for details at bottom, CommandBar for toolbar), adding filter controls (ComboBox for LogLevel enum, TextBox for CorrelationId with watermark, TextBox for Component, TextBox for Search, DatePicker for StartTime/EndTime), creating ListView ItemTemplate (4 columns: Timestamp HH:mm:ss.fff, FontIcon for level, Message with TextTrimming, CorrelationId in Consolas font), creating LogLevelToIconConverter (Info: Info icon, Warning: Warning icon, Error: Error icon) and LogLevelToBackgroundConverter (Error: LightRed, Warning: LightYellow), and writing UI tests | Restrictions: Use ListView virtualization for performance, ensure filters accessible via keyboard, follow Fluent Design grid patterns, keep XAML organized with regions | Success: Control renders correctly with all filters, ListView displays logs efficiently, ItemTemplate shows all log details, details panel expands correctly, converters work, tests verify filtering UI_
+
+- [ ] 9. Create LogViewerViewModel with filtering logic
+  - Files:
+    - `src/FluentPDF.App/ViewModels/LogViewerViewModel.cs`
+    - `tests/FluentPDF.App.Tests/ViewModels/LogViewerViewModelTests.cs`
+  - Implement ViewModel with CommunityToolkit.Mvvm source generators
+  - Add observable properties: LogEntries, SelectedLogEntry, MinimumLevel, CorrelationIdFilter, ComponentFilter, SearchText, StartTime, EndTime, IsLoading
+  - Add relay commands: LoadLogsAsync, ApplyFiltersAsync, ClearFilters, ExportLogsAsync, CopyCorrelationId
+  - Implement filter application logic using LogFilterCriteria
+  - Add debounced search (500ms delay after last keystroke)
+  - Write comprehensive unit tests
+  - Purpose: Provide presentation logic for log viewer with filtering
+  - _Leverage: ObservableObject, RelayCommand, ILogExportService, LogFilterCriteria_
+  - _Requirements: 4.1-4.10, 5.1-5.9, 7.1-7.9_
+  - _Prompt: Role: WinUI MVVM Developer specializing in data filtering | Task: Create LogViewerViewModel following design.md Component 10, inheriting from ObservableObject, adding observable properties for all filters and log collection, implementing LoadLogsAsync (call ILogExportService.GetRecentLogsAsync(1000), populate LogEntries), implementing ApplyFiltersAsync (build LogFilterCriteria from filter properties, call FilterLogsAsync, update LogEntries), implementing ClearFilters (reset all filter properties to defaults), implementing ExportLogsAsync (show file picker, call ExportLogsAsync with filtered logs), implementing CopyCorrelationId (copy to clipboard using Windows.ApplicationModel.DataTransfer.Clipboard), adding search debouncing using Task.Delay(500ms) and CancellationToken, and writing tests with mocked ILogExportService | Restrictions: Do not block UI thread with filtering (use async), handle empty result sets gracefully, keep ViewModel under 500 lines, ensure filters are intuitive | Success: LoadLogsAsync populates collection correctly, filters work accurately, debounced search prevents excessive filtering, ExportLogsAsync exports filtered logs, CopyCorrelationId works, tests verify all operations_
+
+- [ ] 10. Integrate diagnostics panel and log viewer into PdfViewerPage
+  - Files:
+    - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (modify)
+    - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs` (modify)
+    - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (modify)
+  - Add DiagnosticsPanelControl to PdfViewerPage XAML as overlay
+  - Add keyboard shortcut handler for Ctrl+Shift+D (toggle diagnostics)
+  - Add keyboard shortcut handler for Ctrl+Shift+L (open log viewer in dialog)
+  - Add DiagnosticsPanelViewModel and LogViewerViewModel to PdfViewerViewModel
+  - Wire up metrics updates when page renders
+  - Wire up log viewer command
+  - Purpose: Integrate observability features into PDF viewer UI
+  - _Leverage: Existing PdfViewerPage, DiagnosticsPanelControl, LogViewerControl_
+  - _Requirements: 2.1-2.10, 4.1-4.10_
+  - _Prompt: Role: WinUI Integration Engineer specializing in UI composition | Task: Modify PdfViewerPage to integrate observability features following design.md, adding DiagnosticsPanelControl to XAML (inside Grid, last child so it overlays, bind DataContext to DiagnosticsPanelViewModel, bind IsVisible to ViewModel property), adding KeyboardAccelerator for Ctrl+Shift+D calling ToggleDiagnosticsCommand, adding KeyboardAccelerator for Ctrl+Shift+L calling OpenLogViewerCommand, modifying PdfViewerViewModel to include DiagnosticsPanelViewModel and LogViewerViewModel as properties, wiring up metrics updates (after page renders, call IMetricsCollectionService.RecordRenderTime), implementing OpenLogViewerCommand to show ContentDialog with LogViewerControl, and persisting diagnostics visibility state in settings | Restrictions: Do not add business logic in code-behind (only view logic), ensure keyboard shortcuts don't conflict with existing shortcuts, maintain separation between diagnostics and PDF content, log viewer dialog should be resizable | Success: Diagnostics panel toggles with Ctrl+Shift+D, panel overlays content correctly, log viewer opens with Ctrl+Shift+L in dialog, metrics update when rendering, keyboard shortcuts work, state persists across sessions_
+
+- [ ] 11. Register observability services in DI container
+  - Files:
+    - `src/FluentPDF.App/App.xaml.cs` (modify)
+  - Register IMetricsCollectionService and ILogExportService in DI container
+  - Register DiagnosticsPanelViewModel and LogViewerViewModel as transient
+  - Initialize metrics collection on app startup
+  - Add cleanup in OnExit for disposing metrics services
+  - Purpose: Wire up observability services in application
+  - _Leverage: Existing IHost DI container_
+  - _Requirements: All service requirements_
+  - _Prompt: Role: Application Integration Engineer specializing in dependency injection | Task: Modify App.xaml.cs ConfigureServices to register observability services (AddSingleton<IMetricsCollectionService, MetricsCollectionService>, AddSingleton<ILogExportService, LogExportService>, AddTransient<DiagnosticsPanelViewModel>, AddTransient<LogViewerViewModel>), verify OpenTelemetry configuration from task 4 is present, add IMetricsCollectionService initialization call in OnLaunched, add cleanup in OnExit to stop metrics collection and dispose services, and verify all services resolve correctly | Restrictions: Follow existing DI registration patterns, do not skip service registration, ensure proper cleanup, log initialization and shutdown | Success: All observability services registered and resolvable, ViewModels get dependencies injected, metrics collection starts on app launch, cleanup occurs on app exit, DI container resolves all types correctly_
+
+- [ ] 12. Add ArchUnitNET rules for observability layer
+  - Files:
+    - `tests/FluentPDF.Architecture.Tests/ObservabilityArchitectureTests.cs`
+  - Create architecture test file for observability rules
+  - Add rule: Observability models must be in Core/Observability namespace
+  - Add rule: Metrics services must implement interfaces
+  - Add rule: Diagnostics UI controls must be in App/Controls
+  - Add rule: ViewModels use service interfaces, not direct metrics collection
+  - Purpose: Enforce architectural rules for observability components
+  - _Leverage: Existing ArchUnitNET tests_
+  - _Requirements: Architecture integrity_
+  - _Prompt: Role: Software Architect specializing in architecture testing | Task: Create ObservabilityArchitectureTests.cs following design.md testing strategy, implementing ArchUnitNET rules (ObservabilityModels_ShouldBe_InCoreNamespace checks PerformanceMetrics and LogEntry location, MetricsServices_Should_ImplementInterfaces checks IMetricsCollectionService implementation, DiagnosticsControls_Should_BeIn_AppControls checks control locations, ViewModels_ShouldNot_Reference_MetricsCollection checks ViewModels use interfaces), adding descriptive .Because() clauses, and verifying tests catch violations | Restrictions: Do not skip architecture rules, test all violations by intentionally breaking rules, use clear error messages, keep test file under 500 lines | Success: All architecture tests pass, tests catch violations when rules broken, rules enforce clean architecture boundaries, test output clearly explains violations_
+
+- [ ] 13. Integration testing with real OpenTelemetry and log files
+  - Files:
+    - `tests/FluentPDF.App.Tests/Integration/ObservabilityIntegrationTests.cs`
+    - `tests/Fixtures/sample-logs.json` (add sample log file in Serilog JSON format)
+  - Create integration tests using real OpenTelemetry and file system
+  - Test OpenTelemetry MeterProvider and TracerProvider registration
+  - Test metrics collection during actual rendering
+  - Test log file reading from real JSON files
+  - Test OTLP export (if Aspire running)
+  - Test distributed tracing with activity creation
+  - Test export operations (metrics to JSON/CSV, logs to JSON)
+  - Purpose: Verify all observability components work together
+  - _Leverage: OpenTelemetry SDK, file system, real rendering_
+  - _Requirements: All functional requirements_
+  - _Prompt: Role: QA Integration Engineer specializing in observability testing | Task: Create ObservabilityIntegrationTests.cs following design.md testing strategy, adding sample-logs.json (Serilog JSON format with 100 log entries) to fixtures, implementing tests (OpenTelemetry_ConfiguredCorrectly verifies MeterProvider and TracerProvider registered, MetricsCollection_DuringRendering verifies metrics recorded when pages render, LogFileReading_Works verifies LogExportService reads sample-logs.json, OtlpExport_Works verifies logs/metrics sent to Aspire if running, DistributedTracing_CreatesActivities verifies activity spans created during rendering, ExportMetrics_ToJson verifies JSON export produces valid file, ExportLogs_ToJson verifies log export preserves format), using real OpenTelemetry and file system (not mocked), and ensuring tests run reliably | Restrictions: Tests should run even if Aspire not running (skip OTLP tests), ensure test cleanup (delete exported files), add [Trait("Category", "Integration")], handle file system errors gracefully | Success: All integration tests pass, OpenTelemetry works correctly, metrics collected accurately, log reading works, exports produce valid files, distributed tracing creates spans_
+
+- [ ] 14. End-to-end testing and documentation
+  - Files:
+    - `tests/FluentPDF.App.Tests/E2E/ObservabilityE2ETests.cs`
+    - `docs/ARCHITECTURE.md` (update)
+    - `docs/OBSERVABILITY.md` (new)
+    - `docs/DEVELOPMENT.md` (update with Aspire setup)
+    - `README.md` (update with observability features)
+  - Create E2E tests with FlaUI
+  - Test complete observability workflow
+  - Create comprehensive observability documentation
+  - Update architecture documentation with observability layer
+  - Update development documentation with Aspire setup
+  - Update README with observability features
+  - Verify all requirements met
+  - Purpose: Ensure feature is complete and documented
+  - _Leverage: FlaUI, all previous tasks_
+  - _Requirements: All requirements_
+  - _Prompt: Role: QA Lead and Technical Writer performing final validation | Task: Create E2E tests using FlaUI following design.md testing strategy (complete workflow: open PDF and render pages, press Ctrl+Shift+D to open diagnostics, verify metrics display, press Ctrl+Shift+L to open log viewer, apply filters and verify logs filtered, export metrics to JSON and verify file, export logs to JSON and verify file), create OBSERVABILITY.md documentation (overview of observability features, .NET Aspire Dashboard setup with docker-compose, in-app diagnostics panel usage, log viewer usage with filtering examples, metrics export format specification, correlation ID tracing guide), update ARCHITECTURE.md with observability layer (OpenTelemetry integration, metrics collection architecture, log export architecture, distributed tracing design), update DEVELOPMENT.md with Aspire setup instructions, update README.md with observability features section (development-time observability, in-app diagnostics, structured log viewing, keyboard shortcuts Ctrl+Shift+D and Ctrl+Shift+L), and verify all requirements met | Restrictions: Do not approve if critical features missing, ensure documentation accurate and comprehensive, all links must work, no broken functionality | Success: E2E tests cover complete user journey, OBSERVABILITY.md is comprehensive with examples, architecture documentation includes observability layer, Aspire setup documented clearly, README explains features, all requirements verified, feature is production-ready_
+
+## Summary
+
+This spec implements comprehensive observability infrastructure:
+- .NET Aspire Dashboard integration with OTLP exporters
+- OpenTelemetry metrics collection (FPS, memory, render times)
+- Distributed tracing for rendering pipeline
+- In-app diagnostics panel with real-time metrics display
+- Structured log viewer with filtering (correlation ID, severity, component, time range, search)
+- Log and metrics export (JSON, CSV)
+- Performance level calculation and color coding
+- WinUI 3 diagnostics controls
+- MVVM architecture with CommunityToolkit
+- Result pattern error handling
+- Comprehensive testing (unit, integration, E2E, architecture)
+
+**Next steps after completion:**
+- Implement performance profiling integration (dotnet-trace)
+- Add memory snapshot capture for leak analysis
+- Implement historical metrics trends (store metrics over time)
+- Add configurable alerting (threshold-based notifications)
+- Integrate AI quality agent for automated log analysis

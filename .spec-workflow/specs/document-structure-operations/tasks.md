@@ -46,7 +46,7 @@
   - _Requirements: 1, 4_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Backend Developer with expertise in document processing and async operations | Task: Implement DocumentEditingService.MergeAsync method following requirements 1 and 4, using QPDF qpdf_merge_pages with progress reporting and cancellation support, extending patterns from PdfDocumentService.cs | Restrictions: Must validate all input files exist before processing, use SafeQpdfJobHandle for memory safety, report progress every 500ms minimum, support CancellationToken, return Result<string> with output path | _Leverage: Study PdfDocumentService.cs constructor injection, error handling with Result<T>, ITelemetryService logging | _Requirements: Req 1 (merge), Req 4 (progress reporting) | Success: Merges 2-10 PDFs correctly preserving page order, reports progress accurately, supports cancellation mid-operation, validates output with QPDF checks, no memory leaks | Instructions: Mark in-progress [-]. Log with artifacts (class DocumentEditingService, method MergeAsync, integration with QPDF). Mark complete [x]._
 
-- [ ] 6. Implement SplitAsync method
+- [x] 6. Implement SplitAsync method
   - File: src/FluentPDF.Rendering/Services/DocumentEditingService.cs (continue from task 5)
   - Implement SplitAsync using QPDF page extraction
   - Parse page ranges using PageRangeParser

@@ -215,6 +215,192 @@
             Page not found or content error.
             </summary>
         </member>
+        <member name="T:FluentPDF.Rendering.Interop.QpdfNative">
+            <summary>
+            P/Invoke declarations for QPDF native library.
+            Provides managed wrappers for QPDF document manipulation functions.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.Initialize">
+            <summary>
+            Initializes the QPDF library.
+            Must be called once before any other QPDF functions.
+            </summary>
+            <returns>True if initialization succeeded; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.CreateJob">
+            <summary>
+            Creates a new QPDF job handle.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-init
+            </summary>
+            <returns>A QPDF job handle, or IntPtr.Zero on failure.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.qpdf_cleanup(System.IntPtr@)">
+            <summary>
+            Cleans up a QPDF job handle.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-cleanup
+            </summary>
+            <param name="job">Reference to the QPDF job handle (set to IntPtr.Zero on cleanup).</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.ReadDocument(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.String,System.String)">
+            <summary>
+            Reads a PDF document from a file.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-read
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="filename">Path to the PDF file.</param>
+            <param name="password">Password for encrypted PDFs. Pass null for unencrypted files.</param>
+            <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.WriteDocument(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.String)">
+            <summary>
+            Writes the PDF document to a file.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-init-write
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="filename">Output file path.</param>
+            <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.GetPageCount(FluentPDF.Rendering.Interop.SafeQpdfJobHandle)">
+            <summary>
+            Gets the number of pages in a PDF document.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-get-num-pages
+            </summary>
+            <param name="job">QPDF job handle with a loaded document.</param>
+            <returns>The number of pages, or 0 if the document is invalid.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.HasError(FluentPDF.Rendering.Interop.SafeQpdfJobHandle)">
+            <summary>
+            Checks if a QPDF job has errors.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-has-error
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <returns>True if the job has errors; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.GetErrorMessage(FluentPDF.Rendering.Interop.SafeQpdfJobHandle)">
+            <summary>
+            Gets the error message from a QPDF job.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-get-error
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <returns>The error message, or an empty string if no error.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.TranslateErrorCode(System.Int32)">
+            <summary>
+            Translates a QPDF error code to a user-friendly message.
+            </summary>
+            <param name="errorCode">The QPDF error code.</param>
+            <returns>A descriptive error message.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.AddPages(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.String)">
+            <summary>
+            Adds pages from one document to another.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+            </summary>
+            <param name="targetJob">Target QPDF job handle.</param>
+            <param name="sourceJob">Source QPDF job handle.</param>
+            <param name="pageRange">Page range specification (e.g., "1-5" or null for all pages).</param>
+            <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.SetCompressStreams(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.Boolean)">
+            <summary>
+            Sets compression for stream data.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-set-compress-streams
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="compress">True to enable compression; false to disable.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.SetPreserveUnreferencedObjects(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.Boolean)">
+            <summary>
+            Sets whether to preserve unreferenced objects.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-set-preserve-unreferenced-objects
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="preserve">True to preserve; false to remove.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.SetLinearization(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.Boolean)">
+            <summary>
+            Sets linearization (fast web viewing).
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-set-linearization
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="linearize">True to enable linearization; false to disable.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.SetObjectStreamMode(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.Int32)">
+            <summary>
+            Sets object stream mode for compression.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#qpdf-set-object-stream-mode
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="mode">Object stream mode (0 = preserve, 1 = disable, 2 = generate).</param>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes">
+            <summary>
+            QPDF error codes.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#error-codes
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.Success">
+            <summary>
+            No error - operation completed successfully.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.Internal">
+            <summary>
+            Internal QPDF error.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.SystemError">
+            <summary>
+            System error (file I/O, permissions, etc.).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.FileNotFound">
+            <summary>
+            File not found or could not be opened.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.InvalidPassword">
+            <summary>
+            Invalid or missing password for encrypted PDF.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.DamagedPdf">
+            <summary>
+            PDF file is damaged or corrupted.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.InvalidOperation">
+            <summary>
+            Invalid operation for current document state.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ErrorCodes.OutOfMemory">
+            <summary>
+            Out of memory.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.QpdfNative.ObjectStreamMode">
+            <summary>
+            Object stream modes for QPDF optimization.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ObjectStreamMode.Preserve">
+            <summary>
+            Preserve existing object streams.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ObjectStreamMode.Disable">
+            <summary>
+            Disable object streams.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.QpdfNative.ObjectStreamMode.Generate">
+            <summary>
+            Generate object streams for compression.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.SafePdfDocumentHandle">
             <summary>
             Safe handle for PDFium document pointers (FPDF_DOCUMENT).
@@ -248,6 +434,54 @@
             Releases the PDFium page handle by calling FPDF_ClosePage.
             </summary>
             <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.SafeQpdfJobHandle">
+            <summary>
+            Safe handle for QPDF job pointers (qpdf_data).
+            Automatically releases the job handle when disposed.
+            Ensures thread-safe cleanup of QPDF resources.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafeQpdfJobHandle.#ctor(System.IntPtr)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Interop.SafeQpdfJobHandle"/> class
+            with an existing handle.
+            </summary>
+            <param name="handle">The QPDF job handle pointer.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafeQpdfJobHandle.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Interop.SafeQpdfJobHandle"/> class.
+            Used by P/Invoke for automatic handle creation.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafeQpdfJobHandle.ReleaseHandle">
+            <summary>
+            Releases the QPDF job handle by calling qpdf_cleanup.
+            This method is thread-safe and idempotent.
+            </summary>
+            <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.DocumentEditingService">
+            <summary>
+            Service for PDF document structure manipulation operations using QPDF.
+            Provides merging, splitting, and optimization with progress reporting and cancellation support.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DocumentEditingService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.DocumentEditingService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.DocumentEditingService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DocumentEditingService.MergeAsync(System.Collections.Generic.IEnumerable{System.String},System.String,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DocumentEditingService.SplitAsync(System.String,System.String,System.String,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DocumentEditingService.OptimizeAsync(System.String,System.String,FluentPDF.Core.Services.OptimizationOptions,System.IProgress{System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
         </member>
         <member name="T:FluentPDF.Rendering.Services.PdfDocumentService">
             <summary>
