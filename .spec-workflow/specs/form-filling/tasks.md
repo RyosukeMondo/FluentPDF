@@ -160,7 +160,7 @@
   - _Requirements: All functional requirements_
   - _Prompt: Role: QA Integration Engineer specializing in form testing | Task: Create FormFillingIntegrationTests.cs following design.md testing strategy, adding sample form PDF (IRS 1040 or W-4) to fixtures, implementing tests (LoadFormPdf_DetectsFields verifies field enumeration, FillTextField_AndSave_Persists verifies text input and save, ToggleCheckbox_Updates verifies checkbox state, SelectRadioButton_DeselectsOthers verifies radio groups, ValidateRequiredFields_Fails verifies validation, SaveAndReload_PreservesData verifies persistence, MemoryCleanup_NoLeaks verifies resource cleanup), using real PDFium (not mocked), and ensuring tests run reliably in CI | Restrictions: Do not mock PDFium in integration tests, ensure test PDFs committed to repo (small files), tests must clean up resources, add [Trait("Category", "Integration")] | Success: All integration tests pass with real PDFium, form PDF loads and fields detected, text fields fill correctly, checkboxes toggle, validation works, save/reload preserves data, no resource leaks_
 
-- [-] 11. Add form validation error display in UI
+- [x] 11. Add form validation error display in UI
   - Files:
     - `src/FluentPDF.App/Controls/ValidationErrorPanel.xaml`
     - `src/FluentPDF.App/Controls/ValidationErrorPanel.xaml.cs`
