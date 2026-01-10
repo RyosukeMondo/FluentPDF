@@ -33,7 +33,7 @@
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
   - _Prompt: Role: C# Developer specializing in data modeling and JSON serialization | Task: Create FluentPDF.Validation class library with data models for validation reports. Define ValidationReport (overall status, file path, date, profile, tool results), VeraPdfResult (compliant, flavour, errors), JhoveResult (format, validity, metadata), QpdfResult (status, errors). Create JSON Schema schemas/validation-report.schema.json defining structure with required fields, types, enums. Use required properties and init-only setters. | Restrictions: Models must be immutable (init-only), JSON serializable, follow naming conventions, include XML documentation. | Success: Project builds successfully, models compile without errors, JSON Schema is valid, models serialize to JSON correctly._
 
-- [ ] 3. Implement QpdfWrapper for structural validation
+- [x] 3. Implement QpdfWrapper for structural validation
   - Files:
     - `src/FluentPDF.Validation/Wrappers/IQpdfWrapper.cs` (create)
     - `src/FluentPDF.Validation/Wrappers/QpdfWrapper.cs` (create)
