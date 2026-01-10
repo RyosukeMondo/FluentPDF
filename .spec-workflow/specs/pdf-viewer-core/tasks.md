@@ -896,7 +896,7 @@
        - Note enforcement of clean architecture
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 10. Integration testing with real PDFium and sample PDFs
+- [x] 10. Integration testing with real PDFium and sample PDFs
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Integration/PdfViewerIntegrationTests.cs`
     - `tests/Fixtures/sample.pdf` (add sample PDF file)
