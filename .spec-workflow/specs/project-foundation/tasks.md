@@ -685,7 +685,7 @@
        - Note headless testability
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 9. Create vcpkg build script (build-libs.ps1) for PDFium and QPDF
+- [x] 9. Create vcpkg build script (build-libs.ps1) for PDFium and QPDF
   - Files:
     - `tools/build-libs.ps1`
     - `.gitmodules` (add vcpkg submodule)
