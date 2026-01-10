@@ -114,7 +114,7 @@
   - _Requirements: 1, 2, 3_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Integration Test Engineer with expertise in PDF testing and QPDF validation | Task: Create integration tests for DocumentEditingService covering merge, split, optimize operations with real sample PDFs, testing both success and error scenarios from requirements 1, 2, 3 | Restrictions: Must use sample PDFs from Fixtures folder, validate output using QPDF structural checks, test error paths (corrupted PDF, encrypted), clean up output files in test teardown | _Leverage: Use existing sample PDFs in tests/FluentPDF.Rendering.Tests/Fixtures, QPDF validation utilities | _Requirements: Req 1, 2, 3 (all operations) | Success: All operations tested with real PDFs, error scenarios covered, tests are reliable and clean up properly, QPDF validation confirms output quality | Instructions: Mark in-progress [-]. Log with artifacts (test class, integration with QPDF validation). Mark complete [x]._
 
-- [ ] 13. Add architecture tests for DocumentEditing layer
+- [-] 13. Add architecture tests for DocumentEditing layer
   - File: tests/FluentPDF.Architecture.Tests/DocumentEditingLayerTests.cs
   - Validate IDocumentEditingService is in FluentPDF.Core
   - Validate DocumentEditingService is in FluentPDF.Rendering
