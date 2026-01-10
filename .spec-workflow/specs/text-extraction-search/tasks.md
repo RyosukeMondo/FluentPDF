@@ -103,7 +103,7 @@
   - _Requirements: 5.1-5.12_
   - _Prompt: Role: WinUI Frontend Developer | Task: Add search panel UI to PdfViewerPage with keyboard shortcuts and data binding | Restrictions: Must use data binding, follow Fluent Design, ensure accessibility | Success: Search panel integrates seamlessly with viewer UI_
 
-- [ ] 8. Implement highlight overlay for search matches
+- [x] 8. Implement highlight overlay for search matches
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (add Canvas overlay)
     - `src/FluentPDF.App/Helpers/CoordinateTransformHelper.cs`

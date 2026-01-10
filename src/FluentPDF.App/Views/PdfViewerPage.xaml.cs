@@ -1,8 +1,13 @@
+using FluentPDF.App.Helpers;
 using FluentPDF.App.Services;
 using FluentPDF.App.ViewModels;
+using FluentPDF.Core.Models;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 using Windows.System;
 
 namespace FluentPDF.App.Views;
@@ -40,7 +45,7 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
-    /// Handles ViewModel property changes to manage search TextBox focus.
+    /// Handles ViewModel property changes to manage search TextBox focus and update highlights.
     /// </summary>
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -51,6 +56,19 @@ public sealed partial class PdfViewerPage : Page, IDisposable
             {
                 SearchTextBox.Focus(FocusState.Programmatic);
                 SearchTextBox.SelectAll();
+            });
+        }
+        else if (e.PropertyName == nameof(ViewModel.SearchMatches) ||
+                 e.PropertyName == nameof(ViewModel.CurrentMatchIndex) ||
+                 e.PropertyName == nameof(ViewModel.CurrentPageNumber) ||
+                 e.PropertyName == nameof(ViewModel.ZoomLevel) ||
+                 e.PropertyName == nameof(ViewModel.CurrentPageImage) ||
+                 e.PropertyName == nameof(ViewModel.CurrentPageHeight))
+        {
+            // Update search highlights when matches, page, zoom, or dimensions change
+            _ = SearchHighlightCanvas.DispatcherQueue.TryEnqueue(() =>
+            {
+                UpdateSearchHighlights();
             });
         }
     }
@@ -136,6 +154,81 @@ public sealed partial class PdfViewerPage : Page, IDisposable
         {
             ViewModel.ToggleSearchPanelCommand.Execute(null);
             args.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Updates the search highlight overlays on the current page.
+    /// Renders rectangles for all search matches on the current page.
+    /// </summary>
+    private void UpdateSearchHighlights()
+    {
+        // Clear existing highlights
+        SearchHighlightCanvas.Children.Clear();
+
+        // If we don't have valid dimensions or no matches, nothing to render
+        if (ViewModel.CurrentPageHeight == 0 || ViewModel.SearchMatches.Count == 0 || ViewModel.CurrentPageImage == null)
+        {
+            return;
+        }
+
+        // Get matches for the current page (1-based page number in ViewModel, 0-based in SearchMatch)
+        var currentPageMatches = ViewModel.SearchMatches
+            .Where(m => m.PageNumber == ViewModel.CurrentPageNumber - 1)
+            .ToList();
+
+        if (currentPageMatches.Count == 0)
+        {
+            return;
+        }
+
+        // Determine which match is the current match
+        int currentMatchIndexOnPage = -1;
+        if (ViewModel.CurrentMatchIndex >= 0 && ViewModel.CurrentMatchIndex < ViewModel.SearchMatches.Count)
+        {
+            var currentMatch = ViewModel.SearchMatches[ViewModel.CurrentMatchIndex];
+            if (currentMatch.PageNumber == ViewModel.CurrentPageNumber - 1)
+            {
+                currentMatchIndexOnPage = currentPageMatches.IndexOf(currentMatch);
+            }
+        }
+
+        // Render highlight rectangles for each match
+        for (int i = 0; i < currentPageMatches.Count; i++)
+        {
+            var match = currentPageMatches[i];
+            var screenRect = CoordinateTransformHelper.TransformPdfToScreen(
+                match.BoundingBox,
+                ViewModel.CurrentPageHeight,
+                ViewModel.ZoomLevel);
+
+            // Create highlight rectangle
+            var rect = new Rectangle
+            {
+                Width = screenRect.Width,
+                Height = screenRect.Height,
+                Fill = i == currentMatchIndexOnPage
+                    ? new SolidColorBrush(Colors.Orange) { Opacity = 0.5 }  // Current match: orange
+                    : new SolidColorBrush(Colors.Yellow) { Opacity = 0.3 }, // Other matches: yellow
+                Stroke = i == currentMatchIndexOnPage
+                    ? new SolidColorBrush(Colors.DarkOrange)
+                    : new SolidColorBrush(Colors.Gold),
+                StrokeThickness = 1
+            };
+
+            // Position the rectangle on the canvas
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(rect, screenRect.X);
+            Microsoft.UI.Xaml.Controls.Canvas.SetTop(rect, screenRect.Y);
+
+            // Add to canvas
+            SearchHighlightCanvas.Children.Add(rect);
+        }
+
+        // Update canvas size to match the image
+        if (PdfPageImage.ActualWidth > 0 && PdfPageImage.ActualHeight > 0)
+        {
+            SearchHighlightCanvas.Width = PdfPageImage.ActualWidth;
+            SearchHighlightCanvas.Height = PdfPageImage.ActualHeight;
         }
     }
 

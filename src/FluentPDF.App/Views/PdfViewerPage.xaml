@@ -374,6 +374,12 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center" />
 
+                    <!-- Search highlight overlays canvas -->
+                    <Canvas
+                        x:Name="SearchHighlightCanvas"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+
                     <!-- Form field overlays canvas -->
                     <Canvas
                         x:Name="FormFieldCanvas"

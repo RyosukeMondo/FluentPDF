@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
+using FluentPDF.Rendering.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.Pickers;
@@ -158,6 +159,13 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private bool _caseSensitive;
+
+    /// <summary>
+    /// Gets or sets the current page height in PDF units (points).
+    /// Updated when a page is rendered. Used for coordinate transformations.
+    /// </summary>
+    [ObservableProperty]
+    private double _currentPageHeight;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -396,6 +404,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 _logger.LogInformation(
                     "Page rendered successfully. PageNumber={PageNumber}, ZoomLevel={ZoomLevel}",
                     CurrentPageNumber, ZoomLevel);
+
+                // Get page dimensions for coordinate transformations
+                UpdateCurrentPageDimensions();
 
                 // Reload form fields for the current page
                 await FormFieldViewModel.LoadFormFieldsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
@@ -1001,6 +1012,36 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             e.PropertyName == nameof(CaseSensitive))
         {
             SearchCommand.Execute(null);
+        }
+    }
+
+    /// <summary>
+    /// Updates the current page dimensions by loading the page and getting its dimensions.
+    /// Used for coordinate transformations in search highlights and form fields.
+    /// </summary>
+    private void UpdateCurrentPageDimensions()
+    {
+        if (_currentDocument == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var documentHandle = (SafePdfDocumentHandle)_currentDocument.Handle;
+            using var pageHandle = PdfiumInterop.LoadPage(documentHandle, CurrentPageNumber - 1);
+
+            if (!pageHandle.IsInvalid)
+            {
+                CurrentPageHeight = PdfiumInterop.GetPageHeight(pageHandle);
+                _logger.LogDebug(
+                    "Updated page dimensions. PageNumber={PageNumber}, Height={Height}",
+                    CurrentPageNumber, CurrentPageHeight);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get page dimensions for page {PageNumber}", CurrentPageNumber);
         }
     }
 
