@@ -481,7 +481,7 @@
        - Note that this provides three-layer crash protection
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 7. Create ArchUnitNET layer and naming tests
+- [x] 7. Create ArchUnitNET layer and naming tests
   - Files:
     - `tests/FluentPDF.Architecture.Tests/LayerTests.cs`
     - `tests/FluentPDF.Architecture.Tests/NamingTests.cs`
