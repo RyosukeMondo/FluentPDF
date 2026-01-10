@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Create FluentPDF.Benchmarks project and configure BenchmarkDotNet
+- [x] 1. Create FluentPDF.Benchmarks project and configure BenchmarkDotNet
   - Files:
     - `tests/FluentPDF.Benchmarks/FluentPDF.Benchmarks.csproj` (create)
     - `tests/FluentPDF.Benchmarks/Program.cs` (create)
