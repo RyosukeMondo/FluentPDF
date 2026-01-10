@@ -1,18 +1,30 @@
+using FluentPDF.App.ViewModels;
+
 namespace FluentPDF.App.Views
 {
     /// <summary>
-    /// A simple page that can be used on its own or navigated to within a Frame.
+    /// Main page demonstrating MVVM pattern with data binding.
     /// </summary>
     public partial class MainPage : Page
     {
-        int count = 0;
+        /// <summary>
+        /// Gets the view model for this page.
+        /// </summary>
+        public MainViewModel ViewModel { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainPage"/> class.
+        /// </summary>
         public MainPage()
         {
             this.InitializeComponent();
-        }
 
-        private void OnCountClicked(object sender, RoutedEventArgs e)
-            => txtCount.Text = $"Current count: {count++}";
+            // Resolve ViewModel from DI container
+            var app = (App)Application.Current;
+            ViewModel = app.GetService<MainViewModel>();
+
+            // Set DataContext for runtime binding (x:Bind doesn't need this, but good practice)
+            this.DataContext = ViewModel;
+        }
     }
 }

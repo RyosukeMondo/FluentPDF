@@ -6,33 +6,47 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:FluentPDF.App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    x:Name="RootPage">
     <Page.Content>
         <StackPanel
             HorizontalAlignment="Center"
-            Spacing="25"
+            Spacing="20"
             VerticalAlignment="Center">
+            <!-- Application Title -->
             <TextBlock
-                FontSize="24"
+                FontSize="32"
+                FontWeight="Bold"
                 HorizontalAlignment="Center"
-                Style="{StaticResource MyLabel}"
-                Text="Hello, World!" />
+                Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
+
+            <!-- Status Message -->
             <TextBlock
-                FontSize="20"
-                HorizontalAlignment="Center"
-                Style="{StaticResource MyLabel}"
-                Text="Welcome to WinUI 3!" />
-            <TextBlock
-                x:Name="txtCount"
                 FontSize="16"
                 HorizontalAlignment="Center"
-                Style="{StaticResource MyLabel}"
-                Text="Current count: 0" />
-            <Button
-                Click="OnCountClicked"
-                Content="Click Me"
+                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+
+            <!-- Loading Indicator -->
+            <ProgressRing
+                Width="50"
+                Height="50"
                 HorizontalAlignment="Center"
-                Style="{StaticResource PrimaryAction}" />
+                IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
+
+            <!-- Action Buttons -->
+            <StackPanel
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="10">
+                <Button
+                    Command="{x:Bind ViewModel.LoadDocumentCommand}"
+                    Content="Load Document"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button
+                    Command="{x:Bind ViewModel.SaveCommand}"
+                    Content="Save"
+                    IsEnabled="{x:Bind ViewModel.SaveCommand.CanExecute(null), Mode=OneWay}" />
+            </StackPanel>
         </StackPanel>
     </Page.Content>
 </Page>
