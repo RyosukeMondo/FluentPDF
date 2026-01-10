@@ -9,12 +9,21 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 
 ## Features
 
-- **Enterprise-grade PDF rendering** with PDFium
+### PDF Viewing
+- **High-Quality Rendering**: View PDF documents using Google's PDFium rendering engine
+- **Page Navigation**: Navigate through documents with previous/next buttons or arrow keys
+- **Zoom Controls**: Zoom in/out with preset levels (50% to 200%) or keyboard shortcuts
+- **File Picker Integration**: Open PDF files with native Windows file picker
+- **Loading Indicators**: Visual feedback during document loading and page rendering
+- **Error Handling**: Graceful error handling for corrupted or invalid PDF files
+
+### Architecture & Quality
 - **Modern MVVM architecture** with CommunityToolkit.Mvvm source generators
 - **Verifiable quality** with ArchUnitNET automated architecture tests
 - **Comprehensive observability** with Serilog + OpenTelemetry
 - **Type-safe error handling** using FluentResults Result pattern
 - **Testable architecture** with dependency injection and interface-based design
+- **Memory-safe P/Invoke** with SafeHandle pattern for native interop
 
 ## Prerequisites
 
@@ -72,6 +81,39 @@ Build PDFium and QPDF native libraries using the automated vcpkg script:
 dotnet restore FluentPDF.sln
 dotnet build FluentPDF.sln
 ```
+
+## Usage
+
+### Opening a PDF
+
+1. Click the **Open** button in the toolbar (or press **Ctrl+O**)
+2. Select a PDF file from the file picker
+3. The first page will be displayed automatically
+
+### Navigating Pages
+
+- **Next Page**: Click the **Next** button or press **Right Arrow**
+- **Previous Page**: Click the **Previous** button or press **Left Arrow**
+- **Page Indicator**: The toolbar shows your current position (e.g., "Page 2 of 10")
+
+### Zoom Controls
+
+- **Zoom In**: Click the **Zoom In** button or press **Ctrl+Plus** (increases by 25%)
+- **Zoom Out**: Click the **Zoom Out** button or press **Ctrl+Minus** (decreases by 25%)
+- **Reset Zoom**: Click the **Reset Zoom** button or press **Ctrl+0** (returns to 100%)
+- **Zoom Levels**: 50%, 75%, 100%, 125%, 150%, 175%, 200%
+- **Current Zoom**: Displayed in toolbar (e.g., "150%")
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| **Ctrl+O** | Open PDF file |
+| **Right Arrow** | Next page |
+| **Left Arrow** | Previous page |
+| **Ctrl+Plus** | Zoom in |
+| **Ctrl+Minus** | Zoom out |
+| **Ctrl+0** | Reset zoom to 100% |
 
 ## Architecture
 

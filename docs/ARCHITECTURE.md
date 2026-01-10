@@ -466,6 +466,327 @@ public void CoreLayer_ShouldNot_DependOn_AppLayer()
 }
 ```
 
+## PDF Rendering Architecture
+
+The PDF rendering subsystem integrates PDFium (Google's PDF rendering engine) through a carefully designed P/Invoke layer with enterprise-grade error handling and resource management.
+
+### PDFium Integration Overview
+
+```mermaid
+graph TB
+    subgraph "UI Layer"
+        VM[PdfViewerViewModel]
+    end
+
+    subgraph "Service Layer"
+        DocSvc[PdfDocumentService<br/>IPdfDocumentService]
+        RenderSvc[PdfRenderingService<br/>IPdfRenderingService]
+    end
+
+    subgraph "P/Invoke Layer"
+        Interop[PdfiumInterop]
+        DocHandle[SafePdfDocumentHandle]
+        PageHandle[SafePdfPageHandle]
+    end
+
+    subgraph "Native Layer"
+        PDFium[pdfium.dll<br/>Google PDFium]
+    end
+
+    VM --> DocSvc
+    VM --> RenderSvc
+    DocSvc --> Interop
+    RenderSvc --> Interop
+    Interop --> DocHandle
+    Interop --> PageHandle
+    Interop --> PDFium
+    DocHandle -.cleanup.-> PDFium
+    PageHandle -.cleanup.-> PDFium
+```
+
+### Component Breakdown
+
+#### 1. PdfiumInterop (Low-Level P/Invoke)
+
+**Location**: `FluentPDF.Rendering/Interop/PdfiumInterop.cs`
+
+**Responsibilities**:
+- DllImport declarations for PDFium C API
+- Library initialization and shutdown
+- Error code translation
+- Safe handle management
+
+**Key Methods**:
+```csharp
+public class PdfiumInterop
+{
+    public bool Initialize();                                    // FPDF_InitLibrary
+    public void Shutdown();                                      // FPDF_DestroyLibrary
+    public SafePdfDocumentHandle LoadDocument(string path);      // FPDF_LoadDocument
+    public int GetPageCount(SafePdfDocumentHandle doc);          // FPDF_GetPageCount
+    public SafePdfPageHandle LoadPage(SafePdfDocumentHandle doc, int index);
+    public double GetPageWidth(SafePdfPageHandle page);          // FPDF_GetPageWidth
+    public double GetPageHeight(SafePdfPageHandle page);         // FPDF_GetPageHeight
+    public IntPtr CreateBitmap(int width, int height);           // FPDFBitmap_Create
+    public void RenderPageBitmap(IntPtr bitmap, SafePdfPageHandle page, ...);
+}
+```
+
+**Design Patterns**:
+- **SafeHandle Pattern**: All native pointers wrapped in `SafeHandleZeroOrMinusOneIsInvalid`
+- **Singleton Initialization**: PDFium initialized once per app lifetime
+- **Deterministic Cleanup**: Automatic handle release via `ReleaseHandle()`
+
+#### 2. SafeHandle Types
+
+**SafePdfDocumentHandle**:
+```csharp
+public class SafePdfDocumentHandle : SafeHandleZeroOrMinusOneIsInvalid
+{
+    protected override bool ReleaseHandle()
+    {
+        FPDF_CloseDocument(handle);  // Called by GC or explicit Dispose
+        return true;
+    }
+}
+```
+
+**SafePdfPageHandle**: Similar pattern for page handles.
+
+**Benefits**:
+- Prevents handle leaks (automatic cleanup)
+- Exception-safe (cleanup even during unwinding)
+- Interop-safe (P/Invoke recognizes SafeHandle)
+
+#### 3. PdfDocumentService (Business Logic)
+
+**Location**: `FluentPDF.Rendering/Services/PdfDocumentService.cs`
+
+**Responsibilities**:
+- PDF file validation and loading
+- Document metadata extraction (page count, file size)
+- Error handling with `Result<T>` pattern
+- Structured logging with correlation IDs
+
+**Error Codes**:
+- `PDF_FILE_NOT_FOUND`: File path does not exist
+- `PDF_INVALID_FORMAT`: Not a valid PDF file
+- `PDF_CORRUPTED`: Damaged PDF structure
+- `PDF_REQUIRES_PASSWORD`: Password-protected PDF
+- `PDF_LOAD_FAILED`: Generic loading failure
+
+**Example Flow**:
+```
+User -> ViewModel.OpenDocumentAsync()
+  -> DocumentService.LoadDocumentAsync(path)
+    -> Validate file exists
+    -> PdfiumInterop.LoadDocument(path)
+      -> FPDF_LoadDocument (native call)
+    <- SafePdfDocumentHandle
+    -> Get page count, file size
+  <- Result<PdfDocument>
+```
+
+#### 4. PdfRenderingService (Rendering Pipeline)
+
+**Location**: `FluentPDF.Rendering/Services/PdfRenderingService.cs`
+
+**Responsibilities**:
+- Page rendering at specified zoom/DPI
+- Bitmap creation and conversion to BitmapImage
+- Performance monitoring (log warnings for slow renders)
+- Memory management (immediate bitmap disposal)
+
+**Rendering Pipeline**:
+```
+1. Validate page number
+2. Load page handle (FPDF_LoadPage)
+3. Get page dimensions
+4. Calculate output size: (width * dpi/72 * zoom, height * dpi/72 * zoom)
+5. Create bitmap (FPDFBitmap_Create)
+6. Render page to bitmap (FPDF_RenderPageBitmap with antialiasing)
+7. Convert bitmap to BitmapImage (Windows.Graphics.Imaging)
+8. Dispose bitmap handle
+9. Close page handle
+10. Return Result<BitmapImage>
+```
+
+**Performance Thresholds**:
+- Warning logged if rendering > 2 seconds
+- Error logged if rendering > 5 seconds
+
+#### 5. PdfViewerViewModel (Presentation Logic)
+
+**Location**: `FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
+
+**Responsibilities**:
+- UI state management (current page, zoom level, loading state)
+- Command implementation (OpenDocument, NextPage, ZoomIn, etc.)
+- Data binding support via `INotifyPropertyChanged`
+- Error presentation to user
+
+**Observable Properties**:
+- `CurrentPageImage: BitmapImage?`
+- `CurrentPageNumber: int`
+- `TotalPages: int`
+- `ZoomLevel: double`
+- `IsLoading: bool`
+- `StatusMessage: string`
+
+**Commands with CanExecute Logic**:
+- `OpenDocumentCommand`: Always enabled
+- `GoToNextPageCommand`: Enabled if CurrentPage < TotalPages && !IsLoading
+- `GoToPreviousPageCommand`: Enabled if CurrentPage > 1 && !IsLoading
+- `ZoomInCommand`: Enabled if ZoomLevel < 2.0 && !IsLoading
+- `ZoomOutCommand`: Enabled if ZoomLevel > 0.5 && !IsLoading
+
+### Memory Management Strategy
+
+**Problem**: PDFium uses unmanaged memory for documents, pages, and bitmaps. Leaks cause OOM.
+
+**Solution**:
+1. **SafeHandle for Documents and Pages**: Automatic cleanup via finalizer
+2. **Immediate Bitmap Disposal**: Bitmaps disposed immediately after conversion to BitmapImage
+3. **Explicit Document Disposal**: ViewModel implements `IDisposable` to close document on navigation away
+4. **GC.SuppressFinalize**: After explicit disposal to prevent double-cleanup
+
+**Memory Lifecycle**:
+```
+LoadDocument -> SafePdfDocumentHandle created
+  RenderPage -> SafePdfPageHandle created
+               -> Bitmap created
+               -> Convert to BitmapImage
+               -> Bitmap.Dispose() [IMMEDIATE]
+               -> PageHandle.Dispose() [IMMEDIATE]
+  CloseDocument -> DocumentHandle.Dispose()
+                -> FPDF_CloseDocument(native handle)
+                -> GC.SuppressFinalize(this)
+```
+
+### Error Handling Layers
+
+**Layer 1: Native Error Codes**
+- PDFium returns error codes via `FPDF_GetLastError()`
+- PdfiumInterop translates to PdfError with error category
+
+**Layer 2: Result Pattern**
+- Services return `Result<T>` instead of throwing exceptions
+- Errors include context (file path, page number, correlation ID)
+
+**Layer 3: ViewModel Error Presentation**
+- Failed Results logged with correlation ID
+- User sees friendly message in UI
+- StatusMessage updated (e.g., "Failed to render page")
+
+**Layer 4: Global Exception Handlers**
+- Catch unhandled exceptions in rendering pipeline
+- Log to Serilog with full stack trace
+- Show error dialog to user
+
+### Performance Optimizations
+
+1. **Async Rendering**: All PDFium calls on background threads via `Task.Run`
+2. **Bitmap Caching**: (Future) Cache rendered bitmaps for recently viewed pages
+3. **Progressive Rendering**: (Future) Render low-res preview first, then high-res
+4. **Double Buffering**: WinUI handles bitmap display optimization
+
+### Architecture Rules (ArchUnitNET)
+
+```csharp
+// Rule 1: P/Invoke only in Rendering.Interop namespace
+[Fact]
+public void PInvoke_ShouldOnly_ExistIn_RenderingNamespace()
+{
+    var rule = Methods()
+        .That().HaveAttribute<DllImportAttribute>()
+        .Should().ResideInNamespace("FluentPDF.Rendering.Interop")
+        .Because("P/Invoke must be isolated for security and testability");
+
+    rule.Check(Architecture);
+}
+
+// Rule 2: ViewModels must not directly reference PDFium
+[Fact]
+public void ViewModels_ShouldNot_Reference_Pdfium()
+{
+    var rule = Classes()
+        .That().HaveNameEndingWith("ViewModel")
+        .Should().NotDependOnAny(Classes().That().ResideInNamespace("FluentPDF.Rendering.Interop"))
+        .Because("ViewModels should use service interfaces, not direct PDFium access");
+
+    rule.Check(Architecture);
+}
+
+// Rule 3: Core must not reference Rendering infrastructure
+[Fact]
+public void CoreLayer_ShouldNot_Reference_PdfiumInterop()
+{
+    var rule = Classes()
+        .That().ResideInNamespace("FluentPDF.Core")
+        .Should().NotDependOnAny(Classes().That().ResideInNamespace("FluentPDF.Rendering.Interop"))
+        .Because("Core must remain independent of Rendering infrastructure");
+
+    rule.Check(Architecture);
+}
+```
+
+### Dependency Injection Registration
+
+**Location**: `FluentPDF.App/App.xaml.cs`
+
+```csharp
+// Singleton: PDFium initialized once
+services.AddSingleton<PdfiumInterop>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<App>>();
+    var interop = new PdfiumInterop();
+    if (!interop.Initialize())
+    {
+        logger.LogCritical("Failed to initialize PDFium library");
+        throw new InvalidOperationException("Failed to initialize PDFium");
+    }
+    logger.LogInformation("PDFium initialized successfully");
+    return interop;
+});
+
+// Services
+services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
+services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
+
+// ViewModels (transient for each page instance)
+services.AddTransient<PdfViewerViewModel>();
+```
+
+**Shutdown**:
+```csharp
+protected override void OnExit(ExitEventArgs e)
+{
+    var interop = _host.Services.GetService<PdfiumInterop>();
+    interop?.Shutdown();  // FPDF_DestroyLibrary
+    Log.CloseAndFlush();
+    base.OnExit(e);
+}
+```
+
+### Testing Strategy
+
+**Unit Tests**:
+- Mock `PdfiumInterop` to test service logic
+- Verify error handling for all failure scenarios
+- Test CanExecute logic for commands
+- Validate Result<T> error codes
+
+**Integration Tests**:
+- Use real PDFium with sample PDF files
+- Test full workflow: load → render → navigate → zoom
+- Verify memory cleanup (no handle leaks)
+- Test performance thresholds
+
+**Architecture Tests**:
+- Enforce P/Invoke isolation
+- Verify SafeHandle usage
+- Prevent ViewModel → Interop dependencies
+
 ## Build and CI/CD
 
 ### vcpkg Build Automation

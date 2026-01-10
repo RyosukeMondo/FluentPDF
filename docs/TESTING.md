@@ -504,6 +504,397 @@ GitHub Actions automatically:
 3. Comments coverage % on PRs
 4. Fails build if coverage drops below threshold
 
+## PDF Rendering Tests
+
+The PDF rendering subsystem has comprehensive test coverage across all layers, from low-level P/Invoke to high-level ViewModels.
+
+### Test Structure
+
+```
+tests/
+├── FluentPDF.Architecture.Tests/
+│   └── PdfRenderingArchitectureTests.cs    # Architecture rules for PDF layer
+│
+├── FluentPDF.Core.Tests/
+│   └── Models/
+│       ├── PdfDocumentTests.cs             # PdfDocument model tests
+│       └── PdfPageTests.cs                 # PdfPage model tests
+│
+├── FluentPDF.Rendering.Tests/
+│   ├── Interop/
+│   │   └── PdfiumInteropTests.cs           # P/Invoke layer tests (Windows only)
+│   ├── Services/
+│   │   ├── PdfDocumentServiceTests.cs      # Document service unit tests
+│   │   └── PdfRenderingServiceTests.cs     # Rendering service unit tests
+│   └── Integration/
+│       └── PdfViewerIntegrationTests.cs    # End-to-end integration tests
+│
+└── FluentPDF.App.Tests/
+    └── ViewModels/
+        └── PdfViewerViewModelTests.cs      # ViewModel tests (headless)
+```
+
+### Architecture Tests (PdfRenderingArchitectureTests.cs)
+
+**Purpose**: Enforce architectural boundaries and design patterns in the PDF rendering layer.
+
+**Test Cases**:
+
+```csharp
+[Fact]
+public void PInvoke_ShouldOnly_ExistIn_RenderingNamespace()
+{
+    // Ensures all DllImport attributes are in FluentPDF.Rendering.Interop
+    // Prevents P/Invoke proliferation across the codebase
+}
+
+[Fact]
+public void PInvoke_Should_UseSafeHandle_ForPointers()
+{
+    // Verifies SafePdfDocumentHandle and SafePdfPageHandle usage
+    // Prevents raw IntPtr usage for native handles
+}
+
+[Fact]
+public void ViewModels_ShouldNot_Reference_Pdfium()
+{
+    // Ensures ViewModels depend on service interfaces only
+    // Prevents tight coupling to native layer
+}
+
+[Fact]
+public void RenderingServices_Should_ImplementInterfaces()
+{
+    // Verifies all services implement I*Service interfaces
+    // Enables dependency injection and mocking
+}
+
+[Fact]
+public void CoreLayer_ShouldNot_Reference_PdfiumInterop()
+{
+    // Ensures Core layer remains independent of Rendering infrastructure
+    // Maintains clean architecture boundaries
+}
+```
+
+**Run**: `dotnet test tests/FluentPDF.Architecture.Tests --filter PdfRenderingArchitectureTests`
+
+### Unit Tests
+
+#### PdfiumInteropTests.cs (Windows Only)
+
+**Purpose**: Test PDFium P/Invoke layer with real pdfium.dll.
+
+**Important**: These tests require pdfium.dll in test output directory. Skip on Linux/macOS.
+
+**Test Cases**:
+
+```csharp
+[Fact]
+public void Initialize_ShouldSucceed()
+{
+    // Verifies FPDF_InitLibrary succeeds
+    var interop = new PdfiumInterop();
+    var result = interop.Initialize();
+    result.Should().BeTrue();
+}
+
+[Fact]
+public void LoadDocument_WithValidPdf_ShouldReturnValidHandle()
+{
+    // Uses sample.pdf from test fixtures
+    var handle = interop.LoadDocument("sample.pdf", null);
+    handle.Should().NotBeNull();
+    handle.IsInvalid.Should().BeFalse();
+}
+
+[Fact]
+public void GetPageCount_WithValidDocument_ShouldReturnCorrectCount()
+{
+    var handle = interop.LoadDocument("sample.pdf", null);
+    var count = interop.GetPageCount(handle);
+    count.Should().BeGreaterThan(0);
+}
+
+[Fact]
+public void SafeHandles_ShouldDispose_WithoutLeaks()
+{
+    // Verifies SafePdfDocumentHandle and SafePdfPageHandle clean up
+    // Uses reflection to check handle closure
+}
+```
+
+**Fixtures**: Sample PDFs in `tests/Fixtures/`:
+- `sample.pdf`: Valid 3-page PDF for testing
+- `corrupted.pdf`: Invalid PDF for error testing
+- `password-protected.pdf`: Password-protected PDF (if available)
+
+**Run**: `dotnet test tests/FluentPDF.Rendering.Tests --filter PdfiumInteropTests`
+
+#### PdfDocumentServiceTests.cs
+
+**Purpose**: Test document loading service logic with mocked PdfiumInterop.
+
+**Test Cases**:
+
+```csharp
+[Fact]
+public async Task LoadDocumentAsync_WithValidFile_ReturnsSuccess()
+{
+    // Mock: PdfiumInterop.LoadDocument returns valid handle
+    // Mock: GetPageCount returns 3
+    // Assert: Result.IsSuccess == true
+    // Assert: PdfDocument.PageCount == 3
+}
+
+[Fact]
+public async Task LoadDocumentAsync_WithNonExistentFile_ReturnsFileNotFoundError()
+{
+    // Assert: Result.IsFailed == true
+    // Assert: Error.Code == "PDF_FILE_NOT_FOUND"
+    // Assert: Error.Context["FilePath"] == file path
+}
+
+[Fact]
+public async Task LoadDocumentAsync_WithCorruptedFile_ReturnsCorruptedError()
+{
+    // Mock: PdfiumInterop.LoadDocument returns invalid handle
+    // Assert: Result.IsFailed == true
+    // Assert: Error.Code == "PDF_CORRUPTED" or "PDF_INVALID_FORMAT"
+}
+
+[Fact]
+public async Task GetPageInfoAsync_WithValidPage_ReturnsPageInfo()
+{
+    // Mock: LoadPage, GetPageWidth, GetPageHeight
+    // Assert: PdfPage.Width > 0, PdfPage.Height > 0
+    // Assert: PdfPage.AspectRatio calculated correctly
+}
+
+[Fact]
+public async Task GetPageInfoAsync_WithInvalidPage_ReturnsError()
+{
+    // Test page number < 1 and > PageCount
+    // Assert: Result.IsFailed == true
+}
+```
+
+**Run**: `dotnet test tests/FluentPDF.Rendering.Tests --filter PdfDocumentServiceTests`
+
+#### PdfRenderingServiceTests.cs
+
+**Purpose**: Test page rendering service logic with mocked PdfiumInterop.
+
+**Test Cases**:
+
+```csharp
+[Fact]
+public async Task RenderPageAsync_WithValidInputs_ReturnsBitmapImage()
+{
+    // Mock: LoadPage, GetPageWidth/Height, CreateBitmap, RenderPageBitmap
+    // Assert: Result.IsSuccess == true
+    // Assert: BitmapImage != null
+}
+
+[Fact]
+public async Task RenderPageAsync_WithInvalidPage_ReturnsError()
+{
+    // Assert: Result.IsFailed == true
+    // Assert: Error.Code == "PDF_PAGE_INVALID"
+}
+
+[Fact]
+public async Task RenderPageAsync_AtDifferentZoomLevels_CalculatesCorrectSize()
+{
+    // Test zoom: 0.5, 1.0, 1.5, 2.0
+    // Assert: Output dimensions = (page dimensions * zoom * dpi/72)
+}
+
+[Fact]
+public async Task RenderPageAsync_SlowRender_LogsPerformanceWarning()
+{
+    // Mock: Delay rendering > 2 seconds
+    // Assert: Logger.LogWarning called with performance message
+}
+
+[Fact]
+public async Task RenderPageAsync_Always_DisposesBitmapAfterConversion()
+{
+    // Verify bitmap handle is disposed even if conversion fails
+}
+```
+
+**Run**: `dotnet test tests/FluentPDF.Rendering.Tests --filter PdfRenderingServiceTests`
+
+#### PdfViewerViewModelTests.cs
+
+**Purpose**: Test ViewModel logic with mocked services (headless, no WinUI runtime).
+
+**Test Cases**:
+
+```csharp
+[Fact]
+public async Task OpenDocumentCommand_WithValidFile_LoadsAndRendersFirstPage()
+{
+    // Mock: IPdfDocumentService.LoadDocumentAsync returns success
+    // Mock: IPdfRenderingService.RenderPageAsync returns BitmapImage
+    // Execute: OpenDocumentCommand.Execute()
+    // Assert: TotalPages > 0
+    // Assert: CurrentPageNumber == 1
+    // Assert: CurrentPageImage != null
+}
+
+[Fact]
+public async Task GoToNextPageCommand_AdvancesPage()
+{
+    // Setup: Load document with 3 pages
+    // Execute: GoToNextPageCommand.Execute()
+    // Assert: CurrentPageNumber == 2
+}
+
+[Fact]
+public void GoToNextPageCommand_OnLastPage_IsDisabled()
+{
+    // Setup: CurrentPageNumber == TotalPages
+    // Assert: GoToNextPageCommand.CanExecute() == false
+}
+
+[Fact]
+public async Task ZoomInCommand_IncreasesZoom()
+{
+    // Setup: ZoomLevel == 1.0
+    // Execute: ZoomInCommand.Execute()
+    // Assert: ZoomLevel == 1.25
+    // Assert: RenderPageAsync called with new zoom
+}
+
+[Fact]
+public void PropertyChanged_Fires_WhenPropertiesChange()
+{
+    // Verify INotifyPropertyChanged fires for all observable properties
+}
+```
+
+**Run**: `dotnet test tests/FluentPDF.App.Tests --filter PdfViewerViewModelTests`
+
+### Integration Tests (PdfViewerIntegrationTests.cs)
+
+**Purpose**: Test complete workflow with real PDFium and sample PDFs.
+
+**Important**: Requires Windows and pdfium.dll. Mark with `[Trait("Category", "Integration")]`.
+
+**Test Cases**:
+
+```csharp
+[Fact]
+[Trait("Category", "Integration")]
+public async Task LoadDocument_WithValidPdf_Succeeds()
+{
+    // Use real PdfDocumentService (not mocked)
+    // Load tests/Fixtures/sample.pdf
+    // Assert: Result.IsSuccess
+    // Assert: PageCount > 0
+    // Assert: Handle is valid
+    // Dispose document
+}
+
+[Fact]
+[Trait("Category", "Integration")]
+public async Task RenderPage_WithValidDocument_ReturnsImage()
+{
+    // Load sample.pdf
+    // Render page 1 at 100% zoom
+    // Assert: BitmapImage != null
+    // Assert: Image dimensions match expected size (page size * dpi/72)
+}
+
+[Fact]
+[Trait("Category", "Integration")]
+public async Task RenderAllPages_Succeeds()
+{
+    // Load sample.pdf
+    // Render all pages sequentially
+    // Assert: All renders succeed
+    // Assert: No errors logged
+}
+
+[Fact]
+[Trait("Category", "Integration")]
+public async Task ZoomLevels_RenderCorrectly()
+{
+    // Load sample.pdf
+    // Render page 1 at 50%, 100%, 150%, 200%
+    // Assert: Image sizes scale proportionally
+}
+
+[Fact]
+[Trait("Category", "Integration")]
+public async Task LoadCorruptedPdf_ReturnsError()
+{
+    // Load tests/Fixtures/corrupted.pdf
+    // Assert: Result.IsFailed
+    // Assert: Error.Code == "PDF_CORRUPTED" or "PDF_INVALID_FORMAT"
+}
+
+[Fact]
+[Trait("Category", "Integration")]
+public async Task MemoryCleanup_NoLeaks()
+{
+    // Load and dispose multiple documents
+    // Assert: SafeHandles are disposed
+    // Use reflection to check handle closure
+}
+```
+
+**Run**: `dotnet test tests/FluentPDF.Rendering.Tests --filter "Category=Integration"`
+
+### Test Fixtures
+
+**Location**: `tests/Fixtures/`
+
+**Files**:
+- `sample.pdf`: Valid 3-page PDF (Letter size, 8.5x11 inches)
+  - Page 1: Title page with text
+  - Page 2: Content page with images
+  - Page 3: Summary page
+- `corrupted.pdf`: Invalid PDF (binary file renamed to .pdf)
+- `password-protected.pdf`: PDF with user password "test123" (optional)
+
+**Usage**:
+```csharp
+var samplePdfPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Fixtures", "sample.pdf");
+var result = await documentService.LoadDocumentAsync(samplePdfPath);
+```
+
+### CI/CD Integration for PDF Tests
+
+**build.yml modifications**:
+```yaml
+- name: Copy PDFium DLLs to test output
+  run: |
+    Copy-Item "libs/x64/bin/pdfium.dll" "tests/FluentPDF.Rendering.Tests/bin/Release/net8.0/" -Force
+```
+
+**test.yml modifications**:
+```yaml
+- name: Run Unit Tests (excluding Integration)
+  run: dotnet test --no-build --filter "Category!=Integration"
+
+- name: Run Integration Tests (Windows only)
+  run: dotnet test --no-build --filter "Category=Integration"
+  if: runner.os == 'Windows'
+```
+
+### Coverage Targets
+
+**PDF Rendering Layer**:
+- PdfiumInterop: 70% (low because many native calls, hard to test all error paths)
+- PdfDocumentService: 90% (critical path, comprehensive error handling)
+- PdfRenderingService: 90% (critical path, performance monitoring)
+- PdfViewerViewModel: 85% (all commands, properties, error scenarios)
+
+**Overall Target**: 80% minimum across all PDF rendering components.
+
 ## CI/CD Integration
 
 ### Test Workflow (.github/workflows/test.yml)
