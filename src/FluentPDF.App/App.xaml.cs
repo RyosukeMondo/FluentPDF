@@ -1,4 +1,5 @@
 using FluentPDF.App.Services;
+using FluentPDF.App.Views;
 using FluentPDF.Core.Logging;
 using FluentPDF.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Navigation;
 using Serilog;
+using System.Runtime.ExceptionServices;
 
 namespace FluentPDF.App
 {
@@ -29,6 +31,9 @@ namespace FluentPDF.App
             Log.Logger = SerilogConfiguration.CreateLogger();
 
             Log.Information("FluentPDF application starting");
+
+            // Configure global exception handlers
+            SetupExceptionHandlers();
 
             // Configure dependency injection container
             _host = Host.CreateDefaultBuilder()
@@ -103,6 +108,82 @@ namespace FluentPDF.App
             Log.Fatal(e.Exception, "Navigation failed to {PageType} [CorrelationId: {CorrelationId}]",
                 e.SourcePageType.FullName, correlationId);
             throw new Exception($"Failed to load Page {e.SourcePageType.FullName}. CorrelationId: {correlationId}");
+        }
+
+        /// <summary>
+        /// Sets up global exception handlers to catch and log unhandled exceptions.
+        /// </summary>
+        private void SetupExceptionHandlers()
+        {
+            // UI Thread exceptions
+            this.UnhandledException += OnUnhandledException;
+
+            // Background task exceptions
+            TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+            // Non-UI thread exceptions
+            AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
+
+            Log.Debug("Global exception handlers configured");
+        }
+
+        /// <summary>
+        /// Handles unhandled exceptions on the UI thread.
+        /// </summary>
+        private async void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            var correlationId = Guid.NewGuid();
+            Log.Fatal(e.Exception, "Unhandled UI exception [CorrelationId: {CorrelationId}]", correlationId);
+
+            // Try to show error dialog
+            try
+            {
+                var dialog = new ErrorDialog(
+                    "An unexpected error occurred. The application will attempt to continue.",
+                    correlationId.ToString()
+                );
+
+                // Set XamlRoot for the dialog
+                if (_window?.Content is FrameworkElement rootElement)
+                {
+                    dialog.XamlRoot = rootElement.XamlRoot;
+                    await dialog.ShowAsync();
+                }
+            }
+            catch (Exception dialogException)
+            {
+                Log.Error(dialogException, "Failed to display error dialog [CorrelationId: {CorrelationId}]", correlationId);
+            }
+
+            // Mark as handled to prevent crash if possible
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// Handles unobserved exceptions from background tasks.
+        /// </summary>
+        private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+        {
+            var correlationId = Guid.NewGuid();
+            Log.Fatal(e.Exception, "Unobserved task exception [CorrelationId: {CorrelationId}]", correlationId);
+
+            // Mark as observed to prevent crash
+            e.SetObserved();
+        }
+
+        /// <summary>
+        /// Handles unhandled exceptions on non-UI threads.
+        /// </summary>
+        private void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            var correlationId = Guid.NewGuid();
+            var exception = e.ExceptionObject as Exception;
+
+            Log.Fatal(exception, "Domain unhandled exception [CorrelationId: {CorrelationId}] [IsTerminating: {IsTerminating}]",
+                correlationId, e.IsTerminating);
+
+            // Cannot prevent crash in this handler, but log is saved
+            Log.CloseAndFlush();
         }
 
         /// <summary>
