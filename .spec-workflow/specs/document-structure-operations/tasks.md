@@ -56,7 +56,7 @@
   - _Requirements: 2, 4_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Backend Developer with expertise in PDF manipulation and validation | Task: Implement SplitAsync method in DocumentEditingService following requirements 2 and 4, using PageRangeParser and QPDF page extraction with proper validation | Restrictions: Must validate page ranges before processing, check page numbers against document page count, preserve encryption if requested, support progress reporting and cancellation | _Leverage: Use PageRangeParser.Parse from task 4, existing SafeQpdfJobHandle pattern, QPDF page extraction API | _Requirements: Req 2 (split), Req 4 (progress) | Success: Splits PDFs by valid page ranges correctly, validates page numbers before extraction, preserves page quality losslessly, reports progress and supports cancellation, handles encrypted PDFs | Instructions: Mark in-progress [-]. Log with artifacts (method SplitAsync signature and implementation details). Mark complete [x]._
 
-- [ ] 7. Implement OptimizeAsync method
+- [x] 7. Implement OptimizeAsync method
   - File: src/FluentPDF.Rendering/Services/DocumentEditingService.cs (continue from task 6)
   - Implement OptimizeAsync with QPDF optimization features
   - Support stream compression, object removal, deduplication, linearization
