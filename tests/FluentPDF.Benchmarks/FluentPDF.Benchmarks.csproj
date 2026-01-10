@@ -29,4 +29,10 @@
     <ProjectReference Include="..\..\src\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Fixtures\*.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

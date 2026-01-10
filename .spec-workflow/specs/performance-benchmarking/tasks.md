@@ -32,7 +32,7 @@
   - _Requirements: 2.2_
   - _Prompt: Role: QA Engineer specializing in test data creation | Task: Create or source sample PDF files representing different workload types for benchmarking: text-heavy (plain text document), image-heavy (photo gallery), vector-graphics (technical diagrams), complex-layout (magazine-style). Each PDF should be 3-5 pages and < 5MB. Add to tests/FluentPDF.Benchmarks/Fixtures/ and document characteristics in Fixtures/README.md. | Restrictions: PDFs must be redistributable (no copyright issues), files must be small enough to commit to repo, must represent realistic user documents. | Success: 4 sample PDF files added, README documents each file's characteristics, files are under 5MB each, PDFs load successfully in FluentPDF._
 
-- [ ] 3. Implement RenderingBenchmarks suite
+- [x] 3. Implement RenderingBenchmarks suite
   - Files:
     - `tests/FluentPDF.Benchmarks/Suites/RenderingBenchmarks.cs` (create)
   - Create benchmark class with [Config(typeof(BenchmarkConfig))] attribute

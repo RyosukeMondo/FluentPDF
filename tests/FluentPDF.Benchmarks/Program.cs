@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Running;
 using FluentPDF.Benchmarks.Config;
+using FluentPDF.Benchmarks.Suites;
 
 namespace FluentPDF.Benchmarks;
 
@@ -51,12 +52,16 @@ public class Program
         {
             case "--all":
                 Console.WriteLine("Running all benchmark suites...");
-                Console.WriteLine("Note: Individual suites will be added as they are implemented.");
-                Console.WriteLine("Currently no benchmark suites are available.");
+                Console.WriteLine();
+                Console.WriteLine("=== Rendering Benchmarks ===");
+                BenchmarkRunner.Run<RenderingBenchmarks>(config);
+                Console.WriteLine();
+                Console.WriteLine("Note: Additional suites (memory, startup, navigation) will be added as they are implemented.");
                 break;
 
             case "--rendering":
-                Console.WriteLine("Rendering benchmarks will be added in a future task.");
+                Console.WriteLine("Running rendering benchmarks...");
+                BenchmarkRunner.Run<RenderingBenchmarks>(config);
                 break;
 
             case "--memory":
