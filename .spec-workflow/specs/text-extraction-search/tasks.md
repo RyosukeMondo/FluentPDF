@@ -118,7 +118,7 @@
   - _Requirements: 4.1-4.7, 5.12_
   - _Prompt: Role: Graphics UI Developer | Task: Implement highlight overlay rendering search matches with coordinate transformation | Restrictions: Must transform coordinates correctly, handle zoom/rotation, use distinct colors | Success: Search matches visually highlighted on PDF pages_
 
-- [ ] 9. Implement text selection and clipboard copy
+- [x] 9. Implement text selection and clipboard copy
   - Files:
     - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (extend)
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (add selection handling)
