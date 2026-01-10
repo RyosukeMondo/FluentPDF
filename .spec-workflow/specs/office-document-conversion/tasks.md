@@ -17,7 +17,7 @@
   - _Requirements: 1.1-1.7_
   - _Prompt: Role: .NET Developer specializing in document parsing | Task: Integrate Mammoth.NET for DOCX to HTML conversion, implementing DocxParserService with error handling and tests | Restrictions: Must handle embedded images, validate DOCX format, follow Result<T> pattern | Success: Can parse sample DOCX files to well-formed HTML with embedded images_
 
-- [ ] 2. Implement WebView2 HTML to PDF service
+- [x] 2. Implement WebView2 HTML to PDF service
   - Files:
     - `src/FluentPDF.Core/Services/IHtmlToPdfService.cs`
     - `src/FluentPDF.Rendering/Services/HtmlToPdfService.cs`
