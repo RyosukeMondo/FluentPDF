@@ -16,7 +16,7 @@
   - _Requirements: 1.1, 1.2_
   - _Prompt: Role: Native Interop Developer specializing in P/Invoke and form APIs | Task: Create PDFium form P/Invoke declarations (FPDFDOC_InitFormFillEnvironment, FPDFPage_GetFormFieldCount, FPDFFormField_GetType, FPDFFormField_GetValue, FPDFFormField_SetValue, etc.) following design.md Component 1, implementing SafePdfFormHandle for resource cleanup, adding comprehensive error checking, and writing unit tests with sample form PDF | Restrictions: Must use SafeHandle for form environment handle, do not skip error checking, follow existing P/Invoke patterns, keep file under 500 lines | Success: All form API functions have P/Invoke declarations, SafeHandle automatically disposes resources, tests verify basic form operations work with sample PDF_
 
-- [ ] 2. Create form field domain models (PdfFormField, FormFieldType)
+- [x] 2. Create form field domain models (PdfFormField, FormFieldType)
   - Files:
     - `src/FluentPDF.Core/Models/PdfFormField.cs`
     - `src/FluentPDF.Core/Models/FormFieldType.cs`
