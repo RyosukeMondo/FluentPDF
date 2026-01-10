@@ -87,7 +87,7 @@
     7. Log implementation with artifacts documenting P/Invoke functions
     8. Edit tasks.md: change to `[x]`
 
-- [ ] 2. Create BookmarkNode domain model
+- [x] 2. Create BookmarkNode domain model
   - Files:
     - `src/FluentPDF.Core/Models/BookmarkNode.cs`
     - `tests/FluentPDF.Core.Tests/Models/BookmarkNodeTests.cs`
