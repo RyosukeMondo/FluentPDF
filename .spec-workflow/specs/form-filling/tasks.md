@@ -68,7 +68,7 @@
   - _Requirements: 4.1-4.10_
   - _Prompt: Role: Validation Engineer specializing in data validation | Task: Implement IFormValidationService with methods (ValidateField, ValidateAllFields) following design.md Component 5 and 6, creating FormValidationResult and FieldValidationError models, implementing validation rules (required field empty, max length exceeded, invalid format via regex, read-only field modification), adding clear error messages for each validation type, and writing comprehensive tests covering all validation scenarios | Restrictions: Keep validation logic pure (no side effects), use regex for format mask validation, do not skip any validation rules, ensure error messages are user-friendly | Success: All validation rules work correctly, error messages are clear and actionable, ValidateAllFields aggregates all errors, tests cover edge cases (empty strings, special characters, boundary values)_
 
-- [ ] 5. Create FormFieldControl WinUI custom control
+- [x] 5. Create FormFieldControl WinUI custom control
   - Files:
     - `src/FluentPDF.App/Controls/FormFieldControl.xaml`
     - `src/FluentPDF.App/Controls/FormFieldControl.xaml.cs`
