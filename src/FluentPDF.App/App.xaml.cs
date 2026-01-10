@@ -74,6 +74,8 @@ namespace FluentPDF.App
                     // Register application services
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ITelemetryService, TelemetryService>();
+                    services.AddSingleton<IRecentFilesService, RecentFilesService>();
+                    services.AddSingleton<JumpListService>();
 
                     // Register ViewModels
                     services.AddSingleton<MainViewModel>(); // Singleton for main window state
@@ -128,14 +130,46 @@ namespace FluentPDF.App
 
             _window.Activate();
 
-            // Handle command line arguments for opening files
-            if (!string.IsNullOrEmpty(e.Arguments))
-            {
-                var mainViewModel = GetService<MainViewModel>();
-                await mainViewModel.OpenRecentFileCommand.ExecuteAsync(e.Arguments);
-            }
+            // Handle file activation from Jump List or command line
+            await HandleFileActivationAsync();
         }
 
+        /// <summary>
+        /// Handles file activation from Jump List, file associations, or command line arguments.
+        /// </summary>
+        private async Task HandleFileActivationAsync()
+        {
+            try
+            {
+                // Check command line arguments for file paths
+                // This handles both Jump List and file association activation
+                var args = Environment.GetCommandLineArgs();
+
+                // First argument is the executable path, check for file paths after that
+                for (int i = 1; i < args.Length; i++)
+                {
+                    var arg = args[i];
+
+                    // Skip flags/options that start with - or /
+                    if (arg.StartsWith("-") || arg.StartsWith("/"))
+                    {
+                        continue;
+                    }
+
+                    // Check if it's a valid PDF file path
+                    if (File.Exists(arg) && arg.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log.Information("Opening file from activation: {FilePath}", arg);
+                        var mainViewModel = GetService<MainViewModel>();
+                        await mainViewModel.OpenRecentFileCommand.ExecuteAsync(arg);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to handle file activation");
+            }
+        }
 
         /// <summary>
         /// Sets up global exception handlers to catch and log unhandled exceptions.

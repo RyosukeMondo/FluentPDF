@@ -37,7 +37,7 @@
   - Requirements: 2.1-2.8, 3.1-3.7
   - Instructions: Add File menu with Recent Files submenu (dynamic items). Add Clear Recent Files button. Integrate Jump List updates.
 
-- [ ] 8. Register services in DI container
+- [x] 8. Register services in DI container
   - Files: `src/FluentPDF.App/App.xaml.cs`
   - Requirements: DI integration
   - Instructions: Register IRecentFilesService, JumpListService, MainViewModel. Handle app launch arguments from Jump List.
