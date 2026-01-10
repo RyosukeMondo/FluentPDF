@@ -37,6 +37,15 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 - **Error Recovery**: Comprehensive error handling with clear user feedback
 - **Batch Support**: Queue multiple conversions for efficient processing
 
+### PDF Validation
+- **PDF/A Compliance**: VeraPDF integration for archival standard validation (PDF/A-1, PDF/A-2, PDF/A-3)
+- **Format Validation**: JHOVE integration for PDF format characterization and metadata extraction
+- **Structural Validation**: QPDF integration for cross-reference table and corruption detection
+- **Flexible Profiles**: Quick (QPDF), Standard (QPDF+JHOVE), Full (all tools) validation modes
+- **Parallel Execution**: Multiple validation tools run concurrently for performance
+- **Comprehensive Reports**: JSON-serializable validation reports with detailed error information
+- **CI/CD Integration**: Automated validation in GitHub Actions workflows
+
 ### Architecture & Quality
 - **Modern MVVM architecture** with CommunityToolkit.Mvvm source generators
 - **Verifiable quality** with ArchUnitNET automated architecture tests
@@ -75,6 +84,9 @@ See [PERFORMANCE.md](docs/PERFORMANCE.md) for detailed performance characteristi
   - Download: https://go.microsoft.com/fwlink/p/?LinkId=2124703
 - **LibreOffice** (optional, for quality validation)
   - Download: https://www.libreoffice.org/download/
+- **Java Runtime Environment** (for JHOVE validation tool)
+  - Download: https://adoptium.net/
+  - Minimum version: Java 8
 
 ## Getting Started
 
@@ -110,7 +122,22 @@ Build PDFium and QPDF native libraries using the automated vcpkg script:
 .\tools\build-libs.ps1 -Clean
 ```
 
-### 3. Open and Build the Solution
+### 3. Install PDF Validation Tools (Optional)
+
+For PDF validation functionality, install the validation tools:
+
+```powershell
+pwsh .\tools\validation\install-tools.ps1
+```
+
+This installs:
+- **VeraPDF** 1.26.1 - PDF/A compliance validator
+- **JHOVE** 1.30.1 - PDF format characterization (requires Java)
+- **QPDF** 11.9.1 - Structural validation tool
+
+See [tools/validation/README.md](tools/validation/README.md) for detailed installation instructions.
+
+### 4. Open and Build the Solution
 
 1. Open `FluentPDF.sln` in Visual Studio 2022
 2. Restore NuGet packages (automatic on first build)
@@ -252,6 +279,49 @@ When you open a PDF with form fields, FluentPDF automatically detects and displa
 
 **See [CONVERSION.md](docs/CONVERSION.md) for detailed conversion documentation.**
 
+### Validating PDFs
+
+FluentPDF integrates industry-standard validation tools to verify PDF quality, compliance, and structural integrity:
+
+```csharp
+using FluentPDF.Validation.Services;
+using FluentPDF.Validation.Models;
+
+// Create validation service
+var validationService = new PdfValidationService(
+    new QpdfWrapper(),
+    new JhoveWrapper(),
+    new VeraPdfWrapper()
+);
+
+// Validate with Quick profile (fast, QPDF only)
+var result = await validationService.ValidateAsync(
+    "document.pdf",
+    ValidationProfile.Quick
+);
+
+if (result.Value.OverallStatus == ValidationStatus.Pass)
+{
+    Console.WriteLine("PDF is structurally valid");
+}
+```
+
+**Validation Profiles**:
+
+| Profile   | Tools Used              | Use Case                        | Speed  |
+|-----------|------------------------|----------------------------------|--------|
+| Quick     | QPDF                   | Fast structural validation       | ~0.5s  |
+| Standard  | QPDF + JHOVE           | Format + metadata extraction     | ~2s    |
+| Full      | QPDF + JHOVE + VeraPDF | PDF/A compliance + comprehensive | ~4s    |
+
+**What Gets Validated**:
+- **Structural integrity** (cross-reference tables, object streams)
+- **PDF format compliance** (version detection, well-formedness)
+- **PDF/A archival standards** (PDF/A-1, PDF/A-2, PDF/A-3)
+- **Metadata extraction** (title, author, page count, creation date)
+
+**See [VALIDATION.md](docs/VALIDATION.md) for comprehensive validation documentation and [FluentPDF.Validation README](src/FluentPDF.Validation/README.md) for API reference.**
+
 ## Architecture
 
 ```
@@ -266,8 +336,13 @@ FluentPDF
 │   ├── Logging/           # Serilog configuration
 │   └── Services/          # Domain services and interfaces
 │
-└── FluentPDF.Rendering    # PDF rendering infrastructure
-    └── P/Invoke/          # PDFium and QPDF native interop
+├── FluentPDF.Rendering    # PDF rendering infrastructure
+│   └── P/Invoke/          # PDFium and QPDF native interop
+│
+└── FluentPDF.Validation   # PDF validation (VeraPDF, JHOVE, QPDF)
+    ├── Services/          # Validation orchestration
+    ├── Wrappers/          # CLI tool integration
+    └── Models/            # Validation reports and results
 ```
 
 ### Architectural Principles
@@ -445,6 +520,8 @@ FluentPDF/
 
 - **PDFium**: Google's PDF rendering engine
 - **QPDF**: PDF transformation library by Jay Berkenbilt
+- **VeraPDF**: PDF/A validation reference implementation
+- **JHOVE**: PDF format characterization and validation
 - **Mammoth.NET**: Semantic DOCX to HTML converter
 - **WebView2**: Microsoft's Chromium-based rendering engine
 - **vcpkg**: Microsoft's C/C++ package manager

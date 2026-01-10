@@ -153,7 +153,7 @@
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
   - _Prompt: Role: DevOps Engineer specializing in CI/CD pipeline integration | Task: Update GitHub Actions workflows to support PDF validation. In build.yml, add step after native library build to run tools/validation/install-tools.ps1, verify tools installed (run verapdf --version, java -jar jhove.jar -v). In test.yml, run validation integration tests (dotnet test --filter "Category=Integration"), upload validation report JSON files as artifacts. Ensure Java is available (setup-java action). Handle tool installation failures gracefully (fail build if tools don't install). | Restrictions: Must run on Windows agents, install tools in consistent location, cache tool downloads if possible, verify tool installation before tests, include tool versions in workflow logs. | Success: Build workflow installs validation tools successfully, tools are executable in CI, integration tests run with real tools, validation reports uploaded as artifacts, workflow fails if tools cannot be installed._
 
-- [ ] 11. Documentation and final verification
+- [x] 11. Documentation and final verification
   - Files:
     - `src/FluentPDF.Validation/README.md` (create)
     - `docs/VALIDATION.md` (create)
