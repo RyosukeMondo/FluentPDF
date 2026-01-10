@@ -486,7 +486,7 @@
     8. Log implementation with artifacts documenting UI control
     9. Edit tasks.md: change to `[x]`
 
-- [-] 6. Integrate BookmarksPanel into PdfViewerPage
+- [x] 6. Integrate BookmarksPanel into PdfViewerPage
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (modify)
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs` (modify)
