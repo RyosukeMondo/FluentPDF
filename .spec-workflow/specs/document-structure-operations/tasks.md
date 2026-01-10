@@ -27,7 +27,7 @@
   - _Requirements: 1, 2, 3_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Software Architect specializing in service-oriented architecture and C# interfaces | Task: Design IDocumentEditingService interface with MergeAsync, SplitAsync, OptimizeAsync methods following requirements 1, 2, 3, extending patterns from IPdfDocumentService.cs and IPdfRenderingService.cs | Restrictions: Must return Result<T> for all operations, include IProgress<double> for progress reporting, support CancellationToken, do not expose QPDF types in interface signatures | _Leverage: Study IPdfDocumentService.cs method signatures, Result<T> usage patterns | _Requirements: Req 1 (merge), Req 2 (split), Req 3 (optimize), Req 4 (progress) | Success: Interface compiles with clean API surface, supports cancellation and progress, follows existing service patterns, all methods return Result<T> | Instructions: Mark in-progress [-]. Log with artifacts (interface name, methods with signatures). Mark complete [x]._
 
-- [ ] 4. Create PageRange parser utility
+- [x] 4. Create PageRange parser utility
   - File: src/FluentPDF.Core/Utilities/PageRangeParser.cs
   - Implement static Parse method to convert strings like "1-5, 10, 15-20" to List<PageRange>
   - Add validation for invalid ranges (negative, zero, overlapping)
