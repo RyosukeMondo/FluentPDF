@@ -32,7 +32,7 @@
   - _Requirements: 2.1-2.8_
   - _Prompt: Role: Backend Service Developer | Task: Implement TextExtractionService using PDFium text APIs with caching and performance monitoring | Restrictions: Must handle Unicode, log slow operations, support cancellation | Success: Can extract text from pages with proper error handling and caching_
 
-- [ ] 3. Add search P/Invoke declarations to PdfiumInterop
+- [x] 3. Add search P/Invoke declarations to PdfiumInterop
   - Files:
     - `src/FluentPDF.Rendering/Interop/PdfiumInterop.cs` (extend)
     - `tests/FluentPDF.Rendering.Tests/Interop/PdfiumSearchInteropTests.cs`
