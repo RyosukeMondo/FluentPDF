@@ -118,7 +118,7 @@
   - _Requirements: 2.1-2.10, 5.1-5.9, 7.1-7.8_
   - _Prompt: Role: WinUI Integration Engineer specializing in UI composition | Task: Modify PdfViewerPage to integrate form field overlays following design.md Component 9, adding Canvas overlay layer above Image control for form fields, adding ItemsControl bound to FormFieldViewModel.FormFields with DataTemplate for FormFieldControl instances, implementing positioning calculation (Canvas.Left = field.Bounds.Left * ZoomLevel, Canvas.Top = field.Bounds.Top * ZoomLevel), adding Tab/Shift+Tab key handlers in code-behind to call FormFieldViewModel navigation commands, adding InfoBar at top for validation errors, and updating form positions when zoom or scroll changes | Restrictions: Do not add business logic in code-behind (only view logic), use data binding for all dynamic content, ensure keyboard navigation works correctly, maintain separation between form overlays and page content | Success: Form field overlays render at correct positions, overlays move/scale with zoom and scroll, Tab navigation works, validation errors display in InfoBar, forms integrate seamlessly with PDF viewer_
 
-- [ ] 8. Register form services in DI container
+- [x] 8. Register form services in DI container
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
   - Register IPdfFormService and IFormValidationService in DI container

@@ -263,6 +263,152 @@
             Gets a value indicating whether quality validation was performed.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.FieldValidationError">
+            <summary>
+            Represents a validation error for a specific form field.
+            Contains the field name, error type, and user-friendly error message.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.FieldName">
+            <summary>
+            Gets the name of the field that failed validation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.ErrorType">
+            <summary>
+            Gets the type of validation error.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.Message">
+            <summary>
+            Gets the user-friendly error message describing the validation failure.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FieldValidationError.AttemptedValue">
+            <summary>
+            Gets the current value that failed validation (if applicable).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.ValidationErrorType">
+            <summary>
+            Defines the types of validation errors that can occur.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.RequiredFieldEmpty">
+            <summary>
+            A required field was left empty.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.MaxLengthExceeded">
+            <summary>
+            The field value exceeds the maximum allowed length.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.InvalidFormat">
+            <summary>
+            The field value does not match the required format/pattern.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.ReadOnlyFieldModified">
+            <summary>
+            Attempted to modify a read-only field.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ValidationErrorType.InvalidValue">
+            <summary>
+            The field value is invalid for the field type.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.FormFieldType">
+            <summary>
+            Represents the type of a form field in a PDF document.
+            Maps to PDFium FPDF_FORMFIELD_* constants.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Unknown">
+            <summary>
+            Unknown or unsupported field type.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.PushButton">
+            <summary>
+            Push button (non-data field).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Checkbox">
+            <summary>
+            Checkbox field (on/off state).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.RadioButton">
+            <summary>
+            Radio button (one selection per group).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.ComboBox">
+            <summary>
+            Combo box (dropdown list).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.ListBox">
+            <summary>
+            List box (scrollable list).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Text">
+            <summary>
+            Text field (single or multi-line).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Signature">
+            <summary>
+            Signature field.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.FormValidationResult">
+            <summary>
+            Represents the result of validating one or more form fields.
+            Contains a flag indicating overall validity and a collection of validation errors.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FormValidationResult.IsValid">
+            <summary>
+            Gets whether all validated fields passed validation.
+            True if no errors were found; false otherwise.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.FormValidationResult.Errors">
+            <summary>
+            Gets the collection of validation errors.
+            Empty if all fields are valid.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.Success">
+            <summary>
+            Creates a successful validation result with no errors.
+            </summary>
+            <returns>A validation result indicating success.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.Failure(FluentPDF.Core.Models.FieldValidationError[])">
+            <summary>
+            Creates a failed validation result with the specified errors.
+            </summary>
+            <param name="errors">The validation errors that occurred.</param>
+            <returns>A validation result containing the errors.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.Failure(System.Collections.Generic.IEnumerable{FluentPDF.Core.Models.FieldValidationError})">
+            <summary>
+            Creates a failed validation result with the specified errors.
+            </summary>
+            <param name="errors">The validation errors that occurred.</param>
+            <returns>A validation result containing the errors.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.FormValidationResult.GetSummaryMessage">
+            <summary>
+            Gets a summary message describing all validation errors.
+            Returns null if validation succeeded.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Models.PageRange">
             <summary>
             Represents a range of pages in a PDF document.
@@ -328,6 +474,93 @@
             Releases the native PDFium document handle and associated resources.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.PdfFormField">
+            <summary>
+            Represents a form field in a PDF document with all metadata and state.
+            Immutable except for Value and IsChecked which represent user interaction.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Name">
+            <summary>
+            Gets the fully qualified field name (e.g., "Form.Section.FieldName").
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Type">
+            <summary>
+            Gets the type of form field.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.PageNumber">
+            <summary>
+            Gets the 1-based page number where this field is located.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Bounds">
+            <summary>
+            Gets the bounding rectangle of the field in PDF coordinates.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.TabOrder">
+            <summary>
+            Gets the tab order index for keyboard navigation.
+            Lower values are visited first. -1 indicates no tab order.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Value">
+            <summary>
+            Gets or sets the text value of the field (for Text, ComboBox, ListBox).
+            Null for non-text field types.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.IsChecked">
+            <summary>
+            Gets or sets the checked state (for Checkbox, RadioButton).
+            Null for non-checkable field types.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.IsRequired">
+            <summary>
+            Gets whether this field is required to be filled.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.IsReadOnly">
+            <summary>
+            Gets whether this field is read-only.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.MaxLength">
+            <summary>
+            Gets the maximum character length for text fields.
+            Null indicates no limit.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.FormatMask">
+            <summary>
+            Gets the format mask/pattern for validation (e.g., regex pattern).
+            Null indicates no format restriction.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.GroupName">
+            <summary>
+            Gets the group name for radio buttons.
+            All radio buttons with the same group name are mutually exclusive.
+            Null for non-radio fields.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.NativeHandle">
+            <summary>
+            Gets the native PDFium handle for this field.
+            Used internally by the rendering layer.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfFormField.Validate">
+            <summary>
+            Validates that the field has all required properties set correctly.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if required properties are invalid.
+            </exception>
+        </member>
         <member name="T:FluentPDF.Core.Models.PdfPage">
             <summary>
             Represents metadata about a single PDF page.
@@ -353,6 +586,62 @@
             <summary>
             Gets the aspect ratio of the page (Width / Height).
             </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.PdfRectangle">
+            <summary>
+            Represents a rectangle in PDF coordinate space (origin at bottom-left).
+            Used for form field bounds and other positional elements.
+            </summary>
+            <param name="Left">The left coordinate.</param>
+            <param name="Bottom">The bottom coordinate.</param>
+            <param name="Right">The right coordinate.</param>
+            <param name="Top">The top coordinate.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfRectangle.#ctor(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Represents a rectangle in PDF coordinate space (origin at bottom-left).
+            Used for form field bounds and other positional elements.
+            </summary>
+            <param name="Left">The left coordinate.</param>
+            <param name="Bottom">The bottom coordinate.</param>
+            <param name="Right">The right coordinate.</param>
+            <param name="Top">The top coordinate.</param>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Left">
+            <summary>The left coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Bottom">
+            <summary>The bottom coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Right">
+            <summary>The right coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Top">
+            <summary>The top coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Width">
+            <summary>
+            Gets the width of the rectangle.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Height">
+            <summary>
+            Gets the height of the rectangle.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfRectangle.Contains(System.Double,System.Double)">
+            <summary>
+            Determines if this rectangle contains the specified point.
+            </summary>
+            <param name="x">The x-coordinate to test.</param>
+            <param name="y">The y-coordinate to test.</param>
+            <returns>True if the point is within the rectangle bounds.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfRectangle.IsValid">
+            <summary>
+            Validates that the rectangle has valid dimensions.
+            </summary>
+            <returns>True if Right > Left and Top > Bottom.</returns>
         </member>
         <member name="T:FluentPDF.Core.Models.QualityReport">
             <summary>
@@ -604,6 +893,44 @@
             Error codes: DOCX_FILE_NOT_FOUND, DOCX_INVALID_FORMAT, DOCX_PARSE_FAILED.
             </returns>
         </member>
+        <member name="T:FluentPDF.Core.Services.IFormValidationService">
+            <summary>
+            Service contract for validating PDF form field values against their constraints.
+            Provides validation for required fields, length limits, format patterns, and read-only restrictions.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IFormValidationService.ValidateField(FluentPDF.Core.Models.PdfFormField)">
+            <summary>
+            Validates a single form field against its constraints.
+            Checks for required field empty, max length exceeded, format violations, and read-only modifications.
+            </summary>
+            <param name="field">The form field to validate.</param>
+            <returns>
+            A validation result indicating success or containing validation errors.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IFormValidationService.ValidateAllFields(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Models.PdfFormField})">
+            <summary>
+            Validates all form fields in a collection.
+            Aggregates all validation errors from individual fields.
+            </summary>
+            <param name="fields">The collection of form fields to validate.</param>
+            <returns>
+            A validation result indicating success or containing all validation errors.
+            Returns success if all fields are valid.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IFormValidationService.ValidateProposedValue(FluentPDF.Core.Models.PdfFormField,System.String)">
+            <summary>
+            Validates that a proposed value is acceptable for a form field.
+            Does not modify the field; only checks if the value would be valid.
+            </summary>
+            <param name="field">The form field to validate against.</param>
+            <param name="proposedValue">The value to validate.</param>
+            <returns>
+            A validation result indicating whether the proposed value is valid.
+            </returns>
+        </member>
         <member name="T:FluentPDF.Core.Services.IHtmlToPdfService">
             <summary>
             Service contract for HTML to PDF conversion operations.
@@ -661,6 +988,81 @@
             <param name="document">The PDF document to close.</param>
             <returns>
             A Result indicating success or failure of the close operation.
+            </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IPdfFormService">
+            <summary>
+            Service contract for PDF form field detection, manipulation, and persistence.
+            Provides methods for reading form metadata, updating field values, and saving form data.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.GetFormFieldsAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <summary>
+            Gets all form fields on a specific page of the PDF document.
+            Fields are returned sorted by tab order for keyboard navigation.
+            </summary>
+            <param name="document">The PDF document to query.</param>
+            <param name="pageNumber">The 1-based page number.</param>
+            <returns>
+            A result containing a read-only list of form fields, or an error if the operation fails.
+            Returns an empty list if the page has no form fields.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.GetFormFieldAtPointAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Double,System.Double)">
+            <summary>
+            Finds the form field at the specified page coordinates (hit testing).
+            Useful for mouse hover and click interactions.
+            </summary>
+            <param name="document">The PDF document to query.</param>
+            <param name="pageNumber">The 1-based page number.</param>
+            <param name="x">X coordinate in page coordinate system.</param>
+            <param name="y">Y coordinate in page coordinate system.</param>
+            <returns>
+            A result containing the form field at the point, or null if no field exists there.
+            Returns an error if the operation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.SetFieldValueAsync(FluentPDF.Core.Models.PdfFormField,System.String)">
+            <summary>
+            Updates the text value of a form field.
+            Validates against max length, read-only status, and format constraints.
+            </summary>
+            <param name="field">The form field to update.</param>
+            <param name="value">The new value to set.</param>
+            <returns>
+            A successful result if the value was set, or an error if validation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.SetCheckboxStateAsync(FluentPDF.Core.Models.PdfFormField,System.Boolean)">
+            <summary>
+            Sets the checked state of a checkbox or radio button.
+            For radio buttons, automatically unchecks other buttons in the same group.
+            </summary>
+            <param name="field">The form field (checkbox or radio button) to update.</param>
+            <param name="isChecked">True to check the field; false to uncheck.</param>
+            <returns>
+            A successful result if the state was updated, or an error if the operation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.SaveFormDataAsync(FluentPDF.Core.Models.PdfDocument,System.String)">
+            <summary>
+            Saves the PDF document with all form field modifications persisted.
+            Uses PDFium's save API to write the updated document to disk.
+            </summary>
+            <param name="document">The PDF document with modified form fields.</param>
+            <param name="outputPath">The file path where the document should be saved.</param>
+            <returns>
+            A successful result if the document was saved, or an error if the save operation fails.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IPdfFormService.GetFieldsInTabOrder(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Models.PdfFormField})">
+            <summary>
+            Sorts form fields by their tab order for keyboard navigation.
+            Falls back to spatial ordering (top-to-bottom, left-to-right) if tab order is not defined.
+            </summary>
+            <param name="fields">The collection of form fields to sort.</param>
+            <returns>
+            A result containing the sorted list of fields, or an error if the operation fails.
             </returns>
         </member>
         <member name="T:FluentPDF.Core.Services.IPdfRenderingService">

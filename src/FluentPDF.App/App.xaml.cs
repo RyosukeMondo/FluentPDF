@@ -60,6 +60,8 @@ namespace FluentPDF.App
                     services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
                     services.AddSingleton<IDocumentEditingService, DocumentEditingService>();
                     services.AddSingleton<IBookmarkService, BookmarkService>();
+                    services.AddSingleton<IPdfFormService, PdfFormService>();
+                    services.AddSingleton<IFormValidationService, FormValidationService>();
 
                     // Register conversion services
                     services.AddSingleton<Mammoth.IDocumentConverter>(provider => new Mammoth.DocumentConverter());
@@ -77,6 +79,7 @@ namespace FluentPDF.App
                     services.AddTransient<PdfViewerViewModel>();
                     services.AddTransient<ConversionViewModel>();
                     services.AddTransient<BookmarksViewModel>();
+                    services.AddTransient<FormFieldViewModel>();
                 })
                 .Build();
         }
@@ -110,6 +113,9 @@ namespace FluentPDF.App
 
             // Start the host
             await _host.StartAsync();
+
+            // Log form services registration
+            Log.Information("Form services registered: IPdfFormService, IFormValidationService, FormFieldViewModel");
 
             if (_window is null)
             {

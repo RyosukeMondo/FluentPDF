@@ -263,6 +263,52 @@
             Gets a value indicating whether quality validation was performed.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.FormFieldType">
+            <summary>
+            Represents the type of a form field in a PDF document.
+            Maps to PDFium FPDF_FORMFIELD_* constants.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Unknown">
+            <summary>
+            Unknown or unsupported field type.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.PushButton">
+            <summary>
+            Push button (non-data field).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Checkbox">
+            <summary>
+            Checkbox field (on/off state).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.RadioButton">
+            <summary>
+            Radio button (one selection per group).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.ComboBox">
+            <summary>
+            Combo box (dropdown list).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.ListBox">
+            <summary>
+            List box (scrollable list).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Text">
+            <summary>
+            Text field (single or multi-line).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.FormFieldType.Signature">
+            <summary>
+            Signature field.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Models.PageRange">
             <summary>
             Represents a range of pages in a PDF document.
@@ -328,6 +374,93 @@
             Releases the native PDFium document handle and associated resources.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.PdfFormField">
+            <summary>
+            Represents a form field in a PDF document with all metadata and state.
+            Immutable except for Value and IsChecked which represent user interaction.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Name">
+            <summary>
+            Gets the fully qualified field name (e.g., "Form.Section.FieldName").
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Type">
+            <summary>
+            Gets the type of form field.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.PageNumber">
+            <summary>
+            Gets the 1-based page number where this field is located.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Bounds">
+            <summary>
+            Gets the bounding rectangle of the field in PDF coordinates.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.TabOrder">
+            <summary>
+            Gets the tab order index for keyboard navigation.
+            Lower values are visited first. -1 indicates no tab order.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.Value">
+            <summary>
+            Gets or sets the text value of the field (for Text, ComboBox, ListBox).
+            Null for non-text field types.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.IsChecked">
+            <summary>
+            Gets or sets the checked state (for Checkbox, RadioButton).
+            Null for non-checkable field types.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.IsRequired">
+            <summary>
+            Gets whether this field is required to be filled.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.IsReadOnly">
+            <summary>
+            Gets whether this field is read-only.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.MaxLength">
+            <summary>
+            Gets the maximum character length for text fields.
+            Null indicates no limit.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.FormatMask">
+            <summary>
+            Gets the format mask/pattern for validation (e.g., regex pattern).
+            Null indicates no format restriction.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.GroupName">
+            <summary>
+            Gets the group name for radio buttons.
+            All radio buttons with the same group name are mutually exclusive.
+            Null for non-radio fields.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfFormField.NativeHandle">
+            <summary>
+            Gets the native PDFium handle for this field.
+            Used internally by the rendering layer.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfFormField.Validate">
+            <summary>
+            Validates that the field has all required properties set correctly.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">
+            Thrown if required properties are invalid.
+            </exception>
+        </member>
         <member name="T:FluentPDF.Core.Models.PdfPage">
             <summary>
             Represents metadata about a single PDF page.
@@ -353,6 +486,62 @@
             <summary>
             Gets the aspect ratio of the page (Width / Height).
             </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.PdfRectangle">
+            <summary>
+            Represents a rectangle in PDF coordinate space (origin at bottom-left).
+            Used for form field bounds and other positional elements.
+            </summary>
+            <param name="Left">The left coordinate.</param>
+            <param name="Bottom">The bottom coordinate.</param>
+            <param name="Right">The right coordinate.</param>
+            <param name="Top">The top coordinate.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfRectangle.#ctor(System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Represents a rectangle in PDF coordinate space (origin at bottom-left).
+            Used for form field bounds and other positional elements.
+            </summary>
+            <param name="Left">The left coordinate.</param>
+            <param name="Bottom">The bottom coordinate.</param>
+            <param name="Right">The right coordinate.</param>
+            <param name="Top">The top coordinate.</param>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Left">
+            <summary>The left coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Bottom">
+            <summary>The bottom coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Right">
+            <summary>The right coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Top">
+            <summary>The top coordinate.</summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Width">
+            <summary>
+            Gets the width of the rectangle.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.PdfRectangle.Height">
+            <summary>
+            Gets the height of the rectangle.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfRectangle.Contains(System.Double,System.Double)">
+            <summary>
+            Determines if this rectangle contains the specified point.
+            </summary>
+            <param name="x">The x-coordinate to test.</param>
+            <param name="y">The y-coordinate to test.</param>
+            <returns>True if the point is within the rectangle bounds.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.PdfRectangle.IsValid">
+            <summary>
+            Validates that the rectangle has valid dimensions.
+            </summary>
+            <returns>True if Right > Left and Top > Bottom.</returns>
         </member>
         <member name="T:FluentPDF.Core.Models.QualityReport">
             <summary>
@@ -421,6 +610,25 @@
             Temporary placeholder class for initial project setup.
             Will be removed when actual domain classes are implemented.
             </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IBookmarkService">
+            <summary>
+            Service contract for PDF bookmark extraction operations.
+            Provides methods to extract hierarchical bookmark structures from PDF documents.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IBookmarkService.ExtractBookmarksAsync(FluentPDF.Core.Models.PdfDocument)">
+            <summary>
+            Extracts the hierarchical bookmark tree from a PDF document.
+            </summary>
+            <param name="document">The loaded PDF document to extract bookmarks from.</param>
+            <returns>
+            A Result containing a list of root-level BookmarkNode objects if successful,
+            or a PdfError if the operation failed.
+            Returns an empty list if the document has no bookmarks.
+            Error codes: BOOKMARK_EXTRACTION_FAILED, BOOKMARK_INVALID_HANDLE.
+            </returns>
         </member>
         <member name="T:FluentPDF.Core.Services.IDocumentEditingService">
             <summary>

@@ -29,6 +29,11 @@
             Unit tests for PdfDocument and PdfPage models.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Tests.Models.PdfFormFieldTests">
+            <summary>
+            Unit tests for the PdfFormField, PdfRectangle, and FormFieldType models.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Tests.TestBase">
             <summary>
             Base class for unit tests providing common test utilities and helpers.

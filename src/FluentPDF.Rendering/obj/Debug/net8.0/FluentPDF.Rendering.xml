@@ -769,6 +769,21 @@
         <member name="M:FluentPDF.Rendering.Services.DocxParserService.ParseDocxToHtmlAsync(System.String)">
             <inheritdoc />
         </member>
+        <member name="T:FluentPDF.Rendering.Services.FormValidationService">
+            <summary>
+            Service for validating PDF form field values against their constraints.
+            Implements validation rules for required fields, length limits, format patterns, and read-only restrictions.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.FormValidationService.ValidateField(FluentPDF.Core.Models.PdfFormField)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.FormValidationService.ValidateAllFields(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Models.PdfFormField})">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.FormValidationService.ValidateProposedValue(FluentPDF.Core.Models.PdfFormField,System.String)">
+            <inheritdoc />
+        </member>
         <member name="T:FluentPDF.Rendering.Services.HtmlToPdfService">
             <summary>
             Service for HTML to PDF conversion using WebView2 (Chromium) rendering engine.
@@ -829,6 +844,36 @@
         </member>
         <member name="M:FluentPDF.Rendering.Services.PdfDocumentService.CloseDocument(FluentPDF.Core.Models.PdfDocument)">
             <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.PdfFormService">
+            <summary>
+            Service implementation for PDF form field operations using PDFium.
+            Handles form field detection, value manipulation, and persistence.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfFormService.GetFormFieldsAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfFormService.GetFormFieldAtPointAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Double,System.Double)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfFormService.SetFieldValueAsync(FluentPDF.Core.Models.PdfFormField,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfFormService.SetCheckboxStateAsync(FluentPDF.Core.Models.PdfFormField,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfFormService.SaveFormDataAsync(FluentPDF.Core.Models.PdfDocument,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PdfFormService.GetFieldsInTabOrder(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Models.PdfFormField})">
+            <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.PdfFileWriter">
+            <summary>
+            Helper class for writing PDF data to a file.
+            Implements the FPDF_FILEWRITE structure for PDFium save operations.
+            </summary>
         </member>
         <member name="T:FluentPDF.Rendering.Services.PdfRenderingService">
             <summary>
