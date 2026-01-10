@@ -140,7 +140,7 @@
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
   - _Prompt: Role: QA Engineer specializing in integration testing and quality assurance | Task: Create integration tests validating PDF generation operations. In MergeValidationTests, test merging 2+ PDFs and validate output with IPdfValidationService (Quick profile). In SplitValidationTests, test splitting multi-page PDF and validate outputs. In OptimizeValidationTests, test PDF optimization and verify output maintains validity. If validation fails, include ValidationReport in test failure message. Use existing PDF generation logic, add validation as final step. Add [Trait("Category", "Integration")]. | Restrictions: Tests require PDF generation operations working, require validation tools installed, use test fixtures, fail test if validation fails, include full validation report in failure message. | Success: Integration tests validate generated PDFs, merged PDFs pass validation, split PDFs pass validation, optimized PDFs pass validation, validation failures cause test failures with detailed reports._
 
-- [ ] 10. Update CI workflows to install validation tools
+- [x] 10. Update CI workflows to install validation tools
   - Files:
     - `.github/workflows/build.yml` (modify)
     - `.github/workflows/test.yml` (modify)
