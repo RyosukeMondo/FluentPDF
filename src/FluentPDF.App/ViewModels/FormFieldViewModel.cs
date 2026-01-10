@@ -85,6 +85,13 @@ public partial class FormFieldViewModel : ObservableObject
     private bool _isLoading;
 
     /// <summary>
+    /// Gets the collection of validation errors.
+    /// Observable collection for UI binding.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<FieldValidationError> _validationErrors = new();
+
+    /// <summary>
     /// Loads all form fields for the specified page.
     /// Updates FormFields collection and HasFormFields flag.
     /// </summary>
@@ -186,6 +193,12 @@ public partial class FormFieldViewModel : ObservableObject
             if (!validationResult.IsValid)
             {
                 ValidationMessage = validationResult.GetSummaryMessage();
+                HasValidationErrors = true;
+                ValidationErrors.Clear();
+                foreach (var error in validationResult.Errors)
+                {
+                    ValidationErrors.Add(error);
+                }
                 _logger.LogWarning(
                     "Field validation failed. FieldName={FieldName}, Errors={Errors}",
                     field.Name, ValidationMessage);
@@ -199,6 +212,8 @@ public partial class FormFieldViewModel : ObservableObject
                 field.Value = newValue;
                 IsModified = true;
                 ValidationMessage = null;
+                HasValidationErrors = false;
+                ValidationErrors.Clear();
 
                 _logger.LogInformation(
                     "Field value updated. FieldName={FieldName}",
@@ -318,6 +333,11 @@ public partial class FormFieldViewModel : ObservableObject
             {
                 ValidationMessage = validationResult.GetSummaryMessage();
                 HasValidationErrors = true;
+                ValidationErrors.Clear();
+                foreach (var error in validationResult.Errors)
+                {
+                    ValidationErrors.Add(error);
+                }
                 _logger.LogWarning(
                     "Form validation failed. Errors={Errors}",
                     ValidationMessage);
@@ -333,6 +353,7 @@ public partial class FormFieldViewModel : ObservableObject
                 IsModified = false;
                 ValidationMessage = null;
                 HasValidationErrors = false;
+                ValidationErrors.Clear();
 
                 _logger.LogInformation(
                     "Form saved successfully. OutputPath={OutputPath}",
@@ -383,6 +404,11 @@ public partial class FormFieldViewModel : ObservableObject
 
             ValidationMessage = validationResult.GetSummaryMessage();
             HasValidationErrors = !validationResult.IsValid;
+            ValidationErrors.Clear();
+            foreach (var error in validationResult.Errors)
+            {
+                ValidationErrors.Add(error);
+            }
 
             _logger.LogInformation(
                 "Form validation completed. IsValid={IsValid}",
@@ -488,6 +514,44 @@ public partial class FormFieldViewModel : ObservableObject
     private bool CanNavigateFields() => HasFormFields && !IsLoading;
 
     /// <summary>
+    /// Focuses the specified form field by name.
+    /// Used when clicking on validation error "Go to field" buttons.
+    /// </summary>
+    /// <param name="fieldName">The name of the field to focus.</param>
+    [RelayCommand]
+    private void FocusFieldByName(string? fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName))
+        {
+            return;
+        }
+
+        _logger.LogDebug("Focusing field by name. FieldName={FieldName}", fieldName);
+
+        try
+        {
+            var field = FormFields.FirstOrDefault(
+                f => f.Name.Equals(fieldName, StringComparison.Ordinal));
+
+            if (field != null)
+            {
+                FocusedField = field;
+                _logger.LogDebug("Field focused. FieldName={FieldName}", fieldName);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Field not found. FieldName={FieldName}",
+                    fieldName);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error focusing field by name");
+        }
+    }
+
+    /// <summary>
     /// Clears all form fields and resets state.
     /// Used when navigating to a different page or closing the document.
     /// </summary>
@@ -500,6 +564,7 @@ public partial class FormFieldViewModel : ObservableObject
         HasFormFields = false;
         ValidationMessage = null;
         HasValidationErrors = false;
+        ValidationErrors.Clear();
         _currentDocument = null;
         _currentPageNumber = 1;
     }

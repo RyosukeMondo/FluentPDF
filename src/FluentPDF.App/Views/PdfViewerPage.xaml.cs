@@ -91,6 +91,15 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles "Go to field" requests from the validation error panel.
+    /// Focuses the specified form field.
+    /// </summary>
+    private void OnGoToFieldRequested(object sender, string fieldName)
+    {
+        ViewModel.FormFieldViewModel.FocusFieldByNameCommand.Execute(fieldName);
+    }
+
+    /// <summary>
     /// Disposes resources used by the page.
     /// </summary>
     public void Dispose()

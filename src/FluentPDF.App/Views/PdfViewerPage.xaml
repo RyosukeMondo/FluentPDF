@@ -231,14 +231,14 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Validation error InfoBar -->
-            <InfoBar
+            <!-- Validation error panel -->
+            <controls:ValidationErrorPanel
                 Grid.Row="0"
+                x:Name="ValidationPanel"
                 IsOpen="{x:Bind ViewModel.FormFieldViewModel.HasValidationErrors, Mode=OneWay}"
-                Severity="Error"
-                Title="Form Validation Errors"
-                Message="{x:Bind ViewModel.FormFieldViewModel.ValidationMessage, Mode=OneWay}"
-                Margin="12,8,12,0" />
+                SummaryMessage="{x:Bind ViewModel.FormFieldViewModel.ValidationMessage, Mode=OneWay}"
+                ValidationErrors="{x:Bind ViewModel.FormFieldViewModel.ValidationErrors, Mode=OneWay}"
+                GoToFieldRequested="OnGoToFieldRequested" />
 
             <!-- Page viewer with scrolling and form field overlays -->
             <ScrollViewer

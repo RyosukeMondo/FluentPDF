@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<UserControl
+    x:Class="FluentPDF.App.Controls.ValidationErrorPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluentPDF.App.Controls"
+    xmlns:models="using:FluentPDF.Core.Models"
+    xmlns:converters="using:FluentPDF.App.Converters"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:ValidationErrorToStringConverter x:Key="ValidationErrorToStringConverter" />
+    </UserControl.Resources>
+
+    <InfoBar
+        x:Name="ErrorInfoBar"
+        Severity="Error"
+        Title="Form Validation Errors"
+        IsClosable="True"
+        Margin="12,8,12,0">
+        <InfoBar.Content>
+            <StackPanel Spacing="8">
+                <!-- Summary message -->
+                <TextBlock
+                    x:Name="SummaryText"
+                    TextWrapping="Wrap"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                <!-- List of individual errors with "Go to field" buttons -->
+                <ItemsControl x:Name="ErrorsItemsControl">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:FieldValidationError">
+                            <Grid Margin="0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Text="{x:Bind Converter={StaticResource ValidationErrorToStringConverter}}"
+                                    TextWrapping="Wrap"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0" />
+
+                                <Button
+                                    Grid.Column="1"
+                                    Content="Go to field"
+                                    Style="{ThemeResource AccentButtonStyle}"
+                                    Click="OnGoToFieldClick"
+                                    Tag="{x:Bind FieldName}"
+                                    VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </InfoBar.Content>
+    </InfoBar>
+</UserControl>
