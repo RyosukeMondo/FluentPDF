@@ -1012,7 +1012,7 @@
        - Include .editorconfig configuration
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 12. Final integration testing and documentation review
+- [-] 12. Final integration testing and documentation review
   - Files:
     - `docs/ARCHITECTURE.md` (create)
     - `docs/TESTING.md` (create)
