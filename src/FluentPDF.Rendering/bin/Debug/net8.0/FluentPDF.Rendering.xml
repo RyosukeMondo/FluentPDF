@@ -4,6 +4,168 @@
         <name>FluentPDF.Rendering</name>
     </assembly>
     <members>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumFormInterop">
+            <summary>
+            P/Invoke declarations for PDFium form API.
+            Provides managed wrappers for PDFium form fill environment and form field functions.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.InitFormFillEnvironment(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr)">
+            <summary>
+            Initializes the form fill environment.
+            Must be called before any form field operations.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="formInfo">Pointer to FPDF_FORMFILLINFO structure.</param>
+            <returns>A safe handle to the form fill environment, or an invalid handle if initialization failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.ExitFormFillEnvironment(System.IntPtr)">
+            <summary>
+            Exits the form fill environment.
+            Called automatically by SafePdfFormHandle.ReleaseHandle().
+            </summary>
+            <param name="formHandle">Handle to the form environment.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetFormFieldCount(FluentPDF.Rendering.Interop.SafePdfFormHandle,FluentPDF.Rendering.Interop.SafePdfPageHandle)">
+            <summary>
+            Gets the number of form fields on a page.
+            </summary>
+            <param name="formHandle">Handle to the form environment.</param>
+            <param name="page">Handle to the page.</param>
+            <returns>The number of form fields, or -1 on error.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumFormInterop.FieldType">
+            <summary>
+            Form field type constants.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetFormFieldTypeAtPoint(FluentPDF.Rendering.Interop.SafePdfFormHandle,FluentPDF.Rendering.Interop.SafePdfPageHandle,System.Double,System.Double)">
+            <summary>
+            Gets the type of a form field at a specific point.
+            </summary>
+            <param name="formHandle">Handle to the form environment.</param>
+            <param name="page">Handle to the page.</param>
+            <param name="pageX">X coordinate in page coordinate system.</param>
+            <param name="pageY">Y coordinate in page coordinate system.</param>
+            <returns>The form field type constant, or FieldType.Unknown if no field at the point.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetAnnotationCount(FluentPDF.Rendering.Interop.SafePdfPageHandle)">
+            <summary>
+            Gets the number of annotations on a page.
+            </summary>
+            <param name="page">Handle to the page.</param>
+            <returns>The number of annotations, or -1 on error.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetAnnotation(FluentPDF.Rendering.Interop.SafePdfPageHandle,System.Int32)">
+            <summary>
+            Gets an annotation handle by index.
+            </summary>
+            <param name="page">Handle to the page.</param>
+            <param name="index">Zero-based annotation index.</param>
+            <returns>Handle to the annotation, or IntPtr.Zero on error.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.CloseAnnotation(System.IntPtr)">
+            <summary>
+            Closes an annotation handle.
+            </summary>
+            <param name="annot">Handle to the annotation.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetAnnotationSubtype(System.IntPtr)">
+            <summary>
+            Gets the subtype of an annotation.
+            </summary>
+            <param name="annot">Handle to the annotation.</param>
+            <returns>The annotation subtype, or AnnotationSubtype.Unknown on error.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumFormInterop.AnnotationSubtype">
+            <summary>
+            Annotation subtype constants.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetFormFieldFlags(FluentPDF.Rendering.Interop.SafePdfFormHandle,System.IntPtr)">
+            <summary>
+            Gets the flags of a form field annotation.
+            </summary>
+            <param name="formHandle">Handle to the form environment.</param>
+            <param name="annot">Handle to the annotation.</param>
+            <returns>The form field flags, or 0 on error.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumFormInterop.FieldFlags">
+            <summary>
+            Form field flag constants.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetFormFieldValue(FluentPDF.Rendering.Interop.SafePdfFormHandle,System.IntPtr)">
+            <summary>
+            Gets the value of a text form field.
+            </summary>
+            <param name="formHandle">Handle to the form environment.</param>
+            <param name="annot">Handle to the annotation.</param>
+            <returns>The form field value, or empty string on error.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetFormFieldName(System.IntPtr)">
+            <summary>
+            Gets the name of a form field.
+            </summary>
+            <param name="annot">Handle to the annotation.</param>
+            <returns>The form field name, or empty string on error.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.IsFormFieldChecked(FluentPDF.Rendering.Interop.SafePdfFormHandle,System.IntPtr)">
+            <summary>
+            Checks if a checkbox or radio button is checked.
+            </summary>
+            <param name="formHandle">Handle to the form environment.</param>
+            <param name="annot">Handle to the annotation.</param>
+            <returns>True if checked; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.GetAnnotationRect(System.IntPtr,System.Single@,System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Gets the rectangle bounds of an annotation.
+            </summary>
+            <param name="annot">Handle to the annotation.</param>
+            <param name="left">Outputs the left coordinate.</param>
+            <param name="bottom">Outputs the bottom coordinate.</param>
+            <param name="right">Outputs the right coordinate.</param>
+            <param name="top">Outputs the top coordinate.</param>
+            <returns>True if successful; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.SetFormFieldValue(FluentPDF.Rendering.Interop.SafePdfFormHandle,System.IntPtr,System.String)">
+            <summary>
+            Sets the value of a text form field.
+            </summary>
+            <param name="formHandle">Handle to the form environment.</param>
+            <param name="annot">Handle to the annotation.</param>
+            <param name="value">The value to set.</param>
+            <returns>True if successful; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.SetFormFieldChecked(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr,System.Boolean)">
+            <summary>
+            Sets the checked state of a checkbox or radio button.
+            </summary>
+            <param name="document">Handle to the document.</param>
+            <param name="annot">Handle to the annotation.</param>
+            <param name="isChecked">True to check; false to uncheck.</param>
+            <returns>True if successful; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumFormInterop.SaveDocument(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr,System.Int32)">
+            <summary>
+            Saves a PDF document with modifications.
+            </summary>
+            <param name="document">Handle to the document.</param>
+            <param name="writer">Pointer to FPDF_FILEWRITE structure.</param>
+            <param name="flags">Save flags (0 for default).</param>
+            <returns>True if successful; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumFormInterop.SaveFlags">
+            <summary>
+            Save flags for FPDF_SaveAsCopy.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumFormInterop.FPDF_WIDESTRING">
+            <summary>
+            Represents a PDFium wide string (UTF-16LE).
+            </summary>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop">
             <summary>
             P/Invoke declarations for PDFium native library.
@@ -467,6 +629,23 @@
         <member name="M:FluentPDF.Rendering.Interop.SafePdfDocumentHandle.ReleaseHandle">
             <summary>
             Releases the PDFium document handle by calling FPDF_CloseDocument.
+            </summary>
+            <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.SafePdfFormHandle">
+            <summary>
+            Safe handle for PDFium form fill environment pointers (FPDF_FORMHANDLE).
+            Automatically releases the form environment when disposed.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfFormHandle.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Interop.SafePdfFormHandle"/> class.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafePdfFormHandle.ReleaseHandle">
+            <summary>
+            Releases the PDFium form handle by calling FPDFDOC_ExitFormFillEnvironment.
             </summary>
             <returns>True if the handle was released successfully; otherwise, false.</returns>
         </member>

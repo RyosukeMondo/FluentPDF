@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Implement PDFium form P/Invoke declarations with SafeHandle
+- [x] 1. Implement PDFium form P/Invoke declarations with SafeHandle
   - Files:
     - `src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs`
     - `src/FluentPDF.Rendering/Interop/SafePdfFormHandle.cs`
