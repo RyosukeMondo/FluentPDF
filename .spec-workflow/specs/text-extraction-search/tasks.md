@@ -75,7 +75,7 @@
   - _Requirements: 3.1-3.8, 4.1-4.7_
   - _Prompt: Role: Search Algorithm Developer | Task: Implement TextSearchService using PDFium search APIs with bounding box calculation | Restrictions: Must support case sensitivity, handle multi-line matches, support cancellation | Success: Can search documents and return matches with accurate bounding boxes_
 
-- [ ] 6. Extend PdfViewerViewModel with search commands and state
+- [-] 6. Extend PdfViewerViewModel with search commands and state
   - Files:
     - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (extend)
     - `tests/FluentPDF.App.Tests/ViewModels/PdfViewerViewModelSearchTests.cs`

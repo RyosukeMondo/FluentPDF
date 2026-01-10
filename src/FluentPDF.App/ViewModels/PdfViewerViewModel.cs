@@ -20,10 +20,13 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly IPdfDocumentService _documentService;
     private readonly IPdfRenderingService _renderingService;
     private readonly IDocumentEditingService _editingService;
+    private readonly ITextSearchService _searchService;
     private readonly ILogger<PdfViewerViewModel> _logger;
     private PdfDocument? _currentDocument;
     private bool _disposed;
     private CancellationTokenSource? _operationCts;
+    private CancellationTokenSource? _searchCts;
+    private System.Threading.Timer? _searchDebounceTimer;
 
     /// <summary>
     /// Gets the bookmarks view model for the bookmarks panel.
@@ -41,6 +44,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="documentService">Service for loading PDF documents.</param>
     /// <param name="renderingService">Service for rendering PDF pages.</param>
     /// <param name="editingService">Service for editing PDF documents.</param>
+    /// <param name="searchService">Service for searching text in PDF documents.</param>
     /// <param name="bookmarksViewModel">View model for the bookmarks panel.</param>
     /// <param name="formFieldViewModel">View model for form field interactions.</param>
     /// <param name="logger">Logger for tracking operations.</param>
@@ -48,6 +52,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         IPdfDocumentService documentService,
         IPdfRenderingService renderingService,
         IDocumentEditingService editingService,
+        ITextSearchService searchService,
         BookmarksViewModel bookmarksViewModel,
         FormFieldViewModel formFieldViewModel,
         ILogger<PdfViewerViewModel> logger)
@@ -55,6 +60,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
         _editingService = editingService ?? throw new ArgumentNullException(nameof(editingService));
+        _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
         BookmarksViewModel = bookmarksViewModel ?? throw new ArgumentNullException(nameof(bookmarksViewModel));
         FormFieldViewModel = formFieldViewModel ?? throw new ArgumentNullException(nameof(formFieldViewModel));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -116,6 +122,42 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private bool _isOperationInProgress;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the search panel is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSearchPanelVisible;
+
+    /// <summary>
+    /// Gets or sets the current search query entered by the user.
+    /// </summary>
+    [ObservableProperty]
+    private string _searchQuery = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the list of search matches found in the document.
+    /// </summary>
+    [ObservableProperty]
+    private List<SearchMatch> _searchMatches = new();
+
+    /// <summary>
+    /// Gets or sets the index of the currently selected match (0-based).
+    /// </summary>
+    [ObservableProperty]
+    private int _currentMatchIndex = -1;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a search operation is in progress.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSearching;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the search is case-sensitive.
+    /// </summary>
+    [ObservableProperty]
+    private bool _caseSensitive;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -733,6 +775,187 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
     private bool CanCancelOperation() => IsOperationInProgress && _operationCts != null;
 
+    /// <summary>
+    /// Toggles the visibility of the search panel.
+    /// When shown, focuses the search box for immediate input.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleSearchPanel()
+    {
+        _logger.LogInformation("ToggleSearchPanel command invoked");
+        IsSearchPanelVisible = !IsSearchPanelVisible;
+
+        // Clear search when hiding panel
+        if (!IsSearchPanelVisible)
+        {
+            SearchQuery = string.Empty;
+            SearchMatches.Clear();
+            CurrentMatchIndex = -1;
+            _searchCts?.Cancel();
+        }
+    }
+
+    /// <summary>
+    /// Initiates a debounced search operation.
+    /// Search executes 300ms after the last query change.
+    /// </summary>
+    [RelayCommand]
+    private void Search()
+    {
+        _logger.LogInformation("Search command invoked. Query={Query}", SearchQuery);
+
+        // Cancel any pending debounced search
+        _searchDebounceTimer?.Dispose();
+
+        // Cancel any in-progress search
+        _searchCts?.Cancel();
+
+        if (string.IsNullOrWhiteSpace(SearchQuery) || _currentDocument == null)
+        {
+            SearchMatches.Clear();
+            CurrentMatchIndex = -1;
+            return;
+        }
+
+        // Debounce search - execute after 300ms delay
+        _searchDebounceTimer = new System.Threading.Timer(
+            async _ => await ExecuteSearchAsync(),
+            null,
+            TimeSpan.FromMilliseconds(300),
+            Timeout.InfiniteTimeSpan);
+    }
+
+    /// <summary>
+    /// Executes the actual search operation asynchronously.
+    /// </summary>
+    private async Task ExecuteSearchAsync()
+    {
+        if (_currentDocument == null || string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            return;
+        }
+
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+
+        try
+        {
+            IsSearching = true;
+            _logger.LogInformation("Executing search. Query={Query}, CaseSensitive={CaseSensitive}",
+                SearchQuery, CaseSensitive);
+
+            var options = new SearchOptions
+            {
+                CaseSensitive = CaseSensitive,
+                WholeWord = false
+            };
+
+            var result = await _searchService.SearchAsync(
+                _currentDocument,
+                SearchQuery,
+                options,
+                _searchCts.Token);
+
+            if (result.IsSuccess)
+            {
+                SearchMatches = result.Value;
+                CurrentMatchIndex = SearchMatches.Count > 0 ? 0 : -1;
+
+                _logger.LogInformation("Search completed. Matches={MatchCount}", SearchMatches.Count);
+
+                // Navigate to first match if available
+                if (CurrentMatchIndex >= 0)
+                {
+                    await NavigateToCurrentMatchAsync();
+                }
+            }
+            else
+            {
+                _logger.LogError("Search failed: {Errors}", result.Errors);
+                SearchMatches.Clear();
+                CurrentMatchIndex = -1;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Search operation cancelled");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during search");
+            SearchMatches.Clear();
+            CurrentMatchIndex = -1;
+        }
+        finally
+        {
+            IsSearching = false;
+        }
+    }
+
+    /// <summary>
+    /// Navigates to the next search match in the document.
+    /// Wraps around to the first match when reaching the end.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanNavigateToNextMatch))]
+    private async Task GoToNextMatchAsync()
+    {
+        _logger.LogInformation("GoToNextMatch command invoked. CurrentIndex={CurrentIndex}", CurrentMatchIndex);
+
+        if (SearchMatches.Count == 0)
+        {
+            return;
+        }
+
+        CurrentMatchIndex = (CurrentMatchIndex + 1) % SearchMatches.Count;
+        await NavigateToCurrentMatchAsync();
+    }
+
+    private bool CanNavigateToNextMatch() => SearchMatches.Count > 0 && !IsSearching;
+
+    /// <summary>
+    /// Navigates to the previous search match in the document.
+    /// Wraps around to the last match when reaching the beginning.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanNavigateToPreviousMatch))]
+    private async Task GoToPreviousMatchAsync()
+    {
+        _logger.LogInformation("GoToPreviousMatch command invoked. CurrentIndex={CurrentIndex}", CurrentMatchIndex);
+
+        if (SearchMatches.Count == 0)
+        {
+            return;
+        }
+
+        CurrentMatchIndex = (CurrentMatchIndex - 1 + SearchMatches.Count) % SearchMatches.Count;
+        await NavigateToCurrentMatchAsync();
+    }
+
+    private bool CanNavigateToPreviousMatch() => SearchMatches.Count > 0 && !IsSearching;
+
+    /// <summary>
+    /// Navigates to the page containing the current search match.
+    /// </summary>
+    private async Task NavigateToCurrentMatchAsync()
+    {
+        if (CurrentMatchIndex < 0 || CurrentMatchIndex >= SearchMatches.Count)
+        {
+            return;
+        }
+
+        var match = SearchMatches[CurrentMatchIndex];
+        var targetPage = match.PageNumber + 1; // Convert 0-based to 1-based
+
+        _logger.LogInformation(
+            "Navigating to match. Index={Index}, Page={Page}, CharIndex={CharIndex}",
+            CurrentMatchIndex, targetPage, match.CharIndex);
+
+        // Navigate to the page if not already there
+        if (CurrentPageNumber != targetPage)
+        {
+            await GoToPageCommand.ExecuteAsync(targetPage);
+        }
+    }
+
     /// <inheritdoc/>
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
@@ -764,6 +987,21 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             OptimizeDocumentCommand.NotifyCanExecuteChanged();
             CancelOperationCommand.NotifyCanExecuteChanged();
         }
+
+        // Update search command states
+        if (e.PropertyName == nameof(IsSearching) ||
+            e.PropertyName == nameof(SearchMatches))
+        {
+            GoToNextMatchCommand.NotifyCanExecuteChanged();
+            GoToPreviousMatchCommand.NotifyCanExecuteChanged();
+        }
+
+        // Trigger search when query or case sensitivity changes
+        if (e.PropertyName == nameof(SearchQuery) ||
+            e.PropertyName == nameof(CaseSensitive))
+        {
+            SearchCommand.Execute(null);
+        }
     }
 
     /// <summary>
@@ -787,6 +1025,13 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _operationCts?.Cancel();
         _operationCts?.Dispose();
         _operationCts = null;
+
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = null;
+
+        _searchDebounceTimer?.Dispose();
+        _searchDebounceTimer = null;
 
         _disposed = true;
     }
