@@ -614,7 +614,7 @@
     5. Log implementation with artifacts documenting DI registrations
     6. Edit tasks.md: change to `[x]`
 
-- [ ] 8. Integration testing with real PDFium and sample PDFs
+- [x] 8. Integration testing with real PDFium and sample PDFs
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Integration/BookmarkIntegrationTests.cs`
     - `tests/Fixtures/bookmarked.pdf` (add sample PDF with bookmarks)
