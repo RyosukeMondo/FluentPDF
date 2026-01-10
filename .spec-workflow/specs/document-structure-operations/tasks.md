@@ -104,7 +104,7 @@
   - _Requirements: 2_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer with expertise in unit testing and edge case validation | Task: Create comprehensive unit tests for PageRangeParser covering all valid formats and edge cases from requirement 2, using FluentAssertions for readable assertions | Restrictions: Must test both success and failure scenarios, use Theory/InlineData for parameterized tests, test edge cases thoroughly, maintain test isolation | _Leverage: Examine existing test patterns in FluentPDF.Core.Tests, FluentAssertions usage | _Requirements: Req 2 validation | Success: All edge cases covered (100+ test cases), tests are fast and isolated, failures provide clear diagnostic messages | Instructions: Mark in-progress [-]. Log with artifacts (test class and test methods). Mark complete [x]._
 
-- [ ] 12. Add integration tests for DocumentEditingService
+- [x] 12. Add integration tests for DocumentEditingService
   - File: tests/FluentPDF.Rendering.Tests/Services/DocumentEditingServiceTests.cs
   - Write tests for merge (2-10 PDFs), split (various ranges), optimize (size reduction)
   - Test with sample PDFs from Fixtures folder
