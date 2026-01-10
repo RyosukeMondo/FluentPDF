@@ -161,7 +161,7 @@
     6. Log implementation with artifacts documenting BookmarkNode class
     7. Edit tasks.md: change to `[x]`
 
-- [ ] 3. Implement IBookmarkService and BookmarkService
+- [x] 3. Implement IBookmarkService and BookmarkService
   - Files:
     - `src/FluentPDF.Core/Services/IBookmarkService.cs`
     - `src/FluentPDF.Rendering/Services/BookmarkService.cs`
