@@ -2730,6 +2730,1107 @@ services.AddTransient<FormFieldViewModel>();
 - **PDFium Form API**: https://pdfium.googlesource.com/pdfium/+/refs/heads/main/public/fpdf_formfill.h
 - **Form Filling Spec**: [.spec-workflow/specs/form-filling/](../.spec-workflow/specs/form-filling/)
 
+## Text Extraction and Search Architecture
+
+### Text Extraction and Search Overview
+
+The Text Extraction and Search feature provides comprehensive text handling capabilities using PDFium's text APIs. It enables users to extract text from PDF pages, search for content within documents with visual highlighting, and copy text to the clipboard.
+
+**Architecture Diagram**:
+
+```mermaid
+graph TB
+    subgraph "Presentation Layer"
+        SearchPanel[Search Panel UI<br/>TextBox + Navigation]
+        Highlights[Highlight Overlay<br/>Canvas Rendering]
+        ViewerVM[PdfViewerViewModel<br/>Search State]
+    end
+
+    subgraph "Application Layer"
+        ITextExtract[ITextExtractionService]
+        ITextSearch[ITextSearchService]
+        SearchMatch[SearchMatch Model]
+        SearchOpts[SearchOptions]
+    end
+
+    subgraph "Infrastructure Layer"
+        TextExtractSvc[TextExtractionService<br/>Text Caching]
+        TextSearchSvc[TextSearchService<br/>Match Calculation]
+        PdfiumTextInterop[PdfiumInterop<br/>FPDFText_* APIs]
+        SafeTextHandle[SafePdfTextPageHandle]
+    end
+
+    subgraph "Native Layer"
+        PDFiumText[pdfium.dll<br/>Text Extraction + Search]
+    end
+
+    SearchPanel --> ViewerVM
+    Highlights --> ViewerVM
+    ViewerVM --> ITextExtract
+    ViewerVM --> ITextSearch
+    ITextExtract -.implements.- TextExtractSvc
+    ITextSearch -.implements.- TextSearchSvc
+    TextSearchSvc --> TextExtractSvc
+    TextExtractSvc --> PdfiumTextInterop
+    TextSearchSvc --> PdfiumTextInterop
+    PdfiumTextInterop --> SafeTextHandle
+    PdfiumTextInterop --> PDFiumText
+```
+
+**Key Capabilities**:
+- Extract text from individual pages or entire documents
+- Case-sensitive and case-insensitive search
+- Visual match highlighting with bounding boxes
+- Text selection with mouse drag and clipboard copy
+- Performance logging for slow operations (>2s extraction, >10s search)
+- Cancellation support for long-running operations
+
+### Text Extraction and Search Workflow
+
+**Text Extraction Flow**:
+
+```mermaid
+sequenceDiagram
+    participant UI as PdfViewerViewModel
+    participant Svc as TextExtractionService
+    participant Interop as PdfiumInterop
+    participant PDFium as pdfium.dll
+
+    UI->>Svc: ExtractTextAsync(document, pageNumber)
+    Svc->>Interop: FPDFText_LoadPage(pageHandle)
+    Interop->>PDFium: FPDFText_LoadPage
+    PDFium-->>Interop: SafePdfTextPageHandle
+    Interop-->>Svc: SafePdfTextPageHandle
+
+    Svc->>Interop: FPDFText_CountChars(textPage)
+    Interop->>PDFium: FPDFText_CountChars
+    PDFium-->>Interop: charCount
+    Interop-->>Svc: charCount
+
+    Svc->>Interop: FPDFText_GetText(textPage, 0, charCount)
+    Interop->>PDFium: FPDFText_GetText (UTF-16)
+    PDFium-->>Interop: text buffer
+    Interop-->>Svc: text string
+
+    Svc->>Svc: Cache text for page
+    Svc-->>UI: Result.Ok(text)
+
+    Note over Interop,PDFium: SafeHandle auto-disposes<br/>via FPDFText_ClosePage
+```
+
+**Search Flow**:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as PdfViewerViewModel
+    participant SearchSvc as TextSearchService
+    participant Interop as PdfiumInterop
+    participant PDFium as pdfium.dll
+
+    User->>UI: Type in search box (debounced 300ms)
+    UI->>SearchSvc: SearchAsync(doc, query, options)
+
+    loop For each page
+        SearchSvc->>Interop: FPDFText_LoadPage(page)
+        Interop->>PDFium: FPDFText_LoadPage
+        PDFium-->>Interop: textPageHandle
+
+        SearchSvc->>Interop: FPDFText_FindStart(textPage, query, flags)
+        Interop->>PDFium: FPDFText_FindStart
+        PDFium-->>Interop: searchHandle
+
+        loop While matches found
+            SearchSvc->>Interop: FPDFText_FindNext(searchHandle)
+            Interop->>PDFium: FPDFText_FindNext
+            PDFium-->>Interop: true/false
+
+            SearchSvc->>Interop: FPDFText_GetSchResultIndex(searchHandle)
+            SearchSvc->>Interop: FPDFText_GetSchCount(searchHandle)
+
+            loop For each char in match
+                SearchSvc->>Interop: FPDFText_GetCharBox(textPage, charIndex)
+                Interop->>PDFium: FPDFText_GetCharBox
+                PDFium-->>Interop: bounding box (PDF coords)
+            end
+
+            SearchSvc->>SearchSvc: Combine char boxes into match box
+            SearchSvc->>SearchSvc: Create SearchMatch object
+        end
+
+        SearchSvc->>Interop: FPDFText_FindClose(searchHandle)
+    end
+
+    SearchSvc-->>UI: Result.Ok(List<SearchMatch>)
+    UI->>UI: Update SearchMatches property
+    UI->>Highlights: Render match highlights
+    Highlights->>Highlights: Transform PDF coords to screen coords
+    Highlights->>User: Show highlighted matches
+```
+
+### Component Breakdown
+
+#### 1. SafePdfTextPageHandle (Memory Safety)
+
+**Purpose**: Automatic lifetime management for PDFium text page handles.
+
+**Location**: `src/FluentPDF.Rendering/Interop/SafePdfTextPageHandle.cs`
+
+**Implementation**:
+```csharp
+public sealed class SafePdfTextPageHandle : SafeHandleZeroOrMinusOneIsInvalid
+{
+    private SafePdfTextPageHandle() : base(true) { }
+
+    protected override bool ReleaseHandle()
+    {
+        if (!IsInvalid)
+        {
+            PdfiumInterop.FPDFText_ClosePage(handle);
+        }
+        return true;
+    }
+}
+```
+
+**Memory Safety Guarantees**:
+- Automatically calls `FPDFText_ClosePage` when disposed
+- Works with `using` statements for deterministic cleanup
+- Prevents handle leaks even when exceptions occur
+- Thread-safe reference counting via SafeHandle base class
+
+**Architecture Rules**:
+```csharp
+[Fact]
+public void TextServices_MustUseSafeHandleForTextPages()
+{
+    var rule = Types()
+        .That().ResideInNamespace("FluentPDF.Rendering.Services")
+        .Should().FollowCustomCondition(type =>
+            !UsesIntPtrForTextPageHandles(type),
+            "Use SafePdfTextPageHandle instead of IntPtr");
+
+    rule.Check(Architecture);
+}
+```
+
+#### 2. PdfiumInterop Text Extensions (P/Invoke Layer)
+
+**Purpose**: P/Invoke declarations for PDFium text extraction and search APIs.
+
+**Location**: `src/FluentPDF.Rendering/Interop/PdfiumInterop.cs` (extends existing partial class)
+
+**Text Extraction APIs**:
+```csharp
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern SafePdfTextPageHandle FPDFText_LoadPage(SafePdfPageHandle page);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern void FPDFText_ClosePage(IntPtr text_page);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern int FPDFText_CountChars(SafePdfTextPageHandle text_page);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern int FPDFText_GetText(
+    SafePdfTextPageHandle text_page,
+    int start_index,
+    int count,
+    [Out] byte[] result);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern int FPDFText_GetCharBox(
+    SafePdfTextPageHandle text_page,
+    int index,
+    out double left,
+    out double right,
+    out double bottom,
+    out double top);
+```
+
+**Search APIs**:
+```csharp
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern IntPtr FPDFText_FindStart(
+    SafePdfTextPageHandle text_page,
+    [MarshalAs(UnmanagedType.LPWStr)] string findwhat,
+    uint flags,
+    int start_index);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+[return: MarshalAs(UnmanagedType.Bool)]
+internal static extern bool FPDFText_FindNext(IntPtr search_handle);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern int FPDFText_GetSchResultIndex(IntPtr search_handle);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern int FPDFText_GetSchCount(IntPtr search_handle);
+
+[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+internal static extern void FPDFText_FindClose(IntPtr search_handle);
+```
+
+**Search Flags**:
+```csharp
+internal const uint FPDF_MATCHCASE = 0x00000001;
+internal const uint FPDF_MATCHWHOLEWORD = 0x00000002;
+```
+
+**UTF-16 Encoding**: PDFium returns text in UTF-16LE format. The interop layer handles conversion:
+```csharp
+public static string GetTextFromPage(SafePdfTextPageHandle textPage, int startIndex, int count)
+{
+    var bufferSize = (count + 1) * 2; // UTF-16 = 2 bytes per char
+    var buffer = new byte[bufferSize];
+    var written = FPDFText_GetText(textPage, startIndex, count, buffer);
+    return Encoding.Unicode.GetString(buffer, 0, (written - 1) * 2); // -1 to exclude null terminator
+}
+```
+
+#### 3. SearchMatch and SearchOptions (Domain Models)
+
+**Purpose**: Represent search results and search configuration.
+
+**Location**:
+- `src/FluentPDF.Core/Models/SearchMatch.cs`
+- `src/FluentPDF.Core/Models/SearchOptions.cs`
+
+**SearchMatch Model**:
+```csharp
+public class SearchMatch
+{
+    public required int PageNumber { get; init; }
+    public required int CharIndex { get; init; }
+    public required int Length { get; init; }
+    public required string Text { get; init; }
+    public required Rect BoundingBox { get; init; } // PDF coordinates (points)
+}
+```
+
+**SearchOptions Model**:
+```csharp
+public class SearchOptions
+{
+    public bool CaseSensitive { get; init; } = false;
+    public bool WholeWord { get; init; } = false;
+}
+```
+
+**Coordinate System**: `BoundingBox` uses PDF coordinate space (points, origin bottom-left). UI layer transforms to screen coordinates.
+
+#### 4. ITextExtractionService (Application Interface)
+
+**Purpose**: Contract for text extraction operations.
+
+**Location**: `src/FluentPDF.Core/Services/ITextExtractionService.cs`
+
+**Interface Definition**:
+```csharp
+public interface ITextExtractionService
+{
+    Task<Result<string>> ExtractTextAsync(PdfDocument document, int pageNumber);
+
+    Task<Result<Dictionary<int, string>>> ExtractAllTextAsync(
+        PdfDocument document,
+        CancellationToken cancellationToken = default);
+}
+```
+
+**Result Error Codes**:
+- `TEXT_PAGE_LOAD_FAILED`: Failed to create text page handle
+- `TEXT_EXTRACTION_FAILED`: Extraction operation error
+- `NO_TEXT_FOUND`: Page has no text (informational, not error)
+
+#### 5. TextExtractionService (Implementation)
+
+**Purpose**: Implements text extraction with caching and performance monitoring.
+
+**Location**: `src/FluentPDF.Rendering/Services/TextExtractionService.cs`
+
+**Dependencies**:
+```csharp
+public class TextExtractionService : ITextExtractionService
+{
+    private readonly ILogger<TextExtractionService> _logger;
+    private readonly ConcurrentDictionary<string, string> _textCache;
+
+    public TextExtractionService(ILogger<TextExtractionService> logger)
+    {
+        _logger = logger;
+        _textCache = new ConcurrentDictionary<string, string>();
+    }
+}
+```
+
+**Extraction Pipeline**:
+1. Check cache for existing text using `$"{documentPath}:{pageNumber}"` key
+2. Load PDF page via existing page loading mechanism
+3. Call `FPDFText_LoadPage` to get text page handle
+4. Call `FPDFText_CountChars` to get character count
+5. Allocate buffer for UTF-16 text (2 bytes per char + null terminator)
+6. Call `FPDFText_GetText` to extract text
+7. Convert UTF-16 byte array to .NET string
+8. Cache result for future requests
+9. SafeHandle automatically disposes text page via `FPDFText_ClosePage`
+
+**Performance Monitoring**:
+```csharp
+var sw = Stopwatch.StartNew();
+var text = await ExtractTextInternalAsync(document, pageNumber);
+sw.Stop();
+
+if (sw.ElapsedMilliseconds > 2000)
+{
+    _logger.LogWarning("Slow text extraction on page {PageNumber}: {ElapsedMs}ms",
+        pageNumber, sw.ElapsedMilliseconds);
+}
+
+_logger.LogInformation("Text extracted from page {PageNumber} in {ElapsedMs}ms",
+    pageNumber, sw.ElapsedMilliseconds);
+```
+
+**Error Handling**:
+```csharp
+if (textPageHandle.IsInvalid)
+{
+    return Result.Fail(new PdfError(
+        "TEXT_PAGE_LOAD_FAILED",
+        $"Failed to load text page {pageNumber}",
+        ErrorCategory.Rendering,
+        ErrorSeverity.Error));
+}
+```
+
+#### 6. ITextSearchService (Application Interface)
+
+**Purpose**: Contract for text search operations.
+
+**Location**: `src/FluentPDF.Core/Services/ITextSearchService.cs`
+
+**Interface Definition**:
+```csharp
+public interface ITextSearchService
+{
+    Task<Result<List<SearchMatch>>> SearchAsync(
+        PdfDocument document,
+        string query,
+        SearchOptions? options = null,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<List<SearchMatch>>> SearchPageAsync(
+        PdfDocument document,
+        int pageNumber,
+        string query,
+        SearchOptions? options = null);
+}
+```
+
+**Result Error Codes**:
+- `SEARCH_QUERY_EMPTY`: Validation error for empty query
+- `SEARCH_FAILED`: Search operation error
+
+#### 7. TextSearchService (Implementation)
+
+**Purpose**: Implements search using PDFium search APIs with bounding box calculation.
+
+**Location**: `src/FluentPDF.Rendering/Services/TextSearchService.cs`
+
+**Dependencies**:
+```csharp
+public class TextSearchService : ITextSearchService
+{
+    private readonly ILogger<TextSearchService> _logger;
+
+    public TextSearchService(ILogger<TextSearchService> logger)
+    {
+        _logger = logger;
+    }
+}
+```
+
+**Search Algorithm**:
+1. Validate query is not empty
+2. Convert `SearchOptions` to PDFium flags:
+   - `CaseSensitive=true` → `FPDF_MATCHCASE`
+   - `WholeWord=true` → `FPDF_MATCHWHOLEWORD`
+3. For each page in document (with cancellation checks):
+   - Load text page via `FPDFText_LoadPage`
+   - Call `FPDFText_FindStart(textPage, query, flags, 0)`
+   - Loop while `FPDFText_FindNext(searchHandle)` returns true:
+     - Get match position: `FPDFText_GetSchResultIndex(searchHandle)`
+     - Get match length: `FPDFText_GetSchCount(searchHandle)`
+     - Calculate bounding box by combining character boxes:
+       ```csharp
+       var boundingBox = Rect.Empty;
+       for (int i = 0; i < matchLength; i++)
+       {
+           FPDFText_GetCharBox(textPage, matchIndex + i,
+               out var left, out var right, out var bottom, out var top);
+           var charBox = new Rect(left, bottom, right - left, top - bottom);
+           boundingBox = boundingBox.IsEmpty ? charBox : boundingBox.Union(charBox);
+       }
+       ```
+     - Extract match text using `FPDFText_GetText`
+     - Create `SearchMatch` object
+   - Close search handle: `FPDFText_FindClose(searchHandle)`
+4. Return all matches
+
+**Performance Monitoring**:
+```csharp
+var sw = Stopwatch.StartNew();
+var matches = await SearchInternalAsync(document, query, options, cancellationToken);
+sw.Stop();
+
+_logger.LogInformation("Search completed: {MatchCount} matches found in {ElapsedMs}ms",
+    matches.Count, sw.ElapsedMilliseconds);
+
+if (sw.ElapsedMilliseconds > 10000)
+{
+    _logger.LogWarning("Slow search operation: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+}
+```
+
+#### 8. PdfViewerViewModel Search Extensions (Presentation Logic)
+
+**Purpose**: Add search state and commands to existing PDF viewer ViewModel.
+
+**Location**: `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (partial class extension)
+
+**New Observable Properties**:
+```csharp
+[ObservableProperty] private bool _isSearchPanelVisible;
+[ObservableProperty] private string _searchQuery = string.Empty;
+[ObservableProperty] private List<SearchMatch> _searchMatches = new();
+[ObservableProperty] private int _currentMatchIndex = -1;
+[ObservableProperty] private bool _isSearching;
+[ObservableProperty] private bool _caseSensitive;
+```
+
+**New Commands**:
+```csharp
+[RelayCommand]
+private void ToggleSearchPanel()
+{
+    IsSearchPanelVisible = !IsSearchPanelVisible;
+    if (IsSearchPanelVisible)
+    {
+        // Focus will be set in XAML via FocusManager
+    }
+    else
+    {
+        SearchQuery = string.Empty;
+        SearchMatches.Clear();
+        CurrentMatchIndex = -1;
+    }
+}
+
+[RelayCommand]
+private async Task SearchAsync()
+{
+    if (string.IsNullOrWhiteSpace(SearchQuery) || CurrentDocument == null)
+    {
+        SearchMatches.Clear();
+        CurrentMatchIndex = -1;
+        return;
+    }
+
+    IsSearching = true;
+    try
+    {
+        var options = new SearchOptions { CaseSensitive = CaseSensitive };
+        var result = await _textSearchService.SearchAsync(
+            CurrentDocument, SearchQuery, options, _searchCancellationTokenSource.Token);
+
+        if (result.IsSuccess)
+        {
+            SearchMatches = result.Value;
+            CurrentMatchIndex = SearchMatches.Count > 0 ? 0 : -1;
+
+            if (CurrentMatchIndex >= 0)
+            {
+                await NavigateToMatchAsync(CurrentMatchIndex);
+            }
+        }
+    }
+    finally
+    {
+        IsSearching = false;
+    }
+}
+
+[RelayCommand(CanExecute = nameof(CanGoToNextMatch))]
+private async Task GoToNextMatchAsync()
+{
+    if (CurrentMatchIndex < SearchMatches.Count - 1)
+    {
+        CurrentMatchIndex++;
+        await NavigateToMatchAsync(CurrentMatchIndex);
+    }
+}
+
+[RelayCommand(CanExecute = nameof(CanGoToPreviousMatch))]
+private async Task GoToPreviousMatchAsync()
+{
+    if (CurrentMatchIndex > 0)
+    {
+        CurrentMatchIndex--;
+        await NavigateToMatchAsync(CurrentMatchIndex);
+    }
+}
+
+private bool CanGoToNextMatch() => SearchMatches.Count > 0 && CurrentMatchIndex < SearchMatches.Count - 1;
+private bool CanGoToPreviousMatch() => SearchMatches.Count > 0 && CurrentMatchIndex > 0;
+```
+
+**Debounced Search**: Property change handler debounces search by 300ms:
+```csharp
+partial void OnSearchQueryChanged(string value)
+{
+    _searchDebounceTimer?.Cancel();
+    _searchDebounceTimer = new CancellationTokenSource();
+
+    Task.Delay(300, _searchDebounceTimer.Token)
+        .ContinueWith(_ => SearchCommand.ExecuteAsync(null),
+            TaskScheduler.FromCurrentSynchronizationContext());
+}
+```
+
+**Match Navigation**: Scrolls page to ensure match is visible:
+```csharp
+private async Task NavigateToMatchAsync(int matchIndex)
+{
+    var match = SearchMatches[matchIndex];
+
+    // Navigate to page if different
+    if (CurrentPageNumber != match.PageNumber)
+    {
+        await NavigateToPageAsync(match.PageNumber);
+    }
+
+    // Transform PDF coordinates to screen coordinates
+    var screenRect = TransformPdfToScreen(match.BoundingBox, ZoomLevel);
+
+    // Scroll to ensure match is visible
+    ScrollToRectangle(screenRect);
+}
+```
+
+#### 9. Search Panel UI (View Layer)
+
+**Purpose**: Search input and navigation controls integrated into PDF viewer.
+
+**Location**: `src/FluentPDF.App/Views/PdfViewerPage.xaml`
+
+**XAML Implementation**:
+```xml
+<!-- Search Panel (collapsed by default) -->
+<Grid x:Name="SearchPanel"
+      Grid.Row="1"
+      Height="48"
+      Background="{ThemeResource LayerFillColorDefaultBrush}"
+      BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+      BorderThickness="0,0,0,1"
+      Padding="12,8"
+      Visibility="{x:Bind ViewModel.IsSearchPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- Search Input -->
+    <TextBox x:Name="SearchBox"
+             Grid.Column="0"
+             PlaceholderText="Search in document..."
+             Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+             MinWidth="200"
+             VerticalAlignment="Center"/>
+
+    <!-- Previous Match Button -->
+    <Button Grid.Column="1"
+            Command="{x:Bind ViewModel.GoToPreviousMatchCommand}"
+            ToolTipService.ToolTip="Previous match (Shift+F3)"
+            Margin="8,0,0,0">
+        <FontIcon Glyph="&#xE70E;"/> <!-- ChevronUp -->
+    </Button>
+
+    <!-- Next Match Button -->
+    <Button Grid.Column="2"
+            Command="{x:Bind ViewModel.GoToNextMatchCommand}"
+            ToolTipService.ToolTip="Next match (F3)"
+            Margin="4,0,0,0">
+        <FontIcon Glyph="&#xE70D;"/> <!-- ChevronDown -->
+    </Button>
+
+    <!-- Match Counter -->
+    <TextBlock Grid.Column="3"
+               VerticalAlignment="Center"
+               Margin="12,0,0,0"
+               Text="{x:Bind ViewModel.CurrentMatchIndex + 1, Mode=OneWay} of {x:Bind ViewModel.SearchMatches.Count, Mode=OneWay}"
+               Visibility="{x:Bind ViewModel.SearchMatches.Count, Mode=OneWay, Converter={StaticResource IntToVisibilityConverter}}"/>
+
+    <!-- Case Sensitive Toggle -->
+    <CheckBox Grid.Column="4"
+              Content="Aa"
+              IsChecked="{x:Bind ViewModel.CaseSensitive, Mode=TwoWay}"
+              ToolTipService.ToolTip="Match case"
+              Margin="12,0,0,0"
+              VerticalAlignment="Center"/>
+
+    <!-- Close Button -->
+    <Button Grid.Column="5"
+            Command="{x:Bind ViewModel.ToggleSearchPanelCommand}"
+            ToolTipService.ToolTip="Close search (Esc)"
+            Margin="8,0,0,0">
+        <FontIcon Glyph="&#xE711;"/> <!-- Cancel -->
+    </Button>
+</Grid>
+```
+
+**Keyboard Accelerators**:
+```xml
+<Page.KeyboardAccelerators>
+    <!-- Open Search -->
+    <KeyboardAccelerator Key="F" Modifiers="Control"
+                         Invoked="OnSearchAcceleratorInvoked"/>
+
+    <!-- Next Match -->
+    <KeyboardAccelerator Key="F3"
+                         Invoked="OnNextMatchAcceleratorInvoked"/>
+
+    <!-- Previous Match -->
+    <KeyboardAccelerator Key="F3" Modifiers="Shift"
+                         Invoked="OnPreviousMatchAcceleratorInvoked"/>
+
+    <!-- Close Search -->
+    <KeyboardAccelerator Key="Escape"
+                         Invoked="OnEscapeAcceleratorInvoked"/>
+</Page.KeyboardAccelerators>
+```
+
+**Code-Behind (View Logic Only)**:
+```csharp
+private void OnSearchAcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+{
+    ViewModel.ToggleSearchPanelCommand.Execute(null);
+    if (ViewModel.IsSearchPanelVisible)
+    {
+        SearchBox.Focus(FocusState.Keyboard);
+    }
+    args.Handled = true;
+}
+
+private void OnNextMatchAcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+{
+    ViewModel.GoToNextMatchCommand.Execute(null);
+    args.Handled = true;
+}
+```
+
+#### 10. Highlight Overlay (Visual Feedback)
+
+**Purpose**: Render semi-transparent rectangles over search matches on PDF pages.
+
+**Location**: `src/FluentPDF.App/Views/PdfViewerPage.xaml` (Canvas overlay)
+
+**XAML Structure**:
+```xml
+<!-- PDF Content with Highlight Overlay -->
+<Grid Grid.Row="2">
+    <!-- PDF Image -->
+    <Image x:Name="PdfImage"
+           Source="{x:Bind ViewModel.CurrentPageBitmap, Mode=OneWay}"
+           Stretch="Uniform"/>
+
+    <!-- Highlight Overlay Canvas -->
+    <Canvas x:Name="HighlightCanvas"
+            Background="Transparent"/>
+</Grid>
+```
+
+**Highlight Rendering** (in code-behind or attached behavior):
+```csharp
+private void UpdateHighlights()
+{
+    HighlightCanvas.Children.Clear();
+
+    if (ViewModel.SearchMatches == null || ViewModel.SearchMatches.Count == 0)
+        return;
+
+    var currentPageMatches = ViewModel.SearchMatches
+        .Where(m => m.PageNumber == ViewModel.CurrentPageNumber)
+        .ToList();
+
+    foreach (var match in currentPageMatches)
+    {
+        var isCurrent = ViewModel.SearchMatches.IndexOf(match) == ViewModel.CurrentMatchIndex;
+        var screenRect = TransformPdfToScreen(match.BoundingBox, ViewModel.ZoomLevel);
+
+        var rectangle = new Rectangle
+        {
+            Width = screenRect.Width,
+            Height = screenRect.Height,
+            Fill = new SolidColorBrush(isCurrent
+                ? Color.FromArgb(100, 255, 235, 59)  // Yellow for current match
+                : Color.FromArgb(100, 33, 150, 243)), // Blue for other matches
+            Stroke = new SolidColorBrush(isCurrent
+                ? Colors.Orange
+                : Colors.Blue),
+            StrokeThickness = 2
+        };
+
+        Canvas.SetLeft(rectangle, screenRect.X);
+        Canvas.SetTop(rectangle, screenRect.Y);
+        HighlightCanvas.Children.Add(rectangle);
+    }
+}
+```
+
+**Coordinate Transformation**:
+```csharp
+private Rect TransformPdfToScreen(Rect pdfRect, double zoomLevel)
+{
+    const double DPI = 96.0;
+    const double PDF_POINTS_PER_INCH = 72.0;
+    var scaleFactor = (DPI / PDF_POINTS_PER_INCH) * zoomLevel;
+
+    // PDF coordinate system: origin bottom-left
+    // Screen coordinate system: origin top-left
+    var pageHeight = ViewModel.CurrentPageHeight; // in PDF points
+
+    return new Rect(
+        pdfRect.X * scaleFactor,
+        (pageHeight - pdfRect.Y - pdfRect.Height) * scaleFactor, // Flip Y-axis
+        pdfRect.Width * scaleFactor,
+        pdfRect.Height * scaleFactor
+    );
+}
+```
+
+**Property Change Handlers**: Update highlights when zoom, page, or matches change:
+```csharp
+private void OnViewModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+{
+    if (e.PropertyName is nameof(ViewModel.SearchMatches)
+                        or nameof(ViewModel.CurrentMatchIndex)
+                        or nameof(ViewModel.CurrentPageNumber)
+                        or nameof(ViewModel.ZoomLevel))
+    {
+        UpdateHighlights();
+    }
+}
+```
+
+### Memory Management Strategy
+
+**Text Page Handle Lifecycle**:
+1. `FPDFText_LoadPage` creates text page handle (allocated in PDFium heap)
+2. `SafePdfTextPageHandle` wraps handle with reference counting
+3. When last reference dropped, SafeHandle calls `FPDFText_ClosePage`
+4. PDFium frees text page memory
+
+**Text Caching Strategy**:
+```csharp
+private readonly ConcurrentDictionary<string, string> _textCache = new();
+
+private string GetCacheKey(PdfDocument document, int pageNumber)
+    => $"{document.FilePath}:{pageNumber}";
+
+public async Task<Result<string>> ExtractTextAsync(PdfDocument document, int pageNumber)
+{
+    var cacheKey = GetCacheKey(document, pageNumber);
+
+    if (_textCache.TryGetValue(cacheKey, out var cachedText))
+    {
+        _logger.LogDebug("Text cache hit for page {PageNumber}", pageNumber);
+        return Result.Ok(cachedText);
+    }
+
+    var result = await ExtractTextInternalAsync(document, pageNumber);
+
+    if (result.IsSuccess)
+    {
+        _textCache[cacheKey] = result.Value;
+    }
+
+    return result;
+}
+```
+
+**Cache Invalidation**: Clear cache when document closes:
+```csharp
+public void ClearCacheForDocument(PdfDocument document)
+{
+    var keysToRemove = _textCache.Keys
+        .Where(k => k.StartsWith($"{document.FilePath}:"))
+        .ToList();
+
+    foreach (var key in keysToRemove)
+    {
+        _textCache.TryRemove(key, out _);
+    }
+}
+```
+
+**Memory Limits**: Text cache bounded by document lifetime, not global limit. Large documents may cache significant text (estimate: 2KB per page = 200KB for 100-page document).
+
+### Error Handling Layers
+
+**Layer 1: P/Invoke Validation** (PdfiumInterop)
+```csharp
+internal static Result<SafePdfTextPageHandle> LoadTextPage(SafePdfPageHandle page)
+{
+    var handle = FPDFText_LoadPage(page);
+
+    if (handle.IsInvalid)
+    {
+        return Result.Fail(new PdfError(
+            "TEXT_PAGE_LOAD_FAILED",
+            "Failed to load text page from PDFium",
+            ErrorCategory.Rendering,
+            ErrorSeverity.Error));
+    }
+
+    return Result.Ok(handle);
+}
+```
+
+**Layer 2: Service Validation** (TextSearchService)
+```csharp
+public async Task<Result<List<SearchMatch>>> SearchAsync(
+    PdfDocument document,
+    string query,
+    SearchOptions? options = null,
+    CancellationToken cancellationToken = default)
+{
+    if (string.IsNullOrWhiteSpace(query))
+    {
+        return Result.Fail(new PdfError(
+            "SEARCH_QUERY_EMPTY",
+            "Search query cannot be empty",
+            ErrorCategory.Validation,
+            ErrorSeverity.Warning));
+    }
+
+    // ... search implementation
+}
+```
+
+**Layer 3: Presentation Error Display** (PdfViewerViewModel)
+```csharp
+private async Task SearchAsync()
+{
+    var result = await _textSearchService.SearchAsync(CurrentDocument, SearchQuery, options);
+
+    if (result.IsFailed)
+    {
+        var error = result.Errors.First();
+        StatusMessage = $"Search failed: {error.Message}";
+        _logger.LogWarning("Search failed: {Error}", error);
+        return;
+    }
+
+    SearchMatches = result.Value;
+}
+```
+
+### Architecture Rules (ArchUnitNET)
+
+**Text Service Architecture Tests** (`tests/FluentPDF.Architecture.Tests/TextArchitectureTests.cs`):
+
+```csharp
+public class TextArchitectureTests
+{
+    private static readonly Architecture Architecture =
+        new ArchLoader().LoadAssemblies(
+            typeof(ITextExtractionService).Assembly,     // FluentPDF.Core
+            typeof(TextExtractionService).Assembly,       // FluentPDF.Rendering
+            typeof(PdfViewerViewModel).Assembly           // FluentPDF.App
+        ).Build();
+
+    [Fact]
+    public void TextServices_ShouldImplementInterfaces()
+    {
+        var rule = Types()
+            .That().ResideInNamespace("FluentPDF.Rendering.Services")
+            .And().HaveNameEndingWith("Service")
+            .And().AreNotAbstract()
+            .Should().ImplementInterface("FluentPDF.Core.Services.I.*");
+
+        rule.Check(Architecture);
+    }
+
+    [Fact]
+    public void CoreLayer_ShouldNotDependOnPdfiumInterop()
+    {
+        var rule = Types()
+            .That().ResideInNamespace("FluentPDF.Core")
+            .Should().NotDependOnAny(Types()
+                .That().ResideInNamespace("FluentPDF.Rendering.Interop"));
+
+        rule.Check(Architecture);
+    }
+
+    [Fact]
+    public void TextServices_MustUseSafeHandleForTextPages()
+    {
+        var rule = Types()
+            .That().ResideInNamespace("FluentPDF.Rendering.Services")
+            .And().HaveNameContaining("Text")
+            .Should().FollowCustomCondition(type =>
+                !UsesIntPtrForTextPageHandles(type),
+                "Text services must use SafePdfTextPageHandle instead of IntPtr");
+
+        rule.Check(Architecture);
+    }
+
+    [Fact]
+    public void TextExtractionService_MustHaveCaching()
+    {
+        var service = typeof(TextExtractionService);
+        var hasCacheField = service.GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
+            .Any(f => f.FieldType.IsGenericType
+                   && f.FieldType.GetGenericTypeDefinition() == typeof(ConcurrentDictionary<,>));
+
+        Assert.True(hasCacheField, "TextExtractionService must have a ConcurrentDictionary for caching");
+    }
+}
+```
+
+### Dependency Injection Registration
+
+**App.xaml.cs ConfigureServices**:
+```csharp
+private void ConfigureServices(IServiceCollection services)
+{
+    // ... existing registrations
+
+    // Text extraction and search services
+    services.AddSingleton<ITextExtractionService, TextExtractionService>();
+    services.AddSingleton<ITextSearchService, TextSearchService>();
+
+    // ViewModels (PdfViewerViewModel already registered, now uses text services)
+    services.AddTransient<PdfViewerViewModel>();
+}
+```
+
+**Service Lifetimes**:
+- `TextExtractionService`: **Singleton** - Manages text cache across application lifetime
+- `TextSearchService`: **Singleton** - Stateless, shared across all document instances
+
+**Dependency Graph**:
+```
+PdfViewerViewModel
+├── ITextExtractionService (TextExtractionService)
+│   └── ILogger<TextExtractionService>
+└── ITextSearchService (TextSearchService)
+    └── ILogger<TextSearchService>
+```
+
+### Testing Strategy
+
+**Unit Tests**:
+
+1. **TextExtractionServiceTests** (`tests/FluentPDF.Rendering.Tests/Services/TextExtractionServiceTests.cs`):
+   - Mock PdfiumInterop with test text page handles
+   - Verify text caching works correctly
+   - Test Unicode text handling (emoji, CJK characters)
+   - Test empty page returns empty string (not error)
+   - Test error handling for invalid text pages
+
+2. **TextSearchServiceTests** (`tests/FluentPDF.Rendering.Tests/Services/TextSearchServiceTests.cs`):
+   - Mock PdfiumInterop search APIs
+   - Test case-sensitive and case-insensitive search
+   - Test whole word matching
+   - Verify bounding box calculation logic
+   - Test multi-page search results
+   - Test search cancellation via CancellationToken
+
+3. **PdfViewerViewModelSearchTests** (`tests/FluentPDF.App.Tests/ViewModels/PdfViewerViewModelSearchTests.cs`):
+   - Mock ITextSearchService
+   - Test search command debouncing (300ms delay)
+   - Test match navigation (next/previous)
+   - Test search panel visibility toggle
+   - Test case sensitivity toggle
+
+**Integration Tests**:
+
+1. **TextExtractionIntegrationTests** (`tests/FluentPDF.Rendering.Tests/Integration/TextExtractionIntegrationTests.cs`):
+   - Use real PDFium with sample PDFs
+   - Verify text extraction accuracy with known content
+   - Test Unicode handling (sample PDF with emoji, Arabic, CJK)
+   - Test multi-column layout extraction order
+   - Benchmark extraction performance (< 500ms per page)
+
+2. **TextSearchIntegrationTests** (`tests/FluentPDF.Rendering.Tests/Integration/TextSearchIntegrationTests.cs`):
+   - Use real PDFium with test PDFs containing known text
+   - Verify search finds all expected matches
+   - Verify bounding boxes have correct coordinates
+   - Test performance with large documents (100+ pages)
+
+**Architecture Tests**:
+- See "Architecture Rules (ArchUnitNET)" section above
+
+### Performance Characteristics
+
+**Text Extraction Benchmarks**:
+- Typical page (400 words): **< 100ms**
+- Large page (2000 words): **< 500ms**
+- Empty page: **< 10ms**
+- Performance warning threshold: **2000ms**
+
+**Search Performance Benchmarks**:
+- 10-page document: **< 500ms**
+- 100-page document: **< 5s**
+- 1000-page document: **< 60s** (with progress indicator)
+- Performance warning threshold: **10s**
+
+**Memory Usage**:
+- Text cache per page: **~2KB average**
+- 100-page document cached: **~200KB**
+- Search match objects: **~100 bytes per match**
+- 100 matches: **~10KB**
+
+**Optimization Strategies**:
+1. **Text Caching**: Avoid re-extraction of same page
+2. **Debounced Search**: Wait 300ms after typing stops
+3. **Lazy Highlighting**: Only render highlights for visible area
+4. **Cancellation**: Support canceling long-running searches
+
+### Future Enhancements
+
+1. **Advanced Search Features**:
+   - Regular expression search
+   - Fuzzy matching for typos
+   - Search within selection
+   - Search result export to CSV
+
+2. **Text Analysis**:
+   - Word frequency analysis
+   - Extract table of contents
+   - Extract metadata (title, author)
+
+3. **Performance Improvements**:
+   - Incremental search (search first N pages, continue in background)
+   - Index-based search for large documents
+   - Parallel page text extraction
+
+4. **Export Options**:
+   - Export all text to .txt file
+   - Export page range text
+   - CLI for batch text extraction
+
+### References
+
+- **PDFium Text API**: https://pdfium.googlesource.com/pdfium/+/refs/heads/main/public/fpdf_text.h
+- **Text Extraction Spec**: [.spec-workflow/specs/text-extraction-search/](../.spec-workflow/specs/text-extraction-search/)
+- **TEXT-SEARCH.md**: [User-facing text extraction and search documentation](TEXT-SEARCH.md)
+
 ## Build and CI/CD
 
 ### vcpkg Build Automation
