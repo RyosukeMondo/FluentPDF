@@ -7,7 +7,7 @@ namespace FluentPDF.Rendering.Interop;
 /// Provides managed wrappers for QPDF document manipulation functions.
 /// See: https://qpdf.readthedocs.io/en/stable/c-api.html
 /// </summary>
-public static class QpdfNative
+internal static class QpdfNative
 {
     private const string DllName = "qpdf";
 
