@@ -26,13 +26,21 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerPage"/> class.
     /// </summary>
-    public PdfViewerPage()
+    /// <param name="viewModel">Optional view model to use. If null, creates from DI container.</param>
+    public PdfViewerPage(PdfViewerViewModel? viewModel = null)
     {
         this.InitializeComponent();
 
-        // Resolve ViewModel from DI container
-        var app = (App)Application.Current;
-        ViewModel = app.GetService<PdfViewerViewModel>();
+        // Use provided ViewModel or resolve from DI container
+        if (viewModel != null)
+        {
+            ViewModel = viewModel;
+        }
+        else
+        {
+            var app = (App)Application.Current;
+            ViewModel = app.GetService<PdfViewerViewModel>();
+        }
 
         // Set DataContext for runtime binding (x:Bind doesn't need this, but good practice)
         this.DataContext = ViewModel;

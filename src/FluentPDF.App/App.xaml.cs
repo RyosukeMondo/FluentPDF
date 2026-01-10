@@ -9,7 +9,6 @@ using Mammoth;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI.Xaml.Navigation;
 using Serilog;
 using System.Runtime.ExceptionServices;
 
@@ -76,8 +75,8 @@ namespace FluentPDF.App
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ITelemetryService, TelemetryService>();
 
-                    // Register ViewModels as transient (new instance per resolution)
-                    services.AddTransient<MainViewModel>();
+                    // Register ViewModels
+                    services.AddSingleton<MainViewModel>(); // Singleton for main window state
                     services.AddTransient<PdfViewerViewModel>();
                     services.AddTransient<ConversionViewModel>();
                     services.AddTransient<BookmarksViewModel>();
@@ -121,42 +120,22 @@ namespace FluentPDF.App
 
             if (_window is null)
             {
-                _window = new Window();
+                var mainViewModel = GetService<MainViewModel>();
+                _window = new Views.MainWindow(mainViewModel);
                 MainWindow = _window;
                 _window.Closed += async (s, e) => await ShutdownAsync();
             }
 
-            if (_window.Content is not Frame rootFrame)
-            {
-                rootFrame = new Frame();
-                rootFrame.NavigationFailed += OnNavigationFailed;
-                _window.Content = rootFrame;
-
-                // Configure NavigationService with the frame
-                var navigationService = GetService<INavigationService>() as NavigationService;
-                if (navigationService is not null)
-                {
-                    navigationService.Frame = rootFrame;
-                }
-            }
-
-            // Navigate to PdfViewerPage instead of MainPage
-            _ = rootFrame.Navigate(typeof(PdfViewerPage), e.Arguments);
             _window.Activate();
+
+            // Handle command line arguments for opening files
+            if (!string.IsNullOrEmpty(e.Arguments))
+            {
+                var mainViewModel = GetService<MainViewModel>();
+                await mainViewModel.OpenRecentFileCommand.ExecuteAsync(e.Arguments);
+            }
         }
 
-        /// <summary>
-        /// Invoked when Navigation to a certain page fails
-        /// </summary>
-        /// <param name="sender">The Frame which failed navigation</param>
-        /// <param name="e">Details about the navigation failure</param>
-        void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
-        {
-            var correlationId = Guid.NewGuid();
-            Log.Fatal(e.Exception, "Navigation failed to {PageType} [CorrelationId: {CorrelationId}]",
-                e.SourcePageType.FullName, correlationId);
-            throw new Exception($"Failed to load Page {e.SourcePageType.FullName}. CorrelationId: {correlationId}");
-        }
 
         /// <summary>
         /// Sets up global exception handlers to catch and log unhandled exceptions.

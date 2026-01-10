@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "VTlprjNzhMHaXdDso2qyNcvTHK5uH/LRo2rPMksG0DtP5uTyp/Aytm04CQw6G2sVDl/IokLHzPOgRcqwcJUTqQ==",
+  "dgSpecHash": "3BFRNNQsgkhUXE9ID0rr1Ali1raA+XiJs76suXcSmnXlbmcDpwW0bHk7ntph1Pipa/7HSk3LqDYtgWe64UtB4Q==",
   "success": true,
   "projectFilePath": "/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/FluentPDF.Core.Tests.csproj",
   "expectedPackageFiles": [
@@ -14,6 +14,7 @@
     "/home/rmondo/.nuget/packages/grpc.core.api/2.70.0/grpc.core.api.2.70.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/grpc.net.client/2.70.0/grpc.net.client.2.70.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/grpc.net.common/2.70.0/grpc.net.common.2.70.0.nupkg.sha512",
+    "/home/rmondo/.nuget/packages/mammoth/1.11.0/mammoth.1.11.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/microsoft.codecoverage/17.8.0/microsoft.codecoverage.17.8.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/microsoft.extensions.dependencyinjection/10.0.0/microsoft.extensions.dependencyinjection.10.0.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/10.0.0/microsoft.extensions.dependencyinjection.abstractions.10.0.0.nupkg.sha512",
@@ -26,6 +27,7 @@
     "/home/rmondo/.nuget/packages/microsoft.netcore.targets/1.1.0/microsoft.netcore.targets.1.1.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/microsoft.testplatform.objectmodel/17.8.0/microsoft.testplatform.objectmodel.17.8.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/microsoft.testplatform.testhost/17.8.0/microsoft.testplatform.testhost.17.8.0.nupkg.sha512",
+    "/home/rmondo/.nuget/packages/microsoft.web.webview2/1.0.2792.45/microsoft.web.webview2.1.0.2792.45.nupkg.sha512",
     "/home/rmondo/.nuget/packages/microsoft.win32.primitives/4.3.0/microsoft.win32.primitives.4.3.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/moq/4.20.70/moq.4.20.70.nupkg.sha512",
     "/home/rmondo/.nuget/packages/netstandard.library/1.6.1/netstandard.library.1.6.1.nupkg.sha512",
@@ -55,6 +57,7 @@
     "/home/rmondo/.nuget/packages/serilog.sinks.async/2.1.0/serilog.sinks.async.2.1.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/serilog.sinks.file/7.0.0/serilog.sinks.file.7.0.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/serilog.sinks.opentelemetry/4.2.0/serilog.sinks.opentelemetry.4.2.0.nupkg.sha512",
+    "/home/rmondo/.nuget/packages/sixlabors.imagesharp/3.1.12/sixlabors.imagesharp.3.1.12.nupkg.sha512",
     "/home/rmondo/.nuget/packages/system.appcontext/4.3.0/system.appcontext.4.3.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/system.buffers/4.3.0/system.buffers.4.3.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/system.collections/4.3.0/system.collections.4.3.0.nupkg.sha512",

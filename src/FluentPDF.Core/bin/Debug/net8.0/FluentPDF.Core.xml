@@ -705,6 +705,26 @@
             Gets a value indicating whether the quality meets the specified threshold.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.RecentFileEntry">
+            <summary>
+            Represents an entry in the recent files list.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.RecentFileEntry.FilePath">
+            <summary>
+            Gets the full path to the file.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.RecentFileEntry.LastAccessed">
+            <summary>
+            Gets the timestamp when the file was last accessed.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.RecentFileEntry.DisplayName">
+            <summary>
+            Gets the display name of the file (filename without path).
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Models.SearchMatch">
             <summary>
             Represents a single text match found during a PDF search operation.
@@ -1207,6 +1227,35 @@
             Checks if LibreOffice is installed and available for quality validation.
             </summary>
             <returns>True if LibreOffice is detected and functional, false otherwise.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IRecentFilesService">
+            <summary>
+            Service for managing recently opened files.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.GetRecentFiles">
+            <summary>
+            Gets the list of recent files in most-recently-used order.
+            </summary>
+            <returns>Collection of recent file entries, limited to maximum allowed.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.AddRecentFile(System.String)">
+            <summary>
+            Adds a file to the recent files list or updates its timestamp if already present.
+            </summary>
+            <param name="filePath">Full path to the file.</param>
+            <exception cref="T:System.ArgumentException">Thrown when filePath is null, empty, or whitespace.</exception>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.RemoveRecentFile(System.String)">
+            <summary>
+            Removes a file from the recent files list.
+            </summary>
+            <param name="filePath">Full path to the file to remove.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.ClearRecentFiles">
+            <summary>
+            Clears all recent files.
+            </summary>
         </member>
         <member name="T:FluentPDF.Core.Services.ITelemetryService">
             <summary>

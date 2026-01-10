@@ -9,6 +9,24 @@
             Tests for PdfError class to verify error creation, metadata population, and context handling.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Tests.Integration.MergeValidationTests">
+            <summary>
+            Integration tests validating PDF merge operations produce valid output.
+            Tests require validation tools installed (QPDF, JHOVE).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Tests.Integration.OptimizeValidationTests">
+            <summary>
+            Integration tests validating PDF optimize operations produce valid output.
+            Tests require validation tools installed (QPDF, JHOVE).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Tests.Integration.SplitValidationTests">
+            <summary>
+            Integration tests validating PDF split operations produce valid output.
+            Tests require validation tools installed (QPDF, JHOVE).
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Tests.Logging.SerilogConfigurationTests">
             <summary>
             Tests for Serilog configuration.

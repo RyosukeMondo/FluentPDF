@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Window
+    x:Class="FluentPDF.App.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluentPDF.App.Views"
+    xmlns:viewmodels="using:FluentPDF.App.ViewModels"
+    xmlns:converters="using:FluentPDF.App.Converters"
+    xmlns:controls="using:FluentPDF.App.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Window.Resources>
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Menu bar -->
+            <RowDefinition Height="Auto" />
+            <!-- Tab view -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Menu Bar -->
+        <MenuBar Grid.Row="0">
+            <MenuBarItem Title="File">
+                <MenuFlyoutItem Text="Open..." Click="OnOpenFileClick" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Exit" Click="OnExitClick" />
+            </MenuBarItem>
+        </MenuBar>
+
+        <!-- Tab View -->
+        <TabView
+            Grid.Row="1"
+            x:Name="MainTabView"
+            TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
+            SelectedItem="{x:Bind ViewModel.ActiveTab, Mode=TwoWay}"
+            CanDragTabs="True"
+            CanReorderTabs="True"
+            TabWidthMode="Equal"
+            TabCloseRequested="OnTabCloseRequested"
+            AddTabButtonClick="OnAddTabClick">
+
+            <TabView.TabItemTemplate>
+                <DataTemplate x:DataType="viewmodels:TabViewModel">
+                    <TabViewItem
+                        Header="{x:Bind FileName, Mode=OneWay}"
+                        IsClosable="True">
+                        <TabViewItem.IconSource>
+                            <SymbolIconSource Symbol="Document" />
+                        </TabViewItem.IconSource>
+
+                        <!-- Tab Content: PdfViewerControl -->
+                        <controls:PdfViewerControl ViewerViewModel="{x:Bind ViewerViewModel, Mode=OneWay}" />
+                    </TabViewItem>
+                </DataTemplate>
+            </TabView.TabItemTemplate>
+
+            <!-- Empty state when no tabs are open -->
+            <TabView.TabStripHeader>
+                <Grid />
+            </TabView.TabStripHeader>
+
+            <TabView.TabStripFooter>
+                <Grid />
+            </TabView.TabStripFooter>
+        </TabView>
+
+        <!-- Empty state overlay -->
+        <Grid
+            Grid.Row="1"
+            Visibility="{x:Bind ViewModel.Tabs.Count, Mode=OneWay, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=0}">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="16">
+                <SymbolIcon Symbol="Document" RenderTransformOrigin="0.5,0.5">
+                    <SymbolIcon.RenderTransform>
+                        <ScaleTransform ScaleX="3" ScaleY="3" />
+                    </SymbolIcon.RenderTransform>
+                </SymbolIcon>
+                <TextBlock
+                    Text="No PDFs open"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    HorizontalAlignment="Center" />
+                <Button
+                    Content="Open File"
+                    Click="OnOpenFileClick"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

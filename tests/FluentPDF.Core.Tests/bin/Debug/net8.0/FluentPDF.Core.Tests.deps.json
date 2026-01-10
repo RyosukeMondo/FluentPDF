@@ -11,11 +11,18 @@
           "AutoFixture": "4.18.1",
           "FluentAssertions": "6.12.0",
           "FluentPDF.Core": "1.0.0",
+          "FluentPDF.Rendering": "1.0.0",
+          "FluentPDF.Validation": "1.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
           "Microsoft.NET.Test.Sdk": "17.8.0",
           "Moq": "4.20.70",
+          "Serilog": "4.3.0",
           "coverlet.collector": "6.0.0",
           "xunit": "2.9.3",
-          "xunit.runner.visualstudio": "2.8.2"
+          "xunit.runner.visualstudio": "2.8.2",
+          "Microsoft.Web.WebView2.Core": "1.0.2792.45",
+          "Microsoft.Web.WebView2.WinForms": "1.0.2792.45",
+          "Microsoft.Web.WebView2.Wpf": "1.0.2792.45"
         },
         "runtime": {
           "FluentPDF.Core.Tests.dll": {}
@@ -115,6 +122,17 @@
           "lib/net8.0/Grpc.Net.Common.dll": {
             "assemblyVersion": "2.0.0.0",
             "fileVersion": "2.70.0.0"
+          }
+        }
+      },
+      "Mammoth/1.11.0": {
+        "dependencies": {
+          "System.IO.Compression": "4.3.0"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Mammoth.dll": {
+            "assemblyVersion": "1.11.0.0",
+            "fileVersion": "1.11.0.0"
           }
         }
       },
@@ -445,6 +463,25 @@
           }
         }
       },
+      "Microsoft.Web.WebView2/1.0.2792.45": {
+        "runtimeTargets": {
+          "runtimes/win-arm64/native/WebView2Loader.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/WebView2Loader.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x86/native/WebView2Loader.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
       "Microsoft.Win32.Primitives/4.3.0": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "1.1.0",
@@ -660,6 +697,14 @@
           "lib/net8.0/Serilog.Sinks.OpenTelemetry.dll": {
             "assemblyVersion": "4.2.0.0",
             "fileVersion": "4.2.0.0"
+          }
+        }
+      },
+      "SixLabors.ImageSharp/3.1.12": {
+        "runtime": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.1.12.0"
           }
         }
       },
@@ -1355,6 +1400,56 @@
         "runtime": {
           "FluentPDF.Core.dll": {}
         }
+      },
+      "FluentPDF.Rendering/1.0.0": {
+        "dependencies": {
+          "FluentPDF.Core": "1.0.0",
+          "Mammoth": "1.11.0",
+          "Microsoft.Web.WebView2": "1.0.2792.45",
+          "SixLabors.ImageSharp": "3.1.12"
+        },
+        "runtime": {
+          "FluentPDF.Rendering.dll": {}
+        }
+      },
+      "FluentPDF.Validation/1.0.0": {
+        "dependencies": {
+          "FluentResults": "4.0.0",
+          "Serilog": "4.3.0",
+          "Serilog.Enrichers.Environment": "3.0.1",
+          "Serilog.Enrichers.Thread": "4.0.0",
+          "Serilog.Extensions.Logging": "10.0.0",
+          "Serilog.Formatting.Compact": "3.0.0",
+          "Serilog.Sinks.Async": "2.1.0",
+          "Serilog.Sinks.File": "7.0.0"
+        },
+        "runtime": {
+          "FluentPDF.Validation.dll": {}
+        }
+      },
+      "Microsoft.Web.WebView2.Core/1.0.2792.45": {
+        "runtime": {
+          "Microsoft.Web.WebView2.Core.dll": {
+            "assemblyVersion": "1.0.2792.45",
+            "fileVersion": "1.0.2792.45"
+          }
+        }
+      },
+      "Microsoft.Web.WebView2.WinForms/1.0.2792.45": {
+        "runtime": {
+          "Microsoft.Web.WebView2.WinForms.dll": {
+            "assemblyVersion": "1.0.2792.45",
+            "fileVersion": "1.0.2792.45"
+          }
+        }
+      },
+      "Microsoft.Web.WebView2.Wpf/1.0.2792.45": {
+        "runtime": {
+          "Microsoft.Web.WebView2.Wpf.dll": {
+            "assemblyVersion": "1.0.2792.45",
+            "fileVersion": "1.0.2792.45"
+          }
+        }
       }
     }
   },
@@ -1433,6 +1528,13 @@
       "sha512": "sha512-rBdEUMyCwa+iB8mqC6JKyPbj3SBHHkReJj/yy/XKJI63GcG6w9DJMMGTVcYHqq4Ci2W4m0HT4jt2pFfFscar8g==",
       "path": "grpc.net.common/2.70.0",
       "hashPath": "grpc.net.common.2.70.0.nupkg.sha512"
+    },
+    "Mammoth/1.11.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Gqb0ylU9ADphhD04gzYSncOeGsuQobm1ldgS+1xvKoJU+eiSydEla+FR6cDXf+o42j0vo9RXWJNNmsVSn6MPxA==",
+      "path": "mammoth/1.11.0",
+      "hashPath": "mammoth.1.11.0.nupkg.sha512"
     },
     "Microsoft.CodeCoverage/17.8.0": {
       "type": "package",
@@ -1517,6 +1619,13 @@
       "sha512": "sha512-9ivcl/7SGRmOT0YYrHQGohWiT5YCpkmy/UEzldfVisLm6QxbLaK3FAJqZXI34rnRLmqqDCeMQxKINwmKwAPiDw==",
       "path": "microsoft.testplatform.testhost/17.8.0",
       "hashPath": "microsoft.testplatform.testhost.17.8.0.nupkg.sha512"
+    },
+    "Microsoft.Web.WebView2/1.0.2792.45": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-KOlLJSq70OySfU8mdhWdh9iOyApazWsIb6CmSz+YTJ5MmwLcsCLMW0qemORo7Si3A7VhLDIH3jwpMhPxodfkuA==",
+      "path": "microsoft.web.webview2/1.0.2792.45",
+      "hashPath": "microsoft.web.webview2.1.0.2792.45.nupkg.sha512"
     },
     "Microsoft.Win32.Primitives/4.3.0": {
       "type": "package",
@@ -1720,6 +1829,13 @@
       "sha512": "sha512-PzMCyE5G19tjr5IZEi5qg+4UU5QrxBEoBEMu/hhYybTrGKXqUDiSGWKZNUDBgelaVKqLADlsmlJVyKce5SyPrg==",
       "path": "serilog.sinks.opentelemetry/4.2.0",
       "hashPath": "serilog.sinks.opentelemetry.4.2.0.nupkg.sha512"
+    },
+    "SixLabors.ImageSharp/3.1.12": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A==",
+      "path": "sixlabors.imagesharp/3.1.12",
+      "hashPath": "sixlabors.imagesharp.3.1.12.nupkg.sha512"
     },
     "System.AppContext/4.3.0": {
       "type": "package",
@@ -2192,6 +2308,31 @@
     },
     "FluentPDF.Core/1.0.0": {
       "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FluentPDF.Rendering/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FluentPDF.Validation/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Web.WebView2.Core/1.0.2792.45": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Web.WebView2.WinForms/1.0.2792.45": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Web.WebView2.Wpf/1.0.2792.45": {
+      "type": "reference",
       "serviceable": false,
       "sha512": ""
     }
