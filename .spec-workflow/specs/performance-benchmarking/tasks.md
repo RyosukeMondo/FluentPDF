@@ -147,7 +147,7 @@
   - _Requirements: All requirements_
   - _Prompt: Role: QA Integration Engineer specializing in testing framework validation | Task: Create integration tests for benchmark suite in FluentPDF.Benchmarks.Tests. Write tests: Run RenderingBenchmarks and verify JSON/HTML output is generated, run MemoryBenchmarks and verify MemoryDiagnoser data is present, run StartupBenchmarks and verify timing results, test BaselineManager end-to-end (save, load, compare), test regression detection with mock baseline showing 5%, 15%, 25% regressions. Use BenchmarkRunner programmatically in tests to execute small benchmark subsets. | Restrictions: Keep integration tests fast (< 30 seconds total), use subset of benchmarks (not full suite), verify output files exist and are valid JSON/HTML, do not commit test output files, use [Trait("Category", "Integration")] attribute. | Success: Integration tests run successfully, benchmarks execute and generate output, BaselineManager operations verified, regression detection logic tested with mock data, tests complete in < 30 seconds, all assertions pass._
 
-- [ ] 11. Documentation and CI integration verification
+- [x] 11. Documentation and CI integration verification
   - Files:
     - `tests/FluentPDF.Benchmarks/README.md` (create)
     - `docs/PERFORMANCE.md` (create)
