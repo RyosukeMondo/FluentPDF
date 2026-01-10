@@ -48,7 +48,7 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   - _Prompt: Role: C# Developer with expertise in process execution and CLI integration | Task: Implement QpdfWrapper executing QPDF CLI for structural validation. Create IQpdfWrapper interface with ValidateAsync method. Implement QpdfWrapper executing "qpdf --check {filePath}", capturing exit code and stderr. Parse output for errors (cross-reference issues, encryption errors, etc.). Return Result<QpdfResult> with status (Pass/Fail) and error list. Add timeout (30 seconds), logging with correlation ID. Write unit tests mocking Process execution with sample outputs (valid PDF, corrupted PDF, missing file). | Restrictions: Must use ProcessStartInfo with UseShellExecute=false, validate file path before execution, handle timeouts, log all executions, do not block on stdout/stderr reads. | Success: Wrapper executes QPDF successfully, parses output correctly, returns Result<QpdfResult>, handles errors gracefully, unit tests verify logic with mocked process._
 
-- [ ] 4. Implement JhoveWrapper for format validation
+- [x] 4. Implement JhoveWrapper for format validation
   - Files:
     - `src/FluentPDF.Validation/Wrappers/IJhoveWrapper.cs` (create)
     - `src/FluentPDF.Validation/Wrappers/JhoveWrapper.cs` (create)

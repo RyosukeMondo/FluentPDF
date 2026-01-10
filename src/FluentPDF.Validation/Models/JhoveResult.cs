@@ -59,5 +59,6 @@ public sealed class JhoveResult
     /// Gets a value indicating whether the PDF is well-formed and valid.
     /// </summary>
     public bool IsValid => Validity.Equals("Valid", StringComparison.OrdinalIgnoreCase) ||
-                           Validity.Equals("Well-Formed", StringComparison.OrdinalIgnoreCase);
+                           Validity.Equals("Well-Formed", StringComparison.OrdinalIgnoreCase) ||
+                           Validity.Equals("Well-Formed and valid", StringComparison.OrdinalIgnoreCase);
 }
