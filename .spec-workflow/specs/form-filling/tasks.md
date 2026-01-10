@@ -143,7 +143,7 @@
   - _Requirements: Architecture integrity_
   - _Prompt: Role: Software Architect specializing in architecture testing | Task: Create FormArchitectureTests.cs following design.md testing strategy, implementing ArchUnitNET rules (FormPInvoke_ShouldOnly_ExistIn_RenderingInterop checks form P/Invoke in correct namespace, FormControls_Should_BeIn_AppControls checks FormFieldControl location, ViewModels_ShouldNot_Reference_FormInterop checks ViewModels use interfaces, FormServices_Should_ImplementInterfaces checks all services have interfaces), adding descriptive .Because() clauses, and verifying tests catch violations | Restrictions: Do not skip architecture rules, test all violations by intentionally breaking rules, use clear error messages, keep test file under 500 lines | Success: All architecture tests pass, tests catch violations when rules broken, rules enforce clean architecture boundaries, test output clearly explains violations_
 
-- [ ] 10. Integration testing with real PDFium and sample form PDFs
+- [x] 10. Integration testing with real PDFium and sample form PDFs
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Integration/FormFillingIntegrationTests.cs`
     - `tests/Fixtures/sample-form.pdf` (add sample form PDF - IRS 1040 or W-4 form)
