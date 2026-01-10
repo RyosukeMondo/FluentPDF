@@ -567,7 +567,7 @@
     8. Log implementation with artifacts documenting integration
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 7. Register BookmarkService in DI container
+- [x] 7. Register BookmarkService in DI container
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
   - Register IBookmarkService and BookmarkService

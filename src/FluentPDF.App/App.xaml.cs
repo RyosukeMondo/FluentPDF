@@ -59,6 +59,7 @@ namespace FluentPDF.App
                     services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
                     services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
                     services.AddSingleton<IDocumentEditingService, DocumentEditingService>();
+                    services.AddSingleton<IBookmarkService, BookmarkService>();
 
                     // Register conversion services
                     services.AddSingleton<Mammoth.IDocumentConverter>(provider => new Mammoth.DocumentConverter());
@@ -75,6 +76,7 @@ namespace FluentPDF.App
                     services.AddTransient<MainViewModel>();
                     services.AddTransient<PdfViewerViewModel>();
                     services.AddTransient<ConversionViewModel>();
+                    services.AddTransient<BookmarksViewModel>();
                 })
                 .Build();
         }
