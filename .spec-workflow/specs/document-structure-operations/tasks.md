@@ -36,7 +36,7 @@
   - _Requirements: 2_
   - _Prompt: Implement the task for spec document-structure-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer specializing in parsing and validation logic | Task: Create PageRangeParser utility with Parse method to convert page range strings to List<PageRange> following requirement 2, with comprehensive validation | Restrictions: Must handle edge cases (empty strings, invalid formats, negative numbers, zero pages), return Result<List<PageRange>> not exceptions, validate page numbers are positive integers | _Leverage: Examine existing validation utilities in FluentPDF.Core for error handling patterns | _Requirements: Req 2 (split with page ranges) | Success: Parses valid range strings correctly ("1-5, 10, 15-20"), returns validation errors for invalid input, handles edge cases (overlapping ranges, reverse ranges, single pages), comprehensive unit tests pass | Instructions: Mark in-progress [-]. Log with artifacts (function Parse signature and location). Mark complete [x]._
 
-- [ ] 5. Implement DocumentEditingService with MergeAsync
+- [x] 5. Implement DocumentEditingService with MergeAsync
   - File: src/FluentPDF.Rendering/Services/DocumentEditingService.cs
   - Create class implementing IDocumentEditingService
   - Implement MergeAsync using QPDF qpdf_merge_pages
