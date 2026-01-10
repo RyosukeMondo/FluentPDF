@@ -321,7 +321,7 @@
        - Note async pattern and error handling
     8. Edit tasks.md: change to `[x]`
 
-- [-] 5. Implement IPdfRenderingService and PdfRenderingService
+- [x] 5. Implement IPdfRenderingService and PdfRenderingService
   - Files:
     - `src/FluentPDF.Core/Services/IPdfRenderingService.cs`
     - `src/FluentPDF.Rendering/Services/PdfRenderingService.cs`
