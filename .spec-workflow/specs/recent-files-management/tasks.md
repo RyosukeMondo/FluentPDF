@@ -12,7 +12,7 @@
   - Requirements: 1.1-1.8
   - Instructions: Implement service using ApplicationData.LocalSettings for JSON storage. Max 10 items, MRU ordering. Test persistence, validation, edge cases.
 
-- [ ] 3. Implement JumpListService for Windows taskbar integration
+- [x] 3. Implement JumpListService for Windows taskbar integration
   - Files: `src/FluentPDF.App/Services/JumpListService.cs`, `tests/FluentPDF.App.Tests/Services/JumpListServiceTests.cs`
   - Requirements: 3.1-3.7
   - Instructions: Use Windows.UI.StartScreen.JumpList API. Update jump list with recent files. Handle errors gracefully.
