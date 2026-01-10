@@ -414,7 +414,7 @@
        - Note performance monitoring
     9. Edit tasks.md: change to `[x]`
 
-- [ ] 6. Create PdfViewerViewModel with navigation and zoom commands
+- [x] 6. Create PdfViewerViewModel with navigation and zoom commands
   - Files:
     - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
     - `tests/FluentPDF.App.Tests/ViewModels/PdfViewerViewModelTests.cs`
