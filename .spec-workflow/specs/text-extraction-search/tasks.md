@@ -158,7 +158,7 @@
   - _Requirements: All functional requirements_
   - _Prompt: Role: QA Integration Engineer | Task: Create integration tests for text extraction and search using real PDFium | Restrictions: Must use real dependencies, verify text accuracy, check performance | Success: Integration tests verify text functionality end-to-end_
 
-- [ ] 12. Add ArchUnitNET rules for text services
+- [x] 12. Add ArchUnitNET rules for text services
   - Files:
     - `tests/FluentPDF.Architecture.Tests/TextArchitectureTests.cs`
   - Add rule: Text services must implement interfaces
