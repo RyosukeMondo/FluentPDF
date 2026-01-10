@@ -1,4 +1,5 @@
 using FluentPDF.App.Services;
+using FluentPDF.App.ViewModels;
 using FluentPDF.App.Views;
 using FluentPDF.Core.Logging;
 using FluentPDF.Core.Services;
@@ -50,8 +51,8 @@ namespace FluentPDF.App
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<ITelemetryService, TelemetryService>();
 
-                    // ViewModels will be registered here when created
-                    // Example: services.AddTransient<MainViewModel>();
+                    // Register ViewModels as transient (new instance per resolution)
+                    services.AddTransient<MainViewModel>();
                 })
                 .Build();
         }
