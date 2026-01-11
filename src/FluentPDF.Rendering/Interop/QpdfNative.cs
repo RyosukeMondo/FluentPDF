@@ -400,6 +400,127 @@ internal static class QpdfNative
         public const int OutOfMemory = 7;
     }
 
+    /// <summary>
+    /// Removes pages from a document.
+    /// See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+    /// </summary>
+    /// <param name="job">QPDF job handle.</param>
+    /// <param name="pageRange">Page range specification (e.g., "1,3,5-7").</param>
+    /// <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
+    public static int RemovePages(SafeQpdfJobHandle job, string pageRange)
+    {
+        if (job == null || job.IsInvalid)
+        {
+            throw new ArgumentException("Invalid job handle.", nameof(job));
+        }
+
+        if (string.IsNullOrWhiteSpace(pageRange))
+        {
+            throw new ArgumentException("Page range cannot be null or empty.", nameof(pageRange));
+        }
+
+        return qpdf_remove_page_range(job, pageRange);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    private static extern int qpdf_remove_page_range(
+        SafeQpdfJobHandle job,
+        [MarshalAs(UnmanagedType.LPStr)] string page_range);
+
+    /// <summary>
+    /// Gets a page object handle for the specified page number (1-based).
+    /// See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+    /// </summary>
+    /// <param name="job">QPDF job handle.</param>
+    /// <param name="pageNumber">1-based page number.</param>
+    /// <returns>Page object handle, or 0 on error.</returns>
+    public static ulong GetPageHandle(SafeQpdfJobHandle job, int pageNumber)
+    {
+        if (job == null || job.IsInvalid)
+        {
+            throw new ArgumentException("Invalid job handle.", nameof(job));
+        }
+
+        return qpdf_get_page_n(job, pageNumber);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ulong qpdf_get_page_n(SafeQpdfJobHandle job, int page_num);
+
+    /// <summary>
+    /// Rotates a page by the specified angle (must be 0, 90, 180, or 270).
+    /// See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+    /// </summary>
+    /// <param name="job">QPDF job handle.</param>
+    /// <param name="pageHandle">Page object handle from GetPageHandle.</param>
+    /// <param name="angle">Rotation angle (0, 90, 180, or 270 degrees).</param>
+    /// <param name="relative">If true, rotation is relative to current; if false, absolute.</param>
+    /// <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
+    public static int RotatePage(SafeQpdfJobHandle job, ulong pageHandle, int angle, bool relative)
+    {
+        if (job == null || job.IsInvalid)
+        {
+            throw new ArgumentException("Invalid job handle.", nameof(job));
+        }
+
+        return qpdf_oh_rotate_page(job, pageHandle, angle, relative ? 1 : 0);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int qpdf_oh_rotate_page(SafeQpdfJobHandle job, ulong page_oh, int angle, int relative);
+
+    /// <summary>
+    /// Gets the media box for a page (returns array: [llx, lly, urx, ury]).
+    /// See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+    /// </summary>
+    /// <param name="job">QPDF job handle.</param>
+    /// <param name="pageHandle">Page object handle from GetPageHandle.</param>
+    /// <returns>Array of 4 doubles [llx, lly, urx, ury] or null on error.</returns>
+    public static double[]? GetPageMediaBox(SafeQpdfJobHandle job, ulong pageHandle)
+    {
+        if (job == null || job.IsInvalid)
+        {
+            return null;
+        }
+
+        var box = new double[4];
+        var result = qpdf_oh_get_media_box(job, pageHandle, box);
+
+        return result == ErrorCodes.Success ? box : null;
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int qpdf_oh_get_media_box(SafeQpdfJobHandle job, ulong page_oh, [Out] double[] box);
+
+    /// <summary>
+    /// Adds a new blank page to the document.
+    /// See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+    /// </summary>
+    /// <param name="job">QPDF job handle.</param>
+    /// <param name="mediaBox">Media box array [llx, lly, urx, ury].</param>
+    /// <param name="position">Position to insert (1-based), or 0 to append.</param>
+    /// <returns>Page object handle for the new page, or 0 on error.</returns>
+    public static ulong AddBlankPage(SafeQpdfJobHandle job, double[] mediaBox, int position)
+    {
+        if (job == null || job.IsInvalid)
+        {
+            throw new ArgumentException("Invalid job handle.", nameof(job));
+        }
+
+        if (mediaBox == null || mediaBox.Length != 4)
+        {
+            throw new ArgumentException("Media box must be an array of 4 doubles.", nameof(mediaBox));
+        }
+
+        return qpdf_add_blank_page(job, mediaBox[0], mediaBox[1], mediaBox[2], mediaBox[3], position);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ulong qpdf_add_blank_page(
+        SafeQpdfJobHandle job,
+        double llx, double lly, double urx, double ury,
+        int position);
+
     #endregion
 
     #region Object Stream Modes
