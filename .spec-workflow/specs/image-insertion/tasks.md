@@ -66,7 +66,7 @@
   - _Requirements: 4.3, 5.2_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: Add MenuFlyout to ImageManipulationOverlay that shows on right-click of selected image. Add items: Delete, Rotate Right 90°, Rotate Left 90°, Rotate 180°, separator, Bring to Front, Send to Back. Bind to ViewModel commands. | Restrictions: Only show when image selected. Follow existing menu patterns. | _Leverage: WinUI MenuFlyout | _Requirements: 4.3, 5.2 | Success: Context menu appears on right-click, all items functional. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [~] 8. Add keyboard shortcuts for image operations
+- [x] 8. Add keyboard shortcuts for image operations
   - File: `src/FluentPDF.App/Controls/ImageManipulationOverlay.xaml.cs`
   - Handle Delete key to remove selected image
   - Handle arrow keys for nudging
