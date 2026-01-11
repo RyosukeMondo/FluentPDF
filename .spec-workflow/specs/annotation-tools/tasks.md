@@ -46,7 +46,7 @@
   - Files: `src/FluentPDF.App/App.xaml.cs`
   - Instructions: Register IAnnotationService, AnnotationViewModel in container.
 
-- [ ] 10. Integration testing with real PDFium annotations
+- [-] 10. Integration testing with real PDFium annotations
   - Files: `tests/FluentPDF.Rendering.Tests/Integration/AnnotationIntegrationTests.cs`
   - Requirements: All
   - Instructions: Create annotation, save PDF, reload, verify persistence. Test all annotation types. Test lossless save.
