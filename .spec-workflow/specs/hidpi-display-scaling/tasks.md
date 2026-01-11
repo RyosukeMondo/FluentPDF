@@ -87,7 +87,7 @@
   - _Requirements: 3.1-3.7, 5.1-5.7_
   - _Prompt: Role: WinUI UI Developer | Task: Initialize DPI monitoring in PdfViewerPage Loaded event | Restrictions: Must handle lifecycle properly, show quality adjustment feedback | Success: DPI monitoring starts when page loads and stops on unload_
 
-- [ ] 7. Create Settings Page quality UI
+- [x] 7. Create Settings Page quality UI
   - Files:
     - `src/FluentPDF.App/Views/SettingsPage.xaml` (create or extend)
     - `src/FluentPDF.App/ViewModels/SettingsViewModel.cs` (create or extend)
