@@ -12,7 +12,7 @@
   - Requirements: All annotation types
   - Instructions: Define Annotation model with Type, Bounds, Color, Contents, InkPoints. Add AnnotationType enum.
 
-- [ ] 3. Implement IAnnotationService and AnnotationService
+- [x] 3. Implement IAnnotationService and AnnotationService
   - Files: `src/FluentPDF.Core/Services/IAnnotationService.cs`, `src/FluentPDF.Rendering/Services/AnnotationService.cs`, `tests/FluentPDF.Rendering.Tests/Services/AnnotationServiceTests.cs`
   - Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.6, 4.1-4.6, 5.1-5.6
   - Instructions: Implement service with Get, Create, Update, Delete, Save methods. Use PDFium annotation API. Test with sample PDFs.
