@@ -281,6 +281,51 @@ All errors include:
 
 ## Observability Infrastructure
 
+FluentPDF implements comprehensive observability through three integrated layers: development-time monitoring (.NET Aspire Dashboard), in-app diagnostics (real-time performance overlay), and structured log viewing (in-app log browser). See [OBSERVABILITY.md](OBSERVABILITY.md) for detailed usage guide.
+
+### Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Presentation Layer"
+        DiagPanel[DiagnosticsPanelControl<br/>Real-time Metrics Overlay]
+        LogViewer[LogViewerControl<br/>In-App Log Browser]
+        DiagVM[DiagnosticsPanelViewModel]
+        LogVM[LogViewerViewModel]
+    end
+
+    subgraph "Application Layer"
+        IMetrics[IMetricsCollectionService]
+        ILogExport[ILogExportService]
+        PerfMetrics[PerformanceMetrics Model]
+        LogEntry[LogEntry Model]
+    end
+
+    subgraph "Infrastructure Layer"
+        MetricsSvc[MetricsCollectionService<br/>OpenTelemetry Instruments]
+        LogExportSvc[LogExportService<br/>Serilog JSON Reader]
+        PdfRender[PdfRenderingService<br/>ActivitySource Tracing]
+    end
+
+    subgraph "Observability Stack"
+        OTel[OpenTelemetry SDK<br/>Metrics + Traces]
+        Serilog[Serilog<br/>Structured JSON Logs]
+        Aspire[.NET Aspire Dashboard<br/>OTLP Receiver]
+    end
+
+    DiagPanel --> DiagVM
+    LogViewer --> LogVM
+    DiagVM --> IMetrics
+    LogVM --> ILogExport
+    IMetrics -.implements.- MetricsSvc
+    ILogExport -.implements.- LogExportSvc
+    MetricsSvc --> OTel
+    LogExportSvc --> Serilog
+    PdfRender --> OTel
+    OTel --> Aspire
+    Serilog --> Aspire
+```
+
 ### Structured Logging with Serilog
 
 **Configuration** (`SerilogConfiguration.CreateLogger()`):
@@ -311,27 +356,277 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 ```
 
-### Log Correlation
-
-**Correlation IDs** link related operations:
-
-```csharp
-using (LogContext.PushProperty("CorrelationId", Guid.NewGuid()))
+**Log File Format**: Serilog JSON (newline-delimited JSON objects):
+```json
 {
-    _logger.LogInformation("Loading document {FilePath}", path);
-    // All logs in this scope include CorrelationId
+  "@t": "2026-01-11T14:32:15.1234567Z",
+  "@l": "Information",
+  "@mt": "Rendering page {PageNumber} at zoom {ZoomLevel}",
+  "PageNumber": 42,
+  "ZoomLevel": 1.5,
+  "CorrelationId": "3f7b8c9d-e21a-4f5d-a6c8-1b2e3d4a5f6g",
+  "Application": "FluentPDF",
+  "Version": "1.0.0"
 }
 ```
 
-### OpenTelemetry Integration
+### OpenTelemetry Metrics Collection
 
-Development setup:
-```bash
-docker run --rm -it -p 18888:18888 -p 4317:4317 \
-  mcr.microsoft.com/dotnet/aspire-dashboard:8.0
+**Metrics Service** (`MetricsCollectionService`):
+
+```csharp
+public class MetricsCollectionService : IMetricsCollectionService
+{
+    private readonly Meter _meter;
+    private readonly ObservableGauge<double> _fpsGauge;
+    private readonly ObservableGauge<long> _managedMemoryGauge;
+    private readonly ObservableGauge<long> _nativeMemoryGauge;
+    private readonly Histogram<double> _renderTimeHistogram;
+
+    public MetricsCollectionService(IMeterFactory meterFactory)
+    {
+        _meter = meterFactory.Create("FluentPDF.Rendering");
+
+        _fpsGauge = _meter.CreateObservableGauge<double>(
+            "fluentpdf.rendering.fps",
+            () => new Measurement<double>(_currentFPS));
+
+        _renderTimeHistogram = _meter.CreateHistogram<double>(
+            "fluentpdf.rendering.render_time",
+            unit: "ms");
+    }
+
+    public void RecordRenderTime(int pageNumber, double milliseconds)
+    {
+        _renderTimeHistogram.Record(milliseconds,
+            new KeyValuePair<string, object?>("page.number", pageNumber));
+    }
+}
 ```
 
-Dashboard: http://localhost:18888
+**OpenTelemetry Configuration** (`App.xaml.cs`):
+
+```csharp
+services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics
+        .AddMeter("FluentPDF.Rendering")
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri("http://localhost:4317");
+            options.Protocol = OtlpExportProtocol.Grpc;
+        }))
+    .WithTracing(tracing => tracing
+        .AddSource("FluentPDF.Rendering")
+        .SetResourceBuilder(ResourceBuilder.CreateDefault()
+            .AddService("FluentPDF.Desktop", serviceVersion: "1.0.0"))
+        .AddOtlpExporter());
+```
+
+### Distributed Tracing
+
+**Instrumentation** (`PdfRenderingService`):
+
+```csharp
+private readonly ActivitySource _activitySource = new("FluentPDF.Rendering");
+
+public async Task<Result<BitmapImage>> RenderPageAsync(int pageNumber, double zoomLevel)
+{
+    using var activity = _activitySource.StartActivity("RenderPage");
+    activity?.SetTag("page.number", pageNumber);
+    activity?.SetTag("zoom.level", zoomLevel);
+
+    var correlationId = Guid.NewGuid().ToString();
+    activity?.SetTag("correlation.id", correlationId);
+
+    try
+    {
+        using var loadActivity = _activitySource.StartActivity("LoadPage");
+        // ... load page code ...
+
+        using var renderActivity = _activitySource.StartActivity("RenderBitmap");
+        // ... render code ...
+
+        using var convertActivity = _activitySource.StartActivity("ConvertToImage");
+        // ... convert code ...
+
+        activity?.SetTag("render.time.ms", stopwatch.ElapsedMilliseconds);
+        return Result.Ok(image);
+    }
+    catch (Exception ex)
+    {
+        activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+        activity?.RecordException(ex);
+        throw;
+    }
+}
+```
+
+**Trace Hierarchy**:
+```
+RenderPage (parent span)
+├── LoadPage (child span)
+├── RenderBitmap (child span)
+└── ConvertToImage (child span)
+```
+
+**Span Attributes**:
+- `page.number`: Page being rendered
+- `zoom.level`: Current zoom factor
+- `correlation.id`: Unique operation identifier
+- `render.time.ms`: Total render duration
+
+### In-App Diagnostics Panel
+
+**Architecture**:
+- **Control**: `DiagnosticsPanelControl.xaml` - Acrylic overlay with metrics display
+- **ViewModel**: `DiagnosticsPanelViewModel` - Periodic metrics polling (500ms interval)
+- **Service**: `IMetricsCollectionService` - Metrics collection and export
+
+**Keyboard Shortcut**: `Ctrl+Shift+D` toggles diagnostics panel visibility
+
+**Displayed Metrics**:
+| Metric | Update Frequency | Color Coding |
+|--------|------------------|--------------|
+| FPS (Frames Per Second) | 500ms | Green: ≥30, Yellow: 15-30, Red: <15 |
+| Memory (Managed + Native) | 500ms | Green: <500MB, Yellow: 500-1000MB, Red: >1000MB |
+| Last Render Time | Per render | N/A |
+| Current Page Number | Per navigation | N/A |
+
+**Performance Level Calculation**:
+```csharp
+public enum PerformanceLevel
+{
+    Good,      // FPS ≥ 30 AND Memory < 500MB
+    Warning,   // FPS 15-30 OR Memory 500-1000MB
+    Critical   // FPS < 15 OR Memory > 1000MB
+}
+
+public static PerformanceLevel CalculateLevel(double fps, long totalMemoryMB)
+{
+    if (fps < 15 || totalMemoryMB > 1000) return PerformanceLevel.Critical;
+    if (fps < 30 || totalMemoryMB > 500) return PerformanceLevel.Warning;
+    return PerformanceLevel.Good;
+}
+```
+
+**Metrics Export**: JSON and CSV formats supported
+```json
+[
+  {
+    "CurrentFPS": 60.0,
+    "ManagedMemoryMB": 128,
+    "NativeMemoryMB": 256,
+    "TotalMemoryMB": 384,
+    "LastRenderTimeMs": 16.7,
+    "CurrentPageNumber": 42,
+    "Timestamp": "2026-01-11T14:32:15.1234567Z",
+    "Level": "Good"
+  }
+]
+```
+
+### Structured Log Viewer
+
+**Architecture**:
+- **Control**: `LogViewerControl.xaml` - ListView with filtering UI
+- **ViewModel**: `LogViewerViewModel` - Filter application and log export
+- **Service**: `ILogExportService` - Serilog JSON file reading
+
+**Keyboard Shortcut**: `Ctrl+Shift+L` opens log viewer dialog
+
+**Filter Options**:
+1. **Severity Level**: Minimum log level (Trace, Debug, Info, Warning, Error, Critical)
+2. **Correlation ID**: Exact match for operation tracing
+3. **Component**: Prefix match on namespace (e.g., "FluentPDF.Rendering")
+4. **Time Range**: Start and end timestamps
+5. **Search Text**: Case-insensitive message search (debounced 500ms)
+
+**Log Entry Model**:
+```csharp
+public class LogEntry
+{
+    public required DateTime Timestamp { get; init; }
+    public required LogLevel Level { get; init; }
+    public required string Message { get; init; }
+    public string? CorrelationId { get; init; }
+    public required string Component { get; init; }
+    public Dictionary<string, object> Context { get; init; } = new();
+    public string? Exception { get; init; }
+    public string? StackTrace { get; init; }
+}
+```
+
+**Performance Optimizations**:
+- **LRU Cache**: Last 10,000 parsed log entries cached in memory
+- **Streaming**: Large log files read in chunks (not fully loaded)
+- **Virtualization**: ListView only renders visible items
+- **Background Filtering**: Filters applied on background thread
+
+### Correlation ID Tracing
+
+**End-to-End Tracing Workflow**:
+
+1. **Generation**: Unique GUID created per rendering operation
+2. **Propagation**: Flows through all components:
+   - Distributed tracing spans (OpenTelemetry)
+   - Structured logs (Serilog)
+   - Metrics tags (OpenTelemetry Instruments)
+3. **Filtering**:
+   - Aspire Dashboard: Filter logs/traces by correlation ID
+   - In-app log viewer: Exact match correlation ID filter
+4. **Debugging**: Click correlation ID in log viewer → copy to clipboard → paste in Aspire Dashboard
+
+**Example Correlation Flow**:
+```
+User renders page 42
+  ↓
+Generate CorrelationId: "3f7b8c9d-e21a-4f5d-a6c8-1b2e3d4a5f6g"
+  ↓
+OpenTelemetry span: RenderPage
+  │ - tag: correlation.id = "3f7b8c9d..."
+  ├── span: LoadPage
+  ├── span: RenderBitmap
+  └── span: ConvertToImage
+  ↓
+Serilog logs (all include CorrelationId property):
+  - "Loading page 42" (Info)
+  - "Rendering bitmap at zoom 1.5" (Debug)
+  - "Render completed in 16.7ms" (Info)
+  ↓
+Aspire Dashboard / In-app Log Viewer:
+  - Filter by "3f7b8c9d..." to see complete operation trace
+```
+
+### .NET Aspire Dashboard Integration
+
+**Development Setup**:
+```bash
+# Start Aspire Dashboard (docker-compose)
+docker-compose -f tools/docker-compose-aspire.yml up -d
+
+# Access dashboard
+http://localhost:18888
+```
+
+**Dashboard Features**:
+- **Metrics View**: Real-time FPS, memory, render times (histograms, gauges)
+- **Logs View**: Structured logs with correlation ID, severity, component filtering
+- **Traces View**: Distributed traces with span hierarchy and attributes
+
+**Graceful Fallback**: If Aspire not running, OTLP exporter silently drops data. App continues normally with file-based logging.
+
+### Metrics History and Export
+
+**Circular Buffer**: Last 1000 metrics samples retained in memory (O(1) insertion)
+
+**Export Formats**:
+- **JSON**: Structured metrics with full metadata (import into analysis tools)
+- **CSV**: Tabular format for Excel/Power BI/pandas
+
+**Use Cases**:
+- Performance regression testing (compare metrics across versions)
+- Capacity planning (analyze memory growth over time)
+- SLA reporting (FPS distribution, P95/P99 render times)
 
 ## MVVM Pattern Implementation
 
