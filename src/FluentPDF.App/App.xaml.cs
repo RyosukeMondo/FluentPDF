@@ -71,6 +71,7 @@ namespace FluentPDF.App
                     services.AddSingleton<IFormValidationService, FormValidationService>();
                     services.AddSingleton<ITextExtractionService, TextExtractionService>();
                     services.AddSingleton<ITextSearchService, TextSearchService>();
+                    services.AddSingleton<IAnnotationService, AnnotationService>();
 
                     // Register HiDPI and rendering services
                     services.AddSingleton<IDpiDetectionService, DpiDetectionService>();
@@ -100,6 +101,7 @@ namespace FluentPDF.App
                     services.AddTransient<ConversionViewModel>();
                     services.AddTransient<BookmarksViewModel>();
                     services.AddTransient<FormFieldViewModel>();
+                    services.AddTransient<AnnotationViewModel>();
                     services.AddTransient<DiagnosticsPanelViewModel>();
                     services.AddTransient<LogViewerViewModel>();
                     services.AddTransient<SettingsViewModel>();

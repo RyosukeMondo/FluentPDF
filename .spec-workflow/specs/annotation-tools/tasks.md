@@ -42,7 +42,7 @@
   - Requirements: 5.1-5.6
   - Instructions: Save annotations using FPDF_SaveAsCopy. Create .bak backup before overwriting. Restore backup on failure.
 
-- [ ] 9. Register AnnotationService in DI
+- [x] 9. Register AnnotationService in DI
   - Files: `src/FluentPDF.App/App.xaml.cs`
   - Instructions: Register IAnnotationService, AnnotationViewModel in container.
 
