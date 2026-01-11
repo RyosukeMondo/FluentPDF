@@ -1,4 +1,7 @@
 using System.CommandLine;
+using FluentPDF.QualityAgent.Config;
+using FluentPDF.QualityAgent.Models;
+using FluentPDF.QualityAgent.Services;
 using Serilog;
 
 namespace FluentPDF.QualityAgent;
@@ -86,7 +89,7 @@ public class Program
         return rootCommand;
     }
 
-    private static Task<int> ExecuteAnalysis(
+    private static async Task<int> ExecuteAnalysis(
         FileInfo? trxFile,
         DirectoryInfo? logDir,
         FileInfo? visualResults,
@@ -101,32 +104,32 @@ public class Program
             if (trxFile == null && logDir == null && visualResults == null && validationResults == null)
             {
                 Log.Error("At least one input must be provided (--trx-file, --log-dir, --visual-results, or --validation-results)");
-                return Task.FromResult(2); // Fail
+                return 2; // Fail
             }
 
             // Validate input paths
             if (trxFile != null && !trxFile.Exists)
             {
                 Log.Error("TRX file not found: {TrxFile}", trxFile.FullName);
-                return Task.FromResult(2); // Fail
+                return 2; // Fail
             }
 
             if (logDir != null && !logDir.Exists)
             {
                 Log.Error("Log directory not found: {LogDir}", logDir.FullName);
-                return Task.FromResult(2); // Fail
+                return 2; // Fail
             }
 
             if (visualResults != null && !visualResults.Exists)
             {
                 Log.Error("Visual results file not found: {VisualResults}", visualResults.FullName);
-                return Task.FromResult(2); // Fail
+                return 2; // Fail
             }
 
             if (validationResults != null && !validationResults.Exists)
             {
                 Log.Error("Validation results file not found: {ValidationResults}", validationResults.FullName);
-                return Task.FromResult(2); // Fail
+                return 2; // Fail
             }
 
             // Set default output path
@@ -139,16 +142,142 @@ public class Program
             Log.Information("  Validation Results: {ValidationResults}", validationResults?.FullName ?? "(not provided)");
             Log.Information("  Output: {Output}", outputPath);
 
-            // TODO: Implement actual quality analysis
-            Log.Information("Quality analysis not yet implemented - this is task 1 scaffolding");
+            // Configure OpenAI from environment variable
+            var openAiConfig = new OpenAiConfig
+            {
+                ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty,
+                Model = "gpt-4o",
+                MaxRetries = 3
+            };
 
-            Log.Information("Quality analysis completed successfully");
-            return Task.FromResult(0); // Pass (placeholder)
+            if (string.IsNullOrEmpty(openAiConfig.ApiKey))
+            {
+                Log.Warning("OPENAI_API_KEY environment variable not set - AI analysis will use fallback rule-based analysis");
+            }
+
+            // Get schema path
+            var schemaPath = FindSchemaPath();
+            if (string.IsNullOrEmpty(schemaPath))
+            {
+                Log.Error("Quality report JSON schema not found. Expected at schemas/quality-report.schema.json");
+                return 2; // Fail
+            }
+
+            // Get build info from environment
+            var buildInfo = new BuildInfo
+            {
+                BuildId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID") ?? Guid.NewGuid().ToString(),
+                Timestamp = DateTime.UtcNow,
+                Branch = Environment.GetEnvironmentVariable("GITHUB_REF_NAME") ?? "unknown",
+                Commit = Environment.GetEnvironmentVariable("GITHUB_SHA"),
+                Author = Environment.GetEnvironmentVariable("GITHUB_ACTOR")
+            };
+
+            // Prepare analysis input
+            var analysisInput = new AnalysisInput
+            {
+                TrxFilePath = trxFile?.FullName,
+                LogFilePath = logDir != null ? FindFirstLogFile(logDir) : null,
+                SsimResultsPath = visualResults?.FullName,
+                ValidationResultsPath = validationResults?.FullName,
+                BuildInfo = buildInfo,
+                SchemaPath = schemaPath,
+                OutputPath = outputPath
+            };
+
+            // Execute quality analysis
+            var qualityAgent = new AiQualityAgent(openAiConfig);
+            var result = await qualityAgent.AnalyzeAsync(analysisInput);
+
+            if (result.IsFailed)
+            {
+                Log.Error("Quality analysis failed: {Error}", result.Errors.First().Message);
+                return 2; // Fail
+            }
+
+            var report = result.Value;
+
+            // Display summary
+            Log.Information("========================================");
+            Log.Information("Quality Analysis Summary");
+            Log.Information("========================================");
+            Log.Information("Overall Score: {Score}/100", report.OverallScore);
+            Log.Information("Status: {Status}", report.Status);
+            Log.Information("Total Issues: {TotalIssues}", report.Summary.TotalIssues);
+            Log.Information("Critical Issues: {CriticalIssues}", report.Summary.CriticalIssues);
+            Log.Information("========================================");
+
+            // Display key findings
+            if (report.Analysis.TestAnalysis.FailedTests > 0)
+            {
+                Log.Warning("Test Failures: {FailedTests} of {TotalTests} tests failed",
+                    report.Analysis.TestAnalysis.FailedTests,
+                    report.Analysis.TestAnalysis.TotalTests);
+            }
+
+            if (report.Analysis.LogAnalysis.ErrorCount > 0)
+            {
+                Log.Warning("Log Errors: {ErrorCount} errors detected", report.Analysis.LogAnalysis.ErrorCount);
+            }
+
+            if (report.Analysis.VisualAnalysis.CriticalRegressions > 0)
+            {
+                Log.Warning("Visual Regressions: {CriticalRegressions} critical regressions",
+                    report.Analysis.VisualAnalysis.CriticalRegressions);
+            }
+
+            // Display top recommendations
+            if (report.Recommendations.Any())
+            {
+                Log.Information("Top Recommendations:");
+                foreach (var rec in report.Recommendations.Take(3))
+                {
+                    Log.Information("  - {Recommendation}", rec.Description);
+                }
+            }
+
+            Log.Information("Quality report written to: {OutputPath}", outputPath);
+
+            // Return exit code based on status
+            return report.Status switch
+            {
+                QualityStatus.Pass => 0,
+                QualityStatus.Warn => 1,
+                QualityStatus.Fail => 2,
+                _ => 2
+            };
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Quality analysis failed");
-            return Task.FromResult(2); // Fail
+            return 2; // Fail
         }
+    }
+
+    private static string? FindSchemaPath()
+    {
+        // Try multiple common locations
+        var possiblePaths = new[]
+        {
+            "schemas/quality-report.schema.json",
+            "../../../schemas/quality-report.schema.json", // When running from bin/Debug/net8.0
+            "../../../../../../schemas/quality-report.schema.json" // When running from tools/quality-agent/bin/Debug/net8.0
+        };
+
+        foreach (var path in possiblePaths)
+        {
+            if (File.Exists(path))
+            {
+                return Path.GetFullPath(path);
+            }
+        }
+
+        return null;
+    }
+
+    private static string? FindFirstLogFile(DirectoryInfo logDir)
+    {
+        var logFiles = logDir.GetFiles("*.json", SearchOption.AllDirectories);
+        return logFiles.FirstOrDefault()?.FullName;
     }
 }

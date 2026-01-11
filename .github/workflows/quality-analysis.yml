@@ -15,48 +15,243 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
     - name: Download test results
       uses: actions/download-artifact@v4
       with:
         name: test-results
         path: test-results
+      continue-on-error: true
 
-    - name: Display test results structure
+    - name: Download validation reports
+      uses: actions/download-artifact@v4
+      with:
+        name: validation-reports
+        path: validation-reports
+      continue-on-error: true
+
+    - name: Download visual regression results
+      uses: actions/download-artifact@v4
+      with:
+        name: visual-regression-results
+        path: visual-results
+      continue-on-error: true
+
+    - name: Display downloaded artifacts
       run: |
-        echo "Test results downloaded:"
-        find test-results -type f
+        echo "Artifact structure:"
+        echo "Test results:"
+        find test-results -type f 2>/dev/null || echo "No test results found"
         echo ""
-        echo "Test result summary:"
-        find test-results -name "*.trx" -exec echo "Found TRX file: {}" \;
+        echo "Validation reports:"
+        find validation-reports -type f 2>/dev/null || echo "No validation reports found"
+        echo ""
+        echo "Visual regression results:"
+        find visual-results -type f 2>/dev/null || echo "No visual results found"
 
-    # TODO: AI quality analysis will be implemented here
-    # This is a placeholder for future AI agent TRX analysis
-    # The AI agent will:
-    # 1. Parse TRX files to extract test results
-    # 2. Analyze test failures and patterns
-    # 3. Generate insights and recommendations
-    # 4. Post comments to PRs with quality metrics
-    # 5. Track quality trends over time
-
-    - name: Placeholder - AI Analysis
+    - name: Find TRX file
+      id: find-trx
       run: |
-        echo "=========================================="
-        echo "AI Quality Analysis Placeholder"
-        echo "=========================================="
-        echo ""
-        echo "This workflow will implement AI-powered test analysis:"
-        echo "  - Automated root cause analysis of test failures"
-        echo "  - Pattern recognition across test suites"
-        echo "  - Quality trend analysis and predictions"
-        echo "  - Intelligent recommendations for improvements"
-        echo ""
-        echo "TODO: Implement AI agent with TRX parsing capabilities"
-        echo "=========================================="
+        TRX_FILE=$(find test-results -name "*.trx" -type f | head -1)
+        if [ -n "$TRX_FILE" ]; then
+          echo "trx_path=$TRX_FILE" >> $GITHUB_OUTPUT
+          echo "Found TRX file: $TRX_FILE"
+        else
+          echo "No TRX files found"
+          echo "trx_path=" >> $GITHUB_OUTPUT
+        fi
 
-    - name: Upload analysis artifacts
+    - name: Find validation report
+      id: find-validation
+      run: |
+        VALIDATION_FILE=$(find validation-reports -name "*.json" -type f | head -1)
+        if [ -n "$VALIDATION_FILE" ]; then
+          echo "validation_path=$VALIDATION_FILE" >> $GITHUB_OUTPUT
+          echo "Found validation file: $VALIDATION_FILE"
+        else
+          echo "No validation files found"
+          echo "validation_path=" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Find SSIM results
+      id: find-ssim
+      run: |
+        SSIM_FILE=$(find visual-results -name "*ssim*.json" -type f | head -1)
+        if [ -n "$SSIM_FILE" ]; then
+          echo "ssim_path=$SSIM_FILE" >> $GITHUB_OUTPUT
+          echo "Found SSIM file: $SSIM_FILE"
+        else
+          echo "No SSIM files found"
+          echo "ssim_path=" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Build quality agent
+      run: dotnet build tools/quality-agent/FluentPDF.QualityAgent.csproj --configuration Release
+
+    - name: Run AI Quality Analysis
+      id: quality-analysis
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        ARGS=""
+
+        if [ -n "${{ steps.find-trx.outputs.trx_path }}" ]; then
+          ARGS="$ARGS --trx-file ${{ steps.find-trx.outputs.trx_path }}"
+        fi
+
+        if [ -n "${{ steps.find-validation.outputs.validation_path }}" ]; then
+          ARGS="$ARGS --validation-results ${{ steps.find-validation.outputs.validation_path }}"
+        fi
+
+        if [ -n "${{ steps.find-ssim.outputs.ssim_path }}" ]; then
+          ARGS="$ARGS --visual-results ${{ steps.find-ssim.outputs.ssim_path }}"
+        fi
+
+        ARGS="$ARGS --output quality-report.json"
+
+        echo "Running quality agent with args: $ARGS"
+        dotnet run --project tools/quality-agent/FluentPDF.QualityAgent.csproj --configuration Release -- $ARGS
+
+        EXIT_CODE=$?
+        echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+        exit 0  # Don't fail the workflow yet, we'll check the exit code later
+
+    - name: Upload quality report
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: quality-analysis-results
-        path: test-results
+        name: quality-report
+        path: quality-report.json
         retention-days: 30
+
+    - name: Parse quality report
+      id: parse-report
+      if: always()
+      run: |
+        if [ -f quality-report.json ]; then
+          OVERALL_SCORE=$(jq -r '.overallScore // 0' quality-report.json)
+          STATUS=$(jq -r '.status // "Fail"' quality-report.json)
+          TOTAL_ISSUES=$(jq -r '.summary.totalIssues // 0' quality-report.json)
+          CRITICAL_ISSUES=$(jq -r '.summary.criticalIssues // 0' quality-report.json)
+
+          echo "overall_score=$OVERALL_SCORE" >> $GITHUB_OUTPUT
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "total_issues=$TOTAL_ISSUES" >> $GITHUB_OUTPUT
+          echo "critical_issues=$CRITICAL_ISSUES" >> $GITHUB_OUTPUT
+
+          echo "Quality Report Summary:"
+          echo "  Overall Score: $OVERALL_SCORE/100"
+          echo "  Status: $STATUS"
+          echo "  Total Issues: $TOTAL_ISSUES"
+          echo "  Critical Issues: $CRITICAL_ISSUES"
+        else
+          echo "Quality report not found"
+          echo "overall_score=0" >> $GITHUB_OUTPUT
+          echo "status=Fail" >> $GITHUB_OUTPUT
+          echo "total_issues=0" >> $GITHUB_OUTPUT
+          echo "critical_issues=0" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Post PR comment
+      if: github.event.workflow_run.event == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const overallScore = '${{ steps.parse-report.outputs.overall_score }}';
+          const status = '${{ steps.parse-report.outputs.status }}';
+          const totalIssues = '${{ steps.parse-report.outputs.total_issues }}';
+          const criticalIssues = '${{ steps.parse-report.outputs.critical_issues }}';
+
+          let statusEmoji = '✅';
+          if (status === 'Warn') statusEmoji = '⚠️';
+          if (status === 'Fail') statusEmoji = '❌';
+
+          let report = '';
+          try {
+            report = fs.readFileSync('quality-report.json', 'utf8');
+            const reportData = JSON.parse(report);
+
+            let comment = `## ${statusEmoji} Quality Analysis Report\n\n`;
+            comment += `**Overall Score:** ${overallScore}/100\n`;
+            comment += `**Status:** ${status}\n`;
+            comment += `**Total Issues:** ${totalIssues}\n`;
+            comment += `**Critical Issues:** ${criticalIssues}\n\n`;
+
+            // Add test analysis
+            if (reportData.analysis?.testAnalysis) {
+              const ta = reportData.analysis.testAnalysis;
+              comment += `### Test Analysis\n`;
+              comment += `- Total Tests: ${ta.totalTests}\n`;
+              comment += `- Passed: ${ta.passedTests}\n`;
+              comment += `- Failed: ${ta.failedTests}\n`;
+              comment += `- Pass Rate: ${ta.passRate.toFixed(2)}%\n\n`;
+            }
+
+            // Add log analysis
+            if (reportData.analysis?.logAnalysis) {
+              const la = reportData.analysis.logAnalysis;
+              comment += `### Log Analysis\n`;
+              comment += `- Errors: ${la.errorCount}\n`;
+              comment += `- Warnings: ${la.warningCount}\n`;
+              comment += `- Error Rate: ${la.errorRate.toFixed(2)}/hour\n\n`;
+            }
+
+            // Add visual analysis
+            if (reportData.analysis?.visualAnalysis) {
+              const va = reportData.analysis.visualAnalysis;
+              comment += `### Visual Regression Analysis\n`;
+              comment += `- Critical Regressions: ${va.criticalRegressions}\n`;
+              comment += `- Major Regressions: ${va.majorRegressions}\n`;
+              comment += `- Minor Regressions: ${va.minorRegressions}\n\n`;
+            }
+
+            // Add top recommendations
+            if (reportData.recommendations && reportData.recommendations.length > 0) {
+              comment += `### Top Recommendations\n`;
+              reportData.recommendations.slice(0, 5).forEach((rec, idx) => {
+                comment += `${idx + 1}. **${rec.title || 'Recommendation'}** (${rec.severity}): ${rec.description}\n`;
+              });
+            }
+
+            comment += `\n[View full quality report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+
+            // Post comment
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`
+            });
+
+            if (pullRequests.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequests[0].number,
+                body: comment
+              });
+            }
+          } catch (error) {
+            console.error('Failed to parse quality report or post comment:', error);
+          }
+
+    - name: Check quality status
+      if: always()
+      run: |
+        STATUS="${{ steps.parse-report.outputs.status }}"
+        if [ "$STATUS" == "Fail" ]; then
+          echo "Quality analysis failed - build will be marked as failed"
+          exit 1
+        elif [ "$STATUS" == "Warn" ]; then
+          echo "Quality analysis has warnings - build will continue"
+          exit 0
+        else
+          echo "Quality analysis passed"
+          exit 0
+        fi
