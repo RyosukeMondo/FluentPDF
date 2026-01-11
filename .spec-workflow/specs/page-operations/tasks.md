@@ -28,7 +28,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer | Task: Add services.AddSingleton<IPageOperationsService, PageOperationsService>() to ConfigureServices in App.xaml.cs. Follow existing service registration patterns. | Restrictions: Only add registration, do not modify other code. | _Leverage: Existing DI setup in App.xaml.cs | _Requirements: All | Success: Service is registered and resolvable via DI. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 4. Add page operation commands to ThumbnailsViewModel
+- [~] 4. Add page operation commands to ThumbnailsViewModel
   - File: `src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs`
   - Add RotateRightCommand, RotateLeftCommand, Rotate180Command
   - Add DeletePagesCommand with confirmation

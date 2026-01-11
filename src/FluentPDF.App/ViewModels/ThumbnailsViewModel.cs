@@ -25,6 +25,11 @@ public record NavigateToPageMessage(int PageNumber);
 public record AccessibilityNotificationMessage(string Message);
 
 /// <summary>
+/// Message sent when pages have been modified (rotated, deleted, reordered, or inserted).
+/// </summary>
+public record PageModifiedMessage();
+
+/// <summary>
 /// ViewModel for the thumbnails sidebar.
 /// Manages thumbnail state, caching, and navigation.
 /// </summary>
@@ -37,6 +42,7 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     private const int MaxCacheCapacity = 100;
 
     private readonly IThumbnailRenderingService _thumbnailService;
+    private readonly IPageOperationsService _pageOperationsService;
     private readonly ILogger<ThumbnailsViewModel> _logger;
     private readonly LruCache<int, DisposableBitmapImage> _cache;
     private readonly SemaphoreSlim _renderSemaphore;
@@ -50,6 +56,11 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     public ObservableCollection<ThumbnailItem> Thumbnails { get; }
 
     /// <summary>
+    /// Gets the collection of currently selected thumbnails.
+    /// </summary>
+    public IEnumerable<ThumbnailItem> SelectedThumbnails => Thumbnails.Where(t => t.IsSelected);
+
+    /// <summary>
     /// Gets or sets the currently selected page number (1-based).
     /// </summary>
     [ObservableProperty]
@@ -59,12 +70,15 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     /// Initializes a new instance of the <see cref="ThumbnailsViewModel"/> class.
     /// </summary>
     /// <param name="thumbnailService">Service for rendering thumbnails.</param>
+    /// <param name="pageOperationsService">Service for page operations.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public ThumbnailsViewModel(
         IThumbnailRenderingService thumbnailService,
+        IPageOperationsService pageOperationsService,
         ILogger<ThumbnailsViewModel> logger)
     {
         _thumbnailService = thumbnailService ?? throw new ArgumentNullException(nameof(thumbnailService));
+        _pageOperationsService = pageOperationsService ?? throw new ArgumentNullException(nameof(pageOperationsService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         Thumbnails = new ObservableCollection<ThumbnailItem>();
@@ -392,6 +406,250 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         }
         randomAccessStream.Seek(0);
         return randomAccessStream;
+    }
+
+    /// <summary>
+    /// Rotates selected pages 90 degrees clockwise.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedThumbnails))]
+    private async Task RotateRightAsync()
+    {
+        if (_document == null) return;
+
+        var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
+
+        _logger.LogInformation("Rotating {Count} pages right 90°", selectedIndices.Length);
+
+        var result = await _pageOperationsService.RotatePagesAsync(_document, selectedIndices, RotationAngle.Rotate90);
+
+        if (result.IsSuccess)
+        {
+            await RefreshThumbnailsAsync(selectedIndices);
+            NotifyPageModification();
+            _logger.LogInformation("Successfully rotated {Count} pages right", selectedIndices.Length);
+        }
+        else
+        {
+            _logger.LogError("Failed to rotate pages: {Errors}", string.Join(", ", result.Errors.Select(e => e.Message)));
+        }
+    }
+
+    /// <summary>
+    /// Rotates selected pages 90 degrees counter-clockwise.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedThumbnails))]
+    private async Task RotateLeftAsync()
+    {
+        if (_document == null) return;
+
+        var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
+
+        _logger.LogInformation("Rotating {Count} pages left 90°", selectedIndices.Length);
+
+        var result = await _pageOperationsService.RotatePagesAsync(_document, selectedIndices, RotationAngle.Rotate270);
+
+        if (result.IsSuccess)
+        {
+            await RefreshThumbnailsAsync(selectedIndices);
+            NotifyPageModification();
+            _logger.LogInformation("Successfully rotated {Count} pages left", selectedIndices.Length);
+        }
+        else
+        {
+            _logger.LogError("Failed to rotate pages: {Errors}", string.Join(", ", result.Errors.Select(e => e.Message)));
+        }
+    }
+
+    /// <summary>
+    /// Rotates selected pages 180 degrees.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedThumbnails))]
+    private async Task Rotate180Async()
+    {
+        if (_document == null) return;
+
+        var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
+
+        _logger.LogInformation("Rotating {Count} pages 180°", selectedIndices.Length);
+
+        var result = await _pageOperationsService.RotatePagesAsync(_document, selectedIndices, RotationAngle.Rotate180);
+
+        if (result.IsSuccess)
+        {
+            await RefreshThumbnailsAsync(selectedIndices);
+            NotifyPageModification();
+            _logger.LogInformation("Successfully rotated {Count} pages 180°", selectedIndices.Length);
+        }
+        else
+        {
+            _logger.LogError("Failed to rotate pages: {Errors}", string.Join(", ", result.Errors.Select(e => e.Message)));
+        }
+    }
+
+    /// <summary>
+    /// Deletes selected pages with confirmation.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedThumbnails))]
+    private async Task DeletePagesAsync()
+    {
+        if (_document == null) return;
+
+        var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
+        var selectedCount = selectedIndices.Length;
+
+        // Check if deleting all pages
+        if (selectedCount >= _document.PageCount)
+        {
+            _logger.LogWarning("Cannot delete all pages from document");
+            WeakReferenceMessenger.Default.Send(new AccessibilityNotificationMessage("Cannot delete all pages from document"));
+            return;
+        }
+
+        _logger.LogInformation("Attempting to delete {Count} pages", selectedCount);
+
+        // TODO: Show confirmation dialog when dialog is implemented
+        // For now, proceed without confirmation
+
+        var result = await _pageOperationsService.DeletePagesAsync(_document, selectedIndices);
+
+        if (result.IsSuccess)
+        {
+            await ReloadAllThumbnailsAsync();
+            NotifyPageModification();
+            _logger.LogInformation("Successfully deleted {Count} pages", selectedCount);
+        }
+        else
+        {
+            _logger.LogError("Failed to delete pages: {Errors}", string.Join(", ", result.Errors.Select(e => e.Message)));
+        }
+    }
+
+    /// <summary>
+    /// Inserts a blank page at the current position.
+    /// </summary>
+    /// <param name="pageSize">The size of the blank page to insert.</param>
+    [RelayCommand]
+    private async Task InsertBlankPageAsync(PageSize pageSize)
+    {
+        if (_document == null) return;
+
+        var insertIndex = SelectedPageNumber - 1; // Convert to 0-based
+
+        _logger.LogInformation("Inserting blank page at index {Index} with size {Size}", insertIndex, pageSize);
+
+        var result = await _pageOperationsService.InsertBlankPageAsync(_document, insertIndex, pageSize);
+
+        if (result.IsSuccess)
+        {
+            await ReloadAllThumbnailsAsync();
+            NotifyPageModification();
+            _logger.LogInformation("Successfully inserted blank page at index {Index}", insertIndex);
+        }
+        else
+        {
+            _logger.LogError("Failed to insert blank page: {Errors}", string.Join(", ", result.Errors.Select(e => e.Message)));
+        }
+    }
+
+    /// <summary>
+    /// Moves selected pages to a target position for drag-drop reordering.
+    /// </summary>
+    /// <param name="pageIndices">Zero-based indices of pages to move.</param>
+    /// <param name="targetIndex">Zero-based target position.</param>
+    public async Task MovePagesTo(int[] pageIndices, int targetIndex)
+    {
+        if (_document == null) return;
+
+        _logger.LogInformation("Moving {Count} pages to index {Target}", pageIndices.Length, targetIndex);
+
+        var result = await _pageOperationsService.ReorderPagesAsync(_document, pageIndices, targetIndex);
+
+        if (result.IsSuccess)
+        {
+            await ReloadAllThumbnailsAsync();
+            NotifyPageModification();
+            _logger.LogInformation("Successfully moved pages to index {Target}", targetIndex);
+        }
+        else
+        {
+            _logger.LogError("Failed to reorder pages: {Errors}", string.Join(", ", result.Errors.Select(e => e.Message)));
+        }
+    }
+
+    /// <summary>
+    /// Determines whether any thumbnails are selected.
+    /// </summary>
+    private bool HasSelectedThumbnails()
+    {
+        return SelectedThumbnails.Any();
+    }
+
+    /// <summary>
+    /// Refreshes thumbnails for the specified page indices.
+    /// </summary>
+    /// <param name="pageIndices">Zero-based page indices to refresh.</param>
+    private async Task RefreshThumbnailsAsync(int[] pageIndices)
+    {
+        if (_document == null) return;
+
+        var refreshTasks = new List<Task>();
+
+        foreach (var index in pageIndices)
+        {
+            if (index >= 0 && index < Thumbnails.Count)
+            {
+                var item = Thumbnails[index];
+
+                // Remove from cache to force reload
+                _cache.Remove(item.PageNumber);
+
+                // Clear existing thumbnail
+                item.Thumbnail = null;
+                item.IsLoading = true;
+
+                // Reload thumbnail
+                refreshTasks.Add(LoadThumbnailAsync(item));
+            }
+        }
+
+        await Task.WhenAll(refreshTasks);
+        _logger.LogDebug("Refreshed {Count} thumbnails", pageIndices.Length);
+    }
+
+    /// <summary>
+    /// Reloads all thumbnails after structural changes like delete or insert.
+    /// </summary>
+    private async Task ReloadAllThumbnailsAsync()
+    {
+        if (_document == null) return;
+
+        // Clear cache and thumbnails
+        _cache.Clear();
+        _estimatedCacheMemory = 0;
+        Thumbnails.Clear();
+
+        // Reload thumbnails for new page count
+        for (int i = 1; i <= _document.PageCount; i++)
+        {
+            var item = new ThumbnailItem(i);
+            item.PropertyChanged += OnThumbnailItemPropertyChanged;
+            Thumbnails.Add(item);
+        }
+
+        // Load visible thumbnails
+        await LoadPriorityThumbnailsAsync(SelectedPageNumber, Math.Min(20, _document.PageCount));
+
+        _logger.LogInformation("Reloaded all thumbnails, new count: {Count}", _document.PageCount);
+    }
+
+    /// <summary>
+    /// Notifies that page modifications have occurred.
+    /// </summary>
+    private void NotifyPageModification()
+    {
+        // Send message to notify PdfViewerViewModel about changes
+        // This will be used to set HasUnsavedChanges
+        WeakReferenceMessenger.Default.Send(new PageModifiedMessage());
     }
 
     /// <summary>
