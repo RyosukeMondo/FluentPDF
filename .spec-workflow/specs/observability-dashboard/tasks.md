@@ -51,7 +51,7 @@
   - _Requirements: 4.1-4.10, 5.1-5.9, 7.1-7.9_
   - _Prompt: Role: Backend Developer specializing in log processing | Task: Implement ILogExportService interface with methods (GetRecentLogsAsync, FilterLogsAsync, ExportLogsAsync) following design.md Component 5 and 6, reading Serilog JSON log files from ApplicationData.LocalFolder/logs directory, parsing JSON using System.Text.Json, implementing LogFilterCriteria filtering logic (level >= MinimumLevel, correlation ID exact match, component StartsWith, time range between start/end, search case-insensitive Contains), adding LRU cache (Dictionary + LinkedList, max 10,000 entries), and writing unit tests with temp directory mock log files | Restrictions: Do not load entire log file into memory at once (stream in chunks), handle corrupted JSON gracefully (skip invalid entries, log warning), keep file under 500 lines, follow async best practices | Success: Service reads logs correctly, filters work accurately, export preserves Serilog format, LRU cache improves performance, tests verify all scenarios including corrupted JSON_
 
-- [ ] 4. Configure OpenTelemetry with OTLP exporters for Aspire Dashboard
+- [-] 4. Configure OpenTelemetry with OTLP exporters for Aspire Dashboard
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify ConfigureServices)
     - `tools/docker-compose-aspire.yml` (new)

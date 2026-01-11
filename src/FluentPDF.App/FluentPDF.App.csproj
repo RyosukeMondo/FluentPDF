@@ -46,6 +46,9 @@
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="10.*" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.*" />
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.*" />
+        <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.*" />
 
         <Manifest Include="$(ApplicationManifest)" />
     </ItemGroup>

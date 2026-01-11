@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.0
+    container_name: fluentpdf-aspire-dashboard
+    ports:
+      # OTLP gRPC endpoint for receiving telemetry data
+      - "4317:4317"
+      # Dashboard UI
+      - "18888:18888"
+    environment:
+      # Dashboard configuration
+      - DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      # OTLP endpoint configuration
+      - ASPNETCORE_URLS=http://+:18888
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+    restart: unless-stopped
+    networks:
+      - fluentpdf-observability
+
+networks:
+  fluentpdf-observability:
+    driver: bridge

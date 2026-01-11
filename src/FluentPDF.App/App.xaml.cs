@@ -9,7 +9,11 @@ using Mammoth;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 
 namespace FluentPDF.App
@@ -53,6 +57,9 @@ namespace FluentPDF.App
                         builder.ClearProviders();
                         builder.AddSerilog(dispose: true);
                     });
+
+                    // Configure OpenTelemetry with graceful fallback if Aspire not running
+                    ConfigureOpenTelemetry(services);
 
                     // Register PDF services (PDFium will be initialized lazily on first use)
                     services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
@@ -262,6 +269,60 @@ namespace FluentPDF.App
             await _host.StopAsync();
             _host.Dispose();
             Log.CloseAndFlush();
+        }
+
+        /// <summary>
+        /// Configures OpenTelemetry metrics and tracing with OTLP exporters for .NET Aspire Dashboard.
+        /// Gracefully degrades if Aspire is not running.
+        /// </summary>
+        private static void ConfigureOpenTelemetry(IServiceCollection services)
+        {
+            try
+            {
+                var version = Assembly.GetExecutingAssembly()
+                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                    .InformationalVersion ?? "1.0.0";
+
+                // Configure resource attributes
+                var resourceBuilder = ResourceBuilder.CreateDefault()
+                    .AddService("FluentPDF.Desktop", serviceVersion: version)
+                    .AddAttributes(new Dictionary<string, object>
+                    {
+                        ["deployment.environment"] = "development"
+                    });
+
+                // Configure MeterProvider with OTLP exporter
+                services.AddOpenTelemetry()
+                    .WithMetrics(builder =>
+                    {
+                        builder
+                            .SetResourceBuilder(resourceBuilder)
+                            .AddMeter("FluentPDF.Rendering")
+                            .AddOtlpExporter(options =>
+                            {
+                                options.Endpoint = new Uri("http://localhost:4317");
+                                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+                            });
+                    })
+                    .WithTracing(builder =>
+                    {
+                        builder
+                            .SetResourceBuilder(resourceBuilder)
+                            .AddSource("FluentPDF.Rendering")
+                            .AddOtlpExporter(options =>
+                            {
+                                options.Endpoint = new Uri("http://localhost:4317");
+                                options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+                            });
+                    });
+
+                Log.Debug("OpenTelemetry configured with OTLP exporters to localhost:4317");
+            }
+            catch (Exception ex)
+            {
+                // Graceful fallback: log error but continue without OpenTelemetry
+                Log.Warning(ex, "Failed to configure OpenTelemetry. Application will continue without OTLP export to Aspire Dashboard.");
+            }
         }
     }
 }
