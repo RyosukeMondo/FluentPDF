@@ -11,7 +11,7 @@
   - _Requirements: 1.1-1.7, 6.1-6.5_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# P/Invoke Developer with PDFium expertise | Task: Add P/Invoke declarations for image object APIs: FPDFPageObj_NewImageObj, FPDFImageObj_LoadJpegFile, FPDFImageObj_LoadJpegFileInline, FPDFImageObj_SetBitmap, FPDFPageObj_Transform, FPDFPageObj_SetMatrix, FPDFPage_InsertObject, FPDFPage_RemoveObject, FPDFPageObj_GetBounds. Follow existing CallingConvention.Cdecl pattern. | Restrictions: Only add P/Invoke declarations, do not implement wrapper logic. Follow existing naming conventions. | _Leverage: Existing PdfiumInterop.cs | _Requirements: 1.1-1.7, 6.1-6.5 | Success: All P/Invoke declarations compile, follow existing patterns. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 2. Create IImageInsertionService interface
+- [x] 2. Create IImageInsertionService interface
   - File: `src/FluentPDF.Core/Services/IImageInsertionService.cs`
   - Define InsertImageAsync, MoveImageAsync, ScaleImageAsync, RotateImageAsync, DeleteImageAsync
   - Add ImageObject model class
