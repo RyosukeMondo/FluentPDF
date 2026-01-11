@@ -117,7 +117,7 @@
   - _Requirements: 3.1-3.8, 8.1-8.7_
   - _Prompt: Role: DevOps Engineer | Task: Set up test results directory structure with proper .gitignore | Restrictions: Must exclude test outputs, include baselines | Success: TestResults ignored, Baselines committed_
 
-- [ ] 9. Add GitHub Actions workflow for visual tests
+- [x] 9. Add GitHub Actions workflow for visual tests
   - Files:
     - `.github/workflows/visual-regression.yml` (create)
   - Create workflow running on windows-latest
