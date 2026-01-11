@@ -25,11 +25,16 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly ITextExtractionService _textExtractionService;
     private readonly ILogger<PdfViewerViewModel> _logger;
     private readonly Core.Services.IMetricsCollectionService? _metricsService;
+    private readonly IDpiDetectionService? _dpiDetectionService;
+    private readonly IRenderingSettingsService? _renderingSettingsService;
     private PdfDocument? _currentDocument;
     private bool _disposed;
     private CancellationTokenSource? _operationCts;
     private CancellationTokenSource? _searchCts;
     private System.Threading.Timer? _searchDebounceTimer;
+    private IDisposable? _dpiSubscription;
+    private IDisposable? _qualitySubscription;
+    private double _lastRenderedDpi;
 
     /// <summary>
     /// Gets the bookmarks view model for the bookmarks panel.
@@ -64,6 +69,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="diagnosticsPanelViewModel">View model for the diagnostics panel.</param>
     /// <param name="logViewerViewModel">View model for the log viewer.</param>
     /// <param name="metricsService">Optional metrics collection service for observability.</param>
+    /// <param name="dpiDetectionService">Optional DPI detection service for HiDPI support.</param>
+    /// <param name="renderingSettingsService">Optional rendering settings service for quality preferences.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
@@ -76,6 +83,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         DiagnosticsPanelViewModel diagnosticsPanelViewModel,
         LogViewerViewModel logViewerViewModel,
         Core.Services.IMetricsCollectionService? metricsService,
+        IDpiDetectionService? dpiDetectionService,
+        IRenderingSettingsService? renderingSettingsService,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
@@ -88,6 +97,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         DiagnosticsPanelViewModel = diagnosticsPanelViewModel ?? throw new ArgumentNullException(nameof(diagnosticsPanelViewModel));
         LogViewerViewModel = logViewerViewModel ?? throw new ArgumentNullException(nameof(logViewerViewModel));
         _metricsService = metricsService; // Optional service
+        _dpiDetectionService = dpiDetectionService; // Optional service
+        _renderingSettingsService = renderingSettingsService; // Optional service
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Set up navigation callback for bookmarks
@@ -95,6 +106,23 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         {
             await GoToPageCommand.ExecuteAsync(pageNumber);
         });
+
+        // Subscribe to quality changes if settings service is available
+        if (_renderingSettingsService != null)
+        {
+            _qualitySubscription = _renderingSettingsService.ObserveRenderingQuality()
+                .Subscribe(async quality =>
+                {
+                    CurrentRenderingQuality = quality;
+                    _logger.LogInformation("Rendering quality changed to {Quality}", quality);
+
+                    // Re-render current page if document is loaded
+                    if (_currentDocument != null && !IsLoading)
+                    {
+                        await RenderCurrentPageAsync();
+                    }
+                });
+        }
 
         _logger.LogInformation("PdfViewerViewModel initialized");
     }
@@ -220,6 +248,25 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private bool _hasSelectedText;
+
+    /// <summary>
+    /// Gets or sets the current display information for HiDPI rendering.
+    /// </summary>
+    [ObservableProperty]
+    private DisplayInfo? _currentDisplayInfo;
+
+    /// <summary>
+    /// Gets or sets the current rendering quality setting.
+    /// </summary>
+    [ObservableProperty]
+    private RenderingQuality _currentRenderingQuality = RenderingQuality.Auto;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the quality is being adjusted.
+    /// Used to show UI feedback during DPI changes.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isAdjustingQuality;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -441,10 +488,36 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
         try
         {
+            // Calculate effective DPI if DPI detection is available
+            double effectiveDpi = 96.0; // Default standard DPI
+            if (_dpiDetectionService != null && CurrentDisplayInfo != null)
+            {
+                var dpiResult = _dpiDetectionService.CalculateEffectiveDpi(
+                    CurrentDisplayInfo,
+                    ZoomLevel,
+                    CurrentRenderingQuality);
+
+                if (dpiResult.IsSuccess)
+                {
+                    effectiveDpi = dpiResult.Value;
+                    _logger.LogDebug(
+                        "Calculated effective DPI: {EffectiveDpi} (Display={DisplayDpi}, Zoom={Zoom}, Quality={Quality})",
+                        effectiveDpi,
+                        CurrentDisplayInfo.EffectiveDpi,
+                        ZoomLevel,
+                        CurrentRenderingQuality);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to calculate effective DPI, using default: {Errors}", dpiResult.Errors);
+                }
+            }
+
             var result = await _renderingService.RenderPageAsync(
                 _currentDocument,
                 CurrentPageNumber,
-                ZoomLevel);
+                ZoomLevel,
+                effectiveDpi);
 
             if (result.IsSuccess)
             {
@@ -458,9 +531,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
                 renderStartTime.Stop();
 
+                // Update last rendered DPI
+                _lastRenderedDpi = effectiveDpi;
+
                 _logger.LogInformation(
-                    "Page rendered successfully. PageNumber={PageNumber}, ZoomLevel={ZoomLevel}, RenderTime={RenderTimeMs}ms",
-                    CurrentPageNumber, ZoomLevel, renderStartTime.ElapsedMilliseconds);
+                    "Page rendered successfully. PageNumber={PageNumber}, ZoomLevel={ZoomLevel}, EffectiveDpi={EffectiveDpi}, RenderTime={RenderTimeMs}ms",
+                    CurrentPageNumber, ZoomLevel, effectiveDpi, renderStartTime.ElapsedMilliseconds);
 
                 // Record render time metrics if metrics service is available
                 _metricsService?.RecordRenderTime(renderStartTime.ElapsedMilliseconds);
@@ -1286,6 +1362,118 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Starts monitoring DPI changes for the current display.
+    /// </summary>
+    /// <param name="xamlRoot">The XamlRoot to monitor for DPI changes.</param>
+    public void StartDpiMonitoring(object? xamlRoot)
+    {
+        if (_dpiDetectionService == null)
+        {
+            _logger.LogWarning("DPI detection service not available, cannot start DPI monitoring");
+            return;
+        }
+
+        // Stop existing subscription if any
+        _dpiSubscription?.Dispose();
+        _dpiSubscription = null;
+
+        // Get initial display info
+        var displayInfoResult = _dpiDetectionService.GetCurrentDisplayInfo(xamlRoot);
+        if (displayInfoResult.IsSuccess)
+        {
+            CurrentDisplayInfo = displayInfoResult.Value;
+            _lastRenderedDpi = displayInfoResult.Value.EffectiveDpi;
+            _logger.LogInformation(
+                "Initial display info detected. Scale={Scale}, EffectiveDpi={EffectiveDpi}",
+                displayInfoResult.Value.RasterizationScale,
+                displayInfoResult.Value.EffectiveDpi);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to get initial display info: {Errors}", displayInfoResult.Errors);
+            CurrentDisplayInfo = DisplayInfo.Standard();
+            _lastRenderedDpi = 96.0;
+        }
+
+        // Monitor DPI changes
+        var monitorResult = _dpiDetectionService.MonitorDpiChanges(xamlRoot);
+        if (monitorResult.IsSuccess)
+        {
+            _dpiSubscription = monitorResult.Value.Subscribe(async displayInfo =>
+            {
+                await OnDpiChangedAsync(displayInfo);
+            });
+
+            _logger.LogInformation("DPI monitoring started successfully");
+        }
+        else
+        {
+            _logger.LogWarning("Failed to start DPI monitoring: {Errors}", monitorResult.Errors);
+        }
+    }
+
+    /// <summary>
+    /// Handles DPI changes and re-renders if the change is significant.
+    /// </summary>
+    private async Task OnDpiChangedAsync(DisplayInfo newDisplayInfo)
+    {
+        CurrentDisplayInfo = newDisplayInfo;
+
+        _logger.LogInformation(
+            "DPI changed. Scale={Scale}, EffectiveDpi={EffectiveDpi}",
+            newDisplayInfo.RasterizationScale,
+            newDisplayInfo.EffectiveDpi);
+
+        // Calculate the new effective DPI for rendering
+        if (_dpiDetectionService == null || _currentDocument == null)
+        {
+            return;
+        }
+
+        var effectiveDpiResult = _dpiDetectionService.CalculateEffectiveDpi(
+            newDisplayInfo,
+            ZoomLevel,
+            CurrentRenderingQuality);
+
+        if (effectiveDpiResult.IsFailed)
+        {
+            _logger.LogWarning("Failed to calculate effective DPI: {Errors}", effectiveDpiResult.Errors);
+            return;
+        }
+
+        var newEffectiveDpi = effectiveDpiResult.Value;
+
+        // Check if DPI change is significant (> 10% threshold)
+        var dpiChangePercentage = Math.Abs(newEffectiveDpi - _lastRenderedDpi) / _lastRenderedDpi;
+        if (dpiChangePercentage > 0.10)
+        {
+            _logger.LogInformation(
+                "Significant DPI change detected ({ChangePercent:P1}). Re-rendering page. OldDpi={OldDpi}, NewDpi={NewDpi}",
+                dpiChangePercentage,
+                _lastRenderedDpi,
+                newEffectiveDpi);
+
+            IsAdjustingQuality = true;
+            try
+            {
+                await RenderCurrentPageAsync();
+            }
+            finally
+            {
+                IsAdjustingQuality = false;
+            }
+        }
+        else
+        {
+            _logger.LogDebug(
+                "DPI change below threshold ({ChangePercent:P1}), skipping re-render. OldDpi={OldDpi}, NewDpi={NewDpi}",
+                dpiChangePercentage,
+                _lastRenderedDpi,
+                newEffectiveDpi);
+        }
+    }
+
+    /// <summary>
     /// Disposes resources used by the ViewModel.
     /// </summary>
     public void Dispose()
@@ -1313,6 +1501,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
         _searchDebounceTimer?.Dispose();
         _searchDebounceTimer = null;
+
+        _dpiSubscription?.Dispose();
+        _dpiSubscription = null;
+
+        _qualitySubscription?.Dispose();
+        _qualitySubscription = null;
 
         _disposed = true;
     }

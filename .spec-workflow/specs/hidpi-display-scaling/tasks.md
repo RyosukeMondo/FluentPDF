@@ -60,7 +60,7 @@
   - _Requirements: 2.1-2.7, 4.1-4.7_
   - _Prompt: Role: Graphics Rendering Developer | Task: Extend PdfRenderingService to properly handle dynamic DPI with error recovery | Restrictions: Must handle OOM errors, log performance, scale correctly | Success: Can render at any DPI with proper error handling_
 
-- [ ] 5. Extend PdfViewerViewModel with DPI monitoring
+- [-] 5. Extend PdfViewerViewModel with DPI monitoring
   - Files:
     - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (extend)
     - `tests/FluentPDF.App.Tests/ViewModels/PdfViewerViewModelDpiTests.cs`
