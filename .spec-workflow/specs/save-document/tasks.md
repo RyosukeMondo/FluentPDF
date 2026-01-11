@@ -57,7 +57,7 @@
   - _Requirements: 4.1-4.5_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer specializing in dialogs | Task: Create ContentDialog-based SaveConfirmationDialog with Title "Unsaved Changes", message "Do you want to save changes to {filename}?", and three buttons: Save (Primary), Don't Save (Secondary), Cancel (Close). Create static ShowAsync method that returns SaveConfirmationResult enum. Use XamlRoot parameter for proper dialog hosting. | Restrictions: Follow WinUI 3 ContentDialog best practices. Keep dialog simple and focused. | _Leverage: WinUI 3 ContentDialog documentation | _Requirements: 4.1-4.5 | Success: Dialog displays correctly, returns appropriate result for each button click, handles Cancel/Escape properly. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 7. Integrate SaveConfirmationDialog with tab close
+- [x] 7. Integrate SaveConfirmationDialog with tab close
   - File: `src/FluentPDF.App/Views/MainWindow.xaml.cs`
   - Modify OnTabCloseRequested to check HasUnsavedChanges
   - Show dialog and handle Save/DontSave/Cancel results
