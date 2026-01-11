@@ -102,7 +102,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Create WatermarkServiceTests with: ApplyTextWatermark_ValidConfig_Succeeds, ApplyImageWatermark_ValidConfig_Succeeds, ApplyWatermark_AllPages_AppliesCorrectly, ApplyWatermark_PageRange_AppliesCorrectly, RemoveWatermarks_Succeeds, PageRange_Parse_ValidFormat_Succeeds, PageRange_Parse_InvalidFormat_Fails. Mock PDFium. | Restrictions: Use existing patterns. | _Leverage: Existing tests | _Requirements: All | Success: All tests pass. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 12. Add integration tests
+- [x] 12. Add integration tests
   - File: `tests/FluentPDF.App.Tests/Integration/WatermarkTests.cs`
   - Test dialog workflow
   - Test preview updates
