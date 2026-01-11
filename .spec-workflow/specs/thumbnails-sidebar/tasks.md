@@ -131,7 +131,7 @@
   - _Requirements: All functional requirements_
   - _Prompt: Role: QA Integration Engineer | Task: Create ThumbnailsIntegrationTests using FlaUI. Test: Launch app, load 100-page PDF, verify thumbnails appear in sidebar (wait for first 20 to load). Test: Click thumbnail for page 10, verify main viewer shows page 10 (check page indicator). Test: Navigate to page 20 in main viewer (Next button), verify thumbnail 20 is selected in sidebar. Test: Click ToggleSidebar button, verify sidebar hidden, click again, verify shown. Test: Monitor memory usage (Performance Counter), verify < 50MB for thumbnails. Use [Trait("Category", "Integration")]. | Restrictions: Tests require real PDFium and sample PDFs, run on Windows only, handle async loading (wait for IsLoading=false), verify memory via diagnostic tools. | Success: All integration tests pass, thumbnails load correctly, navigation works bidirectionally, sidebar toggles, memory under 50MB verified._
 
-- [ ] 10. Documentation and final verification
+- [x] 10. Documentation and final verification
   - Files:
     - `docs/THUMBNAILS.md` (create)
     - `README.md` (update - add thumbnails feature)
