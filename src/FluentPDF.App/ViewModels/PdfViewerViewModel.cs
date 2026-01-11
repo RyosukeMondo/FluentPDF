@@ -180,6 +180,14 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             }
         };
 
+        ImageInsertionViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ImageInsertionViewModel.HasUnsavedChanges))
+            {
+                OnPropertyChanged(nameof(HasUnsavedChanges));
+            }
+        };
+
         // Subscribe to page modification events from ThumbnailsViewModel
         CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Register<PageModifiedMessage>(this, (r, m) =>
         {
@@ -345,10 +353,10 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Gets a value indicating whether there are unsaved changes in the document.
-    /// Returns true if annotations, form fields, or page operations have been modified.
+    /// Returns true if annotations, form fields, images, or page operations have been modified.
     /// </summary>
     public bool HasUnsavedChanges =>
-        AnnotationViewModel.HasUnsavedChanges || FormFieldViewModel.IsModified || HasPageModifications;
+        AnnotationViewModel.HasUnsavedChanges || FormFieldViewModel.IsModified || ImageInsertionViewModel.HasUnsavedChanges || HasPageModifications;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -1044,6 +1052,14 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 await FormFieldViewModel.SaveFormCommand.ExecuteAsync(_currentDocument.FilePath);
             }
 
+            // Note: Image changes are already persisted to the document via IImageInsertionService
+            // We just need to reset the flag after saving the document
+            if (ImageInsertionViewModel.HasUnsavedChanges)
+            {
+                _logger.LogInformation("Image changes already persisted to document");
+                ImageInsertionViewModel.HasUnsavedChanges = false;
+            }
+
             StatusMessage = $"Document saved: {Path.GetFileName(_currentDocument.FilePath)}";
             _logger.LogInformation("Document saved successfully to {FilePath}", _currentDocument.FilePath);
 
@@ -1116,6 +1132,14 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             {
                 _logger.LogInformation("Saving form data to {FilePath}", outputFile.Path);
                 await FormFieldViewModel.SaveFormCommand.ExecuteAsync(outputFile.Path);
+            }
+
+            // Note: Image changes are already persisted to the document via IImageInsertionService
+            // We just need to reset the flag after saving the document
+            if (ImageInsertionViewModel.HasUnsavedChanges)
+            {
+                _logger.LogInformation("Image changes already persisted to document");
+                ImageInsertionViewModel.HasUnsavedChanges = false;
             }
 
             StatusMessage = $"Document saved as: {Path.GetFileName(outputFile.Path)}";
