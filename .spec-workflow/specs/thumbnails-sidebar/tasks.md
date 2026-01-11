@@ -47,7 +47,7 @@
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
   - _Prompt: Role: MVVM Developer with expertise in state management | Task: Create ThumbnailItem (inherits ObservableObject) with observable properties: PageNumber (int), Thumbnail (BitmapImage?), IsLoading (bool), IsSelected (bool). Create ThumbnailsViewModel with Thumbnails (ObservableCollection<ThumbnailItem>), SelectedPageNumber (int), LruCache<int, BitmapImage> with capacity 100. Implement LoadThumbnailsAsync: create ThumbnailItem for each page, load visible thumbnails (first 20) asynchronously, cache results. Implement NavigateToPage: send message to PdfViewerViewModel. Constructor takes IThumbnailRenderingService, PdfDocument. Write unit tests mocking service, verifying cache usage, navigation messages. | Restrictions: Load thumbnails asynchronously (Task.Run), limit concurrent renders (max 4 using SemaphoreSlim), cache all rendered thumbnails, dispose cache on ViewModel disposal. | Success: ViewModel manages state correctly, thumbnails load asynchronously, cache works, navigation messages sent, unit tests verify logic._
 
-- [ ] 4. Create ThumbnailsSidebar XAML control
+- [x] 4. Create ThumbnailsSidebar XAML control
   - Files:
     - `src/FluentPDF.App/Controls/ThumbnailsSidebar.xaml` (create)
     - `src/FluentPDF.App/Controls/ThumbnailsSidebar.xaml.cs` (create)
