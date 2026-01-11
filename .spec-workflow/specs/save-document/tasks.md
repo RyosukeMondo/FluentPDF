@@ -76,7 +76,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer specializing in xUnit and Moq | Task: Create PdfViewerViewModelSaveTests with tests: SaveCommand_WhenHasUnsavedChanges_SavesSuccessfully, SaveCommand_WhenNoChanges_CannotExecute, SaveAsCommand_ShowsPicker_SavesSuccessfully, HasUnsavedChanges_WhenAnnotationModified_ReturnsTrue. Create TabViewModelTests for DisplayName_WhenUnsaved_ShowsAsterisk. Mock IAnnotationService and IPdfFormService. | Restrictions: Use existing test patterns. Focus on ViewModel behavior. | _Leverage: Existing ViewModel test patterns, Moq, FluentAssertions | _Requirements: All | Success: All tests pass, good coverage of save scenarios, tests are isolated and reliable. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 9. Add integration tests for save workflow
+- [x] 9. Add integration tests for save workflow
   - File: `tests/FluentPDF.App.Tests/Integration/SaveWorkflowTests.cs`
   - Test Ctrl+S save behavior
   - Test Save As file picker flow
