@@ -517,7 +517,7 @@ public class LogViewerViewModelTests
 
     private static LogEntry CreateTestLogEntry(
         int id,
-        LogLevel level = LogLevel.Information,
+        Core.Observability.LogLevel level = Core.Observability.LogLevel.Information,
         string? correlationId = null,
         string component = "FluentPDF.Test",
         string? message = null,
