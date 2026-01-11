@@ -499,6 +499,128 @@ public class TabViewModelTests : IDisposable
             Times.Once);
     }
 
+    [Fact]
+    public void DisplayName_WhenNoUnsavedChanges_ReturnsFileName()
+    {
+        // Arrange
+        var tabViewModel = new TabViewModel(
+            TestFilePath,
+            _viewerViewModel,
+            _loggerMock.Object);
+
+        // Act
+        var displayName = tabViewModel.DisplayName;
+
+        // Assert
+        displayName.Should().Be(TestFileName, "there are no unsaved changes");
+    }
+
+    [Fact]
+    public void DisplayName_WhenHasUnsavedChanges_ReturnsFileNameWithAsterisk()
+    {
+        // Arrange
+        var tabViewModel = new TabViewModel(
+            TestFilePath,
+            _viewerViewModel,
+            _loggerMock.Object);
+
+        // Simulate unsaved changes in AnnotationViewModel
+        var annotationPropertyInfo = typeof(AnnotationViewModel)
+            .GetProperty(nameof(AnnotationViewModel.HasUnsavedChanges));
+        annotationPropertyInfo!.SetValue(_viewerViewModel.AnnotationViewModel, true);
+
+        // Act
+        var displayName = tabViewModel.DisplayName;
+
+        // Assert
+        displayName.Should().Be($"*{TestFileName}", "there are unsaved changes");
+    }
+
+    [Fact]
+    public void DisplayName_PropertyChanged_IsRaisedWhenHasUnsavedChangesChanges()
+    {
+        // Arrange
+        var tabViewModel = new TabViewModel(
+            TestFilePath,
+            _viewerViewModel,
+            _loggerMock.Object);
+
+        var propertyChangedEvents = new List<string>();
+        tabViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(TabViewModel.DisplayName))
+                propertyChangedEvents.Add(e.PropertyName);
+        };
+
+        // Act - Simulate unsaved changes in AnnotationViewModel
+        var annotationPropertyInfo = typeof(AnnotationViewModel)
+            .GetProperty(nameof(AnnotationViewModel.HasUnsavedChanges));
+        annotationPropertyInfo!.SetValue(_viewerViewModel.AnnotationViewModel, true);
+
+        // Raise PropertyChanged on AnnotationViewModel to trigger the subscription
+        var onPropertyChangedMethod = typeof(AnnotationViewModel)
+            .GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        onPropertyChangedMethod!.Invoke(_viewerViewModel.AnnotationViewModel, new[] { nameof(AnnotationViewModel.HasUnsavedChanges) });
+
+        // Assert
+        propertyChangedEvents.Should().Contain(nameof(TabViewModel.DisplayName),
+            "DisplayName should be updated when HasUnsavedChanges changes");
+    }
+
+    [Fact]
+    public void HasUnsavedChanges_DelegatesToViewerViewModel()
+    {
+        // Arrange
+        var tabViewModel = new TabViewModel(
+            TestFilePath,
+            _viewerViewModel,
+            _loggerMock.Object);
+
+        // Simulate unsaved changes in FormFieldViewModel
+        var formPropertyInfo = typeof(FormFieldViewModel)
+            .GetProperty(nameof(FormFieldViewModel.IsModified));
+        formPropertyInfo!.SetValue(_viewerViewModel.FormFieldViewModel, true);
+
+        // Act
+        var hasUnsavedChanges = tabViewModel.HasUnsavedChanges;
+
+        // Assert
+        hasUnsavedChanges.Should().BeTrue("ViewerViewModel has unsaved form changes");
+    }
+
+    [Fact]
+    public void DisplayName_UpdatesImmediately_WhenUnsavedChangesToggle()
+    {
+        // Arrange
+        var tabViewModel = new TabViewModel(
+            TestFilePath,
+            _viewerViewModel,
+            _loggerMock.Object);
+
+        // Act & Assert - Initially no unsaved changes
+        tabViewModel.DisplayName.Should().Be(TestFileName);
+
+        // Set unsaved changes
+        var annotationPropertyInfo = typeof(AnnotationViewModel)
+            .GetProperty(nameof(AnnotationViewModel.HasUnsavedChanges));
+        annotationPropertyInfo!.SetValue(_viewerViewModel.AnnotationViewModel, true);
+
+        // Trigger property change
+        var onPropertyChangedMethod = typeof(AnnotationViewModel)
+            .GetMethod("OnPropertyChanged", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        onPropertyChangedMethod!.Invoke(_viewerViewModel.AnnotationViewModel, new[] { nameof(AnnotationViewModel.HasUnsavedChanges) });
+
+        // Should now show asterisk
+        tabViewModel.DisplayName.Should().Be($"*{TestFileName}");
+
+        // Clear unsaved changes
+        annotationPropertyInfo.SetValue(_viewerViewModel.AnnotationViewModel, false);
+        onPropertyChangedMethod.Invoke(_viewerViewModel.AnnotationViewModel, new[] { nameof(AnnotationViewModel.HasUnsavedChanges) });
+
+        // Should remove asterisk
+        tabViewModel.DisplayName.Should().Be(TestFileName);
+    }
+
     public void Dispose()
     {
         _viewerViewModel?.Dispose();
