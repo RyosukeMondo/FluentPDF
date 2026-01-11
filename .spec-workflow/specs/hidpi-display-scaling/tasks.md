@@ -112,7 +112,7 @@
   - _Requirements: All integration_
   - _Prompt: Role: Application Integration Engineer | Task: Register DPI and rendering settings services in DI container | Restrictions: Follow existing DI patterns, use appropriate lifetimes | Success: All services registered and resolvable_
 
-- [ ] 9. Add integration tests for HiDPI rendering
+- [x] 9. Add integration tests for HiDPI rendering
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Integration/HiDpiRenderingIntegrationTests.cs`
   - Test rendering at various DPI levels (96, 144, 192, 288)
