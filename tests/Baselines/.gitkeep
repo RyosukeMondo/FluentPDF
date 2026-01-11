@@ -1,0 +1,4 @@
+# Visual regression test baseline images
+# This directory contains baseline images for visual regression tests.
+# Baselines are organized by category and test name.
+# Structure: {category}/{testName}/page_{pageNumber}.png

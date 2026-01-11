@@ -28,6 +28,9 @@ TestResults/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
+# Visual regression test outputs (baselines are version controlled)
+tests/TestResults/
+
 # NuGet Packages
 *.nupkg
 *.snupkg
