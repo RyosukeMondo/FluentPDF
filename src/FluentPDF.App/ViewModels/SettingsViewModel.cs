@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentPDF.Core.Models;
@@ -11,26 +12,31 @@ namespace FluentPDF.App.ViewModels;
 
 /// <summary>
 /// View model for the application settings page.
-/// Manages rendering quality settings and provides UI-friendly descriptions.
+/// Manages rendering quality settings, app preferences, and user settings.
 /// </summary>
 public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly ILogger<SettingsViewModel> _logger;
     private readonly IRenderingSettingsService _renderingSettingsService;
+    private readonly ISettingsService _settingsService;
     private IDisposable? _qualitySubscription;
     private bool _disposed;
+    private bool _isLoadingSettings;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsViewModel"/> class.
     /// </summary>
     /// <param name="logger">Logger for tracking view model operations.</param>
     /// <param name="renderingSettingsService">Service for managing rendering quality settings.</param>
+    /// <param name="settingsService">Service for managing application settings.</param>
     public SettingsViewModel(
         ILogger<SettingsViewModel> logger,
-        IRenderingSettingsService renderingSettingsService)
+        IRenderingSettingsService renderingSettingsService,
+        ISettingsService settingsService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _renderingSettingsService = renderingSettingsService ?? throw new ArgumentNullException(nameof(renderingSettingsService));
+        _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 
         // Initialize quality options for ComboBox
         QualityOptions = new List<QualityOption>
@@ -81,6 +87,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 }
             });
 
+        // Load app settings
+        LoadSettings();
+
         _logger.LogInformation("SettingsViewModel initialized with quality: {Quality}", SelectedQualityOption?.Quality);
     }
 
@@ -99,6 +108,36 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     /// Gets a value indicating whether the selected quality is Ultra, which requires a performance warning.
     /// </summary>
     public bool IsUltraQualitySelected => SelectedQualityOption?.Quality == RenderingQuality.Ultra;
+
+    /// <summary>
+    /// Gets or sets the default zoom level for newly opened documents.
+    /// </summary>
+    [ObservableProperty]
+    private ZoomLevel _defaultZoom;
+
+    /// <summary>
+    /// Gets or sets the scroll mode for document viewing.
+    /// </summary>
+    [ObservableProperty]
+    private ScrollMode _scrollMode;
+
+    /// <summary>
+    /// Gets or sets the application theme preference.
+    /// </summary>
+    [ObservableProperty]
+    private AppTheme _theme;
+
+    /// <summary>
+    /// Gets or sets whether anonymous telemetry is enabled.
+    /// </summary>
+    [ObservableProperty]
+    private bool _telemetryEnabled;
+
+    /// <summary>
+    /// Gets or sets whether anonymous crash reporting is enabled.
+    /// </summary>
+    [ObservableProperty]
+    private bool _crashReportingEnabled;
 
     /// <summary>
     /// Applies the selected rendering quality setting.
@@ -132,6 +171,120 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     partial void OnSelectedQualityOptionChanged(QualityOption? value)
     {
         OnPropertyChanged(nameof(IsUltraQualitySelected));
+    }
+
+    /// <summary>
+    /// Called when the default zoom level changes.
+    /// Saves the updated setting to persistent storage.
+    /// </summary>
+    partial void OnDefaultZoomChanged(ZoomLevel value)
+    {
+        if (_isLoadingSettings)
+            return;
+
+        _logger.LogInformation("Default zoom changed to: {ZoomLevel}", value);
+        _settingsService.Settings.DefaultZoom = value;
+        _ = _settingsService.SaveAsync();
+    }
+
+    /// <summary>
+    /// Called when the scroll mode changes.
+    /// Saves the updated setting to persistent storage.
+    /// </summary>
+    partial void OnScrollModeChanged(ScrollMode value)
+    {
+        if (_isLoadingSettings)
+            return;
+
+        _logger.LogInformation("Scroll mode changed to: {ScrollMode}", value);
+        _settingsService.Settings.ScrollMode = value;
+        _ = _settingsService.SaveAsync();
+    }
+
+    /// <summary>
+    /// Called when the theme changes.
+    /// Saves the updated setting to persistent storage.
+    /// </summary>
+    partial void OnThemeChanged(AppTheme value)
+    {
+        if (_isLoadingSettings)
+            return;
+
+        _logger.LogInformation("Theme changed to: {Theme}", value);
+        _settingsService.Settings.Theme = value;
+        _ = _settingsService.SaveAsync();
+    }
+
+    /// <summary>
+    /// Called when telemetry enabled state changes.
+    /// Saves the updated setting to persistent storage.
+    /// </summary>
+    partial void OnTelemetryEnabledChanged(bool value)
+    {
+        if (_isLoadingSettings)
+            return;
+
+        _logger.LogInformation("Telemetry enabled changed to: {Enabled}", value);
+        _settingsService.Settings.TelemetryEnabled = value;
+        _ = _settingsService.SaveAsync();
+    }
+
+    /// <summary>
+    /// Called when crash reporting enabled state changes.
+    /// Saves the updated setting to persistent storage.
+    /// </summary>
+    partial void OnCrashReportingEnabledChanged(bool value)
+    {
+        if (_isLoadingSettings)
+            return;
+
+        _logger.LogInformation("Crash reporting enabled changed to: {Enabled}", value);
+        _settingsService.Settings.CrashReportingEnabled = value;
+        _ = _settingsService.SaveAsync();
+    }
+
+    /// <summary>
+    /// Resets all settings to their default values.
+    /// </summary>
+    [RelayCommand]
+    private async Task ResetToDefaultsAsync()
+    {
+        _logger.LogInformation("Reset to defaults command invoked");
+
+        try
+        {
+            await _settingsService.ResetToDefaultsAsync();
+            LoadSettings();
+            _logger.LogInformation("Settings reset to defaults successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to reset settings to defaults");
+        }
+    }
+
+    /// <summary>
+    /// Loads current settings from the settings service.
+    /// </summary>
+    private void LoadSettings()
+    {
+        _isLoadingSettings = true;
+        try
+        {
+            var settings = _settingsService.Settings;
+            DefaultZoom = settings.DefaultZoom;
+            ScrollMode = settings.ScrollMode;
+            Theme = settings.Theme;
+            TelemetryEnabled = settings.TelemetryEnabled;
+            CrashReportingEnabled = settings.CrashReportingEnabled;
+
+            _logger.LogInformation("Settings loaded: Zoom={Zoom}, ScrollMode={ScrollMode}, Theme={Theme}, Telemetry={Telemetry}, CrashReporting={CrashReporting}",
+                DefaultZoom, ScrollMode, Theme, TelemetryEnabled, CrashReportingEnabled);
+        }
+        finally
+        {
+            _isLoadingSettings = false;
+        }
     }
 
     /// <summary>
