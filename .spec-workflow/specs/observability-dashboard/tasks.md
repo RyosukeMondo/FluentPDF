@@ -68,7 +68,7 @@
   - _Requirements: 1.1-1.8_
   - _Prompt: Role: DevOps Engineer specializing in OpenTelemetry and containerization | Task: Configure OpenTelemetry in App.xaml.cs ConfigureServices following design.md Component 11, adding MeterProvider with AddMeter("FluentPDF.Rendering") and AddOtlpExporter(localhost:4317), adding TracerProvider with AddSource("FluentPDF.Rendering") and resource builder, modifying Serilog configuration to add WriteTo.OpenTelemetry OTLP sink, creating docker-compose-aspire.yml with Aspire Dashboard container (mcr.microsoft.com/dotnet/aspire-dashboard:8.0, ports 4317 and 18888), adding try-catch around OTLP configuration for graceful fallback, and documenting Aspire setup in DEVELOPMENT.md (docker-compose up, access at localhost:18888) | Restrictions: Do not fail app startup if Aspire unavailable, use gRPC protocol for OTLP, add resource attributes (service.name, service.version), keep configuration under 100 lines | Success: OpenTelemetry configured correctly, OTLP export works when Aspire running, app continues without errors when Aspire not running, docker-compose starts Aspire Dashboard, documentation is clear_
 
-- [ ] 5. Instrument PdfRenderingService with distributed tracing
+- [x] 5. Instrument PdfRenderingService with distributed tracing
   - Files:
     - `src/FluentPDF.Rendering/Services/PdfRenderingService.cs` (modify)
     - `tests/FluentPDF.Rendering.Tests/Services/PdfRenderingServiceTracingTests.cs`
