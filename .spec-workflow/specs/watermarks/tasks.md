@@ -28,7 +28,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.5, 3.1-3.5, 4.1-4.7, 5.1-5.7, 6.1-6.5, 7.1-7.4_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer with PDFium expertise | Task: Implement WatermarkService. ApplyTextWatermarkAsync creates text objects with FPDFPageObj_CreateTextObj, sets font, color, applies transform for position/rotation/opacity. ApplyImageWatermarkAsync uses image object APIs like ImageInsertionService. RemoveWatermarksAsync removes watermark objects by tag. GeneratePreviewAsync renders page with watermark to bitmap. Iterate PageRange for batch application. | Restrictions: Use existing PdfiumInterop. Tag watermarks for later removal. | _Leverage: PdfiumInterop, ImageInsertionService | _Requirements: 1.1-1.7, 2.1-2.5, 3.1-3.5, 4.1-4.7, 5.1-5.7, 6.1-6.5, 7.1-7.4 | Success: All watermark operations work, preview generates correctly. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 4. Create WatermarkViewModel
+- [x] 4. Create WatermarkViewModel
   - File: `src/FluentPDF.App/ViewModels/WatermarkViewModel.cs`
   - Add TextConfig, ImageConfig properties
   - Add SelectedType, TargetPages properties
