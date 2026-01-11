@@ -75,7 +75,7 @@
   - _Requirements: 3.1-3.8_
   - _Prompt: Role: Test Infrastructure Developer | Task: Implement baseline manager for visual test baseline storage | Restrictions: Must organize by category, create directories, handle missing baselines | Success: Can create, check, and manage baseline images in organized structure_
 
-- [ ] 6. Create VisualRegressionTestBase class
+- [x] 6. Create VisualRegressionTestBase class
   - Files:
     - `tests/FluentPDF.Validation.Tests/VisualRegressionTestBase.cs`
     - `tests/FluentPDF.Validation.Tests/VisualRegressionTestBaseTests.cs`

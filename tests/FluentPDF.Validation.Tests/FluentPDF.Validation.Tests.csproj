@@ -1,9 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Platform>x64</Platform>
+    <Platforms>x64</Platforms>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -14,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="8.8.0" />
+    <PackageReference Include="FluentResults" Version="3.16.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
@@ -38,6 +41,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FluentPDF.Validation\FluentPDF.Validation.csproj" />
+    <ProjectReference Include="..\FluentPDF.Rendering.Tests\FluentPDF.Rendering.Tests.csproj" />
   </ItemGroup>
 
 </Project>
