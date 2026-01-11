@@ -92,7 +92,7 @@
   - _Requirements: 7.4_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# MVVM Developer | Task: Add HasWatermarkModifications property. Include in HasUnsavedChanges. Set true when watermarks applied or removed. Reset on save. | Restrictions: Follow existing pattern. | _Leverage: save-document pattern | _Requirements: 7.4 | Success: Watermark changes set HasUnsavedChanges. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 11. Add unit tests
+- [x] 11. Add unit tests
   - File: `tests/FluentPDF.Rendering.Tests/Services/WatermarkServiceTests.cs`
   - Test text and image watermark application
   - Test page range parsing
