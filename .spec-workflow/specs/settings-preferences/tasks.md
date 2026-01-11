@@ -12,7 +12,7 @@
   - Requirements: 1.1-1.7
   - Instructions: Define service contract with Load, Save, Reset methods. Include SettingsChanged event.
 
-- [ ] 3. Implement SettingsService with JSON persistence
+- [x] 3. Implement SettingsService with JSON persistence
   - Files: `src/FluentPDF.App/Services/SettingsService.cs`, `tests/FluentPDF.App.Tests/Services/SettingsServiceTests.cs`
   - Requirements: 1.1-1.7, 5.1-5.6
   - Instructions: Implement service using System.Text.Json for persistence in LocalFolder. Add validation, debouncing, error handling. Test persistence, corrupt file recovery.
