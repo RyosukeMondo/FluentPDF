@@ -16,7 +16,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
   - _Prompt: Role: C# Developer with expertise in data structures and caching | Task: Implement generic LruCache<TKey, TValue> where TValue : IDisposable using Dictionary for O(1) lookup and LinkedList for LRU ordering. Implement TryGet (if exists, move node to front and return true), Add (if at capacity, dispose and remove last node, add new node at front). Implement Clear disposing all items. Constructor takes capacity parameter. Write unit tests verifying: adding items, retrieving updates LRU order, eviction when full, disposed items are disposed, Clear disposes all. | Restrictions: Must be thread-safe (use lock), generic type constraint TValue : IDisposable, O(1) access time, automatically dispose on eviction. | Success: Cache works correctly, LRU eviction verified, disposed items counted in tests, all operations O(1), thread-safe._
 
-- [ ] 2. Create IThumbnailRenderingService interface and implementation
+- [x] 2. Create IThumbnailRenderingService interface and implementation
   - Files:
     - `src/FluentPDF.Core/Services/IThumbnailRenderingService.cs` (create)
     - `src/FluentPDF.Rendering/Services/ThumbnailRenderingService.cs` (create)
