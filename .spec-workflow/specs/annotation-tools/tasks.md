@@ -7,7 +7,7 @@
   - Requirements: 1.1-1.7
   - Instructions: Add P/Invoke for FPDFPage_CreateAnnot, FPDFAnnot_SetColor, FPDFAnnot_SetRect, FPDFPage_RemoveAnnot, etc. Create SafeAnnotationHandle.
 
-- [ ] 2. Create Annotation domain model
+- [x] 2. Create Annotation domain model
   - Files: `src/FluentPDF.Core/Models/Annotation.cs`
   - Requirements: All annotation types
   - Instructions: Define Annotation model with Type, Bounds, Color, Contents, InkPoints. Add AnnotationType enum.
