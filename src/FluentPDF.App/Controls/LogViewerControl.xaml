@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<UserControl
+    x:Class="FluentPDF.App.Controls.LogViewerControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluentPDF.App.Controls"
+    xmlns:converters="using:FluentPDF.App.Converters"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="RootControl">
+
+    <UserControl.Resources>
+        <converters:LogLevelToIconConverter x:Key="LogLevelToIconConverter" />
+        <converters:LogLevelToBackgroundConverter x:Key="LogLevelToBackgroundConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- Toolbar -->
+            <RowDefinition Height="Auto" />  <!-- Filters -->
+            <RowDefinition Height="*" />     <!-- Log List -->
+            <RowDefinition Height="Auto" />  <!-- Details Panel -->
+        </Grid.RowDefinitions>
+
+        <!-- #region Toolbar -->
+        <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
+            <AppBarButton
+                Icon="Refresh"
+                Label="Refresh"
+                Command="{Binding RefreshCommand, ElementName=RootControl}"
+                ToolTipService.ToolTip="Reload logs from file" />
+            <AppBarButton
+                Icon="Save"
+                Label="Export"
+                Command="{Binding ExportCommand, ElementName=RootControl}"
+                ToolTipService.ToolTip="Export filtered logs to file" />
+            <AppBarButton
+                Icon="Clear"
+                Label="Clear Filters"
+                Command="{Binding ClearFiltersCommand, ElementName=RootControl}"
+                ToolTipService.ToolTip="Reset all filters" />
+        </CommandBar>
+        <!-- #endregion -->
+
+        <!-- #region Filter Controls -->
+        <StackPanel
+            Grid.Row="1"
+            Padding="16,8"
+            Spacing="12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+
+            <!-- Filter Row 1: Severity and Correlation ID -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Severity Filter -->
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock
+                        Text="Minimum Severity"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <ComboBox
+                        x:Name="SeverityComboBox"
+                        HorizontalAlignment="Stretch"
+                        PlaceholderText="Select minimum level"
+                        ItemsSource="{Binding LogLevels, ElementName=RootControl}"
+                        SelectedItem="{Binding MinimumLevel, ElementName=RootControl, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Correlation ID Filter -->
+                <StackPanel Grid.Column="2" Spacing="4">
+                    <TextBlock
+                        Text="Correlation ID"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBox
+                        x:Name="CorrelationIdTextBox"
+                        PlaceholderText="Enter correlation ID"
+                        Text="{Binding CorrelationIdFilter, ElementName=RootControl, Mode=TwoWay}"
+                        FontFamily="Consolas" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Filter Row 2: Component and Search -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Component Filter -->
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock
+                        Text="Component"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBox
+                        x:Name="ComponentTextBox"
+                        PlaceholderText="Enter component name"
+                        Text="{Binding ComponentFilter, ElementName=RootControl, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Search Filter -->
+                <StackPanel Grid.Column="2" Spacing="4">
+                    <TextBlock
+                        Text="Search"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBox
+                        x:Name="SearchTextBox"
+                        PlaceholderText="Search messages..."
+                        Text="{Binding SearchText, ElementName=RootControl, Mode=TwoWay}">
+                        <TextBox.Resources>
+                            <FontIcon x:Key="SearchIcon" Glyph="&#xE721;" FontSize="14" />
+                        </TextBox.Resources>
+                    </TextBox>
+                </StackPanel>
+            </Grid>
+
+            <!-- Filter Row 3: Time Range -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Start Time -->
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock
+                        Text="Start Time"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <DatePicker
+                        x:Name="StartDatePicker"
+                        HorizontalAlignment="Stretch"
+                        Date="{Binding StartTime, ElementName=RootControl, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- End Time -->
+                <StackPanel Grid.Column="2" Spacing="4">
+                    <TextBlock
+                        Text="End Time"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <DatePicker
+                        x:Name="EndDatePicker"
+                        HorizontalAlignment="Stretch"
+                        Date="{Binding EndTime, ElementName=RootControl, Mode=TwoWay}" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+        <!-- #endregion -->
+
+        <!-- #region Log List View -->
+        <ListView
+            x:Name="LogListView"
+            Grid.Row="2"
+            ItemsSource="{Binding LogEntries, ElementName=RootControl}"
+            SelectedItem="{Binding SelectedLogEntry, ElementName=RootControl, Mode=TwoWay}"
+            SelectionMode="Single"
+            IsItemClickEnabled="True">
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="8,4" />
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid
+                        Padding="8,4"
+                        Background="{Binding Level, Converter={StaticResource LogLevelToBackgroundConverter}}"
+                        CornerRadius="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />  <!-- Timestamp -->
+                            <ColumnDefinition Width="40" />   <!-- Icon -->
+                            <ColumnDefinition Width="*" />    <!-- Message -->
+                            <ColumnDefinition Width="200" />  <!-- Correlation ID -->
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Timestamp -->
+                        <TextBlock
+                            Grid.Column="0"
+                            Text="{Binding Timestamp}"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                        <!-- Level Icon -->
+                        <FontIcon
+                            Grid.Column="1"
+                            Glyph="{Binding Level, Converter={StaticResource LogLevelToIconConverter}}"
+                            FontSize="16"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center" />
+
+                        <!-- Message -->
+                        <TextBlock
+                            Grid.Column="2"
+                            Text="{Binding Message}"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="NoWrap"
+                            VerticalAlignment="Center"
+                            Margin="8,0" />
+
+                        <!-- Correlation ID -->
+                        <TextBlock
+                            Grid.Column="3"
+                            Text="{Binding CorrelationId}"
+                            FontFamily="Consolas"
+                            FontSize="11"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <!-- #endregion -->
+
+        <!-- #region Details Panel -->
+        <Expander
+            Grid.Row="3"
+            Header="Log Details"
+            HorizontalAlignment="Stretch"
+            IsExpanded="{Binding IsDetailsExpanded, ElementName=RootControl, Mode=TwoWay}"
+            Visibility="{Binding HasSelectedLog, ElementName=RootControl, Converter={StaticResource BoolToVisibilityConverter}}"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0">
+
+            <ScrollViewer MaxHeight="300" Padding="16">
+                <StackPanel Spacing="12">
+                    <!-- Timestamp -->
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="Timestamp"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{Binding SelectedLogEntry.Timestamp, ElementName=RootControl}"
+                            FontFamily="Consolas" />
+                    </StackPanel>
+
+                    <!-- Level -->
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="Level"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{Binding SelectedLogEntry.Level, ElementName=RootControl}"
+                            FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <!-- Component -->
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="Component"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding SelectedLogEntry.Component, ElementName=RootControl}" />
+                    </StackPanel>
+
+                    <!-- Message -->
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="Message"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{Binding SelectedLogEntry.Message, ElementName=RootControl}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Correlation ID with Copy Button -->
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            Text="Correlation ID"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="{Binding SelectedLogEntry.CorrelationId, ElementName=RootControl}"
+                                FontFamily="Consolas"
+                                VerticalAlignment="Center" />
+                            <Button
+                                Grid.Column="1"
+                                Content="Copy"
+                                Command="{Binding CopyCorrelationIdCommand, ElementName=RootControl}"
+                                Style="{StaticResource AccentButtonStyle}"
+                                FontSize="12"
+                                Padding="8,4" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Exception (if present) -->
+                    <StackPanel
+                        Spacing="4"
+                        Visibility="{Binding HasException, ElementName=RootControl, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock
+                            Text="Exception"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{Binding SelectedLogEntry.Exception, ElementName=RootControl}"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                            FontFamily="Consolas"
+                            FontSize="11" />
+                    </StackPanel>
+
+                    <!-- Stack Trace (if present) -->
+                    <StackPanel
+                        Spacing="4"
+                        Visibility="{Binding HasStackTrace, ElementName=RootControl, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock
+                            Text="Stack Trace"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ScrollViewer MaxHeight="200" HorizontalScrollBarVisibility="Auto">
+                            <TextBlock
+                                Text="{Binding SelectedLogEntry.StackTrace, ElementName=RootControl}"
+                                TextWrapping="NoWrap"
+                                FontFamily="Consolas"
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <!-- Context (if present) -->
+                    <StackPanel
+                        Spacing="4"
+                        Visibility="{Binding HasContext, ElementName=RootControl, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock
+                            Text="Context"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{Binding ContextJson, ElementName=RootControl}"
+                            TextWrapping="Wrap"
+                            FontFamily="Consolas"
+                            FontSize="11" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Expander>
+        <!-- #endregion -->
+    </Grid>
+</UserControl>

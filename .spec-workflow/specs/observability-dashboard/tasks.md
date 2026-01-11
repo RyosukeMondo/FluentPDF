@@ -115,7 +115,7 @@
   - _Requirements: 2.1-2.10, 3.1-3.10_
   - _Prompt: Role: WinUI MVVM Developer specializing in real-time data display | Task: Create DiagnosticsPanelViewModel following design.md Component 8, inheriting from ObservableObject, adding observable properties for all metrics, implementing DispatcherTimer with 500ms interval calling UpdateMetrics method, calculating FPSColor based on CurrentFPS (Green >= 30, Yellow 15-30, Red < 15), implementing ExportMetricsAsync command (show file picker, call IMetricsCollectionService.ExportMetricsAsync), implementing ToggleVisibility command, and writing tests with mocked IMetricsCollectionService and time-based verification | Restrictions: ViewModel must be UI-agnostic (except WinUI types), do not block UI thread with updates, dispose timer on ViewModel disposal, keep ViewModel under 500 lines | Success: Observable properties update every 500ms, color calculation works correctly, ExportMetricsAsync shows file picker and exports, tests verify timer behavior and property updates_
 
-- [ ] 8. Create LogViewerControl WinUI custom control with filtering
+- [x] 8. Create LogViewerControl WinUI custom control with filtering
   - Files:
     - `src/FluentPDF.App/Controls/LogViewerControl.xaml`
     - `src/FluentPDF.App/Controls/LogViewerControl.xaml.cs`
