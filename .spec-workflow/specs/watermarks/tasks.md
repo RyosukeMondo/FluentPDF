@@ -38,8 +38,8 @@
   - _Requirements: 1.1-1.7, 2.1-2.5, 5.1-5.7, 6.1-6.5, 7.1-7.4_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# WinUI 3 MVVM Developer | Task: Create WatermarkViewModel with: TextConfig and ImageConfig observable properties, SelectedType (Text/Image) enum, TargetPages PageRange, ApplyCommand that calls service and closes dialog, PreviewCommand that generates and displays preview, RemoveCommand for removing watermarks, PreviewImage byte[] for display. Inject IWatermarkService. | Restrictions: Follow existing ViewModel patterns. Use proper change notification. | _Leverage: Existing ViewModels | _Requirements: 1.1-1.7, 2.1-2.5, 5.1-5.7, 6.1-6.5, 7.1-7.4 | Success: ViewModel manages state correctly, commands work. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 5. Create WatermarkDialog
-  - Files: `src/FluentPDF.App/Views/Dialogs/WatermarkDialog.xaml`, `src/FluentPDF.App/Views/Dialogs/WatermarkDialog.xaml.cs`
+- [x] 5. Create WatermarkDialog
+  - Files: `src/FluentPDF.App/Views/WatermarkDialog.xaml`, `src/FluentPDF.App/Views/WatermarkDialog.xaml.cs`
   - Add tabs for Text and Image watermark types
   - Add configuration controls (text input, font, color, opacity, rotation, position)
   - Add page range selector
@@ -49,8 +49,8 @@
   - _Requirements: 1.1-1.7, 2.1-2.5, 3.1-3.5, 4.1-4.7, 5.1-5.7, 6.1-6.5_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: Create ContentDialog-based WatermarkDialog with: TabView for Text/Image selection, TextBox for watermark text, ComboBox for font, Slider for font size (12-144), ColorPicker for color, Slider for opacity (0-100%), NumberBox for rotation (-180 to 180), ComboBox for position presets, RadioButtons for page range (All/Current/Custom/Odd/Even), TextBox for custom range, Image control for preview. Bind to WatermarkViewModel. Apply/Cancel buttons. | Restrictions: Follow existing dialog patterns. Use proper MVVM binding. | _Leverage: WinUI ContentDialog, existing dialogs | _Requirements: 1.1-1.7, 2.1-2.5, 3.1-3.5, 4.1-4.7, 5.1-5.7, 6.1-6.5 | Success: Dialog displays all controls, bindings work, preview updates. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 6. Add live preview to WatermarkDialog
-  - File: `src/FluentPDF.App/Views/Dialogs/WatermarkDialog.xaml.cs`
+- [x] 6. Add live preview to WatermarkDialog
+  - File: `src/FluentPDF.App/Views/WatermarkDialog.xaml.cs`
   - Update preview on any configuration change
   - Debounce preview generation
   - Purpose: Real-time visual feedback
@@ -58,7 +58,7 @@
   - _Requirements: 6.1-6.5_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 Developer | Task: Subscribe to WatermarkViewModel property changes. On any change, debounce 100ms then call GeneratePreviewAsync. Display result in preview Image control. Show loading indicator during generation. Cancel previous preview if new change occurs. | Restrictions: Use debouncing to avoid excessive updates. Handle cancellation properly. | _Leverage: Debounce pattern | _Requirements: 6.1-6.5 | Success: Preview updates within 100ms of change, smooth experience. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 7. Add watermark presets
+- [x] 7. Add watermark presets
   - File: `src/FluentPDF.App/ViewModels/WatermarkViewModel.cs`
   - Add preset buttons: CONFIDENTIAL, DRAFT, COPY, APPROVED
   - Add diagonal rotation preset
