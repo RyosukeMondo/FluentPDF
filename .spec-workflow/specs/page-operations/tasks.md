@@ -96,7 +96,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer with xUnit expertise | Task: Create PageOperationsServiceTests with tests: RotatePages_ValidIndices_Succeeds, DeletePages_ValidIndices_Succeeds, DeletePages_AllPages_Fails, ReorderPages_ValidIndices_Succeeds, InsertBlankPage_ValidIndex_Succeeds. Mock QPDF interop. Test error handling. | Restrictions: Use existing test patterns. Mock external dependencies. | _Leverage: Existing service tests, Moq, FluentAssertions | _Requirements: All | Success: All tests pass, good coverage of operations and error cases. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 11. Add integration tests for page operations
+- [x] 11. Add integration tests for page operations
   - File: `tests/FluentPDF.App.Tests/Integration/PageOperationsTests.cs`
   - Test context menu operations
   - Test drag-drop reorder
