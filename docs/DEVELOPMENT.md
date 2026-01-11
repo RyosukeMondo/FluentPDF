@@ -82,7 +82,13 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ## Observability with .NET Aspire Dashboard
 
-FluentPDF integrates with [.NET Aspire Dashboard](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/dashboard) for development-time observability, providing real-time insights into metrics, traces, and logs.
+FluentPDF provides comprehensive observability through three integrated layers:
+
+1. **Development-time monitoring**: .NET Aspire Dashboard for OpenTelemetry data
+2. **In-app diagnostics**: Real-time performance overlay (`Ctrl+Shift+D`)
+3. **In-app log viewer**: Structured log browser with filtering (`Ctrl+Shift+L`)
+
+See [OBSERVABILITY.md](OBSERVABILITY.md) for complete usage guide.
 
 ### What is .NET Aspire Dashboard?
 
@@ -91,6 +97,10 @@ FluentPDF integrates with [.NET Aspire Dashboard](https://learn.microsoft.com/en
 - **Metrics**: Real-time performance metrics (FPS, memory, render times)
 - **Traces**: Distributed tracing for rendering pipeline
 - **Logs**: Structured log viewer with filtering
+
+FluentPDF also includes in-app observability features that work without the dashboard:
+- **Diagnostics Panel** (`Ctrl+Shift+D`): Acrylic overlay showing FPS, memory, render times
+- **Log Viewer** (`Ctrl+Shift+L`): In-app browser for Serilog JSON logs with advanced filtering
 
 ### Starting the Aspire Dashboard
 
