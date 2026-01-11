@@ -165,7 +165,7 @@
   - _Requirements: 2.1-2.10, 4.1-4.10_
   - _Prompt: Role: WinUI Integration Engineer specializing in UI composition | Task: Modify PdfViewerPage to integrate observability features following design.md, adding DiagnosticsPanelControl to XAML (inside Grid, last child so it overlays, bind DataContext to DiagnosticsPanelViewModel, bind IsVisible to ViewModel property), adding KeyboardAccelerator for Ctrl+Shift+D calling ToggleDiagnosticsCommand, adding KeyboardAccelerator for Ctrl+Shift+L calling OpenLogViewerCommand, modifying PdfViewerViewModel to include DiagnosticsPanelViewModel and LogViewerViewModel as properties, wiring up metrics updates (after page renders, call IMetricsCollectionService.RecordRenderTime), implementing OpenLogViewerCommand to show ContentDialog with LogViewerControl, and persisting diagnostics visibility state in settings | Restrictions: Do not add business logic in code-behind (only view logic), ensure keyboard shortcuts don't conflict with existing shortcuts, maintain separation between diagnostics and PDF content, log viewer dialog should be resizable | Success: Diagnostics panel toggles with Ctrl+Shift+D, panel overlays content correctly, log viewer opens with Ctrl+Shift+L in dialog, metrics update when rendering, keyboard shortcuts work, state persists across sessions_
 
-- [ ] 11. Register observability services in DI container
+- [x] 11. Register observability services in DI container
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
   - Register IMetricsCollectionService and ILogExportService in DI container
