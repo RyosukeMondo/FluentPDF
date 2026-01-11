@@ -44,7 +44,25 @@ public class PdfRenderingServiceTests
             .WithParameterName("document");
     }
 
-    // NOTE: Additional tests for rendering logic, page validation, zoom levels, etc.
-    // require real PDFium handles and are covered in integration tests.
+    [Theory]
+    [InlineData(96)]    // Standard DPI
+    [InlineData(144)]   // 1.5x scaling (High DPI)
+    [InlineData(192)]   // 2x scaling (High DPI)
+    [InlineData(288)]   // 3x scaling (High DPI)
+    public async Task RenderPageAsync_WithVariousDpiLevels_AcceptsDpiParameter(double dpi)
+    {
+        // Arrange & Act
+        var act = async () => await _service.RenderPageAsync(null!, 1, 1.0, dpi);
+
+        // Assert
+        // Should throw ArgumentNullException for null document, not because of DPI
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .WithParameterName("document");
+    }
+
+    // NOTE: Additional tests for rendering logic, page validation, zoom levels, DPI scaling,
+    // OOM fallback, and performance characteristics require real PDFium handles and are
+    // covered in integration tests.
     // See tests/FluentPDF.Rendering.Tests/Integration/PdfViewerIntegrationTests.cs
+    // and tests/FluentPDF.Rendering.Tests/Integration/HiDpiRenderingIntegrationTests.cs
 }

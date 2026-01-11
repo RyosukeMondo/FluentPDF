@@ -23,6 +23,8 @@ public sealed class PdfRenderingService : IPdfRenderingService
     private readonly ILogger<PdfRenderingService> _logger;
     private static readonly ActivitySource ActivitySource = new("FluentPDF.Rendering");
     private const int SlowRenderThresholdMs = 2000;
+    private const double StandardDpi = 96.0;
+    private const double HighDpiThreshold = 144.0; // 1.5x scaling
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PdfRenderingService"/> class.
@@ -53,6 +55,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
         // Add activity tags
         activity?.SetTag("page.number", pageNumber);
         activity?.SetTag("zoom.level", zoomLevel);
+        activity?.SetTag("dpi", dpi);
         activity?.SetTag("correlation.id", correlationId.ToString());
 
         _logger.LogInformation(
@@ -149,33 +152,71 @@ public sealed class PdfRenderingService : IPdfRenderingService
                     return Result.Fail(error);
                 }
 
+                // Variables for tracking effective render dimensions (may differ if OOM fallback occurs)
+                var effectiveDpi = dpi;
+                var effectiveWidth = outputWidth;
+                var effectiveHeight = outputHeight;
+                var attemptedFallback = false;
+
                 // Render page to bitmap
                 using (var renderBitmapActivity = ActivitySource.StartActivity("RenderBitmap"))
                 {
                     renderBitmapActivity?.SetTag("output.width", outputWidth);
                     renderBitmapActivity?.SetTag("output.height", outputHeight);
 
-                    // Create bitmap
-                    bitmap = PdfiumInterop.CreateBitmap(outputWidth, outputHeight, hasAlpha: true);
+                    // Try to create bitmap with OOM fallback
+
+                    bitmap = PdfiumInterop.CreateBitmap(effectiveWidth, effectiveHeight, hasAlpha: true);
+
+                    // If bitmap creation fails and we're at high DPI, try fallback to standard DPI
+                    if (bitmap == IntPtr.Zero && dpi > StandardDpi)
+                    {
+                        attemptedFallback = true;
+                        effectiveDpi = StandardDpi;
+                        var fallbackScaleFactor = (effectiveDpi / 72.0) * zoomLevel;
+                        effectiveWidth = (int)(pageWidth * fallbackScaleFactor);
+                        effectiveHeight = (int)(pageHeight * fallbackScaleFactor);
+
+                        _logger.LogWarning(
+                            "Out of memory at high DPI, attempting fallback. CorrelationId={CorrelationId}, OriginalDpi={OriginalDpi}, FallbackDpi={FallbackDpi}, OriginalSize={OriginalWidth}x{OriginalHeight}, FallbackSize={FallbackWidth}x{FallbackHeight}",
+                            correlationId, dpi, effectiveDpi, outputWidth, outputHeight, effectiveWidth, effectiveHeight);
+
+                        bitmap = PdfiumInterop.CreateBitmap(effectiveWidth, effectiveHeight, hasAlpha: true);
+                    }
 
                     if (bitmap == IntPtr.Zero)
                     {
                         var error = new PdfError(
                             "PDF_OUT_OF_MEMORY",
-                            "Failed to create bitmap for rendering. Out of memory or dimensions too large.",
+                            attemptedFallback
+                                ? "Failed to create bitmap even at standard DPI. Out of memory or dimensions too large."
+                                : "Failed to create bitmap for rendering. Out of memory or dimensions too large.",
                             ErrorCategory.System,
                             ErrorSeverity.Error)
                             .WithContext("OutputWidth", outputWidth)
                             .WithContext("OutputHeight", outputHeight)
+                            .WithContext("RequestedDpi", dpi)
+                            .WithContext("AttemptedFallback", attemptedFallback)
                             .WithContext("CorrelationId", correlationId);
 
                         _logger.LogError(
-                            "Failed to create bitmap. CorrelationId={CorrelationId}, Width={Width}, Height={Height}",
-                            correlationId, outputWidth, outputHeight);
+                            "Failed to create bitmap. CorrelationId={CorrelationId}, Width={Width}, Height={Height}, Dpi={Dpi}, AttemptedFallback={AttemptedFallback}",
+                            correlationId, outputWidth, outputHeight, dpi, attemptedFallback);
 
                         renderBitmapActivity?.SetStatus(ActivityStatusCode.Error, error.Message);
                         activity?.SetStatus(ActivityStatusCode.Error, error.Message);
                         return Result.Fail(error);
+                    }
+
+                    // Log if fallback was successful
+                    if (attemptedFallback)
+                    {
+                        _logger.LogInformation(
+                            "Successfully created bitmap at fallback DPI. CorrelationId={CorrelationId}, FallbackDpi={FallbackDpi}, Size={Width}x{Height}",
+                            correlationId, effectiveDpi, effectiveWidth, effectiveHeight);
+
+                        renderBitmapActivity?.SetTag("fallback.applied", true);
+                        renderBitmapActivity?.SetTag("fallback.dpi", effectiveDpi);
                     }
 
                     // Fill bitmap with white background (ARGB: 0xFFFFFFFF)
@@ -187,8 +228,8 @@ public sealed class PdfRenderingService : IPdfRenderingService
                         pageHandle,
                         startX: 0,
                         startY: 0,
-                        sizeX: outputWidth,
-                        sizeY: outputHeight,
+                        sizeX: effectiveWidth,
+                        sizeY: effectiveHeight,
                         rotate: 0,
                         flags: PdfiumInterop.RenderFlags.Normal);
                 }
@@ -198,7 +239,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                 using (var convertImageActivity = ActivitySource.StartActivity("ConvertToImage"))
                 {
                     convertImageActivity?.SetTag("output.format", "PNG");
-                    imageStream = await ConvertToPngStreamAsync(bitmap, outputWidth, outputHeight);
+                    imageStream = await ConvertToPngStreamAsync(bitmap, effectiveWidth, effectiveHeight);
                 }
 
                 stopwatch.Stop();
@@ -207,11 +248,20 @@ public sealed class PdfRenderingService : IPdfRenderingService
                 activity?.SetTag("render.time.ms", stopwatch.ElapsedMilliseconds);
 
                 // Log performance metrics
+                var isHighDpi = dpi >= HighDpiThreshold;
+
                 if (stopwatch.ElapsedMilliseconds > SlowRenderThresholdMs)
                 {
                     _logger.LogWarning(
-                        "Slow page render detected. CorrelationId={CorrelationId}, PageNumber={PageNumber}, RenderTimeMs={RenderTimeMs}, ZoomLevel={ZoomLevel}",
-                        correlationId, pageNumber, stopwatch.ElapsedMilliseconds, zoomLevel);
+                        "Slow page render detected. CorrelationId={CorrelationId}, PageNumber={PageNumber}, RenderTimeMs={RenderTimeMs}, ZoomLevel={ZoomLevel}, Dpi={Dpi}, IsHighDpi={IsHighDpi}, OutputSize={OutputWidth}x{OutputHeight}",
+                        correlationId, pageNumber, stopwatch.ElapsedMilliseconds, zoomLevel, dpi, isHighDpi, effectiveWidth, effectiveHeight);
+                }
+                else if (isHighDpi)
+                {
+                    // Log high-DPI renders separately for performance monitoring
+                    _logger.LogInformation(
+                        "High-DPI page rendered successfully. CorrelationId={CorrelationId}, PageNumber={PageNumber}, RenderTimeMs={RenderTimeMs}, Dpi={Dpi}, OutputSize={OutputWidth}x{OutputHeight}",
+                        correlationId, pageNumber, stopwatch.ElapsedMilliseconds, dpi, effectiveWidth, effectiveHeight);
                 }
                 else
                 {
