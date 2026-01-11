@@ -117,7 +117,7 @@
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   - _Prompt: Role: Accessibility Engineer with expertise in WinUI and screen readers | Task: In ThumbnailsSidebar.xaml, add AutomationProperties.Name="Page {PageNumber} thumbnail" to thumbnail Grid. Add KeyboardAccelerator (Key=Enter) to Button for navigation. Set IsTabStop=True on thumbnails, configure tab order. Add FocusVisualPrimaryBrush for focus indicator (ThemeResource border). In ThumbnailsViewModel, add ArrowKey handlers (Up/Down) moving focus. In ToggleSidebar command, announce visibility to screen readers (use AutomationPeer.RaiseNotificationEvent). Test with Narrator for proper announcements. | Restrictions: All interactive elements must be keyboard accessible, focus order logical (top to bottom), screen reader announcements clear, visible focus indicators required. | Success: Thumbnails keyboard navigable with Tab/Arrows, Enter navigates, focus indicators visible, screen reader announces correctly, passes accessibility validation._
 
-- [ ] 9. Integration testing with full document workflow
+- [-] 9. Integration testing with full document workflow
   - Files:
     - `tests/FluentPDF.App.Tests/Integration/ThumbnailsIntegrationTests.cs` (create)
   - Create integration tests loading document with thumbnails enabled
