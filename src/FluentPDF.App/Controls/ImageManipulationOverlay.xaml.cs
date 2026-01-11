@@ -575,4 +575,117 @@ public sealed partial class ImageManipulationOverlay : UserControl
                point.Y >= image.Position.Y &&
                point.Y <= image.Position.Y + image.Size.Height;
     }
+
+    /// <summary>
+    /// Handles right-tap on the canvas to show context menu only when image is selected.
+    /// </summary>
+    private void OnCanvasRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (ViewModel?.SelectedImage == null)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        var point = e.GetPosition(ManipulationCanvas);
+        var pdfPoint = new PointF(
+            (float)(point.X / ZoomLevel),
+            (float)(point.Y / ZoomLevel));
+
+        // Only show context menu if right-clicking on the selected image
+        if (IsPointInImage(pdfPoint, ViewModel.SelectedImage))
+        {
+            // Context menu will show automatically due to Canvas.ContextFlyout
+            // Just need to ensure menu items are enabled/disabled correctly
+            UpdateContextMenuState();
+        }
+        else
+        {
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Updates the enabled state of context menu items based on current state.
+    /// </summary>
+    private void UpdateContextMenuState()
+    {
+        if (ViewModel == null)
+        {
+            return;
+        }
+
+        var hasSelection = ViewModel.SelectedImage != null;
+        var canChangeZOrder = hasSelection && ViewModel.InsertedImages.Count > 1;
+
+        DeleteMenuItem.IsEnabled = hasSelection;
+        BringToFrontMenuItem.IsEnabled = canChangeZOrder;
+        SendToBackMenuItem.IsEnabled = canChangeZOrder;
+    }
+
+    /// <summary>
+    /// Handles Delete menu item click.
+    /// </summary>
+    private async void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.DeleteSelectedImageCommand.CanExecute(null) == true)
+        {
+            await ViewModel.DeleteSelectedImageCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Handles Rotate Right menu item click.
+    /// </summary>
+    private async void RotateRightMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.RotateRightCommand.CanExecute(null) == true)
+        {
+            await ViewModel.RotateRightCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Handles Rotate Left menu item click.
+    /// </summary>
+    private async void RotateLeftMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.RotateLeftCommand.CanExecute(null) == true)
+        {
+            await ViewModel.RotateLeftCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Handles Rotate 180 menu item click.
+    /// </summary>
+    private async void Rotate180MenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.Rotate180Command.CanExecute(null) == true)
+        {
+            await ViewModel.Rotate180Command.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Handles Bring to Front menu item click.
+    /// </summary>
+    private void BringToFrontMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.BringToFrontCommand.CanExecute(null) == true)
+        {
+            ViewModel.BringToFrontCommand.Execute(null);
+        }
+    }
+
+    /// <summary>
+    /// Handles Send to Back menu item click.
+    /// </summary>
+    private void SendToBackMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.SendToBackCommand.CanExecute(null) == true)
+        {
+            ViewModel.SendToBackCommand.Execute(null);
+        }
+    }
 }

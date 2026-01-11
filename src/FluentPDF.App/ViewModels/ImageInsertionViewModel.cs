@@ -359,6 +359,86 @@ public partial class ImageInsertionViewModel : ObservableObject
     private bool CanRotateImage() => SelectedImage != null && !IsLoading;
 
     /// <summary>
+    /// Rotates the selected image right by 90 degrees.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanRotateImage))]
+    private async Task RotateRightAsync()
+    {
+        await RotateImageAsync(90);
+    }
+
+    /// <summary>
+    /// Rotates the selected image left by 90 degrees.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanRotateImage))]
+    private async Task RotateLeftAsync()
+    {
+        await RotateImageAsync(-90);
+    }
+
+    /// <summary>
+    /// Rotates the selected image by 180 degrees.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanRotateImage))]
+    private async Task Rotate180Async()
+    {
+        await RotateImageAsync(180);
+    }
+
+    /// <summary>
+    /// Brings the selected image to the front (top of z-order).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanChangeZOrder))]
+    private void BringToFront()
+    {
+        if (SelectedImage == null)
+        {
+            _logger.LogWarning("Cannot bring to front: no image selected");
+            return;
+        }
+
+        _logger.LogInformation(
+            "Bringing image to front. Id={Id}",
+            SelectedImage.Id);
+
+        // Move image to end of collection (rendered last = on top)
+        InsertedImages.Remove(SelectedImage);
+        InsertedImages.Add(SelectedImage);
+        HasUnsavedChanges = true;
+
+        _logger.LogInformation("Image brought to front. Id={Id}", SelectedImage.Id);
+    }
+
+    /// <summary>
+    /// Sends the selected image to the back (bottom of z-order).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanChangeZOrder))]
+    private void SendToBack()
+    {
+        if (SelectedImage == null)
+        {
+            _logger.LogWarning("Cannot send to back: no image selected");
+            return;
+        }
+
+        _logger.LogInformation(
+            "Sending image to back. Id={Id}",
+            SelectedImage.Id);
+
+        // Move image to beginning of collection (rendered first = on bottom)
+        var index = InsertedImages.IndexOf(SelectedImage);
+        if (index > 0)
+        {
+            InsertedImages.Remove(SelectedImage);
+            InsertedImages.Insert(0, SelectedImage);
+            HasUnsavedChanges = true;
+            _logger.LogInformation("Image sent to back. Id={Id}", SelectedImage.Id);
+        }
+    }
+
+    private bool CanChangeZOrder() => SelectedImage != null && InsertedImages.Count > 1 && !IsLoading;
+
+    /// <summary>
     /// Loads images for the specified document and page.
     /// </summary>
     /// <param name="parameters">Tuple containing the document and page number.</param>

@@ -14,5 +14,47 @@
         PointerPressed="OnPointerPressed"
         PointerMoved="OnPointerMoved"
         PointerReleased="OnPointerReleased"
-        PointerExited="OnPointerExited" />
+        PointerExited="OnPointerExited"
+        RightTapped="OnCanvasRightTapped">
+        <Canvas.ContextFlyout>
+            <MenuFlyout x:Name="ImageContextMenu">
+                <!-- Delete menu item -->
+                <MenuFlyoutItem
+                    x:Name="DeleteMenuItem"
+                    Text="Delete"
+                    Click="DeleteMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="Delete" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+
+                <MenuFlyoutSeparator />
+
+                <!-- Rotate submenu -->
+                <MenuFlyoutSubItem Text="Rotate">
+                    <MenuFlyoutItem
+                        Text="Rotate Right 90°"
+                        Click="RotateRightMenuItem_Click" />
+                    <MenuFlyoutItem
+                        Text="Rotate Left 90°"
+                        Click="RotateLeftMenuItem_Click" />
+                    <MenuFlyoutItem
+                        Text="Rotate 180°"
+                        Click="Rotate180MenuItem_Click" />
+                </MenuFlyoutSubItem>
+
+                <MenuFlyoutSeparator />
+
+                <!-- Z-order menu items -->
+                <MenuFlyoutItem
+                    x:Name="BringToFrontMenuItem"
+                    Text="Bring to Front"
+                    Click="BringToFrontMenuItem_Click" />
+                <MenuFlyoutItem
+                    x:Name="SendToBackMenuItem"
+                    Text="Send to Back"
+                    Click="SendToBackMenuItem_Click" />
+            </MenuFlyout>
+        </Canvas.ContextFlyout>
+    </Canvas>
 </UserControl>
