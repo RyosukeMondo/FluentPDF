@@ -2,6 +2,7 @@ using FluentAssertions;
 using FluentPDF.App.ViewModels;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
+using FluentPDF.Rendering.Services;
 using FluentResults;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -32,6 +33,9 @@ public sealed class SaveWorkflowTests : IDisposable
     private readonly Mock<ILogger<LogViewerViewModel>> _logViewerLoggerMock;
     private readonly Mock<ILogger<AnnotationViewModel>> _annotationLoggerMock;
     private readonly Mock<ILogger<ThumbnailsViewModel>> _thumbnailsLoggerMock;
+    private readonly Mock<IThumbnailRenderingService> _thumbnailRenderingServiceMock;
+    private readonly Mock<IPageOperationsService> _pageOperationsServiceMock;
+    private readonly Mock<IMetricsCollectionService> _metricsServiceMock;
     private readonly PdfDocument _testDocument;
 
     public SaveWorkflowTests()
@@ -45,6 +49,9 @@ public sealed class SaveWorkflowTests : IDisposable
         _formServiceMock = new Mock<IPdfFormService>();
         _formValidationServiceMock = new Mock<IFormValidationService>();
         _annotationServiceMock = new Mock<IAnnotationService>();
+        _thumbnailRenderingServiceMock = new Mock<IThumbnailRenderingService>();
+        _pageOperationsServiceMock = new Mock<IPageOperationsService>();
+        _metricsServiceMock = new Mock<IMetricsCollectionService>();
         _viewerLoggerMock = new Mock<ILogger<PdfViewerViewModel>>();
         _tabLoggerMock = new Mock<ILogger<TabViewModel>>();
         _bookmarksLoggerMock = new Mock<ILogger<BookmarksViewModel>>();
@@ -80,7 +87,7 @@ public sealed class SaveWorkflowTests : IDisposable
         // Simulate loaded document
         SetLoadedDocument(viewerViewModel, _testDocument);
 
-        var tabViewModel = new TabViewModel(viewerViewModel, _tabLoggerMock.Object);
+        var tabViewModel = new TabViewModel(_testDocument.FilePath, viewerViewModel, _tabLoggerMock.Object);
 
         var fileName = Path.GetFileName(_testDocument.FilePath);
         tabViewModel.DisplayName.Should().Be(fileName, "initially no asterisk");
@@ -106,7 +113,7 @@ public sealed class SaveWorkflowTests : IDisposable
         // Simulate loaded document
         SetLoadedDocument(viewerViewModel, _testDocument);
 
-        var tabViewModel = new TabViewModel(viewerViewModel, _tabLoggerMock.Object);
+        var tabViewModel = new TabViewModel(_testDocument.FilePath, viewerViewModel, _tabLoggerMock.Object);
 
         // Setup save mocks to return success
         _annotationServiceMock
@@ -310,7 +317,7 @@ public sealed class SaveWorkflowTests : IDisposable
         var viewerViewModel = CreatePdfViewerViewModel();
         SetLoadedDocument(viewerViewModel, _testDocument);
 
-        var tabViewModel = new TabViewModel(viewerViewModel, _tabLoggerMock.Object);
+        var tabViewModel = new TabViewModel(_testDocument.FilePath, viewerViewModel, _tabLoggerMock.Object);
 
         var propertyChangedEvents = new List<string>();
         tabViewModel.PropertyChanged += (s, e) => propertyChangedEvents.Add(e.PropertyName!);
@@ -345,6 +352,7 @@ public sealed class SaveWorkflowTests : IDisposable
             _formLoggerMock.Object);
 
         var diagnosticsPanelViewModel = new DiagnosticsPanelViewModel(
+            _metricsServiceMock.Object,
             _diagnosticsLoggerMock.Object);
 
         var logViewerViewModel = new LogViewerViewModel(
@@ -355,7 +363,8 @@ public sealed class SaveWorkflowTests : IDisposable
             _annotationLoggerMock.Object);
 
         var thumbnailsViewModel = new ThumbnailsViewModel(
-            _renderingServiceMock.Object,
+            _thumbnailRenderingServiceMock.Object,
+            _pageOperationsServiceMock.Object,
             _thumbnailsLoggerMock.Object);
 
         return new PdfViewerViewModel(
