@@ -434,6 +434,28 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center" />
 
+            <!-- Quality adjustment overlay -->
+            <Grid
+                Grid.Row="1"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Opacity="0.9"
+                Visibility="{x:Bind ViewModel.IsAdjustingQuality, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Padding="24,16"
+                CornerRadius="8">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <ProgressRing
+                        IsActive="True"
+                        Width="24"
+                        Height="24" />
+                    <TextBlock
+                        Text="Adjusting quality..."
+                        VerticalAlignment="Center"
+                        Style="{StaticResource BodyStrongTextBlockStyle}" />
+                </StackPanel>
+            </Grid>
+
             <!-- Empty state message -->
             <TextBlock
                 Grid.Row="1"

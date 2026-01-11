@@ -50,6 +50,10 @@ public sealed partial class PdfViewerPage : Page, IDisposable
 
         // Hook up event handler for search panel visibility changes
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        // Hook up lifecycle events for DPI monitoring
+        this.Loaded += OnPageLoaded;
+        this.Unloaded += OnPageUnloaded;
     }
 
     /// <summary>
@@ -79,6 +83,24 @@ public sealed partial class PdfViewerPage : Page, IDisposable
                 UpdateSearchHighlights();
             });
         }
+    }
+
+    /// <summary>
+    /// Handles the page Loaded event to initialize DPI monitoring.
+    /// </summary>
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        // Start monitoring DPI changes for this page's XamlRoot
+        ViewModel.StartDpiMonitoring(this.XamlRoot);
+    }
+
+    /// <summary>
+    /// Handles the page Unloaded event to clean up resources.
+    /// </summary>
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        // XamlRoot will become null on unload, which is handled by the ViewModel
+        // No explicit cleanup needed here as Dispose will handle subscription cleanup
     }
 
     /// <summary>
@@ -313,6 +335,8 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     public void Dispose()
     {
         this.KeyDown -= OnPageKeyDown;
+        this.Loaded -= OnPageLoaded;
+        this.Unloaded -= OnPageUnloaded;
         if (ViewModel != null)
         {
             ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
