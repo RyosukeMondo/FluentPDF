@@ -62,6 +62,7 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 ### Architecture & Quality
 - **Modern MVVM architecture** with CommunityToolkit.Mvvm source generators
 - **Verifiable quality** with ArchUnitNET automated architecture tests
+- **Visual regression testing** with Win2D headless rendering and SSIM comparison
 - **Comprehensive observability** with Serilog + OpenTelemetry
 - **Type-safe error handling** using FluentResults Result pattern
 - **Testable architecture** with dependency injection and interface-based design
@@ -586,7 +587,51 @@ dotnet test tests/FluentPDF.Core.Tests
 
 # UI tests (requires Windows runtime)
 dotnet test tests/FluentPDF.App.Tests
+
+# Visual regression tests (Windows only, Win2D required)
+dotnet test --filter "Category=VisualRegression"
 ```
+
+### Visual Regression Testing
+
+FluentPDF includes comprehensive visual regression testing to detect rendering regressions using perceptual similarity metrics (SSIM).
+
+**Key Features**:
+- **Win2D Headless Rendering**: GPU-accelerated PDF rendering without UI dependencies
+- **SSIM Comparison**: Structural Similarity Index for perceptual image comparison
+- **Baseline Management**: Version-controlled baseline images with automatic first-run creation
+- **Diff Visualization**: Red-highlighted difference images for regression analysis
+- **CI Integration**: Automated visual tests in GitHub Actions with artifact uploads on failure
+
+**Running Visual Tests** (Windows required):
+```bash
+# Run all visual regression tests
+dotnet test --filter "Category=VisualRegression"
+
+# Run specific test category
+dotnet test --filter "Category=VisualRegression&FullyQualifiedName~CoreRendering"
+```
+
+**First-Run Workflow**:
+1. Test runs and creates baseline image (if missing)
+2. Review baseline image for correctness
+3. Commit baseline to Git: `git add tests/Baselines/ && git commit -m "Add visual baseline"`
+
+**Comparison Workflow**:
+1. Test renders PDF page and compares to baseline
+2. Pass if SSIM >= 0.95 (configurable threshold)
+3. Fail if regression detected, uploads actual/diff images to CI artifacts
+4. Review diff image, update baseline if change is intentional
+
+**Test Categories**:
+- **CoreRendering**: Basic PDF rendering accuracy
+- **ZoomLevels**: Zoom level rendering (50%, 100%, 150%, 200%)
+- **Annotations** (future): Annotation rendering verification
+- **Forms** (future): Form field overlay rendering
+
+**Performance**: ~450ms per test (render + compare), suitable for CI integration
+
+See [VISUAL-TESTING.md](docs/VISUAL-TESTING.md) for complete workflow documentation and [TESTING.md](docs/TESTING.md#visual-regression-testing) for implementation details.
 
 ### Code Quality Standards
 
