@@ -986,6 +986,132 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private bool CanExecuteOptimize() => !IsLoading && !IsOperationInProgress && _currentDocument != null;
 
     /// <summary>
+    /// Saves the current document with all annotations and form field changes to the current file path.
+    /// Creates a backup before saving.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSave))]
+    private async Task SaveAsync()
+    {
+        _logger.LogInformation("Save command invoked");
+
+        if (_currentDocument == null)
+        {
+            _logger.LogWarning("Cannot save: no document loaded");
+            await ShowErrorDialogAsync("Save Error", "No document is currently loaded.");
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            StatusMessage = "Saving document...";
+
+            // Save annotations if there are unsaved changes
+            if (AnnotationViewModel.HasUnsavedChanges)
+            {
+                _logger.LogInformation("Saving annotations to {FilePath}", _currentDocument.FilePath);
+                await AnnotationViewModel.SaveAnnotationsCommand.ExecuteAsync(null);
+            }
+
+            // Save form data if modified
+            if (FormFieldViewModel.IsModified)
+            {
+                _logger.LogInformation("Saving form data to {FilePath}", _currentDocument.FilePath);
+                await FormFieldViewModel.SaveFormCommand.ExecuteAsync(_currentDocument.FilePath);
+            }
+
+            StatusMessage = $"Document saved: {Path.GetFileName(_currentDocument.FilePath)}";
+            _logger.LogInformation("Document saved successfully to {FilePath}", _currentDocument.FilePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while saving document");
+            StatusMessage = "Error saving document";
+            await ShowErrorDialogAsync("Save Error", $"Failed to save document: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the Save command can execute.
+    /// </summary>
+    private bool CanSave() => HasUnsavedChanges && !IsLoading && _currentDocument != null;
+
+    /// <summary>
+    /// Saves the current document with all annotations and form field changes to a new file path.
+    /// Prompts user to select the output location using FileSavePicker.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSaveAs))]
+    private async Task SaveAsAsync()
+    {
+        _logger.LogInformation("SaveAs command invoked");
+
+        if (_currentDocument == null)
+        {
+            _logger.LogWarning("Cannot save as: no document loaded");
+            await ShowErrorDialogAsync("Save As Error", "No document is currently loaded.");
+            return;
+        }
+
+        try
+        {
+            // Create save picker for output
+            var savePicker = new FileSavePicker();
+            savePicker.FileTypeChoices.Add("PDF Document", new[] { ".pdf" });
+            savePicker.SuggestedFileName = Path.GetFileNameWithoutExtension(_currentDocument.FilePath) + "_copy.pdf";
+            savePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+            var outputFile = await savePicker.PickSaveFileAsync();
+            if (outputFile == null)
+            {
+                _logger.LogInformation("Save As cancelled by user");
+                return;
+            }
+
+            IsLoading = true;
+            StatusMessage = "Saving document...";
+
+            // Save annotations to new path
+            if (AnnotationViewModel.Annotations.Count > 0 || AnnotationViewModel.HasUnsavedChanges)
+            {
+                _logger.LogInformation("Saving annotations to {FilePath}", outputFile.Path);
+                await AnnotationViewModel.SaveAnnotationsCommand.ExecuteAsync(null);
+            }
+
+            // Save form data to new path
+            if (FormFieldViewModel.HasFormFields || FormFieldViewModel.IsModified)
+            {
+                _logger.LogInformation("Saving form data to {FilePath}", outputFile.Path);
+                await FormFieldViewModel.SaveFormCommand.ExecuteAsync(outputFile.Path);
+            }
+
+            StatusMessage = $"Document saved as: {Path.GetFileName(outputFile.Path)}";
+            _logger.LogInformation("Document saved successfully to {FilePath}", outputFile.Path);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while saving document");
+            StatusMessage = "Error saving document";
+            await ShowErrorDialogAsync("Save As Error", $"Failed to save document: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the SaveAs command can execute.
+    /// </summary>
+    private bool CanSaveAs() => !IsLoading && _currentDocument != null;
+
+    /// <summary>
     /// Cancels the current document editing operation (merge, split, or optimize).
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanCancelOperation))]
@@ -1261,6 +1387,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         if (e.PropertyName == nameof(HasSelectedText))
         {
             CopyToClipboardCommand.NotifyCanExecuteChanged();
+        }
+
+        // Update save command states
+        if (e.PropertyName == nameof(HasUnsavedChanges))
+        {
+            SaveCommand.NotifyCanExecuteChanged();
         }
 
         // Trigger search when query or case sensitivity changes

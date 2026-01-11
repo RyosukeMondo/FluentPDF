@@ -28,7 +28,7 @@
   - _Requirements: 3.1-3.3_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: In MainWindow.xaml TabView.TabItemTemplate, change TabViewItem Header binding from FileName to DisplayName. Ensure Mode=OneWay for property change updates. | Restrictions: Do not modify other parts of MainWindow.xaml. Do not change TabViewItem structure beyond header binding. | _Leverage: Existing MainWindow.xaml TabItemTemplate | _Requirements: 3.1-3.3 | Success: Tab headers display "*filename.pdf" when unsaved, update immediately on change. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 4. Add SaveCommand and SaveAsCommand to PdfViewerViewModel
+- [x] 4. Add SaveCommand and SaveAsCommand to PdfViewerViewModel
   - File: `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
   - Add RelayCommand for Save that calls annotation and form save services
   - Add RelayCommand for SaveAs with FileSavePicker
