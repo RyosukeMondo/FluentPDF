@@ -89,7 +89,7 @@
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
   - _Prompt: Role: MVVM Developer with expertise in inter-ViewModel communication | Task: Create NavigateToPageMessage class. In ThumbnailsViewModel.NavigateToPage, send message via _messenger.Send(new NavigateToPageMessage(pageNumber)). In PdfViewerViewModel constructor, register message handler: _messenger.Register<NavigateToPageMessage>(this, (r, m) => { CurrentPageNumber = m.PageNumber; }). In ThumbnailsViewModel, observe PdfViewerViewModel.CurrentPageNumber changes (subscribe to PropertyChanged) and update SelectedPageNumber + thumbnail IsSelected flags. Disable NavigateToPage command when IsLoading=true. | Restrictions: Use WeakReferenceMessenger for loose coupling, unregister message handlers on disposal, prevent navigation loops (check if page already selected), disable during loading. | Success: Thumbnail click navigates viewer, viewer page change updates selected thumbnail, no navigation loops, loading state prevents clicks._
 
-- [-] 7. Add performance optimizations and memory management
+- [x] 7. Add performance optimizations and memory management
   - Files:
     - `src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs` (modify)
     - `tests/FluentPDF.Benchmarks/Suites/ThumbnailBenchmarks.cs` (create)
