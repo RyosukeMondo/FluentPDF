@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Create observability domain models (PerformanceMetrics, LogEntry, LogFilterCriteria)
+- [x] 1. Create observability domain models (PerformanceMetrics, LogEntry, LogFilterCriteria)
   - Files:
     - `src/FluentPDF.Core/Observability/PerformanceMetrics.cs`
     - `src/FluentPDF.Core/Observability/LogEntry.cs`
