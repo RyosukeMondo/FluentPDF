@@ -27,7 +27,7 @@
   - Requirements: 4.1-4.7
   - Instructions: Build settings page with sections (Viewing, Appearance, Privacy). Use ComboBox for zoom/scroll, RadioButtons for theme, ToggleSwitch for telemetry.
 
-- [ ] 6. Integrate theme switching
+- [x] 6. Integrate theme switching
   - Files: `src/FluentPDF.App/App.xaml.cs`
   - Requirements: 2.5-2.7
   - Instructions: Listen to SettingsChanged event, apply theme to Application.RequestedTheme. Handle UseSystem theme.
@@ -42,7 +42,7 @@
   - Requirements: 4.1
   - Instructions: Add "Settings" menu item, navigate to SettingsPage on click.
 
-- [ ] 9. Register SettingsService in DI
+- [x] 9. Register SettingsService in DI
   - Files: `src/FluentPDF.App/App.xaml.cs`
   - Instructions: Register ISettingsService as singleton, load settings on startup.
 

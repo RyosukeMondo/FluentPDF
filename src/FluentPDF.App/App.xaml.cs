@@ -2,6 +2,7 @@ using FluentPDF.App.Services;
 using FluentPDF.App.ViewModels;
 using FluentPDF.App.Views;
 using FluentPDF.Core.Logging;
+using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
 using FluentPDF.Rendering.Services;
@@ -87,6 +88,7 @@ namespace FluentPDF.App
                     services.AddSingleton<ITelemetryService, TelemetryService>();
                     services.AddSingleton<IRecentFilesService, RecentFilesService>();
                     services.AddSingleton<JumpListService>();
+                    services.AddSingleton<ISettingsService, SettingsService>();
 
                     // Register observability services
                     services.AddSingleton<IMetricsCollectionService, MetricsCollectionService>();
@@ -134,6 +136,23 @@ namespace FluentPDF.App
 
             // Start the host
             await _host.StartAsync();
+
+            // Initialize and load settings
+            try
+            {
+                var settingsService = GetService<ISettingsService>();
+                await settingsService.LoadAsync();
+
+                // Subscribe to settings changes and apply current theme
+                settingsService.SettingsChanged += OnSettingsChanged;
+                ApplyTheme(settingsService.Settings.Theme);
+
+                Log.Information("Settings service initialized and theme applied");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to initialize settings service. Application will continue with default settings.");
+            }
 
             // Initialize metrics collection service
             try
@@ -303,6 +322,50 @@ namespace FluentPDF.App
             await _host.StopAsync();
             _host.Dispose();
             Log.CloseAndFlush();
+        }
+
+        /// <summary>
+        /// Handles settings changes and applies theme updates.
+        /// </summary>
+        private void OnSettingsChanged(object? sender, AppSettings settings)
+        {
+            ApplyTheme(settings.Theme);
+        }
+
+        /// <summary>
+        /// Applies the specified theme to the application.
+        /// </summary>
+        /// <param name="theme">The theme to apply.</param>
+        private void ApplyTheme(AppTheme theme)
+        {
+            try
+            {
+                var requestedTheme = theme switch
+                {
+                    AppTheme.Light => ApplicationTheme.Light,
+                    AppTheme.Dark => ApplicationTheme.Dark,
+                    AppTheme.UseSystem => null, // null uses system default
+                    _ => null
+                };
+
+                // Note: RequestedTheme can only be set before the first window is created
+                // For runtime theme changes, we need to set it on the window's content
+                if (_window?.Content is FrameworkElement rootElement)
+                {
+                    rootElement.RequestedTheme = theme switch
+                    {
+                        AppTheme.Light => ElementTheme.Light,
+                        AppTheme.Dark => ElementTheme.Dark,
+                        AppTheme.UseSystem => ElementTheme.Default,
+                        _ => ElementTheme.Default
+                    };
+                    Log.Information("Theme changed to {Theme}", theme);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to apply theme {Theme}", theme);
+            }
         }
 
         /// <summary>
