@@ -66,7 +66,7 @@
   - _Requirements: 4.1-4.6_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 C# Developer | Task: Modify OnTabCloseRequested to check TabViewModel.HasUnsavedChanges. If true, show SaveConfirmationDialog. Handle Save result by calling SaveCommand then closing. Handle DontSave by closing without save. Handle Cancel by setting args.Cancel=true. If no unsaved changes, close immediately. | Restrictions: Do not modify SaveConfirmationDialog. Keep existing tab close logic for non-dirty tabs. | _Leverage: Existing OnTabCloseRequested handler, SaveConfirmationDialog.ShowAsync | _Requirements: 4.1-4.6 | Success: Tab close shows dialog only when unsaved, Save/DontSave/Cancel behave correctly, no regression for clean tabs. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 8. Add unit tests for save functionality
+- [x] 8. Add unit tests for save functionality
   - Files: `tests/FluentPDF.App.Tests/ViewModels/PdfViewerViewModelSaveTests.cs`, `tests/FluentPDF.App.Tests/ViewModels/TabViewModelTests.cs`
   - Test SaveCommand execution and CanExecute logic
   - Test HasUnsavedChanges aggregation
