@@ -430,6 +430,414 @@ var viewModel = ((App)Application.Current).GetService<MainViewModel>();
 RootPage.DataContext = viewModel;
 ```
 
+## Multi-Tab and Recent Files Architecture
+
+### Overview
+
+FluentPDF implements a multi-document interface (MDI) using WinUI 3's TabView control, allowing users to work with multiple PDF files simultaneously. The architecture integrates with Windows features including the Jump List for quick access to recent files.
+
+### Key Components
+
+#### 1. TabViewModel (Per-Tab State Management)
+
+```csharp
+public class TabViewModel : ObservableObject, IDisposable
+{
+    private readonly string _filePath;
+    private readonly PdfViewerViewModel _viewerViewModel;
+    private bool _isActive;
+
+    public string FilePath => _filePath;
+    public string FileName => Path.GetFileName(_filePath);
+    public PdfViewerViewModel ViewerViewModel => _viewerViewModel;
+    public bool IsActive => _isActive;
+
+    public void Activate() => _isActive = true;
+    public void Deactivate() => _isActive = false;
+}
+```
+
+**Responsibilities:**
+- Wraps PdfViewerViewModel with tab-specific metadata (file path, name)
+- Tracks active/inactive state for tab UI and lifecycle management
+- Manages disposal of viewer resources when tab is closed
+
+#### 2. MainViewModel (Tab Orchestration)
+
+```csharp
+public partial class MainViewModel : ObservableObject, IDisposable
+{
+    private readonly IRecentFilesService _recentFilesService;
+    private readonly IServiceProvider _serviceProvider;
+
+    public ObservableCollection<TabViewModel> Tabs { get; }
+
+    [ObservableProperty]
+    private TabViewModel? _activeTab;
+
+    [RelayCommand]
+    private async Task OpenFileInNewTabAsync() { /* ... */ }
+
+    [RelayCommand]
+    private async Task OpenRecentFileAsync(string filePath) { /* ... */ }
+
+    [RelayCommand]
+    private void CloseTab(TabViewModel tab) { /* ... */ }
+}
+```
+
+**Responsibilities:**
+- Manages collection of open tabs (ObservableCollection<TabViewModel>)
+- Handles tab activation, switching, and closing logic
+- Prevents duplicate tabs for the same file (activates existing tab)
+- Integrates with RecentFilesService to update recent files list
+- Provides commands for UI binding (open, close, recent files)
+
+#### 3. RecentFilesService (Persistence and MRU Management)
+
+```csharp
+public sealed class RecentFilesService : IRecentFilesService, IDisposable
+{
+    private const int MaxRecentFiles = 10;
+    private readonly List<RecentFileEntry> _recentFiles;
+    private readonly ApplicationDataContainer _settings;
+
+    public IReadOnlyList<RecentFileEntry> GetRecentFiles();
+    public void AddRecentFile(string filePath);
+    public void RemoveRecentFile(string filePath);
+    public void ClearRecentFiles();
+}
+```
+
+**Responsibilities:**
+- Persists recent files to Windows.Storage.ApplicationData.LocalSettings
+- Maintains MRU (Most Recently Used) ordering
+- Enforces 10-item limit per Windows guidelines
+- Validates file existence on load (removes deleted files)
+- Case-insensitive duplicate detection
+
+**Persistence Format:**
+```json
+{
+  "RecentFiles": "[
+    {\"FilePath\":\"C:\\\\Docs\\\\file.pdf\",\"LastAccessed\":\"2026-01-11T00:00:00Z\"},
+    {\"FilePath\":\"C:\\\\Docs\\\\other.pdf\",\"LastAccessed\":\"2026-01-10T23:00:00Z\"}
+  ]"
+}
+```
+
+#### 4. JumpListService (Windows Taskbar Integration)
+
+```csharp
+public sealed class JumpListService
+{
+    private const int MaxJumpListItems = 10;
+
+    public async Task UpdateJumpListAsync(IReadOnlyList<RecentFileEntry> recentFiles);
+    public async Task ClearJumpListAsync();
+}
+```
+
+**Responsibilities:**
+- Updates Windows Jump List with recent files
+- Creates jump list items with file paths as launch arguments
+- Groups items under "Recent" category
+- Handles errors gracefully to prevent UI disruption
+
+**Windows Integration:**
+```csharp
+var item = JumpListItem.CreateWithArguments(
+    file.FilePath,           // Launch argument
+    file.DisplayName);       // Display text
+
+item.Description = file.FilePath;
+item.GroupName = "Recent";
+jumpList.Items.Add(item);
+await jumpList.SaveAsync();
+```
+
+### Data Flow
+
+#### Opening a File in New Tab
+
+```
+User clicks "Open File"
+  ↓
+MainViewModel.OpenFileInNewTabAsync()
+  ↓
+Check if file already open → Activate existing tab (early return)
+  ↓
+Create PdfViewerViewModel (via DI)
+  ↓
+Create TabViewModel(filePath, viewerViewModel)
+  ↓
+Add to Tabs collection → UI updates (TabView)
+  ↓
+Activate tab (sets ActiveTab property)
+  ↓
+Load document → viewerViewModel.OpenDocumentAsync()
+  ↓
+Update recent files → _recentFilesService.AddRecentFile(filePath)
+  ↓
+Recent files persisted → ApplicationData.LocalSettings
+  ↓
+Update Jump List → JumpListService.UpdateJumpListAsync()
+```
+
+#### Opening from Recent Files / Jump List
+
+```
+User clicks recent file (menu or Jump List)
+  ↓
+MainViewModel.OpenRecentFileAsync(filePath)
+  ↓
+Validate file exists → Remove from recent if deleted
+  ↓
+Call OpenFileInTabAsync(filePath)
+  ↓
+(Same flow as "Opening a File in New Tab")
+```
+
+#### Closing a Tab
+
+```
+User clicks tab close button
+  ↓
+MainViewModel.CloseTabCommand.Execute(tab)
+  ↓
+Deactivate tab if active
+  ↓
+Activate next/previous tab (if available)
+  ↓
+Remove from Tabs collection
+  ↓
+Dispose tab → tab.Dispose()
+  ↓
+Dispose viewer → viewerViewModel.Dispose()
+  ↓
+Release PDF document resources
+```
+
+### UI Architecture
+
+#### MainWindow.xaml TabView Binding
+
+```xml
+<TabView
+    TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
+    SelectedItem="{x:Bind ViewModel.ActiveTab, Mode=TwoWay}"
+    TabCloseRequested="OnTabCloseRequested">
+
+    <TabView.TabItemTemplate>
+        <DataTemplate x:DataType="viewmodels:TabViewModel">
+            <TabViewItem Header="{x:Bind FileName, Mode=OneWay}">
+                <controls:PdfViewerControl
+                    ViewerViewModel="{x:Bind ViewerViewModel, Mode=OneWay}" />
+            </TabViewItem>
+        </DataTemplate>
+    </TabView.TabItemTemplate>
+</TabView>
+```
+
+#### Recent Files Menu (Dynamic)
+
+```csharp
+// MainWindow.xaml.cs - Loaded event
+private void UpdateRecentFilesMenu()
+{
+    RecentFilesSubMenu.Items.Clear();
+
+    var recentFiles = ViewModel.GetRecentFiles();
+    foreach (var file in recentFiles)
+    {
+        var item = new MenuFlyoutItem
+        {
+            Text = file.DisplayName,
+            Command = ViewModel.OpenRecentFileCommand,
+            CommandParameter = file.FilePath
+        };
+        RecentFilesSubMenu.Items.Add(item);
+    }
+}
+```
+
+### Memory Management
+
+#### Tab Lifecycle
+
+1. **Tab Creation**: PdfViewerViewModel created via DI with fresh dependencies
+2. **Tab Active**: Document loaded, rendering pipeline active
+3. **Tab Inactive**: Document remains loaded but not rendering
+4. **Tab Close**: Explicit disposal chain:
+   - TabViewModel.Dispose() → PdfViewerViewModel.Dispose()
+   - PdfViewerViewModel.Dispose() → DocumentService.CloseDocument()
+   - DocumentService.CloseDocument() → SafePdfDocumentHandle.Dispose()
+   - SafeHandle releases native PDFium resources
+
+#### Preventing Memory Leaks
+
+- **ObservableCollection**: Tabs collection cleared on MainViewModel.Dispose()
+- **Event Handlers**: TabView bindings use x:Bind (compiled, weak references)
+- **IDisposable Pattern**: All ViewModels implement IDisposable for explicit cleanup
+- **SafeHandles**: PDFium resources wrapped in SafeHandles for deterministic release
+
+### Error Handling
+
+#### File Opening Errors
+
+```csharp
+private async Task OpenFileInTabAsync(string filePath)
+{
+    try
+    {
+        var viewerViewModel = _serviceProvider.GetRequiredService<PdfViewerViewModel>();
+        var tabViewModel = new TabViewModel(filePath, viewerViewModel, _tabLogger);
+
+        Tabs.Add(tabViewModel);
+        ActivateTab(tabViewModel);
+
+        await viewerViewModel.OpenDocumentAsync();
+        _recentFilesService.AddRecentFile(filePath);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to open file in tab: {FilePath}", filePath);
+        throw; // UI layer shows error dialog
+    }
+}
+```
+
+#### Jump List Errors
+
+```csharp
+public async Task UpdateJumpListAsync(IReadOnlyList<RecentFileEntry> recentFiles)
+{
+    try
+    {
+        var jumpList = await JumpList.LoadCurrentAsync();
+        jumpList.Items.Clear();
+
+        foreach (var file in recentFiles.Take(MaxJumpListItems))
+        {
+            try
+            {
+                var item = JumpListItem.CreateWithArguments(file.FilePath, file.DisplayName);
+                jumpList.Items.Add(item);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to add Jump List item: {FilePath}", file.FilePath);
+                // Continue with remaining items
+            }
+        }
+
+        await jumpList.SaveAsync();
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to update Jump List");
+        // Do not throw - Jump List is optional feature
+    }
+}
+```
+
+### Testing Strategy
+
+#### Unit Tests
+
+**TabViewModel Tests** (`tests/FluentPDF.App.Tests/ViewModels/TabViewModelTests.cs`):
+- Initialization with file path and viewer
+- Activation/deactivation state transitions
+- Disposal of viewer resources
+
+**MainViewModel Tests** (`tests/FluentPDF.App.Tests/ViewModels/MainViewModelTests.cs`):
+- Tab creation and activation
+- Closing tabs with proper activation logic
+- Recent files integration
+- Disposal of all tabs
+
+**RecentFilesService Tests** (`tests/FluentPDF.App.Tests/Services/RecentFilesServiceTests.cs`):
+- MRU ordering with timestamps
+- Persistence to ApplicationData.LocalSettings
+- 10-item limit enforcement
+- Case-insensitive duplicate detection
+- Validation of file existence on load
+
+**JumpListService Tests** (`tests/FluentPDF.App.Tests/Services/JumpListServiceTests.cs`):
+- Jump List creation with recent files
+- 10-item limit enforcement
+- Error handling for malformed data
+
+#### Integration Tests
+
+**TabManagementIntegrationTests** (`tests/FluentPDF.App.Tests/Integration/TabManagementIntegrationTests.cs`):
+- Opening multiple files creates multiple tabs
+- Opening same file twice activates existing tab
+- Closing active tab activates next tab
+- Recent files persist across service instances
+- Jump List updates with recent files
+- End-to-end workflow (open, close, persist, restore)
+
+### Architecture Rules (ArchUnitNET)
+
+```csharp
+[Fact]
+public void TabViewModel_ShouldNotDependOn_Services()
+{
+    var rule = Classes()
+        .That().Are(typeof(TabViewModel))
+        .Should().NotDependOnAny(
+            Classes().That().ResideInNamespace("FluentPDF.Core.Services"))
+        .Because("TabViewModel is a lightweight wrapper, services are injected into MainViewModel");
+
+    rule.Check(Architecture);
+}
+
+[Fact]
+public void RecentFilesService_ShouldNotDependOn_ViewModels()
+{
+    var rule = Classes()
+        .That().Are(typeof(RecentFilesService))
+        .Should().NotDependOnAny(
+            Classes().That().ResideInNamespace("FluentPDF.App.ViewModels"))
+        .Because("Services must be UI-agnostic for reusability");
+
+    rule.Check(Architecture);
+}
+```
+
+### Dependency Injection Registration
+
+```csharp
+// App.xaml.cs
+services.AddSingleton<IRecentFilesService, RecentFilesService>();
+services.AddSingleton<JumpListService>();
+services.AddTransient<MainViewModel>();
+services.AddTransient<TabViewModel>(); // Factory pattern via MainViewModel
+services.AddTransient<PdfViewerViewModel>();
+```
+
+### Performance Characteristics
+
+- **Tab Switching**: O(1) - Direct property assignment, no document reload
+- **Recent Files Lookup**: O(n) where n ≤ 10 - Linear search acceptable
+- **Jump List Update**: Async operation, does not block UI
+- **Tab Close**: Synchronous disposal, < 100ms for document cleanup
+
+### Future Enhancements
+
+1. **Tab Drag & Drop**: Reorder tabs, drag out to new window
+2. **Tab Groups**: Group related documents (e.g., by folder)
+3. **Session Restore**: Reopen tabs from last session on app launch
+4. **Tab Previews**: Thumbnail previews on hover
+5. **Keyboard Shortcuts**: Ctrl+Tab (next tab), Ctrl+Shift+Tab (previous tab)
+
+### References
+
+- [WinUI 3 TabView Documentation](https://learn.microsoft.com/en-us/windows/apps/design/controls/tab-view)
+- [Windows Jump Lists](https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/jump-lists)
+- [ApplicationData.LocalSettings](https://learn.microsoft.com/en-us/uwp/api/windows.storage.applicationdata.localsettings)
+
 ## Testing Strategy
 
 ### Test Project Structure

@@ -10,6 +10,8 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 ## Features
 
 ### PDF Viewing
+- **Multi-Tab Interface**: Work with multiple PDF files simultaneously using WinUI 3 TabView
+- **Recent Files**: Quick access to recently opened files via File menu and Windows Jump List
 - **High-Quality Rendering**: View PDF documents using Google's PDFium rendering engine
 - **Text Extraction and Search**: Extract text from PDF pages and search within documents with visual highlighting
 - **Bookmark Navigation**: Hierarchical bookmark panel with TreeView for quick document navigation
@@ -156,7 +158,33 @@ dotnet build FluentPDF.sln
 
 1. Click the **Open** button in the toolbar (or press **Ctrl+O**)
 2. Select a PDF file from the file picker
-3. The first page will be displayed automatically
+3. The first page will be displayed automatically in a new tab
+
+### Working with Multiple PDFs (Tabs)
+
+FluentPDF supports opening multiple PDF files simultaneously using tabs:
+
+- **Open in New Tab**: Each PDF opens in its own tab, allowing you to switch between documents
+- **Tab Switching**: Click on any tab to switch to that document
+- **Close Tab**: Click the X button on a tab to close that document
+- **Prevent Duplicates**: Opening the same file again activates the existing tab instead of creating a duplicate
+- **Active Tab**: The currently selected tab is highlighted and shows its content
+
+### Recent Files and Jump List
+
+FluentPDF tracks your recently opened files for quick access:
+
+- **Recent Files Menu**: Click **File** → **Recent Files** to see up to 10 recently opened PDFs
+- **Windows Jump List**: Right-click the FluentPDF taskbar icon to see recent files in the Jump List
+- **Quick Open**: Click any recent file to open it immediately (or activate if already open)
+- **Clear Recent**: Click **File** → **Clear Recent Files** to remove all recent files from the list
+- **Automatic Cleanup**: Deleted or moved files are automatically removed from recent files list
+
+**Recent Files Features**:
+- Most Recently Used (MRU) ordering - most recent files appear first
+- Persistent across application restarts
+- Maximum 10 items per Windows guidelines
+- Integrated with Windows taskbar for native OS experience
 
 ### Navigating Pages
 
@@ -249,7 +277,8 @@ When you open a PDF with form fields, FluentPDF automatically detects and displa
 
 | Shortcut | Action |
 |----------|--------|
-| **Ctrl+O** | Open PDF file |
+| **Ctrl+O** | Open PDF file in new tab |
+| **Ctrl+W** | Close current tab |
 | **Ctrl+S** | Save filled form data |
 | **Ctrl+B** | Toggle bookmarks panel |
 | **Ctrl+F** | Open search panel |
