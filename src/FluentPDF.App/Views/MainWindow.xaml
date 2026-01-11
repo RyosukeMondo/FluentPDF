@@ -58,7 +58,7 @@
             <TabView.TabItemTemplate>
                 <DataTemplate x:DataType="viewmodels:TabViewModel">
                     <TabViewItem
-                        Header="{x:Bind FileName, Mode=OneWay}"
+                        Header="{x:Bind DisplayName, Mode=OneWay}"
                         IsClosable="True">
                         <TabViewItem.IconSource>
                             <SymbolIconSource Symbol="Document" />

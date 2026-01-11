@@ -20,7 +20,7 @@
   - _Requirements: 3.1-3.3_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# WinUI 3 Developer specializing in MVVM data binding | Task: Add HasUnsavedChanges property that delegates to ViewerViewModel.HasUnsavedChanges. Add DisplayName property that returns "*" + FileName when HasUnsavedChanges is true, otherwise just FileName. Subscribe to ViewerViewModel.PropertyChanged to forward HasUnsavedChanges changes. | Restrictions: Do not modify PdfViewerViewModel, only observe it. Keep single responsibility. | _Leverage: Existing TabViewModel, PdfViewerViewModel | _Requirements: 3.1-3.3 | Success: DisplayName shows asterisk prefix when unsaved, tab header updates immediately on change, no memory leaks from event subscriptions. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 3. Update TabView binding to use DisplayName
+- [x] 3. Update TabView binding to use DisplayName
   - File: `src/FluentPDF.App/Views/MainWindow.xaml`
   - Change TabViewItem Header binding from FileName to DisplayName
   - Purpose: Show unsaved indicator in tab headers
