@@ -100,7 +100,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Create ImageInsertionServiceTests with tests for each operation: InsertImage_ValidPath_Succeeds, InsertImage_InvalidPath_Fails, MoveImage_ValidPosition_Succeeds, ScaleImage_ValidSize_Succeeds, RotateImage_90Degrees_Succeeds, DeleteImage_Succeeds. Test PNG, JPEG, BMP format handling. Mock PDFium interop. | Restrictions: Use existing test patterns. | _Leverage: Existing test patterns | _Requirements: All | Success: All tests pass, good coverage. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 12. Add integration tests
+- [x] 12. Add integration tests
   - File: `tests/FluentPDF.App.Tests/Integration/ImageInsertionTests.cs`
   - Test insert image workflow
   - Test manipulation handles
