@@ -61,7 +61,7 @@
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   - _Prompt: Role: WinUI Frontend Developer with expertise in XAML and Fluent Design | Task: Create ThumbnailsSidebar UserControl with ScrollViewer containing ItemsRepeater. ItemsRepeater ItemsSource bound to ThumbnailsViewModel.Thumbnails. ItemTemplate: Grid 150x220, Image (Source=Thumbnail, visible if IsLoaded), Rectangle (Fill=Gray, visible if IsLoading), TextBlock (Text=PageNumber, centered below), Border (highlight if IsSelected). Wrap in Button for click navigation. Add ScrollViewer.ViewChanged handler to detect visible range and load thumbnails lazily. Style selected thumbnail with ThemeResource border. | Restrictions: Use ItemsRepeater (not ListView) for performance, implement virtualization for large lists, smooth scrolling, use Fluent Design styling. | Success: Sidebar displays thumbnails correctly, lazy loading works, click navigation functional, selected thumbnail highlighted, smooth scrolling._
 
-- [ ] 5. Integrate ThumbnailsSidebar into PdfViewerPage
+- [x] 5. Integrate ThumbnailsSidebar into PdfViewerPage
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (modify)
     - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (modify)

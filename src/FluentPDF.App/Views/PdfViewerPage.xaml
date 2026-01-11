@@ -27,19 +27,36 @@
         <KeyboardAccelerator Key="L" Modifiers="Control,Shift" Invoked="OnOpenLogViewerKeyboardAccelerator" />
     </Page.KeyboardAccelerators>
 
-    <SplitView
-        IsPaneOpen="{x:Bind ViewModel.BookmarksViewModel.IsPanelVisible, Mode=TwoWay}"
-        OpenPaneLength="{x:Bind ViewModel.BookmarksViewModel.PanelWidth, Mode=TwoWay}"
-        DisplayMode="Inline"
-        PaneBackground="{ThemeResource LayerFillColorDefaultBrush}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Thumbnails sidebar column -->
+            <ColumnDefinition Width="Auto" />
+            <!-- Main content column -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Left Pane: Bookmarks Panel -->
-        <SplitView.Pane>
-            <controls:BookmarksPanel/>
-        </SplitView.Pane>
+        <!-- Thumbnails Sidebar -->
+        <controls:ThumbnailsSidebar
+            Grid.Column="0"
+            x:Name="ThumbnailsSidebarControl"
+            Visibility="{x:Bind ViewModel.IsSidebarVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+            Width="200" />
 
-        <!-- Main Content -->
-        <SplitView.Content>
+        <!-- Main Content with Bookmarks SplitView -->
+        <SplitView
+            Grid.Column="1"
+            IsPaneOpen="{x:Bind ViewModel.BookmarksViewModel.IsPanelVisible, Mode=TwoWay}"
+            OpenPaneLength="{x:Bind ViewModel.BookmarksViewModel.PanelWidth, Mode=TwoWay}"
+            DisplayMode="Inline"
+            PaneBackground="{ThemeResource LayerFillColorDefaultBrush}">
+
+            <!-- Left Pane: Bookmarks Panel -->
+            <SplitView.Pane>
+                <controls:BookmarksPanel/>
+            </SplitView.Pane>
+
+            <!-- Main Content -->
+            <SplitView.Content>
             <Grid>
                 <Grid.RowDefinitions>
                     <!-- Toolbar row -->
@@ -100,6 +117,19 @@
             </AppBarButton>
 
             <AppBarSeparator />
+
+            <!-- Toggle Thumbnails -->
+            <AppBarButton
+                Label="Thumbnails"
+                Command="{x:Bind ViewModel.ToggleSidebarCommand, Mode=OneWay}"
+                ToolTipService.ToolTip="Toggle thumbnails sidebar">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE8FD;" />
+                </AppBarButton.Icon>
+                <AppBarButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="T" Modifiers="Control" />
+                </AppBarButton.KeyboardAccelerators>
+            </AppBarButton>
 
             <!-- Toggle Bookmarks -->
             <AppBarButton
@@ -592,8 +622,8 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="16" />
-                </Grid>
             </Grid>
-        </SplitView.Content>
-    </SplitView>
+            </SplitView.Content>
+        </SplitView>
+    </Grid>
 </Page>

@@ -281,6 +281,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private bool _isAdjustingQuality;
 
     /// <summary>
+    /// Gets or sets a value indicating whether the thumbnails sidebar is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSidebarVisible = true;
+
+    /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
     /// </summary>
     [RelayCommand]
@@ -964,6 +970,16 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             CurrentMatchIndex = -1;
             _searchCts?.Cancel();
         }
+    }
+
+    /// <summary>
+    /// Toggles the visibility of the thumbnails sidebar.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleSidebar()
+    {
+        _logger.LogInformation("ToggleSidebar command invoked");
+        IsSidebarVisible = !IsSidebarVisible;
     }
 
     /// <summary>

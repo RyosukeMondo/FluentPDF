@@ -32,7 +32,7 @@
                         BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                         BorderThickness="3"
                         CornerRadius="4"
-                        Visibility="{x:Bind IsSelected, Mode=OneWay}"/>
+                        Visibility="{x:Bind IsSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
                     <StackPanel Spacing="8">
                         <!-- Thumbnail container -->
@@ -42,25 +42,11 @@
                                 Source="{x:Bind Thumbnail, Mode=OneWay}"
                                 Stretch="Uniform"
                                 HorizontalAlignment="Center"
-                                VerticalAlignment="Center">
-                                <Image.Visibility>
-                                    <Binding Path="Thumbnail" Converter="{StaticResource NullToVisibilityConverter}">
-                                        <Binding.RelativeSource>
-                                            <RelativeSource Mode="Self"/>
-                                        </Binding.RelativeSource>
-                                    </Binding>
-                                </Image.Visibility>
-                            </Image>
+                                VerticalAlignment="Center"
+                                Visibility="{x:Bind Thumbnail, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"/>
 
                             <!-- Loading placeholder -->
-                            <Grid>
-                                <Grid.Visibility>
-                                    <Binding Path="IsLoading" Converter="{StaticResource BoolToVisibilityConverter}">
-                                        <Binding.RelativeSource>
-                                            <RelativeSource Mode="Self"/>
-                                        </Binding.RelativeSource>
-                                    </Binding>
-                                </Grid.Visibility>
+                            <Grid Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Rectangle Fill="{ThemeResource LayerFillColorDefaultBrush}"/>
                                 <ProgressRing
                                     IsActive="{x:Bind IsLoading, Mode=OneWay}"
