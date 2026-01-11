@@ -54,9 +54,15 @@ public sealed class PerformanceMetrics
     public static PerformanceLevel CalculateLevel(double fps, long totalMemoryMB)
     {
         if (fps < 15 || totalMemoryMB > 1000)
+        {
             return PerformanceLevel.Critical;
+        }
+
         if (fps < 30 || totalMemoryMB >= 500)
+        {
             return PerformanceLevel.Warning;
+        }
+
         return PerformanceLevel.Good;
     }
 }

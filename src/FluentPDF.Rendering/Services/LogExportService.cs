@@ -65,7 +65,9 @@ public sealed class LogExportService : ILogExportService
                 allLogs.AddRange(entries);
 
                 if (allLogs.Count >= maxEntries)
+                {
                     break;
+                }
             }
 
             var recentLogs = allLogs
@@ -96,7 +98,9 @@ public sealed class LogExportService : ILogExportService
             // Get all logs first (using cache)
             var allLogsResult = await GetRecentLogsAsync(10_000);
             if (allLogsResult.IsFailed)
+            {
                 return allLogsResult;
+            }
 
             var filteredLogs = allLogsResult.Value
                 .Where(criteria.Matches)
@@ -165,7 +169,9 @@ public sealed class LogExportService : ILogExportService
                 lineNumber++;
 
                 if (string.IsNullOrWhiteSpace(line))
+                {
                     continue;
+                }
 
                 // Check cache first (use file path + line number as key)
                 var cacheKey = $"{filePath}:{lineNumber}";

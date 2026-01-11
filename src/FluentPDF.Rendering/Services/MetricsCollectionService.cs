@@ -230,7 +230,9 @@ internal sealed class CircularBuffer<T>
     public CircularBuffer(int capacity)
     {
         if (capacity <= 0)
+        {
             throw new ArgumentException("Capacity must be greater than zero", nameof(capacity));
+        }
 
         _buffer = new T[capacity];
         _head = 0;
@@ -245,7 +247,9 @@ internal sealed class CircularBuffer<T>
             _head = (_head + 1) % _buffer.Length;
 
             if (_count < _buffer.Length)
+            {
                 _count++;
+            }
         }
     }
 
@@ -256,7 +260,9 @@ internal sealed class CircularBuffer<T>
             var result = new T[_count];
 
             if (_count == 0)
+            {
                 return result;
+            }
 
             // If buffer is not full, items are from 0 to _count-1
             if (_count < _buffer.Length)

@@ -43,22 +43,34 @@ public sealed class LogFilterCriteria
     public bool Matches(LogEntry entry)
     {
         if (MinimumLevel.HasValue && entry.Level < MinimumLevel.Value)
+        {
             return false;
+        }
 
         if (!string.IsNullOrEmpty(CorrelationId) && entry.CorrelationId != CorrelationId)
+        {
             return false;
+        }
 
         if (!string.IsNullOrEmpty(ComponentFilter) && !entry.Component.StartsWith(ComponentFilter, StringComparison.OrdinalIgnoreCase))
+        {
             return false;
+        }
 
         if (StartTime.HasValue && entry.Timestamp < StartTime.Value)
+        {
             return false;
+        }
 
         if (EndTime.HasValue && entry.Timestamp > EndTime.Value)
+        {
             return false;
+        }
 
         if (!string.IsNullOrEmpty(SearchText) && !entry.Message.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+        {
             return false;
+        }
 
         return true;
     }
