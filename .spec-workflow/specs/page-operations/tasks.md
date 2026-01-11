@@ -69,7 +69,7 @@
   - _Requirements: 5.1-5.4, 6.1-6.3_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 Developer | Task: Add KeyboardAccelerators to ThumbnailsPanel: Delete key invokes DeletePagesCommand, Ctrl+R invokes RotateRightCommand, Ctrl+Shift+R invokes RotateLeftCommand, Ctrl+A selects all thumbnails. Check CanExecute before invoking. | Restrictions: Only add accelerators when thumbnails panel has focus. | _Leverage: WinUI KeyboardAccelerator, existing shortcuts pattern | _Requirements: 5.1-5.4, 6.1-6.3 | Success: All shortcuts work correctly, respects selection state. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 8. Integrate page operations with HasUnsavedChanges
+- [x] 8. Integrate page operations with HasUnsavedChanges
   - File: `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
   - Track page modifications in HasUnsavedChanges
   - Add PageModified event subscription

@@ -172,6 +172,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             }
         };
 
+        // Subscribe to page modification events from ThumbnailsViewModel
+        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Register<PageModifiedMessage>(this, (r, m) =>
+        {
+            HasPageModifications = true;
+        });
+
         _logger.LogInformation("PdfViewerViewModel initialized");
     }
 
@@ -323,11 +329,18 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private bool _isSidebarVisible = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether page operations have been performed.
+    /// Set to true when pages are rotated, deleted, reordered, or blank pages are inserted.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasPageModifications;
+
+    /// <summary>
     /// Gets a value indicating whether there are unsaved changes in the document.
-    /// Returns true if either annotations or form fields have been modified.
+    /// Returns true if annotations, form fields, or page operations have been modified.
     /// </summary>
     public bool HasUnsavedChanges =>
-        AnnotationViewModel.HasUnsavedChanges || FormFieldViewModel.IsModified;
+        AnnotationViewModel.HasUnsavedChanges || FormFieldViewModel.IsModified || HasPageModifications;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -381,6 +394,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             _currentDocument = result.Value;
             TotalPages = _currentDocument.PageCount;
             CurrentPageNumber = 1;
+
+            // Reset page modification flag when loading new document
+            HasPageModifications = false;
 
             _logger.LogInformation(
                 "Document loaded successfully. FilePath={FilePath}, PageCount={PageCount}",
@@ -1022,6 +1038,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
             StatusMessage = $"Document saved: {Path.GetFileName(_currentDocument.FilePath)}";
             _logger.LogInformation("Document saved successfully to {FilePath}", _currentDocument.FilePath);
+
+            // Reset page modification flag after successful save
+            HasPageModifications = false;
         }
         catch (Exception ex)
         {
@@ -1393,6 +1412,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         if (e.PropertyName == nameof(HasUnsavedChanges))
         {
             SaveCommand.NotifyCanExecuteChanged();
+        }
+
+        // Update HasUnsavedChanges when page modifications change
+        if (e.PropertyName == nameof(HasPageModifications))
+        {
+            OnPropertyChanged(nameof(HasUnsavedChanges));
         }
 
         // Trigger search when query or case sensitivity changes
@@ -1778,8 +1803,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
         _logger.LogInformation("Disposing PdfViewerViewModel");
 
-        // Unregister message handler
+        // Unregister message handlers
         CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Unregister<NavigateToPageMessage>(this);
+        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Unregister<PageModifiedMessage>(this);
 
         if (_currentDocument != null)
         {
