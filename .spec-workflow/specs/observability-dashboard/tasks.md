@@ -100,7 +100,7 @@
   - _Requirements: 2.1-2.10, 3.1-3.10_
   - _Prompt: Role: WinUI Frontend Developer specializing in custom controls | Task: Create DiagnosticsPanelControl following design.md Component 7, implementing XAML layout (Border with AcrylicBackgroundFillColorDefaultBrush, StackPanel for vertical layout, metrics display with FontIcon and TextBlock, action buttons), adding dependency property IsVisible (DependencyProperty.Register), implementing color coding converters (FPSColor: Green >= 30, Yellow 15-30, Red < 15), positioning as overlay (HorizontalAlignment Right, VerticalAlignment Top, Margin 16), and writing UI tests verifying color changes and button commands | Restrictions: Use WinUI 3 controls only, follow Fluent Design acrylic guidelines, ensure overlay doesn't block content, keep XAML readable with comments | Success: Control renders correctly as overlay, metrics display with color coding, buttons fire commands, IsVisible property toggles visibility, tests verify control behavior_
 
-- [ ] 7. Create DiagnosticsPanelViewModel with periodic metric updates
+- [x] 7. Create DiagnosticsPanelViewModel with periodic metric updates
   - Files:
     - `src/FluentPDF.App/ViewModels/DiagnosticsPanelViewModel.cs`
     - `tests/FluentPDF.App.Tests/ViewModels/DiagnosticsPanelViewModelTests.cs`
