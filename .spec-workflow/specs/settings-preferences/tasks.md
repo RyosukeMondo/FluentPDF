@@ -22,7 +22,7 @@
   - Requirements: 2.1-2.7, 3.1-3.7, 4.1-4.7
   - Instructions: ViewModel with observable properties for all settings. Wire property changes to save. Add ResetToDefaultsCommand. Test property change saves.
 
-- [-] 5. Create SettingsPage UI
+- [x] 5. Create SettingsPage UI
   - Files: `src/FluentPDF.App/Views/SettingsPage.xaml`, `src/FluentPDF.App/Views/SettingsPage.xaml.cs`
   - Requirements: 4.1-4.7
   - Instructions: Build settings page with sections (Viewing, Appearance, Privacy). Use ComboBox for zoom/scroll, RadioButtons for theme, ToggleSwitch for telemetry.
