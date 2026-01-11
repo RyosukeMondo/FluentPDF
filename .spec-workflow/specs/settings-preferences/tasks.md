@@ -32,7 +32,7 @@
   - Requirements: 2.5-2.7
   - Instructions: Listen to SettingsChanged event, apply theme to Application.RequestedTheme. Handle UseSystem theme.
 
-- [ ] 7. Apply default settings to new documents
+- [x] 7. Apply default settings to new documents
   - Files: `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (modify)
   - Requirements: 2.2, 2.4
   - Instructions: When opening document, set zoom level and scroll mode from settings.

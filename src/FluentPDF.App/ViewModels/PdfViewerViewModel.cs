@@ -27,6 +27,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly Core.Services.IMetricsCollectionService? _metricsService;
     private readonly IDpiDetectionService? _dpiDetectionService;
     private readonly IRenderingSettingsService? _renderingSettingsService;
+    private readonly Core.Services.ISettingsService? _settingsService;
     private PdfDocument? _currentDocument;
     private bool _disposed;
     private CancellationTokenSource? _operationCts;
@@ -71,6 +72,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="metricsService">Optional metrics collection service for observability.</param>
     /// <param name="dpiDetectionService">Optional DPI detection service for HiDPI support.</param>
     /// <param name="renderingSettingsService">Optional rendering settings service for quality preferences.</param>
+    /// <param name="settingsService">Optional settings service for user preferences.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
@@ -85,6 +87,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         Core.Services.IMetricsCollectionService? metricsService,
         IDpiDetectionService? dpiDetectionService,
         IRenderingSettingsService? renderingSettingsService,
+        Core.Services.ISettingsService? settingsService,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
@@ -99,6 +102,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _metricsService = metricsService; // Optional service
         _dpiDetectionService = dpiDetectionService; // Optional service
         _renderingSettingsService = renderingSettingsService; // Optional service
+        _settingsService = settingsService; // Optional service
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Set up navigation callback for bookmarks
@@ -327,6 +331,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
             // Load bookmarks
             await BookmarksViewModel.LoadBookmarksCommand.ExecuteAsync(_currentDocument);
+
+            // Apply default settings if settings service is available
+            ApplyDefaultSettings();
 
             // Render first page
             await RenderCurrentPageAsync();
@@ -1471,6 +1478,56 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 _lastRenderedDpi,
                 newEffectiveDpi);
         }
+    }
+
+    /// <summary>
+    /// Applies default settings from the settings service when opening a new document.
+    /// Sets zoom level and scroll mode based on user preferences.
+    /// </summary>
+    private void ApplyDefaultSettings()
+    {
+        if (_settingsService == null)
+        {
+            _logger.LogDebug("Settings service not available, using default zoom and scroll mode");
+            return;
+        }
+
+        var settings = _settingsService.Settings;
+
+        // Apply default zoom level
+        var zoomValue = ConvertZoomLevelToDouble(settings.DefaultZoom);
+        if (zoomValue.HasValue)
+        {
+            ZoomLevel = zoomValue.Value;
+            _logger.LogInformation(
+                "Applied default zoom level from settings: {ZoomLevel} ({ZoomValue})",
+                settings.DefaultZoom, zoomValue.Value);
+        }
+
+        // Note: ScrollMode is currently not implemented in the UI, but we log it for future use
+        _logger.LogInformation("Default scroll mode from settings: {ScrollMode}", settings.ScrollMode);
+    }
+
+    /// <summary>
+    /// Converts a ZoomLevel enum value to its corresponding double representation.
+    /// </summary>
+    /// <param name="zoomLevel">The zoom level enum value.</param>
+    /// <returns>The zoom level as a double (0.5 to 2.0), or null if the zoom level is FitWidth or FitPage.</returns>
+    private static double? ConvertZoomLevelToDouble(Core.Models.ZoomLevel zoomLevel)
+    {
+        return zoomLevel switch
+        {
+            Core.Models.ZoomLevel.FiftyPercent => 0.5,
+            Core.Models.ZoomLevel.SeventyFivePercent => 0.75,
+            Core.Models.ZoomLevel.OneHundredPercent => 1.0,
+            Core.Models.ZoomLevel.OneTwentyFivePercent => 1.25,
+            Core.Models.ZoomLevel.OneFiftyPercent => 1.5,
+            Core.Models.ZoomLevel.OneSeventyFivePercent => 1.75,
+            Core.Models.ZoomLevel.TwoHundredPercent => 2.0,
+            Core.Models.ZoomLevel.FitWidth => null, // Not currently supported
+            Core.Models.ZoomLevel.FitPage => null,  // Not currently supported
+            _ => 1.0 // Default to 100% for unknown values
+        };
     }
 
     /// <summary>
