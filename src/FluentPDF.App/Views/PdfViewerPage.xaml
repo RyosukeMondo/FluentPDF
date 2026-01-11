@@ -218,7 +218,9 @@
             <!-- Highlight -->
             <AppBarButton
                 Label="Highlight"
-                ToolTipService.ToolTip="Highlight text">
+                ToolTipService.ToolTip="Highlight text"
+                Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
+                CommandParameter="Highlight">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE7E6;" />
                 </AppBarButton.Icon>
@@ -227,7 +229,9 @@
             <!-- Underline -->
             <AppBarButton
                 Label="Underline"
-                ToolTipService.ToolTip="Underline text">
+                ToolTipService.ToolTip="Underline text"
+                Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
+                CommandParameter="Underline">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE8DC;" />
                 </AppBarButton.Icon>
@@ -236,7 +240,9 @@
             <!-- Strikethrough -->
             <AppBarButton
                 Label="Strikethrough"
-                ToolTipService.ToolTip="Strikethrough text">
+                ToolTipService.ToolTip="Strikethrough text"
+                Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
+                CommandParameter="Strikethrough">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xEDE0;" />
                 </AppBarButton.Icon>
@@ -247,7 +253,9 @@
             <!-- Comment -->
             <AppBarButton
                 Label="Comment"
-                ToolTipService.ToolTip="Add text comment">
+                ToolTipService.ToolTip="Add text comment"
+                Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
+                CommandParameter="Comment">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE90A;" />
                 </AppBarButton.Icon>
@@ -258,7 +266,9 @@
             <!-- Rectangle -->
             <AppBarButton
                 Label="Rectangle"
-                ToolTipService.ToolTip="Draw rectangle">
+                ToolTipService.ToolTip="Draw rectangle"
+                Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
+                CommandParameter="Rectangle">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE761;" />
                 </AppBarButton.Icon>
@@ -267,7 +277,9 @@
             <!-- Circle -->
             <AppBarButton
                 Label="Circle"
-                ToolTipService.ToolTip="Draw circle">
+                ToolTipService.ToolTip="Draw circle"
+                Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
+                CommandParameter="Circle">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xEA3A;" />
                 </AppBarButton.Icon>
@@ -276,7 +288,9 @@
             <!-- Freehand -->
             <AppBarButton
                 Label="Freehand"
-                ToolTipService.ToolTip="Draw freehand">
+                ToolTipService.ToolTip="Draw freehand"
+                Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
+                CommandParameter="Freehand">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE76D;" />
                 </AppBarButton.Icon>
@@ -300,7 +314,8 @@
                         IsHexInputVisible="False"
                         IsAlphaEnabled="True"
                         Width="48"
-                        Height="32" />
+                        Height="32"
+                        Color="{x:Bind ViewModel.AnnotationViewModel.SelectedColor, Mode=TwoWay}" />
                 </StackPanel>
             </AppBarElementContainer>
         </CommandBar>
@@ -516,6 +531,14 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </Canvas>
+
+                    <!-- Annotation layer overlay -->
+                    <controls:AnnotationLayer
+                        x:Name="AnnotationLayerControl"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        ViewModel="{x:Bind ViewModel.AnnotationViewModel, Mode=OneWay}"
+                        ZoomLevel="{x:Bind ViewModel.ZoomLevel, Mode=OneWay}" />
                 </Grid>
             </ScrollViewer>
 

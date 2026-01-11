@@ -32,7 +32,7 @@
   - Requirements: 2.1, 3.1, 4.1
   - Instructions: Add annotation toolbar with buttons: Highlight, Underline, Strikethrough, Comment, Rectangle, Circle, Freehand. Add color picker.
 
-- [ ] 7. Integrate AnnotationLayer with PDF viewer
+- [x] 7. Integrate AnnotationLayer with PDF viewer
   - Files: `src/FluentPDF.App/Views/PdfViewerPage.xaml`, `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
   - Requirements: 2.1-2.7, 6.1-6.6
   - Instructions: Overlay AnnotationLayer on PDF viewer. Pass AnnotationViewModel to layer. Load annotations when page changes.

@@ -58,6 +58,11 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     public LogViewerViewModel LogViewerViewModel { get; }
 
     /// <summary>
+    /// Gets the annotation view model for PDF annotations.
+    /// </summary>
+    public AnnotationViewModel AnnotationViewModel { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
     /// </summary>
     /// <param name="documentService">Service for loading PDF documents.</param>
@@ -69,6 +74,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="formFieldViewModel">View model for form field interactions.</param>
     /// <param name="diagnosticsPanelViewModel">View model for the diagnostics panel.</param>
     /// <param name="logViewerViewModel">View model for the log viewer.</param>
+    /// <param name="annotationViewModel">View model for PDF annotations.</param>
     /// <param name="metricsService">Optional metrics collection service for observability.</param>
     /// <param name="dpiDetectionService">Optional DPI detection service for HiDPI support.</param>
     /// <param name="renderingSettingsService">Optional rendering settings service for quality preferences.</param>
@@ -84,6 +90,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         FormFieldViewModel formFieldViewModel,
         DiagnosticsPanelViewModel diagnosticsPanelViewModel,
         LogViewerViewModel logViewerViewModel,
+        AnnotationViewModel annotationViewModel,
         Core.Services.IMetricsCollectionService? metricsService,
         IDpiDetectionService? dpiDetectionService,
         IRenderingSettingsService? renderingSettingsService,
@@ -99,6 +106,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         FormFieldViewModel = formFieldViewModel ?? throw new ArgumentNullException(nameof(formFieldViewModel));
         DiagnosticsPanelViewModel = diagnosticsPanelViewModel ?? throw new ArgumentNullException(nameof(diagnosticsPanelViewModel));
         LogViewerViewModel = logViewerViewModel ?? throw new ArgumentNullException(nameof(logViewerViewModel));
+        AnnotationViewModel = annotationViewModel ?? throw new ArgumentNullException(nameof(annotationViewModel));
         _metricsService = metricsService; // Optional service
         _dpiDetectionService = dpiDetectionService; // Optional service
         _renderingSettingsService = renderingSettingsService; // Optional service
@@ -340,6 +348,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
             // Load form fields for first page
             await FormFieldViewModel.LoadFormFieldsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
+
+            // Load annotations for first page
+            await AnnotationViewModel.LoadAnnotationsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
         }
         catch (Exception ex)
         {
@@ -556,6 +567,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
                 // Reload form fields for the current page
                 await FormFieldViewModel.LoadFormFieldsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
+
+                // Load annotations for the current page
+                await AnnotationViewModel.LoadAnnotationsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
             }
             else
             {
