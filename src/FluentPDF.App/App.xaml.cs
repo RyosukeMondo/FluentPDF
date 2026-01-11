@@ -96,6 +96,7 @@ namespace FluentPDF.App
                     services.AddTransient<FormFieldViewModel>();
                     services.AddTransient<DiagnosticsPanelViewModel>();
                     services.AddTransient<LogViewerViewModel>();
+                    services.AddTransient<SettingsViewModel>();
                 })
                 .Build();
         }

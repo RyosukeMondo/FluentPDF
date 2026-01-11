@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Page
+    x:Class="FluentPDF.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluentPDF.App.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="RootPage">
+    <ScrollViewer>
+        <StackPanel Padding="24" Spacing="24">
+            <!-- Page Header -->
+            <TextBlock
+                FontSize="32"
+                FontWeight="SemiBold"
+                Text="Settings" />
+
+            <!-- Rendering Quality Section -->
+            <StackPanel Spacing="12">
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="Rendering Quality" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Adjust the quality of PDF rendering to balance performance and visual clarity."
+                    TextWrapping="Wrap" />
+
+                <!-- Quality ComboBox -->
+                <ComboBox
+                    x:Name="QualityComboBox"
+                    MinWidth="400"
+                    HorizontalAlignment="Left"
+                    Header="Quality Level"
+                    ItemsSource="{x:Bind ViewModel.QualityOptions, Mode=OneTime}"
+                    SelectedItem="{x:Bind ViewModel.SelectedQualityOption, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Text="{Binding DisplayName}" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{Binding Description}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <!-- Ultra Quality Warning -->
+                <InfoBar
+                    x:Name="UltraWarningInfoBar"
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.IsUltraQualitySelected, Mode=OneWay}"
+                    Message="Ultra quality requires significant memory and may cause slowdowns or crashes on large documents or low-end devices."
+                    Severity="Warning"
+                    Title="Performance Warning" />
+
+                <!-- Apply Button -->
+                <Button
+                    Command="{x:Bind ViewModel.ApplyQualityCommand}"
+                    Content="Apply"
+                    Style="{StaticResource AccentButtonStyle}" />
+
+                <!-- Additional Info -->
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Text="About Quality Settings" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap">
+                        <Run Text="• " />
+                        <Run FontWeight="SemiBold" Text="Auto" />
+                        <Run Text=" - The application automatically adjusts quality based on your display DPI and zoom level. This is recommended for most users." />
+                    </TextBlock>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap">
+                        <Run Text="• " />
+                        <Run FontWeight="SemiBold" Text="Manual Selection" />
+                        <Run Text=" - Choose a specific quality level to override automatic detection. Higher quality levels render at higher DPI but use more memory and processing power." />
+                    </TextBlock>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap">
+                        <Run Text="• " />
+                        <Run FontWeight="SemiBold" Text="Real-Time Adjustment" />
+                        <Run Text=" - When you move the application to a different display or change scaling settings, the rendering will automatically adjust if Auto mode is enabled." />
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
