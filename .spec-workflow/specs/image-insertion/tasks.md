@@ -29,7 +29,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.6, 3.1-3.6, 4.1-4.5, 5.1-5.5, 6.1-6.5_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer with PDFium and image processing expertise | Task: Implement ImageInsertionService. InsertImageAsync loads image, creates FPDFPageObj_NewImageObj, sets bitmap, positions with FPDFPageObj_Transform, adds to page with FPDFPage_InsertObject. MoveImageAsync updates transform matrix. ScaleImageAsync updates size in matrix. RotateImageAsync applies rotation. DeleteImageAsync calls FPDFPage_RemoveObject. Handle PNG alpha, JPEG quality, BMP conversion. | Restrictions: Use existing PdfiumInterop, handle all supported formats, proper error handling. | _Leverage: PdfiumInterop, AnnotationService patterns | _Requirements: 1.1-1.7, 2.1-2.6, 3.1-3.6, 4.1-4.5, 5.1-5.5, 6.1-6.5 | Success: All operations work, formats supported, proper error handling. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 4. Create ImageInsertionViewModel
+- [x] 4. Create ImageInsertionViewModel
   - File: `src/FluentPDF.App/ViewModels/ImageInsertionViewModel.cs`
   - Add InsertImageCommand with file picker
   - Add DeleteSelectedImageCommand
