@@ -19,6 +19,12 @@ namespace FluentPDF.App.ViewModels;
 public record NavigateToPageMessage(int PageNumber);
 
 /// <summary>
+/// Message sent to raise an accessibility notification for screen readers.
+/// </summary>
+/// <param name="Message">The message to announce to screen readers.</param>
+public record AccessibilityNotificationMessage(string Message);
+
+/// <summary>
 /// ViewModel for the thumbnails sidebar.
 /// Manages thumbnail state, caching, and navigation.
 /// </summary>

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
@@ -1001,6 +1002,28 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     {
         _logger.LogInformation("ToggleSidebar command invoked");
         IsSidebarVisible = !IsSidebarVisible;
+
+        // Announce sidebar state change to screen readers
+        RaiseAccessibilityNotification(
+            IsSidebarVisible ? "Thumbnails sidebar shown" : "Thumbnails sidebar hidden");
+    }
+
+    /// <summary>
+    /// Raises an accessibility notification for screen readers.
+    /// </summary>
+    /// <param name="message">The message to announce.</param>
+    private void RaiseAccessibilityNotification(string message)
+    {
+        try
+        {
+            // This will be handled by the View to raise the notification
+            // using AutomationPeer.RaiseNotificationEvent
+            WeakReferenceMessenger.Default.Send(new AccessibilityNotificationMessage(message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to raise accessibility notification: {Message}", message);
+        }
     }
 
     /// <summary>

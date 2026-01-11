@@ -1,9 +1,12 @@
+using CommunityToolkit.Mvvm.Messaging;
 using FluentPDF.App.Helpers;
 using FluentPDF.App.Services;
 using FluentPDF.App.ViewModels;
 using FluentPDF.Core.Models;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -54,6 +57,9 @@ public sealed partial class PdfViewerPage : Page, IDisposable
         // Hook up lifecycle events for DPI monitoring
         this.Loaded += OnPageLoaded;
         this.Unloaded += OnPageUnloaded;
+
+        // Register for accessibility notification messages
+        WeakReferenceMessenger.Default.Register<AccessibilityNotificationMessage>(this, OnAccessibilityNotification);
     }
 
     /// <summary>
@@ -255,6 +261,37 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles accessibility notification messages and announces them to screen readers.
+    /// </summary>
+    private void OnAccessibilityNotification(object recipient, AccessibilityNotificationMessage message)
+    {
+        try
+        {
+            // Get the AutomationPeer for this page
+            var peer = FrameworkElementAutomationPeer.FromElement(this);
+            if (peer == null)
+            {
+                peer = FrameworkElementAutomationPeer.CreatePeerForElement(this);
+            }
+
+            if (peer != null)
+            {
+                // Raise the notification event for screen readers
+                peer.RaiseNotificationEvent(
+                    AutomationNotificationKind.ActionCompleted,
+                    AutomationNotificationProcessing.ImportantMostRecent,
+                    message.Message,
+                    Guid.NewGuid().ToString());
+            }
+        }
+        catch (Exception)
+        {
+            // Silently fail if accessibility notification fails
+            // This is not critical functionality
+        }
+    }
+
+    /// <summary>
     /// Updates the search highlight overlays on the current page.
     /// Renders rectangles for all search matches on the current page.
     /// </summary>
@@ -337,6 +374,10 @@ public sealed partial class PdfViewerPage : Page, IDisposable
         this.KeyDown -= OnPageKeyDown;
         this.Loaded -= OnPageLoaded;
         this.Unloaded -= OnPageUnloaded;
+
+        // Unregister accessibility notification message handler
+        WeakReferenceMessenger.Default.Unregister<AccessibilityNotificationMessage>(this);
+
         if (ViewModel != null)
         {
             ViewModel.PropertyChanged -= OnViewModelPropertyChanged;

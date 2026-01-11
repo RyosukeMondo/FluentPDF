@@ -103,7 +103,7 @@
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
   - _Prompt: Role: Performance Engineer with expertise in async optimization | Task: In ThumbnailsViewModel, add SemaphoreSlim(4) to limit concurrent renders. In LoadThumbnailsAsync, await semaphore before rendering, release after. Implement GetVisibleRange() calculating visible thumbnail indices from ScrollViewer position, load only visible range first. Implement priority loading: load current page ± 5 pages before distant pages. Add MemoryMonitor checking cache size (sum of BitmapImage sizes), reduce capacity if exceeds 50MB. Create ThumbnailBenchmarks in Benchmarks project: benchmark RenderThumbnailAsync P99 latency, verify < 200ms. | Restrictions: Do not block UI thread, limit parallel renders, prioritize visible thumbnails, monitor memory continuously, benchmarks run with real PDFium. | Success: Concurrent renders limited to 4, lazy loading works, priority loading implemented, memory stays under 50MB, P99 latency < 200ms verified in benchmarks._
 
-- [ ] 8. Add keyboard navigation and accessibility
+- [x] 8. Add keyboard navigation and accessibility
   - Files:
     - `src/FluentPDF.App/Controls/ThumbnailsSidebar.xaml` (modify)
     - `src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs` (modify)

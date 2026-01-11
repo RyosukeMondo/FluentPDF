@@ -2,7 +2,10 @@ using FluentPDF.App.Models;
 using FluentPDF.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Windows.System;
 
 namespace FluentPDF.App.Controls;
 
@@ -32,6 +35,75 @@ public sealed partial class ThumbnailsSidebar : UserControl
     }
 
     /// <summary>
+    /// Handles thumbnail button loaded event to set accessibility properties.
+    /// </summary>
+    private void ThumbnailButton_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.DataContext is ThumbnailItem item)
+        {
+            // Set accessibility name for screen readers
+            AutomationProperties.SetName(button, $"Page {item.PageNumber} thumbnail");
+            AutomationProperties.SetAutomationId(button, $"ThumbnailPage_{item.PageNumber}");
+
+            // Add arrow key navigation handler
+            button.KeyDown += ThumbnailButton_KeyDown;
+        }
+    }
+
+    /// <summary>
+    /// Handles arrow key navigation between thumbnails.
+    /// </summary>
+    private void ThumbnailButton_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not ThumbnailItem item)
+        {
+            return;
+        }
+
+        var currentIndex = ViewModel.Thumbnails.IndexOf(item);
+        Button? targetButton = null;
+
+        switch (e.Key)
+        {
+            case VirtualKey.Up:
+                // Move to previous thumbnail
+                if (currentIndex > 0)
+                {
+                    var targetItem = ViewModel.Thumbnails[currentIndex - 1];
+                    targetButton = FindButtonForItem(targetItem);
+                }
+                e.Handled = true;
+                break;
+
+            case VirtualKey.Down:
+                // Move to next thumbnail
+                if (currentIndex < ViewModel.Thumbnails.Count - 1)
+                {
+                    var targetItem = ViewModel.Thumbnails[currentIndex + 1];
+                    targetButton = FindButtonForItem(targetItem);
+                }
+                e.Handled = true;
+                break;
+        }
+
+        // Set focus on target button
+        if (targetButton != null)
+        {
+            targetButton.Focus(FocusState.Keyboard);
+        }
+    }
+
+    /// <summary>
+    /// Finds the button control for a given thumbnail item.
+    /// </summary>
+    private Button? FindButtonForItem(ThumbnailItem item)
+    {
+        // Try to find the realized element in the ItemsRepeater
+        var element = ThumbnailsRepeater.TryGetElement(ViewModel.Thumbnails.IndexOf(item));
+        return element as Button;
+    }
+
+    /// <summary>
     /// Handles thumbnail button click to navigate to the selected page.
     /// </summary>
     private void ThumbnailButton_Click(object sender, RoutedEventArgs e)
@@ -40,6 +112,21 @@ public sealed partial class ThumbnailsSidebar : UserControl
         {
             // Execute navigation command
             ViewModel.NavigateToPageCommand.Execute(item.PageNumber);
+        }
+    }
+
+    /// <summary>
+    /// Handles keyboard accelerator (Enter/Space) to navigate to the focused thumbnail.
+    /// </summary>
+    private void ThumbnailKeyboardAccelerator_Invoked(
+        Microsoft.UI.Xaml.Input.KeyboardAccelerator sender,
+        Microsoft.UI.Xaml.Input.KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (args.Element is Button button && button.DataContext is ThumbnailItem item)
+        {
+            // Execute navigation command
+            ViewModel.NavigateToPageCommand.Execute(item.PageNumber);
+            args.Handled = true;
         }
     }
 

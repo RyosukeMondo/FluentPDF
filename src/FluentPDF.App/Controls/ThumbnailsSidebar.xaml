@@ -19,13 +19,25 @@
         <!-- Data template for thumbnail items -->
         <DataTemplate x:Key="ThumbnailItemTemplate" x:DataType="models:ThumbnailItem">
             <Button
+                x:Name="ThumbnailButton"
                 Click="ThumbnailButton_Click"
+                Loaded="ThumbnailButton_Loaded"
                 Background="Transparent"
                 BorderThickness="0"
                 Padding="0"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
-                Margin="0,4">
+                Margin="0,4"
+                IsTabStop="True"
+                UseSystemFocusVisuals="True"
+                FocusVisualPrimaryBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                FocusVisualPrimaryThickness="3"
+                FocusVisualSecondaryBrush="Transparent"
+                FocusVisualSecondaryThickness="0">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="Enter" Invoked="ThumbnailKeyboardAccelerator_Invoked"/>
+                    <KeyboardAccelerator Key="Space" Invoked="ThumbnailKeyboardAccelerator_Invoked"/>
+                </Button.KeyboardAccelerators>
                 <Grid Width="150" Height="220">
                     <!-- Selected border -->
                     <Border
