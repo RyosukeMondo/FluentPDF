@@ -42,6 +42,11 @@
             Unit tests for the BookmarkNode model.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Tests.Models.DisplayInfoTests">
+            <summary>
+            Unit tests for the DisplayInfo model and RenderingQuality enum.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Tests.Models.PdfDocumentTests">
             <summary>
             Unit tests for PdfDocument and PdfPage models.

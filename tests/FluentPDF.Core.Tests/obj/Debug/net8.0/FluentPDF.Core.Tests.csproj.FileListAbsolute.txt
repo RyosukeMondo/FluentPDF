@@ -151,3 +151,12 @@
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Web.WebView2.Core.xml
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Web.WebView2.Wpf.xml
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Web.WebView2.WinForms.xml
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Extensions.Configuration.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Extensions.Configuration.Abstractions.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Extensions.Configuration.Binder.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Extensions.Diagnostics.Abstractions.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Extensions.Logging.Configuration.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/Microsoft.Extensions.Options.ConfigurationExtensions.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/OpenTelemetry.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/OpenTelemetry.Api.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/OpenTelemetry.Api.ProviderBuilderExtensions.dll

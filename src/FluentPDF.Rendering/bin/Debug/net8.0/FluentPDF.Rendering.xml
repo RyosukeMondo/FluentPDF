@@ -890,6 +890,43 @@
         <member name="M:FluentPDF.Rendering.Services.DocxParserService.ParseDocxToHtmlAsync(System.String)">
             <inheritdoc />
         </member>
+        <member name="T:FluentPDF.Rendering.Services.DpiDetectionService">
+            <summary>
+            Service for detecting and monitoring display DPI using WinUI 3 XamlRoot.
+            Uses reflection to access platform-specific XamlRoot APIs to maintain cross-platform compatibility.
+            Provides DPI detection, monitoring with throttling, and effective DPI calculation.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DpiDetectionService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.DpiDetectionService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.DpiDetectionService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging and diagnostics.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DpiDetectionService.GetCurrentDisplayInfo(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DpiDetectionService.MonitorDpiChanges(System.Object,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DpiDetectionService.CalculateEffectiveDpi(FluentPDF.Core.Models.DisplayInfo,System.Double,FluentPDF.Core.Models.RenderingQuality)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.DpiDetectionService.Dispose">
+            <summary>
+            Disposes the service and cleans up all DPI monitoring subscriptions.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.DpiDetectionService.EventHandlerWrapper">
+            <summary>
+            Wrapper class for handling XamlRoot.Changed events using reflection.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.DpiDetectionService.MonitoringSubscription">
+            <summary>
+            Represents a DPI monitoring subscription that can be disposed.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Rendering.Services.FormValidationService">
             <summary>
             Service for validating PDF form field values against their constraints.
@@ -943,6 +980,76 @@
             Calculates SSIM (Structural Similarity Index) between two images.
             This is a simplified implementation that calculates luminance similarity.
             For production use, consider using a library like OpenCvSharp for full SSIM calculation.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.LogExportService">
+            <summary>
+            Implements log reading, filtering, and export from Serilog JSON log files.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LogExportService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.LogExportService},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.LogExportService"/> class.
+            </summary>
+            <param name="logger">The logger instance.</param>
+            <param name="logDirectory">The directory where log files are stored. If null, uses a default location.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LogExportService.GetRecentLogsAsync(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LogExportService.FilterLogsAsync(FluentPDF.Core.Observability.LogFilterCriteria)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LogExportService.ExportLogsAsync(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Observability.LogEntry},System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LogExportService.ReadLogFileAsync(System.String)">
+            <summary>
+            Reads a log file and parses entries, using cache and streaming to avoid memory issues.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LogExportService.ParseSerilogJsonLine(System.String)">
+            <summary>
+            Parses a Serilog JSON log line into a LogEntry.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.LogExportService.ConvertToSerilogFormat(FluentPDF.Core.Observability.LogEntry)">
+            <summary>
+            Converts a LogEntry back to Serilog JSON format for export.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.LruCache`2">
+            <summary>
+            Simple LRU cache implementation using Dictionary and LinkedList.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.MetricsCollectionService">
+            <summary>
+            Implements metrics collection using OpenTelemetry and in-memory storage.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.MetricsCollectionService.RecordFPS(System.Double)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.MetricsCollectionService.RecordRenderTime(System.Int32,System.Double)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.MetricsCollectionService.RecordMemoryUsage(System.Int64,System.Int64)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.MetricsCollectionService.GetCurrentMetrics">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.MetricsCollectionService.GetMetricsHistory(System.TimeSpan)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.MetricsCollectionService.ExportMetricsAsync(System.String,FluentPDF.Core.Observability.ExportFormat)">
+            <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.CircularBuffer`1">
+            <summary>
+            A circular buffer with fixed capacity that overwrites oldest items when full.
+            Provides O(1) insertion performance.
             </summary>
         </member>
         <member name="T:FluentPDF.Rendering.Services.PdfDocumentService">

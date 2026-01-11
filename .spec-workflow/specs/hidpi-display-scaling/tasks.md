@@ -16,7 +16,7 @@
   - _Requirements: 1.1-1.7, 6.1-6.9_
   - _Prompt: Role: Domain Modeling Developer | Task: Create DisplayInfo and RenderingQuality models for HiDPI support | Restrictions: Keep models immutable, add validation | Success: Models represent display configuration and quality settings_
 
-- [ ] 2. Implement IDpiDetectionService and DpiDetectionService
+- [-] 2. Implement IDpiDetectionService and DpiDetectionService
   - Files:
     - `src/FluentPDF.Core/Services/IDpiDetectionService.cs`
     - `src/FluentPDF.Rendering/Services/DpiDetectionService.cs`

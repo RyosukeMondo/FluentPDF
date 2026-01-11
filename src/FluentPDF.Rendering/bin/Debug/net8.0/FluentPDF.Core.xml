@@ -263,6 +263,68 @@
             Gets a value indicating whether quality validation was performed.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.DisplayInfo">
+            <summary>
+            Represents display configuration information for HiDPI rendering.
+            Contains display scaling, effective DPI, and helper properties for rendering decisions.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.DisplayInfo.RasterizationScale">
+            <summary>
+            Gets the rasterization scale factor of the display.
+            For example: 1.0 = 100% scaling, 1.5 = 150% scaling, 2.0 = 200% scaling.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.DisplayInfo.EffectiveDpi">
+            <summary>
+            Gets the effective DPI (dots per inch) for rendering.
+            This accounts for display scaling, zoom level, and quality settings.
+            Standard DPI is 96. Values range from 50 to 576 DPI.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.DisplayInfo.IsHighDpi">
+            <summary>
+            Gets a value indicating whether this is a high-DPI display.
+            True when RasterizationScale is greater than 1.0.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.DisplayInfo.ScalingPercentage">
+            <summary>
+            Gets the display scaling as a percentage.
+            For example: 100%, 150%, 200%.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.DisplayInfo.Create(System.Double,System.Double)">
+            <summary>
+            Creates a DisplayInfo instance with the specified parameters.
+            </summary>
+            <param name="rasterizationScale">The rasterization scale factor (must be positive).</param>
+            <param name="effectiveDpi">The effective DPI for rendering (must be between 50 and 576).</param>
+            <returns>A new DisplayInfo instance.</returns>
+            <exception cref="T:System.ArgumentOutOfRangeException">
+            Thrown when rasterizationScale is not positive or effectiveDpi is outside valid range.
+            </exception>
+        </member>
+        <member name="M:FluentPDF.Core.Models.DisplayInfo.Standard">
+            <summary>
+            Creates a DisplayInfo instance for a standard display (96 DPI, 100% scaling).
+            </summary>
+            <returns>A DisplayInfo instance representing a standard display.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.DisplayInfo.FromScale(System.Double)">
+            <summary>
+            Creates a DisplayInfo instance for a high-DPI display with the specified scale.
+            </summary>
+            <param name="scale">The scaling factor (e.g., 1.5 for 150%, 2.0 for 200%).</param>
+            <returns>A DisplayInfo instance with calculated effective DPI.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Models.DisplayInfo.GetQualityMultiplier(FluentPDF.Core.Models.RenderingQuality)">
+            <summary>
+            Calculates the scale multiplier for the given quality level.
+            </summary>
+            <param name="quality">The rendering quality level.</param>
+            <returns>The DPI multiplier for the quality level.</returns>
+        </member>
         <member name="T:FluentPDF.Core.Models.FieldValidationError">
             <summary>
             Represents a validation error for a specific form field.
@@ -705,6 +767,67 @@
             Gets a value indicating whether the quality meets the specified threshold.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Models.RecentFileEntry">
+            <summary>
+            Represents an entry in the recent files list.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.RecentFileEntry.FilePath">
+            <summary>
+            Gets the full path to the file.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.RecentFileEntry.LastAccessed">
+            <summary>
+            Gets the timestamp when the file was last accessed.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.RecentFileEntry.DisplayName">
+            <summary>
+            Gets the display name of the file (filename without path).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.RenderingQuality">
+            <summary>
+            Specifies the rendering quality level for PDF rendering.
+            Higher quality levels produce sharper output but require more memory and processing time.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.RenderingQuality.Auto">
+            <summary>
+            Automatically selects quality based on display DPI and zoom level.
+            This is the recommended default setting.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.RenderingQuality.Low">
+            <summary>
+            Low quality rendering (75 DPI equivalent).
+            Suitable for quick previews or low-end devices.
+            Minimal memory usage, fastest rendering.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.RenderingQuality.Medium">
+            <summary>
+            Medium quality rendering (96 DPI equivalent).
+            Suitable for standard displays at 100% scaling.
+            Balanced memory usage and rendering speed.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.RenderingQuality.High">
+            <summary>
+            High quality rendering (144 DPI equivalent).
+            Suitable for high-DPI displays or 150% scaling.
+            Increased memory usage, moderate rendering speed.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.RenderingQuality.Ultra">
+            <summary>
+            Ultra quality rendering (192+ DPI equivalent).
+            Suitable for 4K displays, 200% scaling, or professional use.
+            High memory usage, slower rendering speed.
+            May cause out-of-memory errors on large documents.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.Models.SearchMatch">
             <summary>
             Represents a single text match found during a PDF search operation.
@@ -801,6 +924,216 @@
             Creates search options for case-sensitive whole word search.
             </summary>
             <returns>SearchOptions with both CaseSensitive and WholeWord set to true.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Observability.ExportFormat">
+            <summary>
+            Defines the export format for metrics and logs.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.ExportFormat.Json">
+            <summary>
+            JSON format export.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.ExportFormat.Csv">
+            <summary>
+            CSV format export.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Observability.LogEntry">
+            <summary>
+            Represents a structured log entry.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.Timestamp">
+            <summary>
+            Gets the timestamp when the log entry was created.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.Level">
+            <summary>
+            Gets the log level (severity).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.Message">
+            <summary>
+            Gets the log message.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.CorrelationId">
+            <summary>
+            Gets the correlation ID for distributed tracing.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.Component">
+            <summary>
+            Gets the component (namespace) that generated the log.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.Context">
+            <summary>
+            Gets the additional context data associated with the log entry.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.Exception">
+            <summary>
+            Gets the exception message if an exception was logged.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogEntry.StackTrace">
+            <summary>
+            Gets the stack trace if an exception was logged.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Observability.LogLevel">
+            <summary>
+            Defines the log severity levels.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.LogLevel.Trace">
+            <summary>
+            Trace-level logging (most verbose).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.LogLevel.Debug">
+            <summary>
+            Debug-level logging.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.LogLevel.Information">
+            <summary>
+            Information-level logging.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.LogLevel.Warning">
+            <summary>
+            Warning-level logging.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.LogLevel.Error">
+            <summary>
+            Error-level logging.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.LogLevel.Critical">
+            <summary>
+            Critical-level logging (least verbose).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Observability.LogFilterCriteria">
+            <summary>
+            Represents filtering criteria for log entries.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogFilterCriteria.MinimumLevel">
+            <summary>
+            Gets the minimum log level to include (inclusive).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogFilterCriteria.CorrelationId">
+            <summary>
+            Gets the correlation ID to filter by (exact match).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogFilterCriteria.ComponentFilter">
+            <summary>
+            Gets the component filter (StartsWith match).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogFilterCriteria.StartTime">
+            <summary>
+            Gets the start time for time range filtering (inclusive).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogFilterCriteria.EndTime">
+            <summary>
+            Gets the end time for time range filtering (inclusive).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.LogFilterCriteria.SearchText">
+            <summary>
+            Gets the search text to filter by (case-insensitive Contains on Message).
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Observability.LogFilterCriteria.Matches(FluentPDF.Core.Observability.LogEntry)">
+            <summary>
+            Determines whether a log entry matches these filter criteria.
+            </summary>
+            <param name="entry">The log entry to check.</param>
+            <returns>True if the entry matches all criteria; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Observability.PerformanceMetrics">
+            <summary>
+            Represents runtime performance metrics for the application.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.CurrentFPS">
+            <summary>
+            Gets the current frames per second.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.ManagedMemoryMB">
+            <summary>
+            Gets the managed memory usage in megabytes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.NativeMemoryMB">
+            <summary>
+            Gets the native memory usage in megabytes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.TotalMemoryMB">
+            <summary>
+            Gets the total memory usage (managed + native) in megabytes.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.LastRenderTimeMs">
+            <summary>
+            Gets the last render time in milliseconds.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.CurrentPageNumber">
+            <summary>
+            Gets the current page number being rendered.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.Timestamp">
+            <summary>
+            Gets the timestamp when these metrics were captured.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Observability.PerformanceMetrics.Level">
+            <summary>
+            Gets the performance level based on FPS and memory usage.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Observability.PerformanceMetrics.CalculateLevel(System.Double,System.Int64)">
+            <summary>
+            Calculates the performance level based on FPS and total memory usage.
+            </summary>
+            <param name="fps">The frames per second.</param>
+            <param name="totalMemoryMB">The total memory usage in megabytes.</param>
+            <returns>The calculated performance level.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Observability.PerformanceLevel">
+            <summary>
+            Defines the performance levels based on FPS and memory thresholds.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.PerformanceLevel.Good">
+            <summary>
+            Good performance: FPS greater than or equal to 30, Memory less than 500MB.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.PerformanceLevel.Warning">
+            <summary>
+            Warning performance: FPS 15-30, Memory 500-1000MB.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Observability.PerformanceLevel.Critical">
+            <summary>
+            Critical performance: FPS less than 15, Memory greater than 1000MB.
+            </summary>
         </member>
         <member name="T:FluentPDF.Core.Placeholder">
             <summary>
@@ -990,6 +1323,40 @@
             Error codes: DOCX_FILE_NOT_FOUND, DOCX_INVALID_FORMAT, DOCX_PARSE_FAILED.
             </returns>
         </member>
+        <member name="T:FluentPDF.Core.Services.IDpiDetectionService">
+            <summary>
+            Service contract for detecting and monitoring display DPI information.
+            Provides methods to detect current DPI settings, calculate effective DPI with quality adjustments,
+            and monitor DPI changes in real-time.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDpiDetectionService.GetCurrentDisplayInfo(System.Object)">
+            <summary>
+            Gets the current display information from the provided XamlRoot.
+            XamlRoot is platform-specific (WinUI 3) and must be provided by the caller.
+            </summary>
+            <param name="xamlRoot">The XamlRoot object to query for rasterization scale (platform-specific).</param>
+            <returns>A result containing DisplayInfo with current rasterization scale and base DPI, or an error if detection fails.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDpiDetectionService.MonitorDpiChanges(System.Object,System.Int32)">
+            <summary>
+            Monitors DPI changes and emits DisplayInfo updates through an observable stream.
+            The stream is throttled to avoid excessive updates during rapid DPI changes.
+            </summary>
+            <param name="xamlRoot">The XamlRoot object to monitor for DPI changes (platform-specific).</param>
+            <param name="throttleMilliseconds">Throttle interval in milliseconds to debounce rapid changes. Default is 500ms.</param>
+            <returns>An observable stream of DisplayInfo updates, or an error if monitoring cannot be established.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDpiDetectionService.CalculateEffectiveDpi(FluentPDF.Core.Models.DisplayInfo,System.Double,FluentPDF.Core.Models.RenderingQuality)">
+            <summary>
+            Calculates the effective DPI for rendering, taking into account display scale,
+            zoom level, quality settings, and DPI bounds (50-576 DPI).
+            </summary>
+            <param name="displayInfo">The current display information.</param>
+            <param name="zoomLevel">The zoom level (1.0 = 100%, 2.0 = 200%, etc.).</param>
+            <param name="quality">The rendering quality setting that affects DPI multiplier.</param>
+            <returns>A result containing the calculated effective DPI clamped to valid bounds, or an error if calculation fails.</returns>
+        </member>
         <member name="T:FluentPDF.Core.Services.IFormValidationService">
             <summary>
             Service contract for validating PDF form field values against their constraints.
@@ -1048,6 +1415,79 @@
             Error codes: HTML_EMPTY, OUTPUT_PATH_EMPTY, WEBVIEW2_RUNTIME_NOT_FOUND,
             WEBVIEW2_INIT_FAILED, HTML_TO_PDF_FAILED, CONVERSION_TIMEOUT, CONVERSION_CANCELLED.
             </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.ILogExportService">
+            <summary>
+            Contract for reading, filtering, and exporting Serilog JSON log files.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ILogExportService.GetRecentLogsAsync(System.Int32)">
+            <summary>
+            Gets the most recent log entries from the log files.
+            </summary>
+            <param name="maxEntries">The maximum number of entries to retrieve.</param>
+            <returns>A result containing the recent log entries or an error.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ILogExportService.FilterLogsAsync(FluentPDF.Core.Observability.LogFilterCriteria)">
+            <summary>
+            Filters log entries based on the specified criteria.
+            </summary>
+            <param name="criteria">The filter criteria to apply.</param>
+            <returns>A result containing the filtered log entries or an error.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ILogExportService.ExportLogsAsync(System.Collections.Generic.IReadOnlyList{FluentPDF.Core.Observability.LogEntry},System.String)">
+            <summary>
+            Exports log entries to a file in Serilog JSON format.
+            </summary>
+            <param name="entries">The log entries to export.</param>
+            <param name="filePath">The file path to export to.</param>
+            <returns>A result indicating success or failure.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IMetricsCollectionService">
+            <summary>
+            Contract for performance metrics collection and reporting.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IMetricsCollectionService.RecordFPS(System.Double)">
+            <summary>
+            Records the current frames per second.
+            </summary>
+            <param name="fps">The frames per second value.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IMetricsCollectionService.RecordRenderTime(System.Int32,System.Double)">
+            <summary>
+            Records the render time for a specific page.
+            </summary>
+            <param name="pageNumber">The page number that was rendered.</param>
+            <param name="milliseconds">The render time in milliseconds.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IMetricsCollectionService.RecordMemoryUsage(System.Int64,System.Int64)">
+            <summary>
+            Records the current memory usage.
+            </summary>
+            <param name="managedMB">Managed memory usage in megabytes.</param>
+            <param name="nativeMB">Native memory usage in megabytes.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IMetricsCollectionService.GetCurrentMetrics">
+            <summary>
+            Gets the current performance metrics snapshot.
+            </summary>
+            <returns>The current performance metrics.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IMetricsCollectionService.GetMetricsHistory(System.TimeSpan)">
+            <summary>
+            Gets the metrics history within the specified time duration.
+            </summary>
+            <param name="duration">The time duration to look back.</param>
+            <returns>A read-only list of performance metrics within the time window.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IMetricsCollectionService.ExportMetricsAsync(System.String,FluentPDF.Core.Observability.ExportFormat)">
+            <summary>
+            Exports metrics to a file in the specified format.
+            </summary>
+            <param name="filePath">The file path to export to.</param>
+            <param name="format">The export format (JSON or CSV).</param>
+            <returns>A result indicating success or failure.</returns>
         </member>
         <member name="T:FluentPDF.Core.Services.IPdfDocumentService">
             <summary>
@@ -1207,6 +1647,35 @@
             Checks if LibreOffice is installed and available for quality validation.
             </summary>
             <returns>True if LibreOffice is detected and functional, false otherwise.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IRecentFilesService">
+            <summary>
+            Service for managing recently opened files.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.GetRecentFiles">
+            <summary>
+            Gets the list of recent files in most-recently-used order.
+            </summary>
+            <returns>Collection of recent file entries, limited to maximum allowed.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.AddRecentFile(System.String)">
+            <summary>
+            Adds a file to the recent files list or updates its timestamp if already present.
+            </summary>
+            <param name="filePath">Full path to the file.</param>
+            <exception cref="T:System.ArgumentException">Thrown when filePath is null, empty, or whitespace.</exception>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.RemoveRecentFile(System.String)">
+            <summary>
+            Removes a file from the recent files list.
+            </summary>
+            <param name="filePath">Full path to the file to remove.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRecentFilesService.ClearRecentFiles">
+            <summary>
+            Clears all recent files.
+            </summary>
         </member>
         <member name="T:FluentPDF.Core.Services.ITelemetryService">
             <summary>
