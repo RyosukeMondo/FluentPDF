@@ -6,6 +6,7 @@ using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
 using FluentResults;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Trace;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
@@ -20,6 +21,7 @@ namespace FluentPDF.Rendering.Services;
 public sealed class PdfRenderingService : IPdfRenderingService
 {
     private readonly ILogger<PdfRenderingService> _logger;
+    private static readonly ActivitySource ActivitySource = new("FluentPDF.Rendering");
     private const int SlowRenderThresholdMs = 2000;
 
     /// <summary>
@@ -38,6 +40,8 @@ public sealed class PdfRenderingService : IPdfRenderingService
         double zoomLevel,
         double dpi = 96)
     {
+        using var activity = ActivitySource.StartActivity("RenderPage");
+
         if (document == null)
         {
             throw new ArgumentNullException(nameof(document));
@@ -45,6 +49,11 @@ public sealed class PdfRenderingService : IPdfRenderingService
 
         var correlationId = Guid.NewGuid();
         var stopwatch = Stopwatch.StartNew();
+
+        // Add activity tags
+        activity?.SetTag("page.number", pageNumber);
+        activity?.SetTag("zoom.level", zoomLevel);
+        activity?.SetTag("correlation.id", correlationId.ToString());
 
         _logger.LogInformation(
             "Starting page render. CorrelationId={CorrelationId}, PageNumber={PageNumber}, ZoomLevel={ZoomLevel}, Dpi={Dpi}",
@@ -66,6 +75,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                 "Invalid page number for rendering. CorrelationId={CorrelationId}, PageNumber={PageNumber}, TotalPages={TotalPages}",
                 correlationId, pageNumber, document.PageCount);
 
+            activity?.SetStatus(ActivityStatusCode.Error, error.Message);
             return Result.Fail(error);
         }
 
@@ -76,27 +86,34 @@ public sealed class PdfRenderingService : IPdfRenderingService
 
             try
             {
-                // Cast handle to SafePdfDocumentHandle
-                var documentHandle = (SafePdfDocumentHandle)document.Handle;
-
                 // Load page (0-based index)
-                pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
-
-                if (pageHandle.IsInvalid)
+                using (var loadPageActivity = ActivitySource.StartActivity("LoadPage"))
                 {
-                    var error = new PdfError(
-                        "PDF_PAGE_INVALID",
-                        $"Failed to load page {pageNumber} for rendering.",
-                        ErrorCategory.Rendering,
-                        ErrorSeverity.Error)
-                        .WithContext("PageNumber", pageNumber)
-                        .WithContext("CorrelationId", correlationId);
+                    loadPageActivity?.SetTag("page.number", pageNumber);
 
-                    _logger.LogError(
-                        "Failed to load page for rendering. CorrelationId={CorrelationId}, PageNumber={PageNumber}",
-                        correlationId, pageNumber);
+                    // Cast handle to SafePdfDocumentHandle
+                    var documentHandle = (SafePdfDocumentHandle)document.Handle;
 
-                    return Result.Fail(error);
+                    pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
+
+                    if (pageHandle.IsInvalid)
+                    {
+                        var error = new PdfError(
+                            "PDF_PAGE_INVALID",
+                            $"Failed to load page {pageNumber} for rendering.",
+                            ErrorCategory.Rendering,
+                            ErrorSeverity.Error)
+                            .WithContext("PageNumber", pageNumber)
+                            .WithContext("CorrelationId", correlationId);
+
+                        _logger.LogError(
+                            "Failed to load page for rendering. CorrelationId={CorrelationId}, PageNumber={PageNumber}",
+                            correlationId, pageNumber);
+
+                        loadPageActivity?.SetStatus(ActivityStatusCode.Error, error.Message);
+                        activity?.SetStatus(ActivityStatusCode.Error, error.Message);
+                        return Result.Fail(error);
+                    }
                 }
 
                 // Get page dimensions
@@ -132,45 +149,62 @@ public sealed class PdfRenderingService : IPdfRenderingService
                     return Result.Fail(error);
                 }
 
-                // Create bitmap
-                bitmap = PdfiumInterop.CreateBitmap(outputWidth, outputHeight, hasAlpha: true);
-
-                if (bitmap == IntPtr.Zero)
+                // Render page to bitmap
+                using (var renderBitmapActivity = ActivitySource.StartActivity("RenderBitmap"))
                 {
-                    var error = new PdfError(
-                        "PDF_OUT_OF_MEMORY",
-                        "Failed to create bitmap for rendering. Out of memory or dimensions too large.",
-                        ErrorCategory.System,
-                        ErrorSeverity.Error)
-                        .WithContext("OutputWidth", outputWidth)
-                        .WithContext("OutputHeight", outputHeight)
-                        .WithContext("CorrelationId", correlationId);
+                    renderBitmapActivity?.SetTag("output.width", outputWidth);
+                    renderBitmapActivity?.SetTag("output.height", outputHeight);
 
-                    _logger.LogError(
-                        "Failed to create bitmap. CorrelationId={CorrelationId}, Width={Width}, Height={Height}",
-                        correlationId, outputWidth, outputHeight);
+                    // Create bitmap
+                    bitmap = PdfiumInterop.CreateBitmap(outputWidth, outputHeight, hasAlpha: true);
 
-                    return Result.Fail(error);
+                    if (bitmap == IntPtr.Zero)
+                    {
+                        var error = new PdfError(
+                            "PDF_OUT_OF_MEMORY",
+                            "Failed to create bitmap for rendering. Out of memory or dimensions too large.",
+                            ErrorCategory.System,
+                            ErrorSeverity.Error)
+                            .WithContext("OutputWidth", outputWidth)
+                            .WithContext("OutputHeight", outputHeight)
+                            .WithContext("CorrelationId", correlationId);
+
+                        _logger.LogError(
+                            "Failed to create bitmap. CorrelationId={CorrelationId}, Width={Width}, Height={Height}",
+                            correlationId, outputWidth, outputHeight);
+
+                        renderBitmapActivity?.SetStatus(ActivityStatusCode.Error, error.Message);
+                        activity?.SetStatus(ActivityStatusCode.Error, error.Message);
+                        return Result.Fail(error);
+                    }
+
+                    // Fill bitmap with white background (ARGB: 0xFFFFFFFF)
+                    PdfiumInterop.FillBitmap(bitmap, 0xFFFFFFFF);
+
+                    // Render page to bitmap
+                    PdfiumInterop.RenderPageBitmap(
+                        bitmap,
+                        pageHandle,
+                        startX: 0,
+                        startY: 0,
+                        sizeX: outputWidth,
+                        sizeY: outputHeight,
+                        rotate: 0,
+                        flags: PdfiumInterop.RenderFlags.Normal);
                 }
 
-                // Fill bitmap with white background (ARGB: 0xFFFFFFFF)
-                PdfiumInterop.FillBitmap(bitmap, 0xFFFFFFFF);
-
-                // Render page to bitmap
-                PdfiumInterop.RenderPageBitmap(
-                    bitmap,
-                    pageHandle,
-                    startX: 0,
-                    startY: 0,
-                    sizeX: outputWidth,
-                    sizeY: outputHeight,
-                    rotate: 0,
-                    flags: PdfiumInterop.RenderFlags.Normal);
-
                 // Convert bitmap to PNG stream
-                var imageStream = await ConvertToPngStreamAsync(bitmap, outputWidth, outputHeight);
+                Stream imageStream;
+                using (var convertImageActivity = ActivitySource.StartActivity("ConvertToImage"))
+                {
+                    convertImageActivity?.SetTag("output.format", "PNG");
+                    imageStream = await ConvertToPngStreamAsync(bitmap, outputWidth, outputHeight);
+                }
 
                 stopwatch.Stop();
+
+                // Add render time to activity tags
+                activity?.SetTag("render.time.ms", stopwatch.ElapsedMilliseconds);
 
                 // Log performance metrics
                 if (stopwatch.ElapsedMilliseconds > SlowRenderThresholdMs)
@@ -186,6 +220,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                         correlationId, pageNumber, stopwatch.ElapsedMilliseconds);
                 }
 
+                activity?.SetStatus(ActivityStatusCode.Ok);
                 return Result.Ok<Stream>(imageStream);
             }
             catch (Exception ex)
@@ -205,6 +240,10 @@ public sealed class PdfRenderingService : IPdfRenderingService
                 _logger.LogError(ex,
                     "Failed to render page. CorrelationId={CorrelationId}, PageNumber={PageNumber}, RenderTimeMs={RenderTimeMs}",
                     correlationId, pageNumber, stopwatch.ElapsedMilliseconds);
+
+                // Record exception in activity
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 
                 return Result.Fail(error);
             }
