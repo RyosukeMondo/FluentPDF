@@ -83,7 +83,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer | Task: Add services.AddSingleton<IImageInsertionService, ImageInsertionService>() and services.AddTransient<ImageInsertionViewModel>() to ConfigureServices in App.xaml.cs. | Restrictions: Only add registrations, follow existing patterns. | _Leverage: Existing App.xaml.cs DI setup | _Requirements: All | Success: Services registered and resolvable. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 10. Integrate with HasUnsavedChanges
+- [x] 10. Integrate with HasUnsavedChanges
   - File: `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
   - Track image modifications in HasUnsavedChanges
   - Purpose: Include image changes in save workflow
