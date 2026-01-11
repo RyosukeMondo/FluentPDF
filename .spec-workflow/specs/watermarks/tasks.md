@@ -67,7 +67,7 @@
   - _Requirements: 1.2-1.6, 4.5_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer | Task: Add ApplyPresetCommand(string presetName) to WatermarkViewModel. Presets: "CONFIDENTIAL" (red, 72pt, diagonal), "DRAFT" (gray, 96pt, diagonal), "COPY" (blue, 72pt, diagonal), "APPROVED" (green, 72pt, center). Diagonal preset sets rotation to 45°. Each preset updates TextConfig properties. | Restrictions: Presets only modify TextConfig, don't apply. | _Leverage: WatermarkViewModel | _Requirements: 1.2-1.6, 4.5 | Success: Preset buttons configure watermark correctly. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 8. Add watermark button to toolbar
+- [x] 8. Add watermark button to toolbar
   - File: `src/FluentPDF.App/Views/PdfViewerPage.xaml`
   - Add "Watermark" AppBarButton
   - Wire to show WatermarkDialog
@@ -76,7 +76,7 @@
   - _Requirements: 1.1_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: Add AppBarButton "Watermark" with appropriate symbol to toolbar CommandBar in PdfViewerPage.xaml. Add Click handler to show WatermarkDialog. Create WatermarkViewModel and pass current document. | Restrictions: Follow existing toolbar patterns. | _Leverage: Existing toolbar | _Requirements: 1.1 | Success: Watermark button visible, opens dialog. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 9. Register WatermarkService in DI
+- [x] 9. Register WatermarkService in DI
   - File: `src/FluentPDF.App/App.xaml.cs`
   - Register IWatermarkService and WatermarkViewModel
   - Purpose: Enable dependency injection
@@ -84,7 +84,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer | Task: Add services.AddSingleton<IWatermarkService, WatermarkService>() and services.AddTransient<WatermarkViewModel>() to ConfigureServices. | Restrictions: Only add registrations. | _Leverage: Existing App.xaml.cs | _Requirements: All | Success: Services registered and resolvable. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 10. Integrate with HasUnsavedChanges
+- [x] 10. Integrate with HasUnsavedChanges
   - File: `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
   - Track watermark modifications
   - Purpose: Include watermarks in save workflow
