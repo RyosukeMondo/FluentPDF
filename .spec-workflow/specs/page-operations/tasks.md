@@ -59,8 +59,8 @@
   - _Requirements: 3.1-3.7_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 Developer with drag-drop expertise | Task: Set CanDragItems="True" and CanReorderItems="True" on ListView. Handle DragItemsStarting to set drag data. Handle DragOver to show insertion indicator. Handle Drop to call ViewModel.MovePagesTo with source indices and target index. Support multi-item drag. | Restrictions: Use WinUI standard drag-drop, no custom adorners. | _Leverage: WinUI ListView drag-drop, ThumbnailsViewModel | _Requirements: 3.1-3.7 | Success: Pages can be dragged and dropped to reorder, visual feedback during drag, multi-select works. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 7. Add keyboard shortcuts for page operations
-  - File: `src/FluentPDF.App/Controls/ThumbnailsPanel.xaml.cs`
+- [x] 7. Add keyboard shortcuts for page operations
+  - File: `src/FluentPDF.App/Controls/ThumbnailsSidebar.xaml.cs`
   - Handle Delete key for page deletion
   - Handle Ctrl+R for rotate right, Ctrl+Shift+R for rotate left
   - Handle Ctrl+A for select all

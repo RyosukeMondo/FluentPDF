@@ -35,6 +35,9 @@ public sealed partial class ThumbnailsSidebar : UserControl
         // Resolve ViewModel from DI container
         var app = (App)Application.Current;
         ViewModel = app.Services.GetRequiredService<ThumbnailsViewModel>();
+
+        // Add keyboard shortcuts
+        this.KeyDown += ThumbnailsSidebar_KeyDown;
     }
 
     /// <summary>
@@ -50,6 +53,54 @@ public sealed partial class ThumbnailsSidebar : UserControl
 
             // Add arrow key navigation handler
             button.KeyDown += ThumbnailButton_KeyDown;
+        }
+    }
+
+    /// <summary>
+    /// Handles keyboard shortcuts for page operations.
+    /// </summary>
+    private async void ThumbnailsSidebar_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var ctrlPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        var shiftPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+        switch (e.Key)
+        {
+            case VirtualKey.Delete:
+                // Delete key - delete selected pages
+                if (ViewModel.DeletePagesCommand.CanExecute(null))
+                {
+                    await ViewModel.DeletePagesCommand.ExecuteAsync(null);
+                    e.Handled = true;
+                }
+                break;
+
+            case VirtualKey.R when ctrlPressed && shiftPressed:
+                // Ctrl+Shift+R - rotate left
+                if (ViewModel.RotateLeftCommand.CanExecute(null))
+                {
+                    await ViewModel.RotateLeftCommand.ExecuteAsync(null);
+                    e.Handled = true;
+                }
+                break;
+
+            case VirtualKey.R when ctrlPressed:
+                // Ctrl+R - rotate right
+                if (ViewModel.RotateRightCommand.CanExecute(null))
+                {
+                    await ViewModel.RotateRightCommand.ExecuteAsync(null);
+                    e.Handled = true;
+                }
+                break;
+
+            case VirtualKey.A when ctrlPressed:
+                // Ctrl+A - select all
+                if (ViewModel.SelectAllCommand.CanExecute(null))
+                {
+                    ViewModel.SelectAllCommand.Execute(null);
+                    e.Handled = true;
+                }
+                break;
         }
     }
 

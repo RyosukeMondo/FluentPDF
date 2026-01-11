@@ -577,6 +577,19 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Selects all thumbnails.
+    /// </summary>
+    [RelayCommand]
+    private void SelectAll()
+    {
+        foreach (var item in Thumbnails)
+        {
+            item.IsSelected = true;
+        }
+        _logger.LogDebug("Selected all {Count} thumbnails", Thumbnails.Count);
+    }
+
+    /// <summary>
     /// Determines whether any thumbnails are selected.
     /// </summary>
     private bool HasSelectedThumbnails()

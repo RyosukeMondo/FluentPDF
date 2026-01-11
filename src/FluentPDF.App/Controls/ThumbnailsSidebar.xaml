@@ -9,7 +9,9 @@
     xmlns:converters="using:FluentPDF.App.Converters"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    x:Name="RootControl">
+    x:Name="RootControl"
+    IsTabStop="True"
+    UseSystemFocusVisuals="False">
 
     <UserControl.Resources>
         <!-- Value Converters -->
