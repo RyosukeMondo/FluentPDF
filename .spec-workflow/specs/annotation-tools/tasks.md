@@ -27,7 +27,7 @@
   - Requirements: 2.1-2.7, 4.1-4.6
   - Instructions: Transparent canvas overlay using Win2D. Render annotations on top of PDF. Handle pointer events for drawing, selection.
 
-- [ ] 6. Add annotation toolbar to PdfViewerPage
+- [x] 6. Add annotation toolbar to PdfViewerPage
   - Files: `src/FluentPDF.App/Views/PdfViewerPage.xaml`
   - Requirements: 2.1, 3.1, 4.1
   - Instructions: Add annotation toolbar with buttons: Highlight, Underline, Strikethrough, Comment, Rectangle, Circle, Freehand. Add color picker.
