@@ -7,7 +7,7 @@
   - Requirements: 1.1-1.7, 2.1-2.7
   - Instructions: Define strongly-typed settings model with ZoomLevel, ScrollMode, AppTheme enums. Include default values.
 
-- [ ] 2. Create ISettingsService interface
+- [x] 2. Create ISettingsService interface
   - Files: `src/FluentPDF.Core/Services/ISettingsService.cs`
   - Requirements: 1.1-1.7
   - Instructions: Define service contract with Load, Save, Reset methods. Include SettingsChanged event.
