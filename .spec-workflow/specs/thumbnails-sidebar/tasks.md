@@ -31,7 +31,7 @@
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8_
   - _Prompt: Role: Graphics Developer with expertise in image rendering optimization | Task: Create IThumbnailRenderingService interface with RenderThumbnailAsync(PdfDocument, pageNumber) returning Result<BitmapImage>. Implement ThumbnailRenderingService with constructor taking IPdfRenderingService and ILogger. Implementation: call _renderingService.RenderPageAsync with zoomLevel=0.2, dpi=48 for low-resolution output (~150x200px). Log render start/completion with page number and elapsed time. Handle errors returning Result.Fail with placeholder. Write unit tests mocking PdfRenderingService, verifying low DPI/zoom parameters, error handling. | Restrictions: Must use existing PdfRenderingService (do not duplicate rendering logic), log performance metrics, handle errors gracefully, maintain aspect ratio. | Success: Service renders thumbnails at low resolution, performance logged, errors handled with placeholders, unit tests verify logic._
 
-- [ ] 3. Create ThumbnailItem model and ThumbnailsViewModel
+- [x] 3. Create ThumbnailItem model and ThumbnailsViewModel
   - Files:
     - `src/FluentPDF.App/Models/ThumbnailItem.cs` (create)
     - `src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs` (create)
