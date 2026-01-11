@@ -75,7 +75,7 @@
   - _Requirements: 2.5-2.6, 5.1_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 Developer | Task: Handle KeyDown in ImageManipulationOverlay. Delete key deletes selected image. Arrow keys nudge by 1 point. Shift+Arrow nudges by 10 points. Only handle when image is selected. | Restrictions: Only when overlay has focus and image selected. | _Leverage: WinUI keyboard handling | _Requirements: 2.5-2.6, 5.1 | Success: Keyboard shortcuts work correctly for selected images. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 9. Register ImageInsertionService and ViewModel in DI
+- [x] 9. Register ImageInsertionService and ViewModel in DI
   - File: `src/FluentPDF.App/App.xaml.cs`
   - Register IImageInsertionService and ImageInsertionViewModel
   - Purpose: Enable dependency injection
