@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<UserControl
+    x:Class="FluentPDF.App.Controls.DiagnosticsPanelControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FluentPDF.App.Controls"
+    xmlns:converters="using:FluentPDF.App.Converters"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    x:Name="RootControl">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <!-- Diagnostics Panel - Positioned as overlay in top-right corner -->
+    <Border
+        Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+        CornerRadius="8"
+        Padding="16"
+        HorizontalAlignment="Right"
+        VerticalAlignment="Top"
+        Margin="16"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        Visibility="{Binding IsVisible, ElementName=RootControl, Converter={StaticResource BoolToVisibilityConverter}}">
+
+        <StackPanel Spacing="8">
+            <!-- Header -->
+            <TextBlock
+                Text="Diagnostics"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                FontWeight="SemiBold"/>
+
+            <Border
+                Height="1"
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                Margin="0,4"/>
+
+            <!-- FPS Display with color coding -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon
+                    Glyph="&#xE7C4;"
+                    FontSize="16"
+                    Foreground="{Binding FPSColor, ElementName=RootControl}"/>
+                <TextBlock
+                    Text="FPS:"
+                    VerticalAlignment="Center"
+                    MinWidth="80"/>
+                <TextBlock
+                    Text="{Binding CurrentFPS, ElementName=RootControl}"
+                    Foreground="{Binding FPSColor, ElementName=RootControl}"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Memory Display (Managed + Native) -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon
+                    Glyph="&#xE7B8;"
+                    FontSize="16"/>
+                <TextBlock
+                    Text="Memory:"
+                    VerticalAlignment="Center"
+                    MinWidth="80"/>
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock
+                        Text="{Binding TotalMemoryMB, ElementName=RootControl}"
+                        FontWeight="SemiBold"/>
+                    <TextBlock Text="MB"/>
+                    <TextBlock
+                        Text="(M:"
+                        FontSize="10"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock
+                        Text="{Binding ManagedMemoryMB, ElementName=RootControl}"
+                        FontSize="10"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock
+                        Text="/ N:"
+                        FontSize="10"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock
+                        Text="{Binding NativeMemoryMB, ElementName=RootControl}"
+                        FontSize="10"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock
+                        Text=")"
+                        FontSize="10"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Last Render Time -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon
+                    Glyph="&#xE916;"
+                    FontSize="16"/>
+                <TextBlock
+                    Text="Last Render:"
+                    VerticalAlignment="Center"
+                    MinWidth="80"/>
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock
+                        Text="{Binding LastRenderTimeMs, ElementName=RootControl}"
+                        FontWeight="SemiBold"/>
+                    <TextBlock Text="ms"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Current Page Number -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon
+                    Glyph="&#xE8A5;"
+                    FontSize="16"/>
+                <TextBlock
+                    Text="Page:"
+                    VerticalAlignment="Center"
+                    MinWidth="80"/>
+                <TextBlock
+                    Text="{Binding CurrentPageNumber, ElementName=RootControl}"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <Border
+                Height="1"
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                Margin="0,8,0,4"/>
+
+            <!-- Action Buttons -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button
+                    Content="Export Metrics"
+                    Command="{Binding ExportMetricsCommand, ElementName=RootControl}"
+                    FontSize="12"
+                    Style="{StaticResource AccentButtonStyle}"/>
+                <Button
+                    Content="View Logs"
+                    Command="{Binding OpenLogViewerCommand, ElementName=RootControl}"
+                    FontSize="12"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

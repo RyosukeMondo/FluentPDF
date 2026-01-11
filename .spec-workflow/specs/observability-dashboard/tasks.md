@@ -83,7 +83,7 @@
   - _Requirements: 10.1-10.8_
   - _Prompt: Role: Performance Engineer specializing in distributed tracing | Task: Instrument PdfRenderingService.RenderPageAsync following design.md Component 12, adding ActivitySource field ("FluentPDF.Rendering"), wrapping entire RenderPageAsync in StartActivity("RenderPage"), creating child activities for each step (LoadPage, RenderBitmap, ConvertToImage), adding tags (page.number, zoom.level, correlation.id, render.time.ms), recording exceptions with activity.RecordException(ex), setting activity status to Error on failures, and writing tests that verify activity creation and tags (mock ActivityListener) | Restrictions: Do not add tracing overhead if tracing disabled, keep span names consistent, ensure correlation ID included in all spans, dispose activities properly | Success: Activities created for all rendering operations, parent-child relationships correct, tags include relevant metadata, exception recording works, tests verify span creation_
 
-- [ ] 6. Create DiagnosticsPanelControl WinUI custom control
+- [x] 6. Create DiagnosticsPanelControl WinUI custom control
   - Files:
     - `src/FluentPDF.App/Controls/DiagnosticsPanelControl.xaml`
     - `src/FluentPDF.App/Controls/DiagnosticsPanelControl.xaml.cs`
