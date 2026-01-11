@@ -493,6 +493,153 @@
             Search consecutively (used internally by PDFium).
             </summary>
         </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetAnnotationCount(FluentPDF.Rendering.Interop.SafePdfPageHandle)">
+            <summary>
+            Gets the number of annotations on a page.
+            </summary>
+            <param name="page">Handle to the PDF page.</param>
+            <returns>The number of annotations, or -1 if the page is invalid.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetAnnotation(FluentPDF.Rendering.Interop.SafePdfPageHandle,System.Int32)">
+            <summary>
+            Gets an annotation from a page by index.
+            </summary>
+            <param name="page">Handle to the PDF page.</param>
+            <param name="index">Zero-based annotation index.</param>
+            <returns>A safe handle to the annotation, or an invalid handle if loading failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.CreateAnnotation(FluentPDF.Rendering.Interop.SafePdfPageHandle,FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationType)">
+            <summary>
+            Creates a new annotation on a page.
+            </summary>
+            <param name="page">Handle to the PDF page.</param>
+            <param name="annotationType">The type of annotation to create.</param>
+            <returns>A safe handle to the annotation, or an invalid handle if creation failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.RemoveAnnotation(FluentPDF.Rendering.Interop.SafePdfPageHandle,System.Int32)">
+            <summary>
+            Removes an annotation from a page.
+            </summary>
+            <param name="page">Handle to the PDF page.</param>
+            <param name="index">Zero-based annotation index.</param>
+            <returns>True if the annotation was removed successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetAnnotationSubtype(FluentPDF.Rendering.Interop.SafeAnnotationHandle)">
+            <summary>
+            Gets the subtype of an annotation.
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <returns>The annotation type.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetAnnotationColor(FluentPDF.Rendering.Interop.SafeAnnotationHandle,FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationColorType,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Sets the color of an annotation.
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <param name="colorType">The type of color to set (fill or stroke).</param>
+            <param name="r">Red component (0-255).</param>
+            <param name="g">Green component (0-255).</param>
+            <param name="b">Blue component (0-255).</param>
+            <param name="a">Alpha component (0-255).</param>
+            <returns>True if the color was set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetAnnotationColor(FluentPDF.Rendering.Interop.SafeAnnotationHandle,FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationColorType,System.UInt32@,System.UInt32@,System.UInt32@,System.UInt32@)">
+            <summary>
+            Gets the color of an annotation.
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <param name="colorType">The type of color to get (fill or stroke).</param>
+            <param name="r">Outputs the red component (0-255).</param>
+            <param name="g">Outputs the green component (0-255).</param>
+            <param name="b">Outputs the blue component (0-255).</param>
+            <param name="a">Outputs the alpha component (0-255).</param>
+            <returns>True if the color was retrieved successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetAnnotationRect(FluentPDF.Rendering.Interop.SafeAnnotationHandle,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Sets the rectangle bounds of an annotation.
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <param name="left">Left coordinate in page units.</param>
+            <param name="bottom">Bottom coordinate in page units.</param>
+            <param name="right">Right coordinate in page units.</param>
+            <param name="top">Top coordinate in page units.</param>
+            <returns>True if the rectangle was set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetAnnotationRect(FluentPDF.Rendering.Interop.SafeAnnotationHandle,System.Single@,System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Gets the rectangle bounds of an annotation.
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <param name="left">Outputs the left coordinate in page units.</param>
+            <param name="bottom">Outputs the bottom coordinate in page units.</param>
+            <param name="right">Outputs the right coordinate in page units.</param>
+            <param name="top">Outputs the top coordinate in page units.</param>
+            <returns>True if the rectangle was retrieved successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetAnnotationContents(FluentPDF.Rendering.Interop.SafeAnnotationHandle,System.String)">
+            <summary>
+            Sets the contents (text) of an annotation.
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <param name="contents">The text content to set.</param>
+            <returns>True if the contents were set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetAnnotationContents(FluentPDF.Rendering.Interop.SafeAnnotationHandle)">
+            <summary>
+            Gets the contents (text) of an annotation.
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <returns>The annotation contents, or an empty string if retrieval failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetAnnotationQuadPoints(FluentPDF.Rendering.Interop.SafeAnnotationHandle,System.Single[])">
+            <summary>
+            Sets the quad points for a text markup annotation (highlight, underline, strikethrough).
+            </summary>
+            <param name="annotation">Handle to the annotation.</param>
+            <param name="quadPoints">Array of quad points (must be a multiple of 8 values: x1,y1,x2,y2,x3,y3,x4,y4 for each quad).</param>
+            <returns>True if the quad points were set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SaveDocument(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.String,System.Int32)">
+            <summary>
+            Saves a PDF document to a file path.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="filePath">Path where the PDF should be saved.</param>
+            <param name="flags">Save flags (0 for default).</param>
+            <returns>True if the save was successful; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationType">
+            <summary>
+            PDFium annotation types.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationColorType">
+            <summary>
+            Annotation color type.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationColorType.Fill">
+            <summary>
+            Fill color for the annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationColorType.Stroke">
+            <summary>
+            Stroke (border) color for the annotation.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.FS_RECTF">
+            <summary>
+            Rectangle structure for PDFium (uses floats).
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.FS_QUADPOINTSF">
+            <summary>
+            Quad points structure for text markup annotations.
+            Represents four points defining a quadrilateral.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes">
             <summary>
             PDFium error codes.
@@ -719,6 +866,23 @@
             Generate object streams for compression.
             </summary>
         </member>
+        <member name="T:FluentPDF.Rendering.Interop.SafeAnnotationHandle">
+            <summary>
+            Safe handle for PDFium annotation pointers (FPDF_ANNOTATION).
+            Automatically releases the annotation when disposed.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafeAnnotationHandle.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Interop.SafeAnnotationHandle"/> class.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.SafeAnnotationHandle.ReleaseHandle">
+            <summary>
+            Releases the PDFium annotation handle by calling FPDFPage_CloseAnnot.
+            </summary>
+            <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.SafePdfDocumentHandle">
             <summary>
             Safe handle for PDFium document pointers (FPDF_DOCUMENT).
@@ -813,6 +977,58 @@
             This method is thread-safe and idempotent.
             </summary>
             <returns>True if the handle was released successfully; otherwise, false.</returns>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.AnnotationService">
+            <summary>
+            Service for managing PDF annotations using PDFium.
+            Provides CRUD operations for highlights, underlines, comments, shapes, and freehand drawings.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.AnnotationService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.AnnotationService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.GetAnnotationsAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.CreateAnnotationAsync(FluentPDF.Core.Models.PdfDocument,FluentPDF.Core.Models.Annotation)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.UpdateAnnotationAsync(FluentPDF.Core.Models.PdfDocument,FluentPDF.Core.Models.Annotation)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.DeleteAnnotationAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.SaveAnnotationsAsync(FluentPDF.Core.Models.PdfDocument,System.String,System.Boolean)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.ConvertToAnnotation(FluentPDF.Rendering.Interop.SafeAnnotationHandle,System.Int32,System.Int32)">
+            <summary>
+            Converts a PDFium annotation handle to a domain Annotation object.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.ApplyAnnotationProperties(FluentPDF.Rendering.Interop.SafeAnnotationHandle,FluentPDF.Core.Models.Annotation)">
+            <summary>
+            Applies annotation properties to a PDFium annotation handle.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.MapToPdfiumAnnotationType(FluentPDF.Core.Models.AnnotationType)">
+            <summary>
+            Maps domain AnnotationType to PDFium AnnotationType.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.MapToDomainAnnotationType(FluentPDF.Rendering.Interop.PdfiumInterop.AnnotationType)">
+            <summary>
+            Maps PDFium AnnotationType to domain AnnotationType.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.AnnotationService.CreateError(System.String,System.String,System.String,System.Guid,System.Exception)">
+            <summary>
+            Creates a standardized PdfError for annotation operations.
+            </summary>
         </member>
         <member name="T:FluentPDF.Rendering.Services.BookmarkService">
             <summary>

@@ -344,6 +344,20 @@ public sealed class AnnotationService : IAnnotationService
 
             try
             {
+                // Check if file is read-only BEFORE attempting any PDFium operations
+                if (File.Exists(filePath))
+                {
+                    var fileInfo = new FileInfo(filePath);
+                    if (fileInfo.IsReadOnly)
+                    {
+                        return Result.Fail(CreateError(
+                            "ANNOTATION_FILE_READONLY",
+                            "Cannot save to read-only file. Please use Save As.",
+                            filePath,
+                            correlationId));
+                    }
+                }
+
                 var documentHandle = (SafePdfDocumentHandle)document.Handle;
 
                 if (documentHandle.IsInvalid)
