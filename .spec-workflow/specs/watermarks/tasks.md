@@ -18,7 +18,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.5, 6.1-6.5, 7.1-7.4_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Software Architect | Task: Create IWatermarkService with: ApplyTextWatermarkAsync(PdfDocument, TextWatermarkConfig, PageRange), ApplyImageWatermarkAsync(PdfDocument, ImageWatermarkConfig, PageRange), RemoveWatermarksAsync(PdfDocument, PageRange), GeneratePreviewAsync(PdfDocument, int pageIndex, WatermarkConfig) returning byte[] for preview image. Use Result pattern. | Restrictions: Interface only. Follow existing service patterns. | _Leverage: IAnnotationService pattern | _Requirements: 1.1-1.7, 2.1-2.5, 6.1-6.5, 7.1-7.4 | Success: Interface compiles, proper signatures. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 3. Implement WatermarkService
+- [x] 3. Implement WatermarkService
   - File: `src/FluentPDF.Rendering/Services/WatermarkService.cs`
   - Implement text watermarks using PDFium text objects
   - Implement image watermarks using PDFium image objects
