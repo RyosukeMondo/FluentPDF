@@ -47,7 +47,7 @@
   - _Requirements: 6.1-6.9_
   - _Prompt: Role: Settings Management Developer | Task: Implement rendering settings service with persistence and observable changes | Restrictions: Must persist settings, provide observable updates, handle defaults | Success: Quality settings persist and notify observers of changes_
 
-- [ ] 4. Extend PdfRenderingService to use dynamic DPI
+- [x] 4. Extend PdfRenderingService to use dynamic DPI
   - Files:
     - `src/FluentPDF.Rendering/Services/PdfRenderingService.cs` (modify)
     - `tests/FluentPDF.Rendering.Tests/Services/PdfRenderingServiceTests.cs` (extend)
