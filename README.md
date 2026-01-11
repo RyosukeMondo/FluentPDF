@@ -273,6 +273,30 @@ When you open a PDF with form fields, FluentPDF automatically detects and displa
 - Save frequently to avoid losing your work
 - Original PDF remains unchanged - saves to new file
 
+### Observability and Diagnostics
+
+FluentPDF includes comprehensive observability features for development and production debugging:
+
+**In-App Diagnostics Panel** (`Ctrl+Shift+D`):
+- Real-time performance metrics overlay (FPS, memory usage, render times)
+- Color-coded performance levels (Green: Good, Yellow: Warning, Red: Critical)
+- Export metrics to JSON/CSV for analysis
+- Acrylic background for minimal visual intrusion
+
+**Structured Log Viewer** (`Ctrl+Shift+L`):
+- In-app browser for Serilog JSON logs
+- Advanced filtering: severity, correlation ID, component, time range, search
+- Correlation ID tracing for end-to-end operation debugging
+- Export filtered logs to JSON
+
+**Development-Time Monitoring**:
+- .NET Aspire Dashboard integration via OpenTelemetry (OTLP)
+- Real-time metrics: FPS, memory (managed/native), render time histograms
+- Distributed tracing: Complete rendering pipeline visibility
+- Structured logs with full context
+
+See [OBSERVABILITY.md](docs/OBSERVABILITY.md) for complete observability guide.
+
 ### Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -293,6 +317,8 @@ When you open a PDF with form fields, FluentPDF automatically detects and displa
 | **Tab** | Next form field |
 | **Shift+Tab** | Previous form field |
 | **Ctrl+Shift+C** | Convert DOCX to PDF |
+| **Ctrl+Shift+D** | Toggle diagnostics panel |
+| **Ctrl+Shift+L** | Open log viewer |
 
 ### Converting DOCX to PDF
 
@@ -422,32 +448,97 @@ Open **Test Explorer** in Visual Studio:
 
 ## Observability
 
+FluentPDF provides three-layer observability for comprehensive monitoring and debugging:
+
+### 1. In-App Diagnostics Panel
+
+Press **Ctrl+Shift+D** to toggle the real-time diagnostics overlay:
+
+- **FPS (Frames Per Second)**: Color-coded (Green ≥30, Yellow 15-30, Red <15)
+- **Memory Usage**: Managed + Native memory tracking
+- **Render Time**: Last page render duration
+- **Current Page**: Active page number
+- **Export**: Save metrics to JSON/CSV for analysis
+
+**Performance Levels**:
+- 🟢 **Good**: FPS ≥ 30 AND Memory < 500MB
+- 🟡 **Warning**: FPS 15-30 OR Memory 500-1000MB
+- 🔴 **Critical**: FPS < 15 OR Memory > 1000MB
+
+### 2. Structured Log Viewer
+
+Press **Ctrl+Shift+L** to open the in-app log browser:
+
+**Filter Options**:
+- **Severity**: Minimum log level (Trace, Debug, Info, Warning, Error, Critical)
+- **Correlation ID**: Exact match for operation tracing
+- **Component**: Namespace filter (e.g., "FluentPDF.Rendering")
+- **Time Range**: Start and end timestamps
+- **Search**: Case-insensitive message search
+
+**Features**:
+- LRU cache for fast log access (10,000 entries)
+- Virtualized ListView for performance
+- Export filtered logs to JSON
+- Copy correlation IDs for Aspire Dashboard filtering
+
+### 3. Development-Time Monitoring (.NET Aspire Dashboard)
+
+During development, telemetry is sent to .NET Aspire Dashboard via OpenTelemetry:
+
+```bash
+# Start Aspire Dashboard
+docker-compose -f tools/docker-compose-aspire.yml up -d
+
+# Access dashboard
+http://localhost:18888
+```
+
+**Dashboard Features**:
+- **Metrics**: Real-time FPS, memory, render time histograms
+- **Traces**: Distributed traces showing RenderPage → LoadPage → RenderBitmap → ConvertToImage
+- **Logs**: Structured logs with correlation IDs, severity filtering
+
+**Graceful Fallback**: If Aspire not running, app continues normally with file-based logging.
+
 ### Structured Logging
 
 Logs are written in JSON format to enable AI-powered analysis:
 
 - **Log location**: `%LOCALAPPDATA%\Packages\FluentPDF_*\LocalState\logs\`
-- **Format**: JSON (Serilog Compact JSON formatter)
+- **Format**: Serilog JSON (newline-delimited)
 - **Enrichers**: Machine name, environment, thread ID, correlation IDs
 - **Rolling**: Daily log files, 7-day retention
+- **OTLP Export**: Logs sent to Aspire Dashboard when running
 
-### OpenTelemetry Integration
-
-During development, logs are sent to .NET Aspire Dashboard:
-
-```bash
-# Start .NET Aspire Dashboard (if installed)
-docker run --rm -it -p 18888:18888 -p 4317:4317 mcr.microsoft.com/dotnet/aspire-dashboard:8.0
+**Example Log Entry**:
+```json
+{
+  "@t": "2026-01-11T14:32:15.1234567Z",
+  "@l": "Information",
+  "@mt": "Rendering page {PageNumber} at zoom {ZoomLevel}",
+  "PageNumber": 42,
+  "ZoomLevel": 1.5,
+  "CorrelationId": "3f7b8c9d-e21a-4f5d-a6c8-1b2e3d4a5f6g"
+}
 ```
 
-Then navigate to: [http://localhost:18888](http://localhost:18888)
+### Correlation ID Tracing
 
-### Correlation IDs
+Track operations end-to-end using correlation IDs:
 
-All unhandled exceptions are logged with unique correlation IDs:
-- Displayed in error dialogs for user support
-- Logged with full context for debugging
-- Enables tracing across distributed operations
+1. **Generation**: Unique GUID created per rendering operation
+2. **Propagation**: Flows through OpenTelemetry spans, Serilog logs, metrics tags
+3. **Filtering**: Use correlation ID in log viewer or Aspire Dashboard to see complete trace
+4. **Exception Handling**: All unhandled exceptions include correlation ID in error dialog
+
+**Workflow**:
+- Render a page → Correlation ID generated
+- View logs in app → Filter by correlation ID
+- Copy correlation ID → Paste in Aspire Dashboard
+- See complete distributed trace with all spans and logs
+
+See [OBSERVABILITY.md](docs/OBSERVABILITY.md) for comprehensive guide.
 
 ## Error Handling
 
