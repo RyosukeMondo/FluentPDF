@@ -37,7 +37,7 @@
   - Requirements: 2.1-2.7, 6.1-6.6
   - Instructions: Overlay AnnotationLayer on PDF viewer. Pass AnnotationViewModel to layer. Load annotations when page changes.
 
-- [-] 8. Implement annotation save with backup
+- [x] 8. Implement annotation save with backup
   - Files: `src/FluentPDF.Rendering/Services/AnnotationService.cs`
   - Requirements: 5.1-5.6
   - Instructions: Save annotations using FPDF_SaveAsCopy. Create .bak backup before overwriting. Restore backup on failure.
