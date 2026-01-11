@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Extend PdfiumInterop with annotation P/Invoke declarations
+- [x] 1. Extend PdfiumInterop with annotation P/Invoke declarations
   - Files: `src/FluentPDF.Rendering/Interop/PdfiumInterop.cs`, `src/FluentPDF.Rendering/Interop/SafeAnnotationHandle.cs`
   - Requirements: 1.1-1.7
   - Instructions: Add P/Invoke for FPDFPage_CreateAnnot, FPDFAnnot_SetColor, FPDFAnnot_SetRect, FPDFPage_RemoveAnnot, etc. Create SafeAnnotationHandle.
