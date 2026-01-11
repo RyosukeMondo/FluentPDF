@@ -18,7 +18,7 @@
   - _Requirements: Design Component 1 and 2_
   - _Prompt: Role: C# Developer specializing in domain modeling | Task: Create observability models following design.md Component 1 and 2, implementing PerformanceMetrics with properties (CurrentFPS, ManagedMemoryMB, NativeMemoryMB, LastRenderTimeMs, Timestamp, Level) and CalculateLevel static method, LogEntry with properties (Timestamp, Level, Message, CorrelationId, Component, Context, Exception, StackTrace), LogFilterCriteria with filter properties and Matches method, adding enums (PerformanceLevel, LogLevel, ExportFormat), and writing comprehensive unit tests | Restrictions: Keep models immutable with init properties, do not add business logic beyond CalculateLevel and Matches, follow structure.md code organization | Success: Models compile correctly, CalculateLevel returns correct performance levels for edge cases, Matches filters logs correctly, tests verify all model behavior_
 
-- [ ] 2. Implement IMetricsCollectionService and MetricsCollectionService
+- [x] 2. Implement IMetricsCollectionService and MetricsCollectionService
   - Files:
     - `src/FluentPDF.Core/Services/IMetricsCollectionService.cs`
     - `src/FluentPDF.Rendering/Services/MetricsCollectionService.cs`
