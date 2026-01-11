@@ -57,7 +57,7 @@
   - Purpose: Enable AI-powered root cause analysis
   - _Prompt: Role: AI Integration Developer | Task: Implement TestFailureAnalyzer using Azure.AI.OpenAI. Configure with API key (env var OPENAI_API_KEY) and deployment. Create system prompt: "You are a quality analyst...". Send test failure (name, error, stack trace) + related logs (same correlation ID). Use structured outputs with JSON schema defining RootCauseHypothesis (issue, hypothesis, confidence, severity, actions). Implement retry with exponential backoff (3 attempts). Fallback to rule-based if fails. | Restrictions: Never log API keys, sanitize data before sending to LLM, limit prompt size (< 4000 tokens), handle rate limits. | Success: Analyzer calls OpenAI successfully, returns structured hypothesis, retries on transient errors, falls back on failure._
 
-- [-] 7. Implement visual regression analyzer
+- [x] 7. Implement visual regression analyzer
   - Files: `tools/quality-agent/Analyzers/VisualRegressionAnalyzer.cs`, `tools/quality-agent.Tests/Analyzers/VisualRegressionAnalyzerTests.cs`
   - Analyze SSIM scores using thresholds
   - Classify regression severity (Minor/Major/Critical)
