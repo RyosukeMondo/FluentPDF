@@ -32,6 +32,16 @@ public partial class TabViewModel : ObservableObject, IDisposable
         ViewerViewModel = viewerViewModel ?? throw new ArgumentNullException(nameof(viewerViewModel));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+        // Subscribe to ViewerViewModel property changes to update HasUnsavedChanges and DisplayName
+        ViewerViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ViewerViewModel.HasUnsavedChanges))
+            {
+                OnPropertyChanged(nameof(HasUnsavedChanges));
+                OnPropertyChanged(nameof(DisplayName));
+            }
+        };
+
         _logger.LogInformation("TabViewModel created for file: {FilePath}", filePath);
     }
 
@@ -60,10 +70,16 @@ public partial class TabViewModel : ObservableObject, IDisposable
     private bool _isActive;
 
     /// <summary>
-    /// Gets or sets a value indicating whether this tab has unsaved changes.
+    /// Gets a value indicating whether this tab has unsaved changes.
+    /// Delegates to the ViewerViewModel's HasUnsavedChanges property.
     /// </summary>
-    [ObservableProperty]
-    private bool _hasUnsavedChanges;
+    public bool HasUnsavedChanges => ViewerViewModel.HasUnsavedChanges;
+
+    /// <summary>
+    /// Gets the display name for the tab header.
+    /// Returns "*" + FileName when there are unsaved changes, otherwise just FileName.
+    /// </summary>
+    public string DisplayName => HasUnsavedChanges ? $"*{FileName}" : FileName;
 
     /// <summary>
     /// Activates this tab, setting its state to active.

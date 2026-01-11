@@ -11,7 +11,7 @@
   - _Requirements: 2.1-2.6_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# WinUI 3 Developer specializing in MVVM and CommunityToolkit.Mvvm | Task: Add HasUnsavedChanges computed property to PdfViewerViewModel that returns true if AnnotationViewModel has unsaved annotations OR FormFieldViewModel.IsModified is true. Subscribe to property changes from child ViewModels to trigger PropertyChanged. | Restrictions: Do not modify AnnotationViewModel or FormFieldViewModel logic, only observe their state. Do not add new dependencies to services. | _Leverage: Existing AnnotationViewModel, FormFieldViewModel IsModified property | _Requirements: 2.1-2.6 | Success: HasUnsavedChanges correctly reflects combined dirty state, updates when annotations/forms change, unit tests pass. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 2. Extend TabViewModel with HasUnsavedChanges and DisplayName
+- [x] 2. Extend TabViewModel with HasUnsavedChanges and DisplayName
   - File: `src/FluentPDF.App/ViewModels/TabViewModel.cs`
   - Add HasUnsavedChanges property delegating to ViewerViewModel
   - Add DisplayName property that prefixes "*" when unsaved
