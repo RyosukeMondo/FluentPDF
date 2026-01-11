@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Add Win2D and OpenCvSharp NuGet packages
+- [x] 1. Add Win2D and OpenCvSharp NuGet packages
   - Files:
     - `tests/FluentPDF.Rendering.Tests/FluentPDF.Rendering.Tests.csproj` (modify)
     - `tests/FluentPDF.Validation.Tests/FluentPDF.Validation.Tests.csproj` (modify)
