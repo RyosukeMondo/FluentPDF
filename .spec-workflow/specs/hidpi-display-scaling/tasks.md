@@ -125,7 +125,7 @@
   - _Requirements: 2.1-2.7, 4.1-4.7, 7.1-7.7_
   - _Prompt: Role: QA Integration Engineer | Task: Create integration tests for HiDPI rendering at various DPI levels | Restrictions: Must test real rendering, verify dimensions, check memory | Success: Integration tests verify correct HiDPI rendering_
 
-- [ ] 10. Add performance benchmarks for HiDPI rendering
+- [x] 10. Add performance benchmarks for HiDPI rendering
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Performance/HiDpiPerformanceBenchmarks.cs`
   - Create BenchmarkDotNet benchmarks for rendering at different DPIs
