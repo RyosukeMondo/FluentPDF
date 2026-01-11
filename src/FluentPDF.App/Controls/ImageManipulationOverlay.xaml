@@ -11,11 +11,13 @@
     <Canvas
         x:Name="ManipulationCanvas"
         Background="Transparent"
+        IsTabStop="True"
         PointerPressed="OnPointerPressed"
         PointerMoved="OnPointerMoved"
         PointerReleased="OnPointerReleased"
         PointerExited="OnPointerExited"
-        RightTapped="OnCanvasRightTapped">
+        RightTapped="OnCanvasRightTapped"
+        KeyDown="OnKeyDown">
         <Canvas.ContextFlyout>
             <MenuFlyout x:Name="ImageContextMenu">
                 <!-- Delete menu item -->

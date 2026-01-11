@@ -297,6 +297,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
         if (sender is Rectangle rect && rect.Tag is ImageObject image && ViewModel != null)
         {
             ViewModel.SelectImageCommand.Execute(image);
+            ManipulationCanvas.Focus(FocusState.Programmatic);
             e.Handled = true;
         }
     }
@@ -687,5 +688,77 @@ public sealed partial class ImageManipulationOverlay : UserControl
         {
             ViewModel.SendToBackCommand.Execute(null);
         }
+    }
+
+    /// <summary>
+    /// Handles keyboard shortcuts for image operations.
+    /// </summary>
+    private async void OnKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        // Only handle keyboard shortcuts when an image is selected
+        if (ViewModel?.SelectedImage == null)
+        {
+            return;
+        }
+
+        var isShiftPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+        switch (e.Key)
+        {
+            case Windows.System.VirtualKey.Delete:
+                // Delete selected image
+                if (ViewModel.DeleteSelectedImageCommand.CanExecute(null))
+                {
+                    await ViewModel.DeleteSelectedImageCommand.ExecuteAsync(null);
+                    e.Handled = true;
+                }
+                break;
+
+            case Windows.System.VirtualKey.Up:
+                // Nudge up by 1 point (or 10 points with Shift)
+                await NudgeImageAsync(0, isShiftPressed ? -10 : -1);
+                e.Handled = true;
+                break;
+
+            case Windows.System.VirtualKey.Down:
+                // Nudge down by 1 point (or 10 points with Shift)
+                await NudgeImageAsync(0, isShiftPressed ? 10 : 1);
+                e.Handled = true;
+                break;
+
+            case Windows.System.VirtualKey.Left:
+                // Nudge left by 1 point (or 10 points with Shift)
+                await NudgeImageAsync(isShiftPressed ? -10 : -1, 0);
+                e.Handled = true;
+                break;
+
+            case Windows.System.VirtualKey.Right:
+                // Nudge right by 1 point (or 10 points with Shift)
+                await NudgeImageAsync(isShiftPressed ? 10 : 1, 0);
+                e.Handled = true;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Nudges the selected image by the specified delta in PDF points.
+    /// </summary>
+    private async System.Threading.Tasks.Task NudgeImageAsync(float deltaX, float deltaY)
+    {
+        if (ViewModel?.SelectedImage == null)
+        {
+            return;
+        }
+
+        var image = ViewModel.SelectedImage;
+        var newPosition = new PointF(
+            image.Position.X + deltaX,
+            image.Position.Y + deltaY);
+
+        // Update position and apply via command
+        image.Position = newPosition;
+        RenderAllImages();
+        await ViewModel.MoveImageCommand.ExecuteAsync(newPosition);
     }
 }
