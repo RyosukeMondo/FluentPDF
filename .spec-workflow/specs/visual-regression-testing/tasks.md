@@ -44,7 +44,7 @@
   - _Requirements: 2.4-2.8_
   - _Prompt: Role: Domain Modeling Developer | Task: Create ComparisonResult model for SSIM comparison results | Restrictions: Keep model immutable, include all necessary paths | Success: Model represents comparison results with SSIM score and image paths_
 
-- [ ] 4. Implement VisualComparisonService with SSIM
+- [-] 4. Implement VisualComparisonService with SSIM
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Services/IVisualComparisonService.cs`
     - `tests/FluentPDF.Rendering.Tests/Services/VisualComparisonService.cs`
