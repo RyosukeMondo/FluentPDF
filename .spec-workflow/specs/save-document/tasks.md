@@ -38,7 +38,7 @@
   - _Requirements: 1.1-1.8_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# WinUI 3 Developer specializing in MVVM commands and async operations | Task: Add [RelayCommand] SaveAsync that calls AnnotationService.SaveAnnotationsAsync and FormService.SaveFormDataAsync to current FilePath. Add CanSave that returns HasUnsavedChanges. Add [RelayCommand] SaveAsAsync that shows FileSavePicker then saves to selected path. Handle errors with Result pattern and show appropriate messages. Set HasUnsavedChanges=false on success. | Restrictions: Reuse existing service methods, do not implement new save logic. Use FileSavePicker pattern from existing MergeDocumentsCommand. | _Leverage: IAnnotationService.SaveAnnotationsAsync, IPdfFormService.SaveFormDataAsync | _Requirements: 1.1-1.8 | Success: SaveCommand saves annotations and forms to current file, SaveAsCommand prompts for location, both reset HasUnsavedChanges on success. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 5. Add Save menu items to MainWindow File menu
+- [x] 5. Add Save menu items to MainWindow File menu
   - Files: `src/FluentPDF.App/Views/MainWindow.xaml`, `src/FluentPDF.App/Views/MainWindow.xaml.cs`
   - Add Save MenuFlyoutItem with Ctrl+S accelerator after Open
   - Add Save As MenuFlyoutItem with Ctrl+Shift+S accelerator
@@ -48,7 +48,7 @@
   - _Requirements: 1.1-1.2, 5.1-5.4_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: Add MenuFlyoutItem "Save" with Ctrl+S KeyboardAccelerator after "Open..." item. Add MenuFlyoutItem "Save As..." with Ctrl+Shift+S KeyboardAccelerator after Save. Add Click handlers in code-behind that invoke ActiveTab.ViewerViewModel.SaveCommand and SaveAsCommand. Disable items when no tab active or CanSave is false. | Restrictions: Follow existing menu item patterns. Use consistent naming and styling. | _Leverage: Existing File menu, OnOpenFileClick pattern | _Requirements: 1.1-1.2, 5.1-5.4 | Success: Save and Save As menu items visible with correct shortcuts, invoke correct commands, disabled when no unsaved changes. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 6. Create SaveConfirmationDialog
+- [x] 6. Create SaveConfirmationDialog
   - Files: `src/FluentPDF.App/Views/Dialogs/SaveConfirmationDialog.xaml`, `src/FluentPDF.App/Views/Dialogs/SaveConfirmationDialog.xaml.cs`
   - Create ContentDialog with Save, Don't Save, Cancel buttons
   - Add static ShowAsync method returning SaveConfirmationResult enum
