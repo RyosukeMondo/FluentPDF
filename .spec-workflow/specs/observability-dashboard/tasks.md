@@ -177,7 +177,7 @@
   - _Requirements: All service requirements_
   - _Prompt: Role: Application Integration Engineer specializing in dependency injection | Task: Modify App.xaml.cs ConfigureServices to register observability services (AddSingleton<IMetricsCollectionService, MetricsCollectionService>, AddSingleton<ILogExportService, LogExportService>, AddTransient<DiagnosticsPanelViewModel>, AddTransient<LogViewerViewModel>), verify OpenTelemetry configuration from task 4 is present, add IMetricsCollectionService initialization call in OnLaunched, add cleanup in OnExit to stop metrics collection and dispose services, and verify all services resolve correctly | Restrictions: Follow existing DI registration patterns, do not skip service registration, ensure proper cleanup, log initialization and shutdown | Success: All observability services registered and resolvable, ViewModels get dependencies injected, metrics collection starts on app launch, cleanup occurs on app exit, DI container resolves all types correctly_
 
-- [ ] 12. Add ArchUnitNET rules for observability layer
+- [-] 12. Add ArchUnitNET rules for observability layer
   - Files:
     - `tests/FluentPDF.Architecture.Tests/ObservabilityArchitectureTests.cs`
   - Create architecture test file for observability rules
