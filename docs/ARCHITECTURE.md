@@ -15,6 +15,7 @@ This document describes the architectural design of FluentPDF, including system 
 - [PDF Rendering Architecture](#pdf-rendering-architecture)
 - [Office Document Conversion Architecture](#office-document-conversion-architecture)
 - [Bookmarks Panel Architecture](#bookmarks-panel-architecture)
+- [PDF Annotation Tools Architecture](#pdf-annotation-tools-architecture)
 - [HiDPI Display Scaling Architecture](#hidpi-display-scaling-architecture)
 - [Build and CI/CD](#build-and-cicd)
 
@@ -2733,6 +2734,408 @@ services.AddTransient<BookmarksViewModel>();
 - **PDFium Bookmark API**: https://pdfium.googlesource.com/pdfium/+/refs/heads/main/public/fpdf_doc.h
 - **TreeView Control**: https://learn.microsoft.com/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.controls.treeview
 - **Bookmark Feature Spec**: [.spec-workflow/specs/bookmarks-panel/](../.spec-workflow/specs/bookmarks-panel/)
+
+## PDF Annotation Tools Architecture
+
+FluentPDF provides comprehensive PDF annotation capabilities including text markup (highlight, underline, strikethrough), comments, shapes (rectangle, circle), and freehand drawing. Annotations are rendered using Win2D canvas overlay and persisted directly to PDF files using PDFium's annotation API with lossless quality preservation.
+
+### Annotation Tools Overview
+
+```mermaid
+graph TB
+    subgraph "UI Layer"
+        ViewerPage[PdfViewerPage.xaml]
+        AnnotationLayer[AnnotationLayer.xaml<br/>Win2D Canvas Overlay]
+        AnnotationVM[AnnotationViewModel]
+        Toolbar[Annotation Toolbar<br/>Tool Selection + Color Picker]
+    end
+
+    subgraph "Service Layer"
+        AnnotationSvc[AnnotationService<br/>IAnnotationService]
+    end
+
+    subgraph "Domain Layer"
+        Annotation[Annotation Model<br/>Type, Bounds, Colors]
+        AnnotationType[AnnotationType Enum<br/>Highlight, Text, Square, etc.]
+    end
+
+    subgraph "P/Invoke Layer"
+        PdfiumInterop[PdfiumInterop<br/>Annotation API]
+        SafeAnnotHandle[SafeAnnotationHandle]
+    end
+
+    subgraph "Native Layer"
+        PDFium[pdfium.dll<br/>FPDFPage_CreateAnnot<br/>FPDFAnnot_SetColor<br/>FPDFAnnot_SetRect]
+    end
+
+    ViewerPage --> AnnotationLayer
+    ViewerPage --> Toolbar
+    ViewerPage --> AnnotationVM
+    AnnotationLayer --> AnnotationVM
+    Toolbar --> AnnotationVM
+    AnnotationVM --> AnnotationSvc
+    AnnotationSvc --> Annotation
+    AnnotationSvc --> PdfiumInterop
+    PdfiumInterop --> SafeAnnotHandle
+    PdfiumInterop --> PDFium
+```
+
+### Annotation Workflow
+
+```
+User Selects Annotation Tool (e.g., Highlight)
+       ↓
+AnnotationViewModel.ActiveTool = AnnotationType.Highlight
+       ↓
+User Draws on AnnotationLayer (Pointer Events)
+       ↓
+AnnotationLayer Captures Gesture
+   - Press: Start drawing
+   - Move: Update preview
+   - Release: Finalize annotation
+       ↓
+AnnotationViewModel.CreateAnnotationCommand
+       ↓
+AnnotationService.CreateAnnotationAsync(document, annotation)
+       ↓
+1. Create PDFium Annotation Handle
+   PdfiumInterop.CreateAnnotation(page, annotationType)
+       ↓
+2. Set Annotation Properties
+   - SetAnnotationRect(handle, bounds)
+   - SetAnnotationColor(handle, fillColor, strokeColor)
+   - SetAnnotationContents(handle, text)
+   - SetInkPoints(handle, points) [for freehand]
+       ↓
+3. Return Result<Annotation>
+   - Created annotation with ID
+   - Updated bounds and properties
+       ↓
+AnnotationViewModel Updates UI
+   - Add to Annotations collection
+   - AnnotationLayer re-renders
+       ↓
+User Saves Document
+       ↓
+AnnotationService.SaveAnnotationsAsync(document, filePath)
+       ↓
+1. Create Backup (.bak file)
+2. Save PDF with FPDF_SaveAsCopy
+3. Restore backup on failure
+```
+
+### Component Breakdown
+
+#### 1. Annotation (Domain Model)
+
+**Location**: `FluentPDF.Core/Models/Annotation.cs`
+
+**Responsibilities**:
+- Immutable annotation data structure
+- Represents single annotation with type, bounds, colors, and content
+- Supports all PDFium annotation types
+
+**Model Structure**:
+```csharp
+public class Annotation
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public AnnotationType Type { get; set; }
+    public int PageNumber { get; set; }
+    public PdfRectangle Bounds { get; set; }
+    public Color FillColor { get; set; } = Color.Yellow;
+    public Color StrokeColor { get; set; } = Color.Black;
+    public string Contents { get; set; } = string.Empty;
+    public double Opacity { get; set; } = 1.0;
+    public double StrokeWidth { get; set; } = 1.0;
+    public List<PointF> InkPoints { get; set; } = new();      // Freehand drawing
+    public List<float> QuadPoints { get; set; } = new();      // Text markup
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
+    public bool IsSelected { get; set; }
+    public string Author { get; set; } = string.Empty;
+}
+
+public enum AnnotationType
+{
+    Unknown = 0, Text = 1, Highlight = 9, Underline = 10,
+    StrikeOut = 12, Square = 5, Circle = 6, Ink = 15, ...
+}
+```
+
+**Design Principles**:
+- **Comprehensive Properties**: Covers all annotation visual properties
+- **Self-Initialization**: Lists initialized to empty (never null)
+- **Metadata Tracking**: Created/modified dates, author tracking
+- **UI State**: IsSelected for highlighting active annotation
+
+#### 2. PdfiumInterop Annotation Extensions
+
+**Location**: `FluentPDF.Rendering/Interop/PdfiumInterop.cs`
+
+**Responsibilities**:
+- P/Invoke declarations for PDFium annotation API
+- Safe handle management via SafeAnnotationHandle
+- Color conversion (System.Drawing.Color → RGBA uint)
+
+**Key P/Invoke Functions**:
+```csharp
+[DllImport("pdfium.dll")]
+internal static extern SafeAnnotationHandle FPDFPage_CreateAnnot(
+    SafePdfPageHandle page,
+    int annotationType);
+
+[DllImport("pdfium.dll")]
+internal static extern bool FPDFAnnot_SetColor(
+    SafeAnnotationHandle annot,
+    int colorType,  // FPDFANNOT_COLORTYPE_Color, InteriorColor
+    uint R, uint G, uint B, uint A);
+
+[DllImport("pdfium.dll")]
+internal static extern bool FPDFAnnot_SetRect(
+    SafeAnnotationHandle annot,
+    ref FS_RECTF rect);
+
+[DllImport("pdfium.dll")]
+internal static extern bool FPDFPage_RemoveAnnot(
+    SafePdfPageHandle page,
+    int index);
+```
+
+**SafeAnnotationHandle**:
+- Extends SafeHandleZeroOrMinusOneIsInvalid
+- Auto-cleanup via FPDFPage_CloseAnnot
+- Prevents memory leaks from annotation handles
+
+#### 3. AnnotationService
+
+**Location**: `FluentPDF.Rendering/Services/AnnotationService.cs`
+
+**Responsibilities**:
+- CRUD operations for annotations using PDFium API
+- Annotation persistence with backup/restore
+- Error handling with FluentResults
+
+**Key Methods**:
+```csharp
+Task<Result<List<Annotation>>> GetAnnotationsAsync(PdfDocument doc, int page)
+Task<Result<Annotation>> CreateAnnotationAsync(PdfDocument doc, Annotation annot)
+Task<Result> UpdateAnnotationAsync(PdfDocument doc, Annotation annot)
+Task<Result> DeleteAnnotationAsync(PdfDocument doc, int page, int index)
+Task<Result> SaveAnnotationsAsync(PdfDocument doc, string path, bool backup = true)
+```
+
+**Save with Backup Algorithm**:
+```
+1. Check file not read-only
+2. Create backup: Copy original.pdf → original.pdf.bak
+3. Save: FPDF_SaveAsCopy(document, path)
+4. On success: Keep backup (user can delete)
+5. On failure: Restore backup → original.pdf
+```
+
+**Design Principles**:
+- **Defensive Programming**: Null checks, read-only file detection
+- **Transactional Save**: Backup before write, restore on failure
+- **Structured Logging**: All operations logged with context
+- **Result Pattern**: No exceptions for expected failures
+
+#### 4. AnnotationLayer (Win2D Canvas Overlay)
+
+**Location**: `FluentPDF.App/Controls/AnnotationLayer.xaml`
+
+**Responsibilities**:
+- Transparent canvas overlay on PDF viewer
+- Render annotations using Win2D drawing API
+- Capture pointer events for drawing gestures
+- Handle hit testing for annotation selection
+
+**Rendering Pipeline**:
+```
+CanvasControl.Draw Event
+       ↓
+1. Get CanvasDrawingSession
+2. For each annotation in AnnotationViewModel.Annotations:
+   - Switch on AnnotationType
+   - Highlight: DrawRectangle with semi-transparent fill
+   - Underline: DrawLine under text
+   - StrikeOut: DrawLine through text middle
+   - Text: DrawEllipse (sticky note icon)
+   - Square: DrawRectangle
+   - Circle: DrawEllipse
+   - Ink: DrawLines connecting InkPoints
+3. Highlight selected annotation (thicker border)
+```
+
+**Pointer Event Handling**:
+```csharp
+PointerPressed: Start gesture (capture initial point)
+PointerMoved: Update preview (draw temporary shape)
+PointerReleased: Finalize annotation
+   - Create Annotation model from gesture
+   - Call AnnotationViewModel.CreateAnnotationCommand
+   - Clear preview
+```
+
+**Coordinate Transformation**:
+- Win2D canvas coordinates → PDF page coordinates
+- Account for zoom level and scroll position
+- Transform via ViewportTransform matrix
+
+#### 5. AnnotationViewModel
+
+**Location**: `FluentPDF.App/ViewModels/AnnotationViewModel.cs`
+
+**Responsibilities**:
+- Manage annotation state and tool selection
+- Expose commands for UI binding
+- Coordinate between AnnotationLayer and AnnotationService
+
+**Key Properties**:
+```csharp
+AnnotationType ActiveTool { get; set; }           // Current tool (Highlight, etc.)
+Color SelectedColor { get; set; }                 // Annotation color
+ObservableCollection<Annotation> Annotations      // Current page annotations
+Annotation? SelectedAnnotation { get; set; }      // Currently selected
+```
+
+**Key Commands**:
+```csharp
+RelayCommand<AnnotationType> SelectToolCommand    // Switch tool
+AsyncRelayCommand<Annotation> CreateAnnotationCommand
+AsyncRelayCommand<Annotation> UpdateAnnotationCommand
+AsyncRelayCommand<Annotation> DeleteAnnotationCommand
+AsyncRelayCommand SaveAnnotationsCommand
+```
+
+**Page Change Handling**:
+```csharp
+OnPageChanged(int newPageNumber)
+{
+    // Clear current annotations
+    Annotations.Clear();
+
+    // Load annotations for new page
+    var result = await _annotationService.GetAnnotationsAsync(document, newPageNumber);
+    if (result.IsSuccess)
+    {
+        foreach (var annotation in result.Value)
+            Annotations.Add(annotation);
+    }
+}
+```
+
+### Annotation Types Supported
+
+| Type | Description | Visual Representation | Use Case |
+|------|-------------|----------------------|----------|
+| **Highlight** | Semi-transparent rectangle over text | Yellow/colored overlay | Mark important text |
+| **Underline** | Line under text | Colored line | Emphasize text |
+| **StrikeOut** | Line through text | Colored strikethrough | Mark deleted content |
+| **Text** | Sticky note comment | Icon with popup | Add notes/comments |
+| **Square** | Rectangle shape | Bordered/filled rectangle | Highlight regions |
+| **Circle** | Ellipse shape | Bordered/filled ellipse | Circle areas of interest |
+| **Ink** | Freehand drawing | Connected line segments | Draw custom shapes |
+
+### Persistence and Lossless Quality
+
+**Challenge**: Annotations must be saved directly to PDF file without quality degradation or content loss.
+
+**Solution**: Use PDFium's `FPDF_SaveAsCopy` for lossless incremental saves.
+
+**Save Algorithm**:
+```
+1. Annotations exist in PDFium document memory after creation
+2. SaveAnnotationsAsync calls FPDF_SaveAsCopy(document, outputPath)
+3. PDFium writes entire document with annotations embedded
+4. Original PDF content preserved byte-for-byte (lossless)
+5. Only annotation objects added to PDF structure
+```
+
+**Verification**:
+- Integration tests verify page count unchanged
+- File size increases (annotations added) but doesn't decrease
+- Reload test: Create annotation → Save → Close → Reload → Verify present
+
+### Error Handling
+
+**Read-Only File Detection**:
+```csharp
+var fileInfo = new FileInfo(filePath);
+if (fileInfo.IsReadOnly)
+{
+    return Result.Fail(new PdfError(
+        "ANNOTATION_FILE_READONLY",
+        $"Cannot save annotations: File is read-only: {filePath}"));
+}
+```
+
+**Backup Restore on Failure**:
+```csharp
+try
+{
+    File.Copy(filePath, backupPath, overwrite: true);
+    SaveWithPDFium(document, filePath);
+}
+catch (Exception ex)
+{
+    File.Copy(backupPath, filePath, overwrite: true);
+    return Result.Fail(new PdfError("ANNOTATION_SAVE_FAILED", ex.Message));
+}
+```
+
+### Testing Strategy
+
+**Unit Tests** (`AnnotationServiceTests.cs`):
+- Null argument validation
+- Read-only file detection
+- Error result handling
+
+**Integration Tests** (`AnnotationIntegrationTests.cs`):
+- All annotation types: Create → Save → Reload → Verify
+- Update annotation: Modify contents → Save → Reload → Verify
+- Delete annotation: Remove → Save → Reload → Verify empty
+- Multiple annotations: Create 4 types → Save → Reload → Verify all
+- Backup creation: Save with backup → Verify .bak file exists
+- Lossless save: Save → Verify page count unchanged, file size ≥ original
+
+**Test Coverage**:
+- 12 integration test methods
+- Coverage: All annotation types, CRUD operations, persistence, backup/restore
+
+### Performance Considerations
+
+**Annotation Rendering**:
+- Win2D GPU-accelerated drawing (60 FPS target)
+- Only redraw on CanvasControl.Invalidate()
+- Batch rendering: All annotations drawn in single Draw event
+
+**Memory Management**:
+- SafeAnnotationHandle auto-disposes PDFium handles
+- Annotations collection cleared on page change
+- No memory leaks from annotation creation/deletion
+
+**Save Performance**:
+- FPDF_SaveAsCopy is incremental (only modified objects written)
+- Backup creation: File.Copy is OS-optimized (CoW on modern filesystems)
+
+### Future Enhancements
+
+1. **Text Selection Integration**: Auto-detect text bounds for highlight/underline
+2. **Annotation Replies**: Threaded comments on annotations
+3. **Annotation Import/Export**: FDF (Forms Data Format) support
+4. **Annotation Appearance Streams**: Custom rendering with PDF graphics operators
+5. **Annotation Permissions**: Author-only editing, read-only annotations
+6. **Annotation Stamps**: Pre-defined stamps (Approved, Confidential, etc.)
+7. **Shape Tools**: Line, arrow, polygon annotations
+8. **Text Box Annotation**: Free-form text with font selection
+
+### References
+
+- **PDFium Annotation API**: https://pdfium.googlesource.com/pdfium/+/refs/heads/main/public/fpdf_annot.h
+- **Win2D Canvas**: https://microsoft.github.io/Win2D/WinUI3/html/T_Microsoft_Graphics_Canvas_UI_Xaml_CanvasControl.htm
+- **PDF Annotation Spec (ISO 32000-1)**: Section 12.5 Annotations
+- **Annotation Feature Spec**: [.spec-workflow/specs/annotation-tools/](../.spec-workflow/specs/annotation-tools/)
 
 ## PDF Form Filling Architecture
 

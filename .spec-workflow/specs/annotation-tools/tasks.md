@@ -51,7 +51,7 @@
   - Requirements: All
   - Instructions: Create annotation, save PDF, reload, verify persistence. Test all annotation types. Test lossless save.
 
-- [ ] 11. Final testing and documentation
+- [-] 11. Final testing and documentation
   - Files: `docs/ARCHITECTURE.md`, `README.md`
   - Requirements: All
   - Instructions: E2E test annotation workflow. Update docs with annotation features.

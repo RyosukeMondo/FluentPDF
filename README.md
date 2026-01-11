@@ -20,6 +20,12 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
   - Optimized performance for modern displays
 - **Text Extraction and Search**: Extract text from PDF pages and search within documents with visual highlighting
 - **Bookmark Navigation**: Hierarchical bookmark panel with TreeView for quick document navigation
+- **PDF Annotation Tools**: Mark up documents with highlights, comments, shapes, and freehand drawing
+  - Text markup: Highlight, underline, strikethrough
+  - Shapes: Rectangle, circle, freehand ink
+  - Comments: Sticky note annotations
+  - Lossless persistence directly to PDF files
+  - Win2D GPU-accelerated rendering
 - **Page Navigation**: Navigate through documents with previous/next buttons or arrow keys
 - **Zoom Controls**: Zoom in/out with preset levels (50% to 200%) or keyboard shortcuts
 - **File Picker Integration**: Open PDF files with native Windows file picker
@@ -242,6 +248,43 @@ FluentPDF provides powerful text extraction and search capabilities using PDFium
 
 See [TEXT-SEARCH.md](docs/TEXT-SEARCH.md) for detailed text extraction and search documentation.
 
+### PDF Annotation Tools
+
+FluentPDF provides comprehensive annotation capabilities for marking up and commenting on PDF documents:
+
+**Annotation Types**:
+- **Highlight**: Semi-transparent colored overlay to mark important text
+- **Underline**: Colored line under text to emphasize content
+- **Strikethrough**: Line through text to mark deletions
+- **Text Comments**: Sticky note annotations with pop-up text
+- **Rectangle**: Draw rectangular shapes to highlight regions
+- **Circle**: Draw circular shapes to mark areas of interest
+- **Freehand Drawing**: Draw custom shapes with pen tool
+
+**Using Annotation Tools**:
+1. Click annotation tool button in toolbar (Highlight, Rectangle, etc.)
+2. Draw on PDF page with mouse/pointer
+3. Annotations appear instantly with Win2D GPU rendering
+4. Select color from color picker for fill/stroke
+5. Click existing annotation to select and edit
+6. Delete selected annotation with Delete key
+
+**Annotation Persistence**:
+- **Lossless Save**: Annotations saved directly to PDF using PDFium API
+- **Backup Protection**: Automatic .bak backup before save
+- **Format Preservation**: Original PDF content unchanged (byte-perfect)
+- **Cross-Platform**: Annotations readable in Adobe Reader, Foxit, etc.
+
+**Keyboard Shortcuts**:
+- **Ctrl+Shift+A**: Toggle annotation toolbar
+- **Delete**: Delete selected annotation
+- **Escape**: Deselect annotation
+
+**Performance**:
+- Win2D GPU-accelerated rendering (60 FPS target)
+- Instant annotation creation with no lag
+- Memory-safe handle management (no leaks)
+
 ### Zoom Controls
 
 - **Zoom In**: Click the **Zoom In** button or press **Ctrl+Plus** (increases by 25%)
@@ -342,9 +385,11 @@ See [OBSERVABILITY.md](docs/OBSERVABILITY.md) for complete observability guide.
 |----------|--------|
 | **Ctrl+O** | Open PDF file in new tab |
 | **Ctrl+W** | Close current tab |
-| **Ctrl+S** | Save filled form data |
+| **Ctrl+S** | Save filled form data / Save annotations |
 | **Ctrl+B** | Toggle bookmarks panel |
 | **Ctrl+F** | Open search panel |
+| **Ctrl+Shift+A** | Toggle annotation toolbar |
+| **Delete** | Delete selected annotation |
 | **F3** | Next search match |
 | **Shift+F3** | Previous search match |
 | **Escape** | Close search panel |
