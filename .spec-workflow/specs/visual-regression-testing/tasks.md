@@ -130,7 +130,7 @@
   - _Requirements: 5.1-5.7_
   - _Prompt: Role: CI/CD Engineer | Task: Create GitHub Actions workflow for visual regression tests | Restrictions: Must run on Windows, upload artifacts on failure, use proper filters | Success: Visual tests run in CI and upload comparison images on failures_
 
-- [ ] 10. Add performance benchmarks for visual tests
+- [x] 10. Add performance benchmarks for visual tests
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Performance/VisualTestPerformanceBenchmarks.cs`
   - Create BenchmarkDotNet benchmarks for rendering and SSIM
