@@ -60,7 +60,7 @@
   - _Requirements: 2.1-2.8, 7.1-7.7_
   - _Prompt: Role: Computer Vision Developer | Task: Implement visual comparison service using OpenCvSharp SSIM | Restrictions: Must generate diff images, handle size mismatches, use proper thresholds | Success: Can compare images and generate perceptual similarity scores with diff visualization_
 
-- [ ] 5. Implement BaselineManager for baseline storage
+- [x] 5. Implement BaselineManager for baseline storage
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Services/IBaselineManager.cs`
     - `tests/FluentPDF.Rendering.Tests/Services/BaselineManager.cs`
