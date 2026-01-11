@@ -86,7 +86,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec save-document, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer with FlaUI expertise | Task: Create SaveWorkflowTests with tests: CtrlS_WhenDocumentModified_SavesDocument, SaveAs_ShowsFilePicker, CloseTab_WhenUnsaved_ShowsConfirmation, CloseTab_WhenClean_ClosesImmediately. Use FlaUI Page Object Pattern. Handle async dialogs with FlaUI retry strategies. | Restrictions: Skip tests if running in CI without UI. Follow existing integration test patterns. | _Leverage: Existing FlaUI tests, Page Object Pattern | _Requirements: All | Success: Integration tests verify end-to-end save workflow, tests are stable and CI-compatible. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 10. Update documentation
+- [x] 10. Update documentation
   - Files: `docs/ARCHITECTURE.md`, `README.md`
   - Add save command flow to architecture docs
   - Update features section with save functionality

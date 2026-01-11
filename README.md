@@ -47,6 +47,16 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 - **Form Data Persistence**: Save filled form data back to PDF using PDFium's native save API
 - **Error Display**: InfoBar shows validation errors with clear, actionable messages
 
+### Save Document Workflow
+- **Unsaved Changes Tracking**: Automatic detection of unsaved annotations and form data
+- **Visual Indicators**: Asterisk prefix on tab titles for documents with unsaved changes
+- **Save Command (Ctrl+S)**: Quick save to current file location
+- **Save As Command (Ctrl+Shift+S)**: Save with file picker to choose new location
+- **Close Confirmation**: Prompt before closing tabs with unsaved changes (Save/Don't Save/Cancel)
+- **Automatic Backups**: Creates .bak backup files before saving for data protection
+- **Error Recovery**: Restores backup on save failure with user-friendly error messages
+- **Keyboard Shortcuts**: Full keyboard support for save operations
+
 ### Office Document Conversion
 - **DOCX to PDF Conversion**: Convert Microsoft Word documents to PDF with high quality
 - **Semantic Parsing**: Uses Mammoth.NET to preserve document structure and formatting
@@ -392,7 +402,8 @@ See [OBSERVABILITY.md](docs/OBSERVABILITY.md) for complete observability guide.
 |----------|--------|
 | **Ctrl+O** | Open PDF file in new tab |
 | **Ctrl+W** | Close current tab |
-| **Ctrl+S** | Save filled form data / Save annotations |
+| **Ctrl+S** | Save document (annotations and forms) |
+| **Ctrl+Shift+S** | Save document as (choose new location) |
 | **Ctrl+B** | Toggle bookmarks panel |
 | **Ctrl+F** | Open search panel |
 | **Ctrl+Shift+A** | Toggle annotation toolbar |

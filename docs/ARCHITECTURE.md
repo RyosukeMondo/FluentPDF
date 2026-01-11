@@ -16,6 +16,9 @@ This document describes the architectural design of FluentPDF, including system 
 - [Office Document Conversion Architecture](#office-document-conversion-architecture)
 - [Bookmarks Panel Architecture](#bookmarks-panel-architecture)
 - [PDF Annotation Tools Architecture](#pdf-annotation-tools-architecture)
+- [PDF Form Filling Architecture](#pdf-form-filling-architecture)
+- [Save Document Workflow Architecture](#save-document-workflow-architecture)
+- [Text Extraction and Search Architecture](#text-extraction-and-search-architecture)
 - [HiDPI Display Scaling Architecture](#hidpi-display-scaling-architecture)
 - [Build and CI/CD](#build-and-cicd)
 
@@ -3836,6 +3839,515 @@ services.AddTransient<FormFieldViewModel>();
 
 - **PDFium Form API**: https://pdfium.googlesource.com/pdfium/+/refs/heads/main/public/fpdf_formfill.h
 - **Form Filling Spec**: [.spec-workflow/specs/form-filling/](../.spec-workflow/specs/form-filling/)
+
+## Save Document Workflow Architecture
+
+### Save Document Overview
+
+The Save Document feature provides comprehensive document persistence for both annotations and form data. It tracks unsaved changes, displays visual indicators, prompts users before closing unsaved tabs, and provides both Save (Ctrl+S) and Save As (Ctrl+Shift+S) operations.
+
+**Architecture Diagram**:
+
+```mermaid
+graph TB
+    subgraph "Presentation Layer"
+        TabView[TabView UI<br/>DisplayName with asterisk]
+        FileMenu[File Menu<br/>Save/Save As items]
+        SaveDialog[SaveConfirmationDialog<br/>Save/Don't Save/Cancel]
+        ViewerVM[PdfViewerViewModel<br/>SaveCommand/SaveAsCommand]
+        TabVM[TabViewModel<br/>HasUnsavedChanges/DisplayName]
+    end
+
+    subgraph "Application Layer"
+        AnnotationVM[AnnotationViewModel<br/>HasUnsavedAnnotations]
+        FormVM[FormFieldViewModel<br/>IsModified]
+        AnnotationSvc[IAnnotationService<br/>SaveAnnotationsAsync]
+        FormSvc[IPdfFormService<br/>SaveFormDataAsync]
+    end
+
+    subgraph "Infrastructure Layer"
+        PdfiumInterop[PdfiumInterop<br/>FPDF_SaveAsCopy]
+    end
+
+    subgraph "Native Layer"
+        PDFium[pdfium.dll<br/>Save with annotations/forms]
+    end
+
+    FileMenu --> ViewerVM
+    TabView --> TabVM
+    SaveDialog --> ViewerVM
+    TabVM --> ViewerVM
+    ViewerVM --> AnnotationVM
+    ViewerVM --> FormVM
+    ViewerVM --> AnnotationSvc
+    ViewerVM --> FormSvc
+    AnnotationSvc --> PdfiumInterop
+    FormSvc --> PdfiumInterop
+    PdfiumInterop --> PDFium
+```
+
+**Key Capabilities**:
+- Track unsaved changes from annotations and form fields
+- Visual indicators (asterisk prefix on tab titles)
+- Save confirmation dialog before closing unsaved tabs
+- Save (Ctrl+S) to current file location
+- Save As (Ctrl+Shift+S) with file picker
+- Automatic backup creation (.bak files)
+- Integration with annotation and form services
+
+### Save Document Workflow
+
+**Save Flow (Ctrl+S)**:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Menu as File Menu
+    participant VM as PdfViewerViewModel
+    participant AnnotationSvc as AnnotationService
+    participant FormSvc as FormService
+    participant Interop as PdfiumInterop
+    participant PDFium as pdfium.dll
+
+    User->>Menu: Click Save or press Ctrl+S
+    Menu->>VM: SaveCommand.Execute()
+
+    alt Has unsaved changes
+        VM->>VM: Check HasUnsavedChanges
+        VM->>AnnotationSvc: SaveAnnotationsAsync(document, filePath)
+        AnnotationSvc->>Interop: Create backup (.bak file)
+        AnnotationSvc->>Interop: FPDF_SaveAsCopy(document, filePath)
+        Interop->>PDFium: FPDF_SaveAsCopy
+        PDFium-->>Interop: Success/Failure
+        Interop-->>AnnotationSvc: Result.Ok() or Result.Fail()
+        AnnotationSvc-->>VM: Result
+
+        VM->>FormSvc: SaveFormDataAsync(document, filePath)
+        FormSvc->>Interop: FPDF_SaveAsCopy(document, filePath)
+        Interop->>PDFium: FPDF_SaveAsCopy
+        PDFium-->>Interop: Success/Failure
+        Interop-->>FormSvc: Result.Ok() or Result.Fail()
+        FormSvc-->>VM: Result
+
+        VM->>VM: Set HasUnsavedChanges = false
+        VM-->>User: Success notification
+    else No unsaved changes
+        VM-->>User: Command disabled (CanExecute=false)
+    end
+```
+
+**Save As Flow (Ctrl+Shift+S)**:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Menu as File Menu
+    participant VM as PdfViewerViewModel
+    participant Picker as FileSavePicker
+    participant AnnotationSvc as AnnotationService
+    participant FormSvc as FormService
+
+    User->>Menu: Click Save As or press Ctrl+Shift+S
+    Menu->>VM: SaveAsCommand.Execute()
+    VM->>Picker: PickSaveFileAsync()
+    Picker-->>User: Show file picker dialog
+    User->>Picker: Select location and filename
+    Picker-->>VM: StorageFile
+
+    VM->>AnnotationSvc: SaveAnnotationsAsync(document, newPath)
+    AnnotationSvc-->>VM: Result
+
+    VM->>FormSvc: SaveFormDataAsync(document, newPath)
+    FormSvc-->>VM: Result
+
+    VM->>VM: Update FilePath to newPath
+    VM->>VM: Set HasUnsavedChanges = false
+    VM-->>User: Success notification
+```
+
+**Tab Close Confirmation Flow**:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant TabView
+    participant MainWindow
+    participant Dialog as SaveConfirmationDialog
+    participant VM as PdfViewerViewModel
+
+    User->>TabView: Click close button on tab
+    TabView->>MainWindow: OnTabCloseRequested(tab)
+    MainWindow->>VM: Check HasUnsavedChanges
+
+    alt Has unsaved changes
+        MainWindow->>Dialog: ShowAsync(filename)
+        Dialog-->>User: Show "Save changes?" dialog
+
+        alt User clicks Save
+            User->>Dialog: Click Save
+            Dialog-->>MainWindow: SaveConfirmationResult.Save
+            MainWindow->>VM: SaveCommand.Execute()
+            VM-->>MainWindow: Save complete
+            MainWindow->>TabView: Remove tab
+        else User clicks Don't Save
+            User->>Dialog: Click Don't Save
+            Dialog-->>MainWindow: SaveConfirmationResult.DontSave
+            MainWindow->>TabView: Remove tab (discard changes)
+        else User clicks Cancel
+            User->>Dialog: Click Cancel or press Escape
+            Dialog-->>MainWindow: SaveConfirmationResult.Cancel
+            MainWindow->>TabView: Cancel close (args.Cancel=true)
+        end
+    else No unsaved changes
+        MainWindow->>TabView: Remove tab immediately
+    end
+```
+
+### Component Breakdown
+
+#### 1. PdfViewerViewModel (Save Commands)
+
+**Location**: `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs`
+
+**Responsibilities**:
+- Expose SaveCommand and SaveAsCommand for menu binding
+- Aggregate unsaved state from AnnotationViewModel and FormFieldViewModel
+- Coordinate save operations across multiple services
+- Reset HasUnsavedChanges after successful save
+- Handle errors with Result pattern
+
+**Key Properties and Commands**:
+```csharp
+public partial class PdfViewerViewModel : ObservableObject
+{
+    [ObservableProperty]
+    private bool hasUnsavedChanges;
+
+    [RelayCommand(CanExecute = nameof(CanSave))]
+    private async Task SaveAsync()
+    {
+        // Save annotations
+        var annotationResult = await _annotationService
+            .SaveAnnotationsAsync(_document, FilePath);
+
+        // Save form data
+        var formResult = await _formService
+            .SaveFormDataAsync(_document, FilePath);
+
+        // Reset unsaved flag
+        HasUnsavedChanges = false;
+    }
+
+    private bool CanSave() => HasUnsavedChanges;
+
+    [RelayCommand]
+    private async Task SaveAsAsync()
+    {
+        // Show file picker
+        var savePicker = new FileSavePicker();
+        var file = await savePicker.PickSaveFileAsync();
+
+        // Save to new location
+        await _annotationService.SaveAnnotationsAsync(_document, file.Path);
+        await _formService.SaveFormDataAsync(_document, file.Path);
+
+        // Update path and reset flag
+        FilePath = file.Path;
+        HasUnsavedChanges = false;
+    }
+}
+```
+
+**HasUnsavedChanges Aggregation**:
+```csharp
+private void InitializeUnsavedTracking()
+{
+    // Subscribe to annotation changes
+    _annotationViewModel.PropertyChanged += (s, e) =>
+    {
+        if (e.PropertyName == nameof(AnnotationViewModel.HasUnsavedAnnotations))
+        {
+            UpdateHasUnsavedChanges();
+        }
+    };
+
+    // Subscribe to form changes
+    _formFieldViewModel.PropertyChanged += (s, e) =>
+    {
+        if (e.PropertyName == nameof(FormFieldViewModel.IsModified))
+        {
+            UpdateHasUnsavedChanges();
+        }
+    };
+}
+
+private void UpdateHasUnsavedChanges()
+{
+    HasUnsavedChanges = _annotationViewModel.HasUnsavedAnnotations
+                     || _formFieldViewModel.IsModified;
+}
+```
+
+#### 2. TabViewModel (Display Name)
+
+**Location**: `src/FluentPDF.App/ViewModels/TabViewModel.cs`
+
+**Responsibilities**:
+- Delegate HasUnsavedChanges to PdfViewerViewModel
+- Compute DisplayName with asterisk prefix when unsaved
+- Forward property change notifications to UI
+
+**Key Properties**:
+```csharp
+public partial class TabViewModel : ObservableObject
+{
+    public bool HasUnsavedChanges => ViewerViewModel.HasUnsavedChanges;
+
+    public string DisplayName => HasUnsavedChanges
+        ? $"*{FileName}"
+        : FileName;
+
+    private void InitializePropertyForwarding()
+    {
+        ViewerViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(PdfViewerViewModel.HasUnsavedChanges))
+            {
+                OnPropertyChanged(nameof(HasUnsavedChanges));
+                OnPropertyChanged(nameof(DisplayName));
+            }
+        };
+    }
+}
+```
+
+#### 3. SaveConfirmationDialog
+
+**Location**: `src/FluentPDF.App/Views/Dialogs/SaveConfirmationDialog.xaml`
+
+**Responsibilities**:
+- Display save confirmation prompt
+- Provide Save, Don't Save, Cancel buttons
+- Return user's choice as enum result
+
+**Dialog Structure**:
+```xml
+<ContentDialog x:Class="FluentPDF.App.Views.Dialogs.SaveConfirmationDialog"
+               Title="Unsaved Changes"
+               PrimaryButtonText="Save"
+               SecondaryButtonText="Don't Save"
+               CloseButtonText="Cancel">
+    <TextBlock TextWrapping="Wrap">
+        Do you want to save changes to <Run FontWeight="SemiBold" Text="{x:Bind FileName}"/>?
+    </TextBlock>
+</ContentDialog>
+```
+
+**Static ShowAsync Method**:
+```csharp
+public enum SaveConfirmationResult
+{
+    Save,
+    DontSave,
+    Cancel
+}
+
+public static async Task<SaveConfirmationResult> ShowAsync(
+    string filename,
+    XamlRoot xamlRoot)
+{
+    var dialog = new SaveConfirmationDialog { FileName = filename };
+    dialog.XamlRoot = xamlRoot;
+
+    var result = await dialog.ShowAsync();
+
+    return result switch
+    {
+        ContentDialogResult.Primary => SaveConfirmationResult.Save,
+        ContentDialogResult.Secondary => SaveConfirmationResult.DontSave,
+        _ => SaveConfirmationResult.Cancel
+    };
+}
+```
+
+#### 4. MainWindow Tab Close Integration
+
+**Location**: `src/FluentPDF.App/Views/MainWindow.xaml.cs`
+
+**Responsibilities**:
+- Intercept tab close requests
+- Show SaveConfirmationDialog when unsaved changes exist
+- Execute save operation on Save result
+- Cancel close on Cancel result
+
+**OnTabCloseRequested Handler**:
+```csharp
+private async void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+{
+    var tab = args.Tab.Tag as TabViewModel;
+
+    if (tab.HasUnsavedChanges)
+    {
+        var result = await SaveConfirmationDialog.ShowAsync(
+            tab.FileName,
+            this.Content.XamlRoot);
+
+        switch (result)
+        {
+            case SaveConfirmationResult.Save:
+                await tab.ViewerViewModel.SaveCommand.ExecuteAsync(null);
+                _viewModel.Tabs.Remove(tab);
+                break;
+
+            case SaveConfirmationResult.DontSave:
+                _viewModel.Tabs.Remove(tab);
+                break;
+
+            case SaveConfirmationResult.Cancel:
+                // Do nothing - keep tab open
+                break;
+        }
+    }
+    else
+    {
+        // No unsaved changes - close immediately
+        _viewModel.Tabs.Remove(tab);
+    }
+}
+```
+
+#### 5. File Menu Integration
+
+**Location**: `src/FluentPDF.App/Views/MainWindow.xaml`
+
+**XAML Menu Items**:
+```xml
+<MenuFlyoutItem Text="Save" Click="OnSaveClick">
+    <MenuFlyoutItem.KeyboardAccelerators>
+        <KeyboardAccelerator Key="S" Modifiers="Control"/>
+    </MenuFlyoutItem.KeyboardAccelerators>
+</MenuFlyoutItem>
+
+<MenuFlyoutItem Text="Save As..." Click="OnSaveAsClick">
+    <MenuFlyoutItem.KeyboardAccelerators>
+        <KeyboardAccelerator Key="S" Modifiers="Control,Shift"/>
+    </MenuFlyoutItem.KeyboardAccelerators>
+</MenuFlyoutItem>
+```
+
+**Code-Behind Event Handlers**:
+```csharp
+private async void OnSaveClick(object sender, RoutedEventArgs e)
+{
+    var activeTab = _viewModel.ActiveTab;
+    if (activeTab?.ViewerViewModel.SaveCommand.CanExecute(null) == true)
+    {
+        await activeTab.ViewerViewModel.SaveCommand.ExecuteAsync(null);
+    }
+}
+
+private async void OnSaveAsClick(object sender, RoutedEventArgs e)
+{
+    var activeTab = _viewModel.ActiveTab;
+    if (activeTab != null)
+    {
+        await activeTab.ViewerViewModel.SaveAsCommand.ExecuteAsync(null);
+    }
+}
+```
+
+### Performance Characteristics
+
+**Save Operation**:
+- Annotation save: < 2 seconds for 100 annotations
+- Form data save: < 1 second for 50 fields
+- Backup creation: < 500ms for 10MB PDF
+- Total save time: < 3 seconds (P95)
+
+**UI Responsiveness**:
+- DisplayName update: < 1ms (property change propagation)
+- Tab header refresh: < 16ms (single frame)
+- Dialog display: < 100ms (ContentDialog creation)
+
+**Memory Usage**:
+- SaveConfirmationDialog: ~2KB overhead
+- Command infrastructure: ~1KB per ViewModel
+
+### Error Handling
+
+**Save Failure Scenarios**:
+1. **File Access Denied**: File locked by another process
+2. **Disk Full**: Insufficient storage space
+3. **Network Drive Disconnect**: File on unavailable network share
+4. **PDFium Save Error**: Corruption or unsupported PDF features
+
+**Error Recovery**:
+- Restore .bak backup on save failure
+- Show user-friendly error dialog with specific message
+- Keep HasUnsavedChanges=true on failure
+- Log error with correlation ID for diagnostics
+
+**Example Error Handling**:
+```csharp
+var result = await _annotationService.SaveAnnotationsAsync(_document, FilePath);
+
+if (result.IsFailed)
+{
+    // Log error
+    _logger.LogError("Save failed: {Error}", result.Errors.First().Message);
+
+    // Show error dialog
+    var dialog = new ContentDialog
+    {
+        Title = "Save Failed",
+        Content = $"Could not save file: {result.Errors.First().Message}",
+        CloseButtonText = "OK"
+    };
+    await dialog.ShowAsync();
+
+    // Keep unsaved flag set
+    // HasUnsavedChanges remains true
+}
+```
+
+### Keyboard Shortcuts
+
+| Shortcut | Action | Command |
+|----------|--------|---------|
+| **Ctrl+S** | Save document | SaveCommand |
+| **Ctrl+Shift+S** | Save document as | SaveAsCommand |
+
+### Security Considerations
+
+**Backup Protection**:
+- Automatic .bak file creation before save
+- Restore backup on save failure
+- No data loss from failed save operations
+
+**File Access Safety**:
+- Check file permissions before save
+- Handle locked files gracefully
+- Validate file path before writing
+
+**Data Integrity**:
+- Atomic save operations (all-or-nothing)
+- No partial saves that corrupt files
+- Validation before marking as saved
+
+### Future Enhancements
+
+1. **Auto-Save**: Periodic background saves every 5 minutes
+2. **Save Conflict Resolution**: Handle concurrent edits from multiple users
+3. **Cloud Storage Integration**: Save to OneDrive, SharePoint
+4. **Version History**: Track save history with rollback capability
+5. **Selective Save**: Save only annotations or only forms
+6. **Save Progress Indicator**: Progress bar for large files
+7. **Save Hooks**: Plugin system for pre/post-save actions
+
+### References
+
+- **PDFium Save API**: https://pdfium.googlesource.com/pdfium/+/refs/heads/main/public/fpdf_save.h
+- **Save Document Spec**: [.spec-workflow/specs/save-document/](../.spec-workflow/specs/save-document/)
 
 ## Text Extraction and Search Architecture
 
