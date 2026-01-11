@@ -91,7 +91,7 @@
   - _Requirements: 4.1-4.8_
   - _Prompt: Role: Test Framework Developer | Task: Create base class for visual regression tests with helper methods | Restrictions: Must handle first-run, create clear failure messages, dispose resources | Success: Provides reusable infrastructure for visual tests_
 
-- [ ] 7. Create sample visual regression tests
+- [x] 7. Create sample visual regression tests
   - Files:
     - `tests/FluentPDF.Validation.Tests/CoreRenderingVisualTests.cs`
     - `tests/FluentPDF.Validation.Tests/ZoomVisualTests.cs`
