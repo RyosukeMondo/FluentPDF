@@ -91,7 +91,7 @@
   - _Requirements: 5.5_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# MVVM Developer | Task: Add HasImageModifications property to PdfViewerViewModel. Include in HasUnsavedChanges calculation. Subscribe to ImageInsertionViewModel changes. Set HasImageModifications=true when images inserted/modified/deleted. Reset on save. | Restrictions: Follow existing HasUnsavedChanges pattern. | _Leverage: save-document HasUnsavedChanges | _Requirements: 5.5 | Success: Image operations set HasUnsavedChanges correctly. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 11. Add unit tests
+- [x] 11. Add unit tests
   - File: `tests/FluentPDF.Rendering.Tests/Services/ImageInsertionServiceTests.cs`
   - Test insert, move, scale, rotate, delete operations
   - Test format support
