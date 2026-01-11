@@ -75,7 +75,7 @@
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
   - _Prompt: Role: WinUI Developer with expertise in layout and animations | Task: Modify PdfViewerPage.xaml: change root Grid to two columns (thumbnail sidebar width=200, content area width=*), add ThumbnailsSidebar in column 0, move existing content to column 1. Add IsSidebarVisible (bool) property to PdfViewerViewModel with [ObservableProperty]. Add ToggleSidebar [RelayCommand] toggling visibility. Add toolbar button binding to ToggleSidebarCommand. Bind sidebar Visibility to IsSidebarVisible converter. Subscribe to NavigateToPageMessage in PdfViewerViewModel to sync CurrentPageNumber with thumbnail selection. Add DoubleAnimation for sidebar width on show/hide. | Restrictions: Sidebar default visible, animation duration 200ms, ensure content area resizes smoothly, use Grid.Column attached properties, wire message passing correctly. | Success: Sidebar integrates into viewer, toggle button works, sidebar shows/hides with animation, thumbnail selection navigates main viewer, current page highlights in sidebar._
 
-- [-] 6. Implement thumbnail click navigation and synchronization
+- [x] 6. Implement thumbnail click navigation and synchronization
   - Files:
     - `src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs` (modify)
     - `src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs` (modify)
