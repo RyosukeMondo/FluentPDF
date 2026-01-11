@@ -1,5 +1,6 @@
 using FluentPDF.App.Models;
 using FluentPDF.App.ViewModels;
+using FluentPDF.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -154,5 +155,85 @@ public sealed partial class ThumbnailsSidebar : UserControl
 
         // Load thumbnails for visible range
         await ViewModel.LoadVisibleThumbnailsAsync(startIndex, endIndex);
+    }
+
+    /// <summary>
+    /// Handles right-click on thumbnail to select it before showing context menu.
+    /// </summary>
+    private void ThumbnailButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (sender is Button button && button.DataContext is ThumbnailItem item)
+        {
+            // Select the right-clicked item if not already selected
+            if (!item.IsSelected)
+            {
+                // Clear other selections and select this item
+                ViewModel.NavigateToPageCommand.Execute(item.PageNumber);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles Rotate Right 90° menu item click.
+    /// </summary>
+    private async void RotateRight_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.RotateRightCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>
+    /// Handles Rotate Left 90° menu item click.
+    /// </summary>
+    private async void RotateLeft_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.RotateLeftCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>
+    /// Handles Rotate 180° menu item click.
+    /// </summary>
+    private async void Rotate180_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.Rotate180Command.ExecuteAsync(null);
+    }
+
+    /// <summary>
+    /// Handles Delete menu item click.
+    /// </summary>
+    private async void Delete_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.DeletePagesCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>
+    /// Handles Insert Blank Page (Same Size) menu item click.
+    /// </summary>
+    private async void InsertBlankPageSameSize_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.InsertBlankPageCommand.ExecuteAsync(PageSize.SameAsCurrent);
+    }
+
+    /// <summary>
+    /// Handles Insert Blank Page (Letter) menu item click.
+    /// </summary>
+    private async void InsertBlankPageLetter_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.InsertBlankPageCommand.ExecuteAsync(PageSize.Letter);
+    }
+
+    /// <summary>
+    /// Handles Insert Blank Page (A4) menu item click.
+    /// </summary>
+    private async void InsertBlankPageA4_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.InsertBlankPageCommand.ExecuteAsync(PageSize.A4);
+    }
+
+    /// <summary>
+    /// Handles Insert Blank Page (Legal) menu item click.
+    /// </summary>
+    private async void InsertBlankPageLegal_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.InsertBlankPageCommand.ExecuteAsync(PageSize.Legal);
     }
 }

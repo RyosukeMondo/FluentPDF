@@ -33,11 +33,49 @@
                 FocusVisualPrimaryBrush="{ThemeResource AccentFillColorDefaultBrush}"
                 FocusVisualPrimaryThickness="3"
                 FocusVisualSecondaryBrush="Transparent"
-                FocusVisualSecondaryThickness="0">
+                FocusVisualSecondaryThickness="0"
+                RightTapped="ThumbnailButton_RightTapped">
                 <Button.KeyboardAccelerators>
                     <KeyboardAccelerator Key="Enter" Invoked="ThumbnailKeyboardAccelerator_Invoked"/>
                     <KeyboardAccelerator Key="Space" Invoked="ThumbnailKeyboardAccelerator_Invoked"/>
                 </Button.KeyboardAccelerators>
+                <Button.ContextFlyout>
+                    <MenuFlyout>
+                        <!-- Rotate submenu -->
+                        <MenuFlyoutSubItem Text="Rotate">
+                            <MenuFlyoutItem Text="Rotate Right 90°" Click="RotateRight_Click">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="R" Modifiers="Control" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="Rotate Left 90°" Click="RotateLeft_Click">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="R" Modifiers="Control,Shift" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="Rotate 180°" Click="Rotate180_Click" />
+                        </MenuFlyoutSubItem>
+
+                        <MenuFlyoutSeparator />
+
+                        <!-- Delete menu item -->
+                        <MenuFlyoutItem Text="Delete" Click="Delete_Click">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="Delete" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+
+                        <MenuFlyoutSeparator />
+
+                        <!-- Insert Blank Page submenu -->
+                        <MenuFlyoutSubItem Text="Insert Blank Page">
+                            <MenuFlyoutItem Text="Same Size" Click="InsertBlankPageSameSize_Click" />
+                            <MenuFlyoutItem Text="Letter (8.5 x 11 in)" Click="InsertBlankPageLetter_Click" />
+                            <MenuFlyoutItem Text="A4 (210 x 297 mm)" Click="InsertBlankPageA4_Click" />
+                            <MenuFlyoutItem Text="Legal (8.5 x 14 in)" Click="InsertBlankPageLegal_Click" />
+                        </MenuFlyoutSubItem>
+                    </MenuFlyout>
+                </Button.ContextFlyout>
                 <Grid Width="150" Height="220">
                     <!-- Selected border -->
                     <Border

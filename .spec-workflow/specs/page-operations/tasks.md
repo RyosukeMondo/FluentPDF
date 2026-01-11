@@ -28,7 +28,7 @@
   - _Requirements: All_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer | Task: Add services.AddSingleton<IPageOperationsService, PageOperationsService>() to ConfigureServices in App.xaml.cs. Follow existing service registration patterns. | Restrictions: Only add registration, do not modify other code. | _Leverage: Existing DI setup in App.xaml.cs | _Requirements: All | Success: Service is registered and resolvable via DI. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [~] 4. Add page operation commands to ThumbnailsViewModel
+- [x] 4. Add page operation commands to ThumbnailsViewModel
   - File: `src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs`
   - Add RotateRightCommand, RotateLeftCommand, Rotate180Command
   - Add DeletePagesCommand with confirmation
@@ -39,7 +39,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.7, 4.1-4.6, 5.1-5.4_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# WinUI 3 Developer with MVVM expertise | Task: Add [RelayCommand] methods: RotateRightAsync, RotateLeftAsync, Rotate180Async, DeletePagesAsync, InsertBlankPageAsync. Add CanExecute that checks SelectedThumbnails.Any(). Inject IPageOperationsService. Add MovePagesTo(int[] indices, int targetIndex) for drag-drop. After each operation, refresh thumbnails and notify PdfViewerViewModel. | Restrictions: Use existing SelectedThumbnails property. Do not modify thumbnail loading logic. | _Leverage: Existing ThumbnailsViewModel, IPageOperationsService | _Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.7, 4.1-4.6, 5.1-5.4 | Success: All commands work, thumbnails refresh after operations, CanExecute logic correct. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 5. Add context menu to ThumbnailsPanel
+- [x] 5. Add context menu to ThumbnailsPanel
   - File: `src/FluentPDF.App/Controls/ThumbnailsPanel.xaml`
   - Add MenuFlyout with Rotate submenu (Right 90°, Left 90°, 180°)
   - Add Delete menu item
