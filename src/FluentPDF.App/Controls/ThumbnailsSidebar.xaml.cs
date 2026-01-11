@@ -1,3 +1,4 @@
+using System.Linq;
 using FluentPDF.App.Models;
 using FluentPDF.App.ViewModels;
 using FluentPDF.Core.Models;
@@ -6,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
 namespace FluentPDF.App.Controls;
@@ -235,5 +237,181 @@ public sealed partial class ThumbnailsSidebar : UserControl
     private async void InsertBlankPageLegal_Click(object sender, RoutedEventArgs e)
     {
         await ViewModel.InsertBlankPageCommand.ExecuteAsync(PageSize.Legal);
+    }
+
+    /// <summary>
+    /// Handles drag starting event to set up drag data.
+    /// </summary>
+    private void ThumbnailButton_DragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        if (sender is Button button && button.DataContext is ThumbnailItem item)
+        {
+            // Get all selected page indices
+            var selectedIndices = ViewModel.Thumbnails
+                .Where(t => t.IsSelected)
+                .Select(t => t.PageNumber - 1) // Convert to zero-based index
+                .ToArray();
+
+            if (selectedIndices.Length == 0)
+            {
+                // If nothing selected, select the item being dragged
+                selectedIndices = new[] { item.PageNumber - 1 };
+            }
+
+            // Store the indices in the data package
+            args.Data.Properties.Add("PageIndices", selectedIndices);
+            args.Data.RequestedOperation = DataPackageOperation.Move;
+
+            // Set drag UI with page count
+            var count = selectedIndices.Length;
+            args.DragUI.SetContentFromDataPackage();
+        }
+    }
+
+    /// <summary>
+    /// Handles drag over event to show drop indicator.
+    /// </summary>
+    private void ThumbnailButton_DragOver(object sender, DragEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not ThumbnailItem item)
+        {
+            return;
+        }
+
+        // Check if we have page indices in the drag data
+        if (!e.DataView.Properties.ContainsKey("PageIndices"))
+        {
+            e.AcceptedOperation = DataPackageOperation.None;
+            return;
+        }
+
+        e.AcceptedOperation = DataPackageOperation.Move;
+
+        // Show drop indicator at top or bottom based on cursor position
+        var position = e.GetPosition(button);
+        var halfHeight = button.ActualHeight / 2;
+
+        // Find the drop indicators in the button's template
+        var grid = FindChild<Grid>(button);
+        if (grid != null)
+        {
+            var topIndicator = grid.FindName("DropIndicatorTop") as Border;
+            var bottomIndicator = grid.FindName("DropIndicatorBottom") as Border;
+
+            if (topIndicator != null && bottomIndicator != null)
+            {
+                if (position.Y < halfHeight)
+                {
+                    // Show top indicator
+                    topIndicator.Visibility = Visibility.Visible;
+                    bottomIndicator.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    // Show bottom indicator
+                    topIndicator.Visibility = Visibility.Collapsed;
+                    bottomIndicator.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles drop event to reorder pages.
+    /// </summary>
+    private async void ThumbnailButton_Drop(object sender, DragEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not ThumbnailItem targetItem)
+        {
+            return;
+        }
+
+        // Hide drop indicators
+        HideDropIndicators(button);
+
+        // Get the dragged page indices
+        if (e.DataView.Properties.TryGetValue("PageIndices", out var indicesObj) &&
+            indicesObj is int[] sourceIndices)
+        {
+            // Determine target index based on drop position
+            var position = e.GetPosition(button);
+            var halfHeight = button.ActualHeight / 2;
+            var targetIndex = targetItem.PageNumber - 1; // Convert to zero-based
+
+            // If dropping in bottom half, insert after the target
+            if (position.Y >= halfHeight)
+            {
+                targetIndex++;
+            }
+
+            // Perform the reorder operation
+            await ViewModel.MovePagesTo(sourceIndices, targetIndex);
+        }
+
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles drag leave event to hide drop indicators.
+    /// </summary>
+    private void ThumbnailButton_DragLeave(object sender, DragEventArgs e)
+    {
+        if (sender is Button button)
+        {
+            HideDropIndicators(button);
+        }
+    }
+
+    /// <summary>
+    /// Hides drop indicators for a thumbnail button.
+    /// </summary>
+    private void HideDropIndicators(Button button)
+    {
+        var grid = FindChild<Grid>(button);
+        if (grid != null)
+        {
+            var topIndicator = grid.FindName("DropIndicatorTop") as Border;
+            var bottomIndicator = grid.FindName("DropIndicatorBottom") as Border;
+
+            if (topIndicator != null)
+            {
+                topIndicator.Visibility = Visibility.Collapsed;
+            }
+            if (bottomIndicator != null)
+            {
+                bottomIndicator.Visibility = Visibility.Collapsed;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Finds a child element of a specific type in the visual tree.
+    /// </summary>
+    private T? FindChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        if (parent == null)
+        {
+            return null;
+        }
+
+        var childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < childCount; i++)
+        {
+            var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T typedChild)
+            {
+                return typedChild;
+            }
+
+            var result = FindChild<T>(child);
+            if (result != null)
+            {
+                return result;
+            }
+        }
+
+        return null;
     }
 }

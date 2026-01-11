@@ -49,7 +49,7 @@
   - _Requirements: 1.1-1.2, 2.1-2.2, 4.1-4.2_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: Add MenuFlyout to ListView in ThumbnailsPanel.xaml. Add MenuFlyoutSubItem "Rotate" with items: "Rotate Right 90°", "Rotate Left 90°", "Rotate 180°". Add MenuFlyoutItem "Delete". Add MenuFlyoutSubItem "Insert Blank Page" with items: "Same Size", "Letter", "A4", "Legal". Bind Click to ViewModel commands. | Restrictions: Follow existing XAML patterns. Use proper keyboard accelerators. | _Leverage: Existing ThumbnailsPanel.xaml, WinUI MenuFlyout | _Requirements: 1.1-1.2, 2.1-2.2, 4.1-4.2 | Success: Context menu appears on right-click, all items work correctly. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 6. Implement drag-drop reordering in ThumbnailsPanel
+- [x] 6. Implement drag-drop reordering in ThumbnailsPanel
   - Files: `src/FluentPDF.App/Controls/ThumbnailsPanel.xaml`, `src/FluentPDF.App/Controls/ThumbnailsPanel.xaml.cs`
   - Enable CanDragItems and CanReorderItems on ListView
   - Handle DragItemsStarting, DragOver, Drop events

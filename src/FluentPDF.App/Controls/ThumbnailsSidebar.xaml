@@ -34,7 +34,13 @@
                 FocusVisualPrimaryThickness="3"
                 FocusVisualSecondaryBrush="Transparent"
                 FocusVisualSecondaryThickness="0"
-                RightTapped="ThumbnailButton_RightTapped">
+                RightTapped="ThumbnailButton_RightTapped"
+                CanDrag="True"
+                DragStarting="ThumbnailButton_DragStarting"
+                AllowDrop="True"
+                DragOver="ThumbnailButton_DragOver"
+                Drop="ThumbnailButton_Drop"
+                DragLeave="ThumbnailButton_DragLeave">
                 <Button.KeyboardAccelerators>
                     <KeyboardAccelerator Key="Enter" Invoked="ThumbnailKeyboardAccelerator_Invoked"/>
                     <KeyboardAccelerator Key="Space" Invoked="ThumbnailKeyboardAccelerator_Invoked"/>
@@ -83,6 +89,24 @@
                         BorderThickness="3"
                         CornerRadius="4"
                         Visibility="{x:Bind IsSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                    <!-- Drop target indicator (top) -->
+                    <Border
+                        x:Name="DropIndicatorTop"
+                        Height="4"
+                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                        VerticalAlignment="Top"
+                        Visibility="Collapsed"
+                        CornerRadius="2"/>
+
+                    <!-- Drop target indicator (bottom) -->
+                    <Border
+                        x:Name="DropIndicatorBottom"
+                        Height="4"
+                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                        VerticalAlignment="Bottom"
+                        Visibility="Collapsed"
+                        CornerRadius="2"/>
 
                     <StackPanel Spacing="8">
                         <!-- Thumbnail container -->
