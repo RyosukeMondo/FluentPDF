@@ -142,7 +142,7 @@
   - _Requirements: 8.1-8.7_
   - _Prompt: Role: Performance Engineer | Task: Create performance benchmarks for visual regression tests | Restrictions: Must use BenchmarkDotNet, measure key operations | Success: Benchmarks document rendering and comparison performance_
 
-- [ ] 11. Document baseline update workflow
+- [x] 11. Document baseline update workflow
   - Files:
     - `docs/VISUAL-TESTING.md` (create)
     - `tests/Baselines/README.md` (create)
