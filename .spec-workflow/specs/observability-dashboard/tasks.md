@@ -134,7 +134,7 @@
   - _Requirements: 4.1-4.10, 5.1-5.9_
   - _Prompt: Role: WinUI Frontend Developer specializing in data grids and filtering | Task: Create LogViewerControl following design.md Component 9, implementing XAML layout (Grid with StackPanel for filters at top, ListView in middle with ItemTemplate, Expander for details at bottom, CommandBar for toolbar), adding filter controls (ComboBox for LogLevel enum, TextBox for CorrelationId with watermark, TextBox for Component, TextBox for Search, DatePicker for StartTime/EndTime), creating ListView ItemTemplate (4 columns: Timestamp HH:mm:ss.fff, FontIcon for level, Message with TextTrimming, CorrelationId in Consolas font), creating LogLevelToIconConverter (Info: Info icon, Warning: Warning icon, Error: Error icon) and LogLevelToBackgroundConverter (Error: LightRed, Warning: LightYellow), and writing UI tests | Restrictions: Use ListView virtualization for performance, ensure filters accessible via keyboard, follow Fluent Design grid patterns, keep XAML organized with regions | Success: Control renders correctly with all filters, ListView displays logs efficiently, ItemTemplate shows all log details, details panel expands correctly, converters work, tests verify filtering UI_
 
-- [ ] 9. Create LogViewerViewModel with filtering logic
+- [x] 9. Create LogViewerViewModel with filtering logic
   - Files:
     - `src/FluentPDF.App/ViewModels/LogViewerViewModel.cs`
     - `tests/FluentPDF.App.Tests/ViewModels/LogViewerViewModelTests.cs`
