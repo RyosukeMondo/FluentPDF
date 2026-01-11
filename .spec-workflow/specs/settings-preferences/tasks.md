@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Create AppSettings model with enums
+- [x] 1. Create AppSettings model with enums
   - Files: `src/FluentPDF.Core/Models/AppSettings.cs`
   - Requirements: 1.1-1.7, 2.1-2.7
   - Instructions: Define strongly-typed settings model with ZoomLevel, ScrollMode, AppTheme enums. Include default values.
