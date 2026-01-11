@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fluentpdf.org/schemas/quality-report.schema.json",
+  "title": "Quality Report",
+  "description": "Schema for FluentPDF AI Quality Agent reports",
+  "type": "object",
+  "required": [
+    "summary",
+    "overallScore",
+    "status",
+    "buildInfo",
+    "analysis",
+    "rootCauseHypotheses",
+    "recommendations"
+  ],
+  "properties": {
+    "summary": {
+      "type": "object",
+      "required": ["timestamp", "buildId", "totalIssues", "criticalIssues"],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the report was generated"
+        },
+        "buildId": {
+          "type": "string",
+          "description": "Unique identifier for the build being analyzed"
+        },
+        "totalIssues": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of issues found across all categories"
+        },
+        "criticalIssues": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of critical severity issues"
+        }
+      }
+    },
+    "overallScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Overall quality score (0-100)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Pass", "Warn", "Fail"],
+      "description": "Overall status: Pass (≥80), Warn (60-79), Fail (<60)"
+    },
+    "buildInfo": {
+      "type": "object",
+      "required": ["buildId", "timestamp", "branch"],
+      "properties": {
+        "buildId": {
+          "type": "string",
+          "description": "Build identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Build timestamp"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Git branch name"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Git commit SHA"
+        },
+        "author": {
+          "type": "string",
+          "description": "Commit author"
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "required": ["testAnalysis", "logAnalysis", "visualAnalysis"],
+      "properties": {
+        "testAnalysis": {
+          "type": "object",
+          "required": ["total", "passed", "failed", "skipped", "passRate", "score"],
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "failed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "skipped": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "failures": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["testName"],
+                "properties": {
+                  "testName": {
+                    "type": "string"
+                  },
+                  "errorMessage": {
+                    "type": ["string", "null"]
+                  },
+                  "stackTrace": {
+                    "type": ["string", "null"]
+                  },
+                  "correlationId": {
+                    "type": ["string", "null"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "logAnalysis": {
+          "type": "object",
+          "required": ["errorRateHealth", "totalPatterns", "score"],
+          "properties": {
+            "errorRateHealth": {
+              "type": "string",
+              "enum": ["Healthy", "Warning", "Critical"]
+            },
+            "totalPatterns": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "errorRate": {
+              "type": "object",
+              "properties": {
+                "errorsPerHour": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "baselineErrorsPerHour": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "isSpike": {
+                  "type": "boolean"
+                },
+                "spikeMultiplier": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "repeatedExceptions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "exceptionType": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "occurrences": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "performanceWarnings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string"
+                  },
+                  "durationMs": {
+                    "type": "number"
+                  },
+                  "thresholdMs": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "visualAnalysis": {
+          "type": "object",
+          "required": ["totalTests", "passedTests", "score"],
+          "properties": {
+            "totalTests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passedTests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "minorRegressions": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "majorRegressions": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "criticalRegressions": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "degradingTests": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "regressions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["testName", "ssimScore", "severity"],
+                "properties": {
+                  "testName": {
+                    "type": "string"
+                  },
+                  "ssimScore": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": ["Minor", "Major", "Critical"]
+                  },
+                  "baselineImagePath": {
+                    "type": ["string", "null"]
+                  },
+                  "currentImagePath": {
+                    "type": ["string", "null"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "validationAnalysis": {
+          "type": "object",
+          "properties": {
+            "totalValidations": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "passedValidations": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        }
+      }
+    },
+    "rootCauseHypotheses": {
+      "type": "array",
+      "description": "AI-generated root cause hypotheses for test failures",
+      "items": {
+        "type": "object",
+        "required": ["issue", "hypothesis", "confidence", "severity"],
+        "properties": {
+          "testName": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "hypothesis": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["Low", "Medium", "High", "Critical"]
+          },
+          "recommendedActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relatedContext": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usedFallback": {
+            "type": "boolean",
+            "description": "Whether rule-based fallback was used instead of AI"
+          }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "description": "Prioritized list of recommended actions",
+      "items": {
+        "type": "object",
+        "required": ["priority", "category", "description"],
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low"]
+          },
+          "category": {
+            "type": "string",
+            "enum": ["Testing", "Logging", "Visual", "Validation", "Performance"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "relatedIssues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
