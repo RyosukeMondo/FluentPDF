@@ -53,10 +53,15 @@ public class PdfViewerViewModelSaveTests : IDisposable
         _thumbnailsLoggerMock = new Mock<ILogger<ThumbnailsViewModel>>();
 
         // Create test document
-        _testDocument = new PdfDocument(
-            nint.Zero,
-            "/path/to/test.pdf",
-            5);
+        var mockHandle = new Mock<IDisposable>();
+        _testDocument = new PdfDocument
+        {
+            Handle = mockHandle.Object,
+            FilePath = "/path/to/test.pdf",
+            PageCount = 5,
+            LoadedAt = DateTime.UtcNow,
+            FileSizeBytes = 1024
+        };
 
         // Create child view models
         var bookmarksViewModel = new BookmarksViewModel(
