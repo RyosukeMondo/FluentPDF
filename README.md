@@ -497,6 +497,44 @@ if (result.Value.OverallStatus == ValidationStatus.Pass)
 
 **See [VALIDATION.md](docs/VALIDATION.md) for comprehensive validation documentation and [FluentPDF.Validation README](src/FluentPDF.Validation/README.md) for API reference.**
 
+### AI Quality Analysis
+
+FluentPDF includes an AI-powered quality analysis system that automatically analyzes test results, logs, visual regressions, and validation reports to provide actionable insights and recommendations.
+
+**Features**:
+- **Test Result Analysis**: Parses TRX files to identify test failures and patterns
+- **Log Pattern Detection**: Detects error spikes, repeated exceptions, and anomalies in Serilog JSON logs
+- **Visual Regression Analysis**: Evaluates SSIM scores to detect UI regressions and degradation trends
+- **AI-Powered Root Cause Analysis**: Uses OpenAI/Azure OpenAI to generate hypothesis for test failures
+- **Quality Scoring**: Calculates weighted overall score (0-100) with Pass/Warn/Fail status
+- **Automated Recommendations**: Provides actionable recommendations based on analysis results
+- **CI/CD Integration**: Automatically runs in GitHub Actions and posts PR comments with quality summary
+
+**CLI Usage**:
+```bash
+dotnet run --project tools/quality-agent -- \
+  --trx-file ./TestResults/test-results.trx \
+  --log-dir ./logs \
+  --visual-results ./visual-results/ssim-results.json \
+  --output quality-report.json
+```
+
+**Exit Codes**:
+- `0` (Pass): Quality score ≥ 80
+- `1` (Warn): Quality score 60-79
+- `2` (Fail): Quality score < 60
+
+**Quality Scoring**:
+The overall score is calculated using weighted metrics:
+- Tests (40%): Test pass rate
+- Logs (30%): Log health score (based on error rates and patterns)
+- Visual (20%): Visual regression score
+- Validation (10%): PDF validation score
+
+**CI Integration**: The quality agent automatically runs after tests complete in GitHub Actions, generates a comprehensive quality report, and posts PR comments with key findings. Builds fail if quality status is "Fail".
+
+**See [AI Quality Agent CLI Documentation](tools/quality-agent/README.md) for detailed usage and [AI-QUALITY-AGENT.md](docs/AI-QUALITY-AGENT.md) for architecture details.**
+
 ## Architecture
 
 ```
