@@ -57,7 +57,7 @@
   - _Requirements: 1.1-1.2_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: Add ImageManipulationOverlay to PdfViewerPage Grid overlaying the PDF viewer. Add AppBarButton "Insert Image" with Picture symbol to toolbar CommandBar. Bind to ImageInsertionViewModel.InsertImageCommand. Position overlay to match PDF viewer bounds. | Restrictions: Follow existing toolbar patterns. Do not modify unrelated layout. | _Leverage: Existing PdfViewerPage.xaml | _Requirements: 1.1-1.2 | Success: Insert Image button visible, overlay renders over PDF, commands work. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 7. Add context menu for inserted images
+- [x] 7. Add context menu for inserted images
   - File: `src/FluentPDF.App/Controls/ImageManipulationOverlay.xaml`
   - Add right-click context menu with Delete, Rotate options
   - Add Bring to Front, Send to Back options
