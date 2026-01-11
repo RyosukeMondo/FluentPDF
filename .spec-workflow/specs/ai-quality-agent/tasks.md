@@ -47,7 +47,7 @@
   - Purpose: Automatically detect log patterns and anomalies
   - _Prompt: Role: Data Analyst with pattern recognition expertise | Task: Implement LogPatternAnalyzer detecting patterns in logs. Calculate error rate (errors per hour), compare to baseline (stored in config), flag spikes > 2x. Group exceptions by stack trace hash, flag repeated (> 5 occurrences). Detect performance warnings (duration > threshold). Find entries without correlation IDs. Return Result<LogPatterns> with detected patterns. Write unit tests with mock log entries (error spike, repeated exception, slow operation). | Restrictions: Handle baseline calculation (use moving average if no baseline), parameterize thresholds, avoid false positives. | Success: Analyzer detects all pattern types, unit tests verify detection logic._
 
-- [ ] 6. Integrate OpenAI/Azure OpenAI for test failure analysis
+- [x] 6. Integrate OpenAI/Azure OpenAI for test failure analysis
   - Files: `tools/quality-agent/Analyzers/TestFailureAnalyzer.cs`, `tools/quality-agent/Config/OpenAiConfig.cs`
   - Integrate Azure.AI.OpenAI SDK
   - Configure OpenAI API and Azure OpenAI support
