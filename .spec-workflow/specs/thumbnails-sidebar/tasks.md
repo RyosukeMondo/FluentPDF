@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [-] 1. Implement generic LruCache with automatic disposal
+- [x] 1. Implement generic LruCache with automatic disposal
   - Files:
     - `src/FluentPDF.Core/Caching/LruCache.cs` (create)
     - `tests/FluentPDF.Core.Tests/Caching/LruCacheTests.cs` (create)
