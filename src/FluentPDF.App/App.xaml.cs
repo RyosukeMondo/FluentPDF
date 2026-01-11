@@ -84,12 +84,18 @@ namespace FluentPDF.App
                     services.AddSingleton<IRecentFilesService, RecentFilesService>();
                     services.AddSingleton<JumpListService>();
 
+                    // Register observability services
+                    services.AddSingleton<IMetricsCollectionService, MetricsCollectionService>();
+                    services.AddSingleton<ILogExportService, LogExportService>();
+
                     // Register ViewModels
                     services.AddSingleton<MainViewModel>(); // Singleton for main window state
                     services.AddTransient<PdfViewerViewModel>();
                     services.AddTransient<ConversionViewModel>();
                     services.AddTransient<BookmarksViewModel>();
                     services.AddTransient<FormFieldViewModel>();
+                    services.AddTransient<DiagnosticsPanelViewModel>();
+                    services.AddTransient<LogViewerViewModel>();
                 })
                 .Build();
         }
@@ -123,6 +129,17 @@ namespace FluentPDF.App
 
             // Start the host
             await _host.StartAsync();
+
+            // Initialize metrics collection service
+            try
+            {
+                var metricsService = GetService<IMetricsCollectionService>();
+                Log.Information("Metrics collection service initialized");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to initialize metrics collection service. Application will continue without metrics.");
+            }
 
             // Log form services registration
             Log.Information("Form services registered: IPdfFormService, IFormValidationService, FormFieldViewModel");
@@ -261,6 +278,18 @@ namespace FluentPDF.App
         internal async Task ShutdownAsync()
         {
             Log.Information("FluentPDF application shutting down");
+
+            // Cleanup observability services
+            try
+            {
+                // Services will be disposed automatically when the host is disposed
+                // as they are registered as singletons in the DI container
+                Log.Information("Observability services cleanup initiated");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to cleanup observability services");
+            }
 
             // Shutdown PDFium library
             PdfiumInterop.Shutdown();
