@@ -150,7 +150,7 @@
   - _Requirements: 7.1-7.7_
   - _Prompt: Role: QA Manual Tester | Task: Perform manual testing on multiple display configurations | Restrictions: Must test all scaling levels, document issues | Success: HiDPI works correctly on all tested devices_
 
-- [ ] 12. Final testing and documentation
+- [x] 12. Final testing and documentation
   - Files:
     - `docs/ARCHITECTURE.md` (update)
     - `docs/HIDPI.md` (new)

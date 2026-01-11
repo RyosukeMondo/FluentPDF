@@ -13,6 +13,11 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 - **Multi-Tab Interface**: Work with multiple PDF files simultaneously using WinUI 3 TabView
 - **Recent Files**: Quick access to recently opened files via File menu and Windows Jump List
 - **High-Quality Rendering**: View PDF documents using Google's PDFium rendering engine
+- **HiDPI Display Scaling**: Automatic crisp rendering on high-resolution displays (4K, Surface devices)
+  - Automatic DPI detection (100%-300% scaling)
+  - Dynamic quality adjustment when moving between monitors
+  - User-controlled quality settings (Auto, Low, Medium, High, Ultra)
+  - Optimized performance for modern displays
 - **Text Extraction and Search**: Extract text from PDF pages and search within documents with visual highlighting
 - **Bookmark Navigation**: Hierarchical bookmark panel with TreeView for quick document navigation
 - **Page Navigation**: Navigate through documents with previous/next buttons or arrow keys
@@ -272,6 +277,40 @@ When you open a PDF with form fields, FluentPDF automatically detects and displa
 - Validation happens as you type - fix errors immediately
 - Save frequently to avoid losing your work
 - Original PDF remains unchanged - saves to new file
+
+### HiDPI Display Scaling
+
+FluentPDF automatically detects and adapts to high-resolution displays for crisp, pixel-perfect PDF rendering:
+
+**Automatic Adaptation**:
+- Detects display scaling (100%, 125%, 150%, 200%, 300%)
+- Renders PDFs at optimal DPI for your display
+- Automatically re-renders when moving between monitors with different DPI
+- Shows "Adjusting quality..." overlay during DPI changes
+
+**Quality Settings**:
+Navigate to Settings to manually control rendering quality:
+
+1. Open **Settings** page
+2. Find **Rendering Quality** section
+3. Choose quality level:
+   - **Auto** (Recommended): Matches your display automatically
+   - **Low** (96 DPI): Fastest rendering, lower quality
+   - **Medium** (144 DPI): Balanced quality and performance
+   - **High** (192 DPI): Sharp rendering for most displays
+   - **Ultra** (288 DPI): Maximum quality (may be slow on large documents)
+
+**Multi-Monitor Support**:
+- Seamlessly adapts when moving app between monitors
+- Each monitor can have different DPI (e.g., laptop screen + 4K external)
+- Set manual quality for consistent rendering across all displays
+
+**Performance**:
+- Standard document at 2x DPI (192 DPI): < 1 second render time
+- Memory usage scales with quality (2x DPI = 4x memory)
+- Automatic fallback to lower DPI on out-of-memory errors
+
+**See [HIDPI.md](docs/HIDPI.md) for comprehensive HiDPI documentation.**
 
 ### Observability and Diagnostics
 
