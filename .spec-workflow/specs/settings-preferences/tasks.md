@@ -46,7 +46,7 @@
   - Files: `src/FluentPDF.App/App.xaml.cs`
   - Instructions: Register ISettingsService as singleton, load settings on startup.
 
-- [ ] 10. Integration testing and documentation
+- [x] 10. Integration testing and documentation
   - Files: `tests/FluentPDF.App.Tests/Integration/SettingsIntegrationTests.cs`, `README.md`
   - Requirements: All
   - Instructions: Test settings persistence across app restarts. Test theme switching. Update docs.

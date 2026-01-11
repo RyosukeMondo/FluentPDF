@@ -358,6 +358,42 @@ See [OBSERVABILITY.md](docs/OBSERVABILITY.md) for complete observability guide.
 | **Ctrl+Shift+C** | Convert DOCX to PDF |
 | **Ctrl+Shift+D** | Toggle diagnostics panel |
 | **Ctrl+Shift+L** | Open log viewer |
+| **Ctrl+,** | Open settings |
+
+### Settings and Preferences
+
+FluentPDF provides a comprehensive settings system to customize your PDF viewing experience. Access settings by clicking **File** → **Settings** or pressing **Ctrl+,**.
+
+**Viewing Preferences**:
+- **Default Zoom Level**: Choose the initial zoom level for newly opened documents
+  - Options: 50%, 75%, 100% (default), 125%, 150%, 175%, 200%, Fit Width, Fit Page
+- **Scroll Mode**: Set the default scroll behavior
+  - Vertical: Traditional top-to-bottom scrolling (default)
+  - Horizontal: Left-to-right scrolling for wide documents
+  - Fit Page: Single page view with page-by-page navigation
+
+**Appearance**:
+- **Theme**: Choose your preferred application theme
+  - Light: Bright theme with light backgrounds
+  - Dark: Dark theme for reduced eye strain
+  - Use System (default): Automatically matches Windows theme preference
+
+**Privacy**:
+- **Anonymous Telemetry**: Opt-in to share anonymous usage data (default: disabled)
+- **Crash Reporting**: Opt-in to share crash reports for debugging (default: disabled)
+
+**Settings Features**:
+- **Automatic Persistence**: Settings are saved automatically to `ApplicationData.LocalFolder/settings.json`
+- **Instant Apply**: Changes take effect immediately without restart
+- **Debounced Saves**: Rapid changes are batched to reduce I/O operations
+- **Corrupt File Recovery**: If settings file is corrupted, defaults are restored automatically
+- **Reset to Defaults**: Click **Reset to Defaults** button to restore all settings to factory values
+
+**Settings Behavior**:
+- Theme changes apply immediately to the entire application
+- Zoom and scroll mode preferences apply to newly opened documents
+- Existing open documents retain their current settings
+- All settings persist across application restarts
 
 ### Converting DOCX to PDF
 
