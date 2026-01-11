@@ -1,0 +1,1 @@
+{"Timestamp":"2026-01-11T10:00:00.0000000Z","Level":"Error","MessageTemplate":"Rendering failed","Exception":"System.NullReferenceException: Object reference not set to an instance of an object.\r\n   at FluentPDF.Rendering.PdfRenderer.Render() in PdfRenderer.cs:line 123\r\n   at FluentPDF.App.MainWindow.OnRender() in MainWindow.cs:line 45"}
