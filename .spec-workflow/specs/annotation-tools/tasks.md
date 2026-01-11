@@ -22,7 +22,7 @@
   - Requirements: 2.1-2.7, 6.1-6.6
   - Instructions: ViewModel with ActiveTool, SelectedColor, Annotations list. Commands for creating, deleting, selecting annotations.
 
-- [-] 5. Create AnnotationLayer canvas overlay control
+- [x] 5. Create AnnotationLayer canvas overlay control
   - Files: `src/FluentPDF.App/Controls/AnnotationLayer.xaml`, `src/FluentPDF.App/Controls/AnnotationLayer.xaml.cs`
   - Requirements: 2.1-2.7, 4.1-4.6
   - Instructions: Transparent canvas overlay using Win2D. Render annotations on top of PDF. Handle pointer events for drawing, selection.
