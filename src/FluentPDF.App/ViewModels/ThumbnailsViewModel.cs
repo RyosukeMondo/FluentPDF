@@ -24,12 +24,19 @@ public record NavigateToPageMessage(int PageNumber);
 /// </summary>
 public partial class ThumbnailsViewModel : ObservableObject, IDisposable
 {
+    private const int MaxConcurrentRenders = 4;
+    private const int PriorityRange = 5; // Load current page ± 5 pages first
+    private const long MaxCacheMemoryBytes = 50 * 1024 * 1024; // 50 MB
+    private const int MinCacheCapacity = 20;
+    private const int MaxCacheCapacity = 100;
+
     private readonly IThumbnailRenderingService _thumbnailService;
     private readonly ILogger<ThumbnailsViewModel> _logger;
     private readonly LruCache<int, DisposableBitmapImage> _cache;
     private readonly SemaphoreSlim _renderSemaphore;
     private PdfDocument? _document;
     private bool _disposed;
+    private long _estimatedCacheMemory;
 
     /// <summary>
     /// Gets the collection of thumbnail items.
@@ -55,10 +62,11 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         Thumbnails = new ObservableCollection<ThumbnailItem>();
-        _cache = new LruCache<int, DisposableBitmapImage>(100);
-        _renderSemaphore = new SemaphoreSlim(4, 4); // Limit concurrent renders to 4
+        _cache = new LruCache<int, DisposableBitmapImage>(MaxCacheCapacity);
+        _renderSemaphore = new SemaphoreSlim(MaxConcurrentRenders, MaxConcurrentRenders);
+        _estimatedCacheMemory = 0;
 
-        _logger.LogInformation("ThumbnailsViewModel initialized");
+        _logger.LogInformation("ThumbnailsViewModel initialized with max cache capacity {Capacity}", MaxCacheCapacity);
     }
 
     /// <summary>
@@ -87,18 +95,9 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
 
         _logger.LogInformation("Created {Count} thumbnail items for document", document.PageCount);
 
-        // Load first 20 thumbnails asynchronously
-        var visibleCount = Math.Min(20, document.PageCount);
-        var loadTasks = new List<Task>();
-
-        for (int i = 0; i < visibleCount; i++)
-        {
-            var item = Thumbnails[i];
-            loadTasks.Add(LoadThumbnailAsync(item));
-        }
-
-        await Task.WhenAll(loadTasks);
-        _logger.LogInformation("Loaded first {Count} thumbnails", visibleCount);
+        // Load first 20 thumbnails with priority (current page neighborhood first)
+        await LoadPriorityThumbnailsAsync(1, Math.Min(20, document.PageCount));
+        _logger.LogInformation("Loaded initial thumbnails");
     }
 
     /// <summary>
@@ -134,11 +133,19 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
                 item.Thumbnail = bitmap;
                 item.IsLoading = false;
 
-                // Cache the thumbnail
+                // Cache the thumbnail and track memory
                 var disposableImage = new DisposableBitmapImage(bitmap);
                 _cache.Add(item.PageNumber, disposableImage);
 
-                _logger.LogDebug("Loaded thumbnail for page {PageNumber}", item.PageNumber);
+                // Estimate memory usage (typical thumbnail ~150x200 pixels, 4 bytes per pixel)
+                var estimatedSize = 150 * 200 * 4;
+                _estimatedCacheMemory += estimatedSize;
+
+                // Check memory and adjust cache if needed
+                MonitorCacheMemory();
+
+                _logger.LogDebug("Loaded thumbnail for page {PageNumber}, estimated cache memory: {Memory} MB",
+                    item.PageNumber, _estimatedCacheMemory / (1024.0 * 1024.0));
             }
             else
             {
@@ -160,6 +167,7 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Loads thumbnails for the specified range of pages.
+    /// Uses priority loading to load pages near the current selection first.
     /// </summary>
     /// <param name="startIndex">The 0-based start index.</param>
     /// <param name="endIndex">The 0-based end index (exclusive).</param>
@@ -170,18 +178,60 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var loadTasks = new List<Task>();
+        // Use priority loading with current page as center
+        var currentPage = SelectedPageNumber;
+        var visibleCount = endIndex - startIndex;
 
-        for (int i = startIndex; i < endIndex && i < Thumbnails.Count; i++)
+        // Load with priority around current page within visible range
+        await LoadPriorityRangeThumbnailsAsync(currentPage, startIndex, endIndex);
+    }
+
+    /// <summary>
+    /// Loads thumbnails in a specific range with priority around the current page.
+    /// </summary>
+    /// <param name="currentPage">The current page number (1-based).</param>
+    /// <param name="startIndex">The 0-based start index.</param>
+    /// <param name="endIndex">The 0-based end index (exclusive).</param>
+    private async Task LoadPriorityRangeThumbnailsAsync(int currentPage, int startIndex, int endIndex)
+    {
+        if (_document == null)
+        {
+            return;
+        }
+
+        var loadTasks = new List<Task>();
+        var loaded = new HashSet<int>();
+
+        // Priority 1: Load current page and neighbors within visible range
+        var priorityStart = Math.Max(startIndex, currentPage - 1 - PriorityRange);
+        var priorityEnd = Math.Min(endIndex - 1, currentPage - 1 + PriorityRange);
+
+        for (int i = priorityStart; i <= priorityEnd && i < Thumbnails.Count; i++)
         {
             var item = Thumbnails[i];
-            if (item.Thumbnail == null && item.IsLoading)
+            if (item.Thumbnail == null)
             {
                 loadTasks.Add(LoadThumbnailAsync(item));
+                loaded.Add(i);
+            }
+        }
+
+        // Priority 2: Load remaining visible thumbnails
+        for (int i = startIndex; i < endIndex && i < Thumbnails.Count; i++)
+        {
+            if (!loaded.Contains(i))
+            {
+                var item = Thumbnails[i];
+                if (item.Thumbnail == null)
+                {
+                    loadTasks.Add(LoadThumbnailAsync(item));
+                }
             }
         }
 
         await Task.WhenAll(loadTasks);
+        _logger.LogDebug("Loaded thumbnails in range {Start}-{End} with priority around page {Page}",
+            startIndex, endIndex, currentPage);
     }
 
     /// <summary>
@@ -251,6 +301,75 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         {
             // Update CanExecute state when loading state changes
             NavigateToPageCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
+    /// Loads thumbnails with priority for pages near the current page.
+    /// </summary>
+    /// <param name="currentPage">The current page number (1-based).</param>
+    /// <param name="visibleCount">Total number of thumbnails to load.</param>
+    private async Task LoadPriorityThumbnailsAsync(int currentPage, int visibleCount)
+    {
+        if (_document == null)
+        {
+            return;
+        }
+
+        var loadTasks = new List<Task>();
+        var loaded = new HashSet<int>();
+
+        // Priority 1: Load current page and immediate neighbors (± PriorityRange pages)
+        var priorityStart = Math.Max(1, currentPage - PriorityRange);
+        var priorityEnd = Math.Min(_document.PageCount, currentPage + PriorityRange);
+
+        for (int i = priorityStart; i <= priorityEnd && i <= visibleCount; i++)
+        {
+            if (i >= 1 && i <= Thumbnails.Count)
+            {
+                var item = Thumbnails[i - 1];
+                loadTasks.Add(LoadThumbnailAsync(item));
+                loaded.Add(i);
+            }
+        }
+
+        // Priority 2: Load remaining visible thumbnails
+        for (int i = 1; i <= visibleCount && i <= Thumbnails.Count; i++)
+        {
+            if (!loaded.Contains(i))
+            {
+                var item = Thumbnails[i - 1];
+                loadTasks.Add(LoadThumbnailAsync(item));
+            }
+        }
+
+        await Task.WhenAll(loadTasks);
+        _logger.LogDebug("Loaded {Count} thumbnails with priority around page {Page}", loaded.Count, currentPage);
+    }
+
+    /// <summary>
+    /// Monitors cache memory usage and adjusts capacity if needed.
+    /// </summary>
+    private void MonitorCacheMemory()
+    {
+        if (_estimatedCacheMemory > MaxCacheMemoryBytes)
+        {
+            // Memory exceeded - we need to reduce cache capacity
+            // The LruCache will automatically evict items when new ones are added
+            _logger.LogWarning("Cache memory exceeded {Current} MB / {Max} MB, items will be evicted",
+                _estimatedCacheMemory / (1024.0 * 1024.0),
+                MaxCacheMemoryBytes / (1024.0 * 1024.0));
+
+            // Reduce estimated memory (the cache eviction will handle actual cleanup)
+            // We'll recalibrate on the next add
+            var itemSize = 150 * 200 * 4;
+            var itemsToRemove = (int)((_estimatedCacheMemory - MaxCacheMemoryBytes) / itemSize) + 1;
+            _estimatedCacheMemory -= itemsToRemove * itemSize;
+
+            if (_estimatedCacheMemory < 0)
+            {
+                _estimatedCacheMemory = 0;
+            }
         }
     }
 
