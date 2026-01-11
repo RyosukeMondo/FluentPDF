@@ -76,7 +76,7 @@
   - _Requirements: 2.1-2.7, 3.1-3.7, 5.1-5.7_
   - _Prompt: Role: WinUI MVVM Developer | Task: Extend PdfViewerViewModel with DPI monitoring and automatic quality adjustment | Restrictions: Must subscribe/unsubscribe properly, re-render only on significant changes | Success: ViewModel monitors DPI and re-renders pages when DPI changes_
 
-- [-] 6. Initialize DPI monitoring in PdfViewerPage
+- [x] 6. Initialize DPI monitoring in PdfViewerPage
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs` (modify)
   - Call ViewModel.StartDpiMonitoring(this.XamlRoot) in Loaded event
