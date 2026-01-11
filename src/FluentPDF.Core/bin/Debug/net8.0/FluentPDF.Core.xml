@@ -4,6 +4,55 @@
         <name>FluentPDF.Core</name>
     </assembly>
     <members>
+        <member name="T:FluentPDF.Core.Caching.LruCache`2">
+            <summary>
+            Thread-safe LRU (Least Recently Used) cache with automatic disposal of evicted items.
+            </summary>
+            <typeparam name="TKey">The type of keys in the cache.</typeparam>
+            <typeparam name="TValue">The type of values in the cache. Must implement IDisposable.</typeparam>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the LruCache class with the specified capacity.
+            </summary>
+            <param name="capacity">The maximum number of items the cache can hold.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when capacity is less than 1.</exception>
+        </member>
+        <member name="P:FluentPDF.Core.Caching.LruCache`2.Count">
+            <summary>
+            Gets the current number of items in the cache.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Caching.LruCache`2.Capacity">
+            <summary>
+            Gets the maximum capacity of the cache.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.TryGet(`0,`1@)">
+            <summary>
+            Attempts to retrieve a value from the cache and updates its position to most recently used.
+            </summary>
+            <param name="key">The key to look up.</param>
+            <param name="value">The value if found, otherwise default.</param>
+            <returns>True if the key was found, otherwise false.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.Add(`0,`1)">
+            <summary>
+            Adds or updates an item in the cache. If the cache is at capacity, the least recently used item is evicted and disposed.
+            </summary>
+            <param name="key">The key of the item to add.</param>
+            <param name="value">The value to add.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.Clear">
+            <summary>
+            Removes all items from the cache and disposes them.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.Dispose">
+            <summary>
+            Disposes all cached items and releases resources.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.ErrorHandling.ErrorCategory">
             <summary>
             Categorizes PDF-related errors for classification and routing.
@@ -2250,6 +2299,20 @@
             A Result containing a list of SearchMatch objects for the page if successful, or a PdfError if the operation failed.
             Error codes: PDF_PAGE_INVALID, PDF_SEARCH_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
             </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IThumbnailRenderingService">
+            <summary>
+            Service contract for rendering PDF page thumbnails as low-resolution images.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IThumbnailRenderingService.RenderThumbnailAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <summary>
+            Renders a PDF page thumbnail at low resolution optimized for preview display.
+            The stream contains PNG-encoded image data at reduced DPI and zoom level.
+            </summary>
+            <param name="document">The PDF document containing the page.</param>
+            <param name="pageNumber">The 1-based page number to render.</param>
+            <returns>A result containing a Stream with PNG-encoded thumbnail data, or an error if rendering failed.</returns>
         </member>
         <member name="T:FluentPDF.Core.Services.TelemetryService">
             <summary>

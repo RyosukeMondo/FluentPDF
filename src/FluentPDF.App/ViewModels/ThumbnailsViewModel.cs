@@ -80,7 +80,9 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         // Create thumbnail items for all pages
         for (int i = 1; i <= document.PageCount; i++)
         {
-            Thumbnails.Add(new ThumbnailItem(i));
+            var item = new ThumbnailItem(i);
+            item.PropertyChanged += OnThumbnailItemPropertyChanged;
+            Thumbnails.Add(item);
         }
 
         _logger.LogInformation("Created {Count} thumbnail items for document", document.PageCount);
@@ -186,7 +188,7 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     /// Navigates to the specified page.
     /// </summary>
     /// <param name="pageNumber">The 1-based page number to navigate to.</param>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanNavigateToPage))]
     private void NavigateToPage(int pageNumber)
     {
         if (pageNumber < 1 || (_document != null && pageNumber > _document.PageCount))
@@ -206,6 +208,16 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         WeakReferenceMessenger.Default.Send(new NavigateToPageMessage(pageNumber));
 
         _logger.LogDebug("Navigating to page {PageNumber} via thumbnail click", pageNumber);
+    }
+
+    /// <summary>
+    /// Determines whether navigation to a page can execute.
+    /// Navigation is disabled when any thumbnail is currently loading.
+    /// </summary>
+    private bool CanNavigateToPage(int pageNumber)
+    {
+        // Check if any thumbnail is currently being loaded
+        return !Thumbnails.Any(t => t.IsLoading);
     }
 
     /// <summary>
@@ -231,6 +243,18 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Handles property changes on thumbnail items to update command states.
+    /// </summary>
+    private void OnThumbnailItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ThumbnailItem.IsLoading))
+        {
+            // Update CanExecute state when loading state changes
+            NavigateToPageCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
     /// Converts a Stream to IRandomAccessStream for WinUI BitmapImage.
     /// </summary>
     private static async Task<IRandomAccessStream> ConvertStreamToRandomAccessStreamAsync(Stream stream)
@@ -253,6 +277,12 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         if (_disposed)
         {
             return;
+        }
+
+        // Unsubscribe from thumbnail item events
+        foreach (var item in Thumbnails)
+        {
+            item.PropertyChanged -= OnThumbnailItemPropertyChanged;
         }
 
         _cache.Dispose();

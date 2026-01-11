@@ -1382,5 +1382,21 @@
             Handles multi-line matches by encompassing all character positions.
             </summary>
         </member>
+        <member name="T:FluentPDF.Rendering.Services.ThumbnailRenderingService">
+            <summary>
+            Service for rendering PDF page thumbnails at low resolution.
+            Wraps PdfRenderingService with optimized settings for thumbnail generation (low DPI, small zoom).
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ThumbnailRenderingService.#ctor(FluentPDF.Core.Services.IPdfRenderingService,Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.ThumbnailRenderingService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.ThumbnailRenderingService"/> class.
+            </summary>
+            <param name="renderingService">The underlying PDF rendering service.</param>
+            <param name="logger">Logger for performance monitoring.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ThumbnailRenderingService.RenderThumbnailAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <inheritdoc />
+        </member>
     </members>
 </doc>

@@ -160,3 +160,4 @@
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/OpenTelemetry.dll
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/OpenTelemetry.Api.dll
 /home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/OpenTelemetry.Api.ProviderBuilderExtensions.dll
+/home/rmondo/repos/FluentPDF/tests/FluentPDF.Core.Tests/bin/Debug/net8.0/System.Reactive.dll

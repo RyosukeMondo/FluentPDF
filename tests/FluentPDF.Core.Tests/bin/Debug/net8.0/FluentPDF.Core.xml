@@ -4,6 +4,55 @@
         <name>FluentPDF.Core</name>
     </assembly>
     <members>
+        <member name="T:FluentPDF.Core.Caching.LruCache`2">
+            <summary>
+            Thread-safe LRU (Least Recently Used) cache with automatic disposal of evicted items.
+            </summary>
+            <typeparam name="TKey">The type of keys in the cache.</typeparam>
+            <typeparam name="TValue">The type of values in the cache. Must implement IDisposable.</typeparam>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the LruCache class with the specified capacity.
+            </summary>
+            <param name="capacity">The maximum number of items the cache can hold.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Thrown when capacity is less than 1.</exception>
+        </member>
+        <member name="P:FluentPDF.Core.Caching.LruCache`2.Count">
+            <summary>
+            Gets the current number of items in the cache.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Caching.LruCache`2.Capacity">
+            <summary>
+            Gets the maximum capacity of the cache.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.TryGet(`0,`1@)">
+            <summary>
+            Attempts to retrieve a value from the cache and updates its position to most recently used.
+            </summary>
+            <param name="key">The key to look up.</param>
+            <param name="value">The value if found, otherwise default.</param>
+            <returns>True if the key was found, otherwise false.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.Add(`0,`1)">
+            <summary>
+            Adds or updates an item in the cache. If the cache is at capacity, the least recently used item is evicted and disposed.
+            </summary>
+            <param name="key">The key of the item to add.</param>
+            <param name="value">The value to add.</param>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.Clear">
+            <summary>
+            Removes all items from the cache and disposes them.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Caching.LruCache`2.Dispose">
+            <summary>
+            Disposes all cached items and releases resources.
+            </summary>
+        </member>
         <member name="T:FluentPDF.Core.ErrorHandling.ErrorCategory">
             <summary>
             Categorizes PDF-related errors for classification and routing.
@@ -136,6 +185,356 @@
             Gets the application version from the executing assembly.
             </summary>
             <returns>Assembly version string.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Models.Annotation">
+            <summary>
+            Represents a PDF annotation.
+            Annotations include highlights, underlines, comments, shapes, and freehand drawings.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.Id">
+            <summary>
+            Gets or sets the unique identifier for this annotation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.Type">
+            <summary>
+            Gets or sets the type of annotation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.PageNumber">
+            <summary>
+            Gets or sets the page number (zero-based) where this annotation is located.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.Bounds">
+            <summary>
+            Gets or sets the bounding rectangle for the annotation in PDF coordinates.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.FillColor">
+            <summary>
+            Gets or sets the fill color for the annotation (used for highlights, shapes).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.StrokeColor">
+            <summary>
+            Gets or sets the stroke (border) color for the annotation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.Contents">
+            <summary>
+            Gets or sets the text content of the annotation (used for comments and text annotations).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.Opacity">
+            <summary>
+            Gets or sets the opacity of the annotation (0.0 to 1.0).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.StrokeWidth">
+            <summary>
+            Gets or sets the stroke width for drawing annotations.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.InkPoints">
+            <summary>
+            Gets or sets the ink points for freehand drawing annotations.
+            Each point is represented as (x, y) coordinates in PDF space.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.QuadPoints">
+            <summary>
+            Gets or sets the quad points for text markup annotations (highlight, underline, strikethrough).
+            Each quad is represented by 8 values: x1,y1,x2,y2,x3,y3,x4,y4.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.CreatedDate">
+            <summary>
+            Gets or sets the creation date of the annotation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.ModifiedDate">
+            <summary>
+            Gets or sets the last modification date of the annotation.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.IsSelected">
+            <summary>
+            Gets or sets whether the annotation is currently selected.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.Annotation.Author">
+            <summary>
+            Gets or sets the author of the annotation.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.AnnotationType">
+            <summary>
+            Represents the type of PDF annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Unknown">
+            <summary>
+            Unknown or unsupported annotation type.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Text">
+            <summary>
+            Text annotation (sticky note).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Link">
+            <summary>
+            Link annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.FreeText">
+            <summary>
+            Free text annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Line">
+            <summary>
+            Line annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Square">
+            <summary>
+            Square (rectangle) annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Circle">
+            <summary>
+            Circle annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Polygon">
+            <summary>
+            Polygon annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.PolyLine">
+            <summary>
+            Polyline annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Highlight">
+            <summary>
+            Highlight text markup annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Underline">
+            <summary>
+            Underline text markup annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Squiggly">
+            <summary>
+            Squiggly underline text markup annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.StrikeOut">
+            <summary>
+            Strikethrough text markup annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Stamp">
+            <summary>
+            Rubber stamp annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Caret">
+            <summary>
+            Caret annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Ink">
+            <summary>
+            Ink (freehand drawing) annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Popup">
+            <summary>
+            Popup annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.FileAttachment">
+            <summary>
+            File attachment annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Sound">
+            <summary>
+            Sound annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Movie">
+            <summary>
+            Movie annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Widget">
+            <summary>
+            Widget annotation (form field).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Screen">
+            <summary>
+            Screen annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.PrinterMark">
+            <summary>
+            Printer's mark annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.TrapNet">
+            <summary>
+            Trap network annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Watermark">
+            <summary>
+            Watermark annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.ThreeD">
+            <summary>
+            3D annotation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AnnotationType.Redact">
+            <summary>
+            Redaction annotation.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.AppSettings">
+            <summary>
+            Represents the application settings and user preferences.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.AppSettings.DefaultZoom">
+            <summary>
+            Gets or sets the default zoom level for newly opened documents.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.AppSettings.ScrollMode">
+            <summary>
+            Gets or sets the default scroll mode for document viewing.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.AppSettings.Theme">
+            <summary>
+            Gets or sets the application theme preference.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.AppSettings.TelemetryEnabled">
+            <summary>
+            Gets or sets whether anonymous telemetry is enabled.
+            Default is false (opt-in only).
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Models.AppSettings.CrashReportingEnabled">
+            <summary>
+            Gets or sets whether anonymous crash reporting is enabled.
+            Default is false (opt-in only).
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Models.AppSettings.CreateDefault">
+            <summary>
+            Creates a new instance with default values.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.ZoomLevel">
+            <summary>
+            Defines available zoom levels for PDF viewing.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.FiftyPercent">
+            <summary>
+            50% zoom level.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.SeventyFivePercent">
+            <summary>
+            75% zoom level.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.OneHundredPercent">
+            <summary>
+            100% zoom level (actual size).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.OneTwentyFivePercent">
+            <summary>
+            125% zoom level.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.OneFiftyPercent">
+            <summary>
+            150% zoom level.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.OneSeventyFivePercent">
+            <summary>
+            175% zoom level.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.TwoHundredPercent">
+            <summary>
+            200% zoom level.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.FitWidth">
+            <summary>
+            Fit page width to viewport.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ZoomLevel.FitPage">
+            <summary>
+            Fit entire page in viewport.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.ScrollMode">
+            <summary>
+            Defines scroll modes for document navigation.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ScrollMode.Vertical">
+            <summary>
+            Vertical scrolling (default).
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ScrollMode.Horizontal">
+            <summary>
+            Horizontal scrolling.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.ScrollMode.FitPage">
+            <summary>
+            Single page view with page-by-page navigation.
+            </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Models.AppTheme">
+            <summary>
+            Defines application theme options.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AppTheme.Light">
+            <summary>
+            Light theme.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AppTheme.Dark">
+            <summary>
+            Dark theme.
+            </summary>
+        </member>
+        <member name="F:FluentPDF.Core.Models.AppTheme.UseSystem">
+            <summary>
+            Follow system theme preference (default).
+            </summary>
         </member>
         <member name="T:FluentPDF.Core.Models.BookmarkNode">
             <summary>
@@ -1141,6 +1540,70 @@
             Will be removed when actual domain classes are implemented.
             </summary>
         </member>
+        <member name="T:FluentPDF.Core.Services.IAnnotationService">
+            <summary>
+            Service contract for PDF annotation operations.
+            Provides methods to create, read, update, and delete annotations in PDF documents.
+            All operations return Result&lt;T&gt; for consistent error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IAnnotationService.GetAnnotationsAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <summary>
+            Gets all annotations from a specific page in a PDF document.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="pageNumber">The zero-based page number.</param>
+            <returns>
+            A Result containing a list of Annotation objects if successful,
+            or an error if the operation failed.
+            Returns an empty list if the page has no annotations.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IAnnotationService.CreateAnnotationAsync(FluentPDF.Core.Models.PdfDocument,FluentPDF.Core.Models.Annotation)">
+            <summary>
+            Creates a new annotation on a page.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="annotation">The annotation to create.</param>
+            <returns>
+            A Result containing the created Annotation with updated properties if successful,
+            or an error if the operation failed.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IAnnotationService.UpdateAnnotationAsync(FluentPDF.Core.Models.PdfDocument,FluentPDF.Core.Models.Annotation)">
+            <summary>
+            Updates an existing annotation.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="annotation">The annotation with updated properties.</param>
+            <returns>
+            A Result indicating success or failure.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IAnnotationService.DeleteAnnotationAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.Int32)">
+            <summary>
+            Deletes an annotation from a page.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="pageNumber">The zero-based page number.</param>
+            <param name="annotationIndex">The zero-based annotation index on the page.</param>
+            <returns>
+            A Result indicating success or failure.
+            </returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IAnnotationService.SaveAnnotationsAsync(FluentPDF.Core.Models.PdfDocument,System.String,System.Boolean)">
+            <summary>
+            Saves all annotations in the document back to the PDF file.
+            Creates a backup of the original file before saving.
+            </summary>
+            <param name="document">The loaded PDF document.</param>
+            <param name="filePath">The path to save the PDF file.</param>
+            <param name="createBackup">Whether to create a .bak backup file before saving.</param>
+            <returns>
+            A Result indicating success or failure.
+            If saving fails and a backup was created, the backup will be restored.
+            </returns>
+        </member>
         <member name="T:FluentPDF.Core.Services.IBookmarkService">
             <summary>
             Service contract for PDF bookmark extraction operations.
@@ -1322,6 +1785,40 @@
             A Result containing the HTML string if successful, or a PdfError if the operation failed.
             Error codes: DOCX_FILE_NOT_FOUND, DOCX_INVALID_FORMAT, DOCX_PARSE_FAILED.
             </returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IDpiDetectionService">
+            <summary>
+            Service contract for detecting and monitoring display DPI information.
+            Provides methods to detect current DPI settings, calculate effective DPI with quality adjustments,
+            and monitor DPI changes in real-time.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDpiDetectionService.GetCurrentDisplayInfo(System.Object)">
+            <summary>
+            Gets the current display information from the provided XamlRoot.
+            XamlRoot is platform-specific (WinUI 3) and must be provided by the caller.
+            </summary>
+            <param name="xamlRoot">The XamlRoot object to query for rasterization scale (platform-specific).</param>
+            <returns>A result containing DisplayInfo with current rasterization scale and base DPI, or an error if detection fails.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDpiDetectionService.MonitorDpiChanges(System.Object,System.Int32)">
+            <summary>
+            Monitors DPI changes and emits DisplayInfo updates through an observable stream.
+            The stream is throttled to avoid excessive updates during rapid DPI changes.
+            </summary>
+            <param name="xamlRoot">The XamlRoot object to monitor for DPI changes (platform-specific).</param>
+            <param name="throttleMilliseconds">Throttle interval in milliseconds to debounce rapid changes. Default is 500ms.</param>
+            <returns>An observable stream of DisplayInfo updates, or an error if monitoring cannot be established.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IDpiDetectionService.CalculateEffectiveDpi(FluentPDF.Core.Models.DisplayInfo,System.Double,FluentPDF.Core.Models.RenderingQuality)">
+            <summary>
+            Calculates the effective DPI for rendering, taking into account display scale,
+            zoom level, quality settings, and DPI bounds (50-576 DPI).
+            </summary>
+            <param name="displayInfo">The current display information.</param>
+            <param name="zoomLevel">The zoom level (1.0 = 100%, 2.0 = 200%, etc.).</param>
+            <param name="quality">The rendering quality setting that affects DPI multiplier.</param>
+            <returns>A result containing the calculated effective DPI clamped to valid bounds, or an error if calculation fails.</returns>
         </member>
         <member name="T:FluentPDF.Core.Services.IFormValidationService">
             <summary>
@@ -1642,6 +2139,69 @@
             <summary>
             Clears all recent files.
             </summary>
+        </member>
+        <member name="T:FluentPDF.Core.Services.IRenderingSettingsService">
+            <summary>
+            Service contract for managing rendering quality settings.
+            Provides methods to persist and retrieve rendering quality preferences,
+            and observe changes to settings in real-time.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRenderingSettingsService.GetRenderingQuality">
+            <summary>
+            Gets the current rendering quality setting.
+            Returns Auto if no setting has been saved.
+            </summary>
+            <returns>A result containing the current RenderingQuality, or an error if retrieval fails.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRenderingSettingsService.SetRenderingQuality(FluentPDF.Core.Models.RenderingQuality)">
+            <summary>
+            Sets the rendering quality setting and persists it to storage.
+            Notifies all observers of the quality change.
+            </summary>
+            <param name="quality">The rendering quality to set.</param>
+            <returns>A result indicating success or failure of the save operation.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.IRenderingSettingsService.ObserveRenderingQuality">
+            <summary>
+            Observes changes to the rendering quality setting.
+            Emits the current quality immediately upon subscription, then emits updates when the quality changes.
+            </summary>
+            <returns>An observable stream of RenderingQuality updates.</returns>
+        </member>
+        <member name="T:FluentPDF.Core.Services.ISettingsService">
+            <summary>
+            Service for managing application settings and user preferences.
+            </summary>
+        </member>
+        <member name="P:FluentPDF.Core.Services.ISettingsService.Settings">
+            <summary>
+            Gets the current application settings.
+            </summary>
+        </member>
+        <member name="E:FluentPDF.Core.Services.ISettingsService.SettingsChanged">
+            <summary>
+            Event raised when settings are changed.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ISettingsService.LoadAsync">
+            <summary>
+            Loads settings from persistent storage.
+            If settings file doesn't exist or is corrupted, returns default settings.
+            </summary>
+            <returns>A task that represents the asynchronous load operation.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ISettingsService.SaveAsync">
+            <summary>
+            Saves the current settings to persistent storage.
+            </summary>
+            <returns>A task that represents the asynchronous save operation.</returns>
+        </member>
+        <member name="M:FluentPDF.Core.Services.ISettingsService.ResetToDefaultsAsync">
+            <summary>
+            Resets all settings to their default values and saves.
+            </summary>
+            <returns>A task that represents the asynchronous reset operation.</returns>
         </member>
         <member name="T:FluentPDF.Core.Services.ITelemetryService">
             <summary>

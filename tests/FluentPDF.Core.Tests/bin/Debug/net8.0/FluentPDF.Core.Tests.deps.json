@@ -1120,6 +1120,14 @@
           "System.Threading": "4.3.0"
         }
       },
+      "System.Reactive/6.1.0": {
+        "runtime": {
+          "lib/net6.0/System.Reactive.dll": {
+            "assemblyVersion": "6.1.0.0",
+            "fileVersion": "6.1.0.62682"
+          }
+        }
+      },
       "System.Reflection/4.3.0": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "1.1.0",
@@ -1526,7 +1534,8 @@
           "OpenTelemetry": "1.14.0",
           "OpenTelemetry.Api": "1.14.0",
           "Serilog": "4.3.0",
-          "SixLabors.ImageSharp": "3.1.12"
+          "SixLabors.ImageSharp": "3.1.12",
+          "System.Reactive": "6.1.0"
         },
         "runtime": {
           "FluentPDF.Rendering.dll": {}
@@ -2208,6 +2217,13 @@
       "sha512": "sha512-bdX+80eKv9bN6K4N+d77OankKHGn6CH711a6fcOpMQu2Fckp/Ft4L/kW9WznHpyR0NRAvJutzOMHNNlBGvxQzQ==",
       "path": "system.objectmodel/4.3.0",
       "hashPath": "system.objectmodel.4.3.0.nupkg.sha512"
+    },
+    "System.Reactive/6.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-M5cCC1ZMkZr9jbSQGTHnVkb5TDN67qWCV7AP8TAHdGkvDlu0puT5NzemESNn9+HkYIDpWpocP68/i+/ame2/2w==",
+      "path": "system.reactive/6.1.0",
+      "hashPath": "system.reactive.6.1.0.nupkg.sha512"
     },
     "System.Reflection/4.3.0": {
       "type": "package",

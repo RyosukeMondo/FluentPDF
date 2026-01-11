@@ -63,6 +63,11 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     public AnnotationViewModel AnnotationViewModel { get; }
 
     /// <summary>
+    /// Gets the thumbnails view model for the thumbnails sidebar.
+    /// </summary>
+    public ThumbnailsViewModel ThumbnailsViewModel { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
     /// </summary>
     /// <param name="documentService">Service for loading PDF documents.</param>
@@ -75,6 +80,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="diagnosticsPanelViewModel">View model for the diagnostics panel.</param>
     /// <param name="logViewerViewModel">View model for the log viewer.</param>
     /// <param name="annotationViewModel">View model for PDF annotations.</param>
+    /// <param name="thumbnailsViewModel">View model for the thumbnails sidebar.</param>
     /// <param name="metricsService">Optional metrics collection service for observability.</param>
     /// <param name="dpiDetectionService">Optional DPI detection service for HiDPI support.</param>
     /// <param name="renderingSettingsService">Optional rendering settings service for quality preferences.</param>
@@ -91,6 +97,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         DiagnosticsPanelViewModel diagnosticsPanelViewModel,
         LogViewerViewModel logViewerViewModel,
         AnnotationViewModel annotationViewModel,
+        ThumbnailsViewModel thumbnailsViewModel,
         Core.Services.IMetricsCollectionService? metricsService,
         IDpiDetectionService? dpiDetectionService,
         IRenderingSettingsService? renderingSettingsService,
@@ -107,6 +114,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         DiagnosticsPanelViewModel = diagnosticsPanelViewModel ?? throw new ArgumentNullException(nameof(diagnosticsPanelViewModel));
         LogViewerViewModel = logViewerViewModel ?? throw new ArgumentNullException(nameof(logViewerViewModel));
         AnnotationViewModel = annotationViewModel ?? throw new ArgumentNullException(nameof(annotationViewModel));
+        ThumbnailsViewModel = thumbnailsViewModel ?? throw new ArgumentNullException(nameof(thumbnailsViewModel));
         _metricsService = metricsService; // Optional service
         _dpiDetectionService = dpiDetectionService; // Optional service
         _renderingSettingsService = renderingSettingsService; // Optional service
@@ -117,6 +125,16 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         BookmarksViewModel.SetNavigateToPageAction(async (pageNumber) =>
         {
             await GoToPageCommand.ExecuteAsync(pageNumber);
+        });
+
+        // Register message handler for thumbnail navigation
+        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Register<NavigateToPageMessage>(this, (r, m) =>
+        {
+            if (m.PageNumber != CurrentPageNumber)
+            {
+                CurrentPageNumber = m.PageNumber;
+                _ = RenderCurrentPageAsync();
+            }
         });
 
         // Subscribe to quality changes if settings service is available
@@ -345,6 +363,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
             // Load bookmarks
             await BookmarksViewModel.LoadBookmarksCommand.ExecuteAsync(_currentDocument);
+
+            // Load thumbnails
+            await ThumbnailsViewModel.LoadThumbnailsAsync(_currentDocument);
 
             // Apply default settings if settings service is available
             ApplyDefaultSettings();
@@ -1165,6 +1186,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 e.PropertyName, IsLoading);
         }
 
+        // Update thumbnails selection when current page changes
+        if (e.PropertyName == nameof(CurrentPageNumber))
+        {
+            ThumbnailsViewModel.UpdateSelectedPage(CurrentPageNumber);
+        }
+
         // Update document editing command states
         if (e.PropertyName == nameof(IsLoading) ||
             e.PropertyName == nameof(IsOperationInProgress))
@@ -1571,6 +1598,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         }
 
         _logger.LogInformation("Disposing PdfViewerViewModel");
+
+        // Unregister message handler
+        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Unregister<NavigateToPageMessage>(this);
 
         if (_currentDocument != null)
         {
