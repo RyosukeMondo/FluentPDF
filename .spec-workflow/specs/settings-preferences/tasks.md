@@ -37,7 +37,7 @@
   - Requirements: 2.2, 2.4
   - Instructions: When opening document, set zoom level and scroll mode from settings.
 
-- [ ] 8. Add Settings menu item and navigation
+- [x] 8. Add Settings menu item and navigation
   - Files: `src/FluentPDF.App/Views/MainWindow.xaml`
   - Requirements: 4.1
   - Instructions: Add "Settings" menu item, navigate to SettingsPage on click.

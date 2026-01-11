@@ -264,4 +264,23 @@ public sealed partial class MainWindow : Window
         var recentFiles = ViewModel.GetRecentFiles();
         await _jumpListService.UpdateJumpListAsync(recentFiles);
     }
+
+    /// <summary>
+    /// Handles the Settings menu item click.
+    /// </summary>
+    private async void OnSettingsClick(object sender, RoutedEventArgs e)
+    {
+        var settingsPage = new SettingsPage();
+
+        var dialog = new ContentDialog
+        {
+            Title = "Settings",
+            Content = settingsPage,
+            CloseButtonText = "Close",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.Content.XamlRoot
+        };
+
+        await dialog.ShowAsync();
+    }
 }

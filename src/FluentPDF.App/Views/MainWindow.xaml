@@ -39,6 +39,13 @@
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem Text="Exit" Click="OnExitClick" />
             </MenuBarItem>
+            <MenuBarItem Title="Tools">
+                <MenuFlyoutItem Text="Settings..." Click="OnSettingsClick">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="OemComma" Modifiers="Control" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
         </MenuBar>
 
         <!-- Tab View -->
