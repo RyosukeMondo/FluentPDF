@@ -17,7 +17,7 @@
   - Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.6, 4.1-4.6, 5.1-5.6
   - Instructions: Implement service with Get, Create, Update, Delete, Save methods. Use PDFium annotation API. Test with sample PDFs.
 
-- [ ] 4. Create AnnotationViewModel with tool management
+- [x] 4. Create AnnotationViewModel with tool management
   - Files: `src/FluentPDF.App/ViewModels/AnnotationViewModel.cs`, `tests/FluentPDF.App.Tests/ViewModels/AnnotationViewModelTests.cs`
   - Requirements: 2.1-2.7, 6.1-6.6
   - Instructions: ViewModel with ActiveTool, SelectedColor, Annotations list. Commands for creating, deleting, selecting annotations.
