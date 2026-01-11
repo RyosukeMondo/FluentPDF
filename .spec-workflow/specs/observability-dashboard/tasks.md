@@ -190,7 +190,7 @@
   - _Requirements: Architecture integrity_
   - _Prompt: Role: Software Architect specializing in architecture testing | Task: Create ObservabilityArchitectureTests.cs following design.md testing strategy, implementing ArchUnitNET rules (ObservabilityModels_ShouldBe_InCoreNamespace checks PerformanceMetrics and LogEntry location, MetricsServices_Should_ImplementInterfaces checks IMetricsCollectionService implementation, DiagnosticsControls_Should_BeIn_AppControls checks control locations, ViewModels_ShouldNot_Reference_MetricsCollection checks ViewModels use interfaces), adding descriptive .Because() clauses, and verifying tests catch violations | Restrictions: Do not skip architecture rules, test all violations by intentionally breaking rules, use clear error messages, keep test file under 500 lines | Success: All architecture tests pass, tests catch violations when rules broken, rules enforce clean architecture boundaries, test output clearly explains violations_
 
-- [ ] 13. Integration testing with real OpenTelemetry and log files
+- [x] 13. Integration testing with real OpenTelemetry and log files
   - Files:
     - `tests/FluentPDF.App.Tests/Integration/ObservabilityIntegrationTests.cs`
     - `tests/Fixtures/sample-logs.json` (add sample log file in Serilog JSON format)
