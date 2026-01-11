@@ -207,11 +207,41 @@ public sealed partial class MainWindow : Window
     /// <summary>
     /// Handles tab close requests.
     /// </summary>
-    private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+    private async void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
     {
-        if (args.Item is TabViewModel tab)
+        if (args.Item is not TabViewModel tab)
+            return;
+
+        // If no unsaved changes, close immediately
+        if (!tab.HasUnsavedChanges)
         {
             ViewModel.CloseTabCommand.Execute(tab);
+            return;
+        }
+
+        // Show save confirmation dialog
+        var result = await SaveConfirmationDialog.ShowAsync(tab.FileName, this.Content.XamlRoot);
+
+        switch (result)
+        {
+            case SaveConfirmationResult.Save:
+                // Save the document first
+                if (tab.ViewerViewModel?.SaveCommand is { } saveCommand && saveCommand.CanExecute(null))
+                {
+                    await saveCommand.ExecuteAsync(null);
+                }
+                // Then close the tab
+                ViewModel.CloseTabCommand.Execute(tab);
+                break;
+
+            case SaveConfirmationResult.DontSave:
+                // Close without saving
+                ViewModel.CloseTabCommand.Execute(tab);
+                break;
+
+            case SaveConfirmationResult.Cancel:
+                // Do nothing - tab remains open
+                break;
         }
     }
 
