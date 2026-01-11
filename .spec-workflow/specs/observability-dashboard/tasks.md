@@ -206,7 +206,7 @@
   - _Requirements: All functional requirements_
   - _Prompt: Role: QA Integration Engineer specializing in observability testing | Task: Create ObservabilityIntegrationTests.cs following design.md testing strategy, adding sample-logs.json (Serilog JSON format with 100 log entries) to fixtures, implementing tests (OpenTelemetry_ConfiguredCorrectly verifies MeterProvider and TracerProvider registered, MetricsCollection_DuringRendering verifies metrics recorded when pages render, LogFileReading_Works verifies LogExportService reads sample-logs.json, OtlpExport_Works verifies logs/metrics sent to Aspire if running, DistributedTracing_CreatesActivities verifies activity spans created during rendering, ExportMetrics_ToJson verifies JSON export produces valid file, ExportLogs_ToJson verifies log export preserves format), using real OpenTelemetry and file system (not mocked), and ensuring tests run reliably | Restrictions: Tests should run even if Aspire not running (skip OTLP tests), ensure test cleanup (delete exported files), add [Trait("Category", "Integration")], handle file system errors gracefully | Success: All integration tests pass, OpenTelemetry works correctly, metrics collected accurately, log reading works, exports produce valid files, distributed tracing creates spans_
 
-- [ ] 14. End-to-end testing and documentation
+- [x] 14. End-to-end testing and documentation
   - Files:
     - `tests/FluentPDF.App.Tests/E2E/ObservabilityE2ETests.cs`
     - `docs/ARCHITECTURE.md` (update)
