@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   visual-regression:
@@ -13,62 +14,112 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
-    # TODO: Visual regression testing with Win2D headless rendering
-    # This is a placeholder for future implementation
-    # The visual regression tests will:
-    # 1. Render UI components using Win2D headless mode
-    # 2. Compare rendered images against baseline screenshots
-    # 3. Detect visual regressions automatically
-    # 4. Generate diff images for review
-    # 5. Support approval workflow for intentional changes
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          tools/vcpkg
+          libs
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('tools/build-libs.ps1') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-
 
-    - name: Placeholder - Visual Regression Setup
-      run: |
-        echo "=========================================="
-        echo "Visual Regression Testing Placeholder"
-        echo "=========================================="
-        echo ""
-        echo "This workflow will implement automated visual regression testing:"
-        echo "  - Win2D headless rendering for UI components"
-        echo "  - Pixel-perfect screenshot comparison"
-        echo "  - Automated visual diff generation"
-        echo "  - Baseline image management"
-        echo "  - Visual change approval workflow"
-        echo ""
-        echo "TODO: Implement when UI tests exist in FluentPDF.App.Tests"
-        echo "=========================================="
-
-    - name: Check if UI tests exist
-      id: check-tests
+    - name: Build native libraries
       shell: pwsh
       run: |
-        if (Test-Path "tests/FluentPDF.App.Tests") {
-          Write-Host "UI tests found"
-          echo "tests_exist=true" >> $env:GITHUB_OUTPUT
+        .\tools\build-libs.ps1 -UseCache
+      continue-on-error: false
+
+    - name: Restore NuGet packages
+      run: dotnet restore FluentPDF.sln
+
+    - name: Build solution
+      run: dotnet build FluentPDF.sln --configuration Release --no-restore
+
+    - name: Ensure PDFium DLLs are in test directories
+      shell: pwsh
+      run: |
+        # Copy PDFium DLL to visual regression test output directories
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+
+        if (Test-Path $pdfiumDll) {
+          # Copy to Validation.Tests (where visual regression tests are)
+          if (Test-Path "tests/FluentPDF.Validation.Tests") {
+            $validationTestDirs = Get-ChildItem -Path "tests/FluentPDF.Validation.Tests/bin" -Directory -Recurse -Filter "net8.0" -ErrorAction SilentlyContinue
+            foreach ($dir in $validationTestDirs) {
+              Copy-Item $pdfiumDll $dir.FullName -Force -ErrorAction SilentlyContinue
+              Write-Host "Copied pdfium.dll to $($dir.FullName)"
+            }
+          }
+
+          # Copy to Rendering.Tests (where headless rendering service is)
+          if (Test-Path "tests/FluentPDF.Rendering.Tests") {
+            $renderingTestDirs = Get-ChildItem -Path "tests/FluentPDF.Rendering.Tests/bin" -Directory -Recurse -Filter "net8.0" -ErrorAction SilentlyContinue
+            foreach ($dir in $renderingTestDirs) {
+              Copy-Item $pdfiumDll $dir.FullName -Force -ErrorAction SilentlyContinue
+              Write-Host "Copied pdfium.dll to $($dir.FullName)"
+            }
+          }
+
+          Write-Host "PDFium DLL deployment completed"
         } else {
-          Write-Host "UI tests do not exist yet - skipping visual regression"
-          echo "tests_exist=false" >> $env:GITHUB_OUTPUT
+          Write-Warning "PDFium DLL not found at $pdfiumDll"
         }
 
-    # Placeholder for future visual regression test execution
-    # - name: Run Visual Regression Tests
-    #   if: steps.check-tests.outputs.tests_exist == 'true'
-    #   shell: pwsh
-    #   run: |
-    #     dotnet test tests/FluentPDF.App.Tests --filter Category=VisualRegression --logger "trx"
+    - name: Run Visual Regression Tests
+      shell: pwsh
+      run: |
+        Write-Host "Running visual regression tests..."
+        dotnet test tests/FluentPDF.Validation.Tests --filter "Category=VisualRegression" --configuration Release --no-build --logger "trx;LogFileName=visual-regression-tests.trx" --verbosity normal
+      continue-on-error: false
 
-    # - name: Upload Visual Regression Results
-    #   if: always() && steps.check-tests.outputs.tests_exist == 'true'
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: visual-regression-results
-    #     path: |
-    #       **/TestResults/**/visual-regression/**
-    #       **/TestResults/**/screenshots/**
-    #     retention-days: 30
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: visual-regression-test-results
+        path: |
+          **/TestResults/**/*.trx
+        retention-days: 30
+
+    - name: Upload baseline images (on baseline changes)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: visual-regression-baselines
+        path: |
+          tests/Baselines/**/*.png
+        retention-days: 90
+        if-no-files-found: ignore
+
+    - name: Upload test output images (on failure)
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: visual-regression-failures
+        path: |
+          **/TestResults/**/Actual/**/*.png
+          **/TestResults/**/Diff/**/*.png
+          **/TestResults/**/Baseline/**/*.png
+        retention-days: 30
+        if-no-files-found: ignore
+
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Visual Regression Test Results
+        path: '**/TestResults/**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
