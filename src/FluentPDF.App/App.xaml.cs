@@ -87,6 +87,7 @@ namespace FluentPDF.App
                     services.AddSingleton<IAnnotationService, AnnotationService>();
                     services.AddSingleton<IThumbnailRenderingService, ThumbnailRenderingService>();
                     services.AddSingleton<IImageInsertionService, ImageInsertionService>();
+                    services.AddSingleton<IWatermarkService, WatermarkService>();
 
                     // Register HiDPI and rendering services
                     services.AddSingleton<IDpiDetectionService, DpiDetectionService>();
@@ -122,6 +123,7 @@ namespace FluentPDF.App
                     services.AddTransient<SettingsViewModel>();
                     services.AddTransient<ThumbnailsViewModel>();
                     services.AddTransient<ImageInsertionViewModel>();
+                    services.AddTransient<WatermarkViewModel>();
                 })
                 .Build();
         }

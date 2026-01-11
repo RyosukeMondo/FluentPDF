@@ -119,6 +119,42 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles the watermark button click to show the watermark dialog.
+    /// </summary>
+    private async void OnWatermarkClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentDocument == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var watermarkViewModel = ((App)Application.Current).GetService<WatermarkViewModel>();
+
+            var applied = await WatermarkDialog.ShowAsync(
+                this.XamlRoot,
+                watermarkViewModel,
+                ViewModel.CurrentDocument,
+                ViewModel.CurrentPageNumber,
+                ViewModel.TotalPages);
+
+            if (applied)
+            {
+                // Mark document as modified
+                ViewModel.HasUnsavedChanges = true;
+
+                // Refresh the current page display
+                await ViewModel.RefreshCurrentPageAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error(ex, "Failed to show watermark dialog");
+        }
+    }
+
+    /// <summary>
     /// Handles keyboard events for form field navigation.
     /// Tab/Shift+Tab navigate between form fields in tab order.
     /// </summary>

@@ -206,6 +206,16 @@
                 Command="{x:Bind ViewModel.ImageInsertionViewModel.InsertImageCommand, Mode=OneWay}"
                 ToolTipService.ToolTip="Insert an image into the PDF" />
 
+            <!-- Add Watermark -->
+            <AppBarButton
+                Label="Watermark"
+                Click="OnWatermarkClick"
+                ToolTipService.ToolTip="Add text or image watermark to pages">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE8B9;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+
             <AppBarSeparator />
 
             <!-- Document Editing Operations -->

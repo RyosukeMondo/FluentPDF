@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentDialog
+    x:Class="FluentPDF.App.Views.WatermarkDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="using:FluentPDF.App.ViewModels"
+    xmlns:converters="using:FluentPDF.App.Converters"
+    mc:Ignorable="d"
+    Title="Add Watermark"
+    PrimaryButtonText="Apply"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    IsPrimaryButtonEnabled="{x:Bind ViewModel.ApplyCommand.CanExecute(null), Mode=OneWay}"
+    Style="{StaticResource DefaultContentDialogStyle}">
+
+    <ContentDialog.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+        <converters:EnumToIntConverter x:Key="EnumToIntConverter" />
+    </ContentDialog.Resources>
+
+    <Grid MinWidth="800" MinHeight="600">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Quick Presets -->
+        <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
+            <TextBlock Text="Quick Presets" FontWeight="SemiBold" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="CONFIDENTIAL" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="CONFIDENTIAL" />
+                <Button Content="DRAFT" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="DRAFT" />
+                <Button Content="COPY" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="COPY" />
+                <Button Content="APPROVED" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="APPROVED" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Main Content with Preview -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="350" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Configuration Panel -->
+            <ScrollViewer Grid.Column="0" Margin="0,0,16,0">
+                <StackPanel Spacing="16">
+                    <!-- Watermark Type -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Watermark Type" FontWeight="SemiBold" />
+                        <RadioButtons SelectedIndex="{x:Bind ViewModel.SelectedType, Mode=TwoWay, Converter={StaticResource EnumToIntConverter}}">
+                            <RadioButton Content="Text" Tag="0" />
+                            <RadioButton Content="Image" Tag="1" />
+                        </RadioButtons>
+                    </StackPanel>
+
+                    <!-- Text Configuration -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsTextMode, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="Text Settings" FontWeight="SemiBold" />
+
+                        <!-- Text Input -->
+                        <TextBox
+                            Header="Watermark Text"
+                            PlaceholderText="Enter watermark text"
+                            Text="{x:Bind ViewModel.TextConfig.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            MaxLength="100" />
+
+                        <!-- Font Family -->
+                        <ComboBox
+                            Header="Font Family"
+                            ItemsSource="{x:Bind ViewModel.AvailableFonts, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.TextConfig.FontFamily, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch" />
+
+                        <!-- Font Size -->
+                        <StackPanel Spacing="4">
+                            <TextBlock>
+                                <Run Text="Font Size:" />
+                                <Run Text="{x:Bind ViewModel.TextConfig.FontSize, Mode=OneWay}" />
+                                <Run Text="pt" />
+                            </TextBlock>
+                            <Slider
+                                Minimum="12"
+                                Maximum="144"
+                                StepFrequency="1"
+                                Value="{x:Bind ViewModel.TextConfig.FontSize, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <!-- Color Picker -->
+                        <ColorPicker
+                            Header="Text Color"
+                            x:Name="TextColorPicker"
+                            ColorChanged="OnTextColorChanged" />
+                    </StackPanel>
+
+                    <!-- Image Configuration -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsImageMode, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="Image Settings" FontWeight="SemiBold" />
+
+                        <!-- Image Selection -->
+                        <Button
+                            Content="Select Image"
+                            Command="{x:Bind ViewModel.SelectImageCommand}"
+                            HorizontalAlignment="Stretch" />
+
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ImageConfig.ImagePath, Mode=OneWay}"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Visibility="{x:Bind ViewModel.HasImageSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <!-- Image Scale -->
+                        <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.HasImageSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock>
+                                <Run Text="Scale:" />
+                                <Run Text="{x:Bind ViewModel.ImageScalePercentage, Mode=OneWay}" />
+                                <Run Text="%" />
+                            </TextBlock>
+                            <Slider
+                                Minimum="10"
+                                Maximum="200"
+                                StepFrequency="5"
+                                Value="{x:Bind ViewModel.ImageScalePercentage, Mode=TwoWay}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Common Settings -->
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Position &amp; Appearance" FontWeight="SemiBold" />
+
+                        <!-- Position Presets -->
+                        <ComboBox
+                            Header="Position"
+                            ItemsSource="{x:Bind ViewModel.AvailablePositions, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedPosition, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch" />
+
+                        <!-- Custom Position -->
+                        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.IsCustomPosition, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <NumberBox
+                                Header="X Position (%)"
+                                Minimum="0"
+                                Maximum="100"
+                                SpinButtonPlacementMode="Inline"
+                                Value="{x:Bind ViewModel.CustomX, Mode=TwoWay}" />
+                            <NumberBox
+                                Header="Y Position (%)"
+                                Minimum="0"
+                                Maximum="100"
+                                SpinButtonPlacementMode="Inline"
+                                Value="{x:Bind ViewModel.CustomY, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <!-- Opacity -->
+                        <StackPanel Spacing="4">
+                            <TextBlock>
+                                <Run Text="Opacity:" />
+                                <Run Text="{x:Bind ViewModel.OpacityPercentage, Mode=OneWay}" />
+                                <Run Text="%" />
+                            </TextBlock>
+                            <Slider
+                                Minimum="0"
+                                Maximum="100"
+                                StepFrequency="5"
+                                Value="{x:Bind ViewModel.OpacityPercentage, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <!-- Rotation -->
+                        <StackPanel Spacing="4">
+                            <Grid>
+                                <TextBlock HorizontalAlignment="Left">
+                                    <Run Text="Rotation:" />
+                                    <Run Text="{x:Bind ViewModel.Rotation, Mode=OneWay}" />
+                                    <Run Text="°" />
+                                </TextBlock>
+                                <Button
+                                    Content="45° Diagonal"
+                                    Command="{x:Bind ViewModel.SetDiagonalCommand}"
+                                    HorizontalAlignment="Right"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    FontSize="12"
+                                    Padding="8,4" />
+                            </Grid>
+                            <Slider
+                                Minimum="-180"
+                                Maximum="180"
+                                StepFrequency="5"
+                                Value="{x:Bind ViewModel.Rotation, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <!-- Behind/Above Content -->
+                        <CheckBox
+                            Content="Place behind content"
+                            IsChecked="{x:Bind ViewModel.BehindContent, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <!-- Page Range -->
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Apply To" FontWeight="SemiBold" />
+
+                        <ComboBox
+                            Header="Page Range"
+                            ItemsSource="{x:Bind ViewModel.AvailablePageRangeTypes, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.PageRangeType, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch" />
+
+                        <!-- Custom Range Input -->
+                        <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.IsCustomPageRange, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBox
+                                Header="Page Range (e.g., 1-5, 10, 15-20)"
+                                PlaceholderText="Enter page range"
+                                Text="{x:Bind ViewModel.CustomPageRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.PageRangeError, Mode=OneWay}"
+                                Foreground="{ThemeResource SystemErrorTextColor}"
+                                Visibility="{x:Bind ViewModel.HasPageRangeError, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Preview Panel -->
+            <Border
+                Grid.Column="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Background="{ThemeResource LayerFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Preview Header -->
+                    <Border
+                        Grid.Row="0"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        Padding="12"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="0,0,0,1">
+                        <TextBlock Text="Preview" FontWeight="SemiBold" />
+                    </Border>
+
+                    <!-- Preview Content -->
+                    <Grid Grid.Row="1" Padding="16">
+                        <!-- Loading Indicator -->
+                        <ProgressRing
+                            IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                            Width="48"
+                            Height="48"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+
+                        <!-- Preview Image -->
+                        <Viewbox Stretch="Uniform" Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
+                            <Image x:Name="PreviewImage" />
+                        </Viewbox>
+
+                        <!-- No Preview Message -->
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8"
+                            Visibility="{x:Bind ViewModel.HasPreview, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
+                            <FontIcon
+                                Glyph="&#xE8B9;"
+                                FontSize="48"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock
+                                Text="Preview will appear here"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentDialog>

@@ -121,6 +121,221 @@ public partial class WatermarkViewModel : ObservableObject
     private bool _dialogApplied;
 
     /// <summary>
+    /// Gets a value indicating whether text mode is selected.
+    /// </summary>
+    public bool IsTextMode => SelectedType == WatermarkType.Text;
+
+    /// <summary>
+    /// Gets a value indicating whether image mode is selected.
+    /// </summary>
+    public bool IsImageMode => SelectedType == WatermarkType.Image;
+
+    /// <summary>
+    /// Gets a value indicating whether an image has been selected.
+    /// </summary>
+    public bool HasImageSelected => !string.IsNullOrWhiteSpace(ImageConfig.ImagePath);
+
+    /// <summary>
+    /// Gets a value indicating whether a preview is available.
+    /// </summary>
+    public bool HasPreview => PreviewImage != null && PreviewImage.Length > 0 && !IsLoading;
+
+    /// <summary>
+    /// Gets a value indicating whether there is a page range error.
+    /// </summary>
+    public bool HasPageRangeError => !string.IsNullOrWhiteSpace(PageRangeError);
+
+    /// <summary>
+    /// Gets a value indicating whether custom position is selected.
+    /// </summary>
+    public bool IsCustomPosition => SelectedPosition == WatermarkPosition.Custom;
+
+    /// <summary>
+    /// Gets a value indicating whether custom page range is selected.
+    /// </summary>
+    public bool IsCustomPageRange => PageRangeType == PageRangeType.Custom;
+
+    /// <summary>
+    /// Gets or sets the opacity as a percentage (0-100).
+    /// </summary>
+    public float OpacityPercentage
+    {
+        get => (SelectedType == WatermarkType.Text ? TextConfig.Opacity : ImageConfig.Opacity) * 100f;
+        set
+        {
+            var opacity = value / 100f;
+            if (SelectedType == WatermarkType.Text)
+            {
+                TextConfig.Opacity = opacity;
+                OnPropertyChanged(nameof(TextConfig));
+            }
+            else
+            {
+                ImageConfig.Opacity = opacity;
+                OnPropertyChanged(nameof(ImageConfig));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the rotation in degrees.
+    /// </summary>
+    public float Rotation
+    {
+        get => SelectedType == WatermarkType.Text ? TextConfig.RotationDegrees : ImageConfig.RotationDegrees;
+        set
+        {
+            if (SelectedType == WatermarkType.Text)
+            {
+                TextConfig.RotationDegrees = value;
+                OnPropertyChanged(nameof(TextConfig));
+            }
+            else
+            {
+                ImageConfig.RotationDegrees = value;
+                OnPropertyChanged(nameof(ImageConfig));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether watermark is behind content.
+    /// </summary>
+    public bool BehindContent
+    {
+        get => SelectedType == WatermarkType.Text ? TextConfig.BehindContent : ImageConfig.BehindContent;
+        set
+        {
+            if (SelectedType == WatermarkType.Text)
+            {
+                TextConfig.BehindContent = value;
+                OnPropertyChanged(nameof(TextConfig));
+            }
+            else
+            {
+                ImageConfig.BehindContent = value;
+                OnPropertyChanged(nameof(ImageConfig));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the image scale as a percentage (10-200).
+    /// </summary>
+    public float ImageScalePercentage
+    {
+        get => ImageConfig.Scale * 100f;
+        set
+        {
+            ImageConfig.Scale = value / 100f;
+            OnPropertyChanged(nameof(ImageConfig));
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the selected position preset.
+    /// </summary>
+    public WatermarkPosition SelectedPosition
+    {
+        get => SelectedType == WatermarkType.Text ? TextConfig.Position : ImageConfig.Position;
+        set
+        {
+            if (SelectedType == WatermarkType.Text)
+            {
+                TextConfig.Position = value;
+                OnPropertyChanged(nameof(TextConfig));
+            }
+            else
+            {
+                ImageConfig.Position = value;
+                OnPropertyChanged(nameof(ImageConfig));
+            }
+            OnPropertyChanged(nameof(IsCustomPosition));
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the custom X position.
+    /// </summary>
+    public float CustomX
+    {
+        get => SelectedType == WatermarkType.Text ? TextConfig.CustomX : ImageConfig.CustomX;
+        set
+        {
+            if (SelectedType == WatermarkType.Text)
+            {
+                TextConfig.CustomX = value;
+                OnPropertyChanged(nameof(TextConfig));
+            }
+            else
+            {
+                ImageConfig.CustomX = value;
+                OnPropertyChanged(nameof(ImageConfig));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the custom Y position.
+    /// </summary>
+    public float CustomY
+    {
+        get => SelectedType == WatermarkType.Text ? TextConfig.CustomY : ImageConfig.CustomY;
+        set
+        {
+            if (SelectedType == WatermarkType.Text)
+            {
+                TextConfig.CustomY = value;
+                OnPropertyChanged(nameof(TextConfig));
+            }
+            else
+            {
+                ImageConfig.CustomY = value;
+                OnPropertyChanged(nameof(ImageConfig));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the list of available font families.
+    /// </summary>
+    public List<string> AvailableFonts { get; } = new()
+    {
+        "Arial",
+        "Calibri",
+        "Courier New",
+        "Georgia",
+        "Times New Roman",
+        "Trebuchet MS",
+        "Verdana"
+    };
+
+    /// <summary>
+    /// Gets the list of available position presets.
+    /// </summary>
+    public List<WatermarkPosition> AvailablePositions { get; } = new()
+    {
+        WatermarkPosition.Center,
+        WatermarkPosition.TopLeft,
+        WatermarkPosition.TopRight,
+        WatermarkPosition.BottomLeft,
+        WatermarkPosition.BottomRight,
+        WatermarkPosition.Custom
+    };
+
+    /// <summary>
+    /// Gets the list of available page range types.
+    /// </summary>
+    public List<PageRangeType> AvailablePageRangeTypes { get; } = new()
+    {
+        PageRangeType.All,
+        PageRangeType.CurrentPage,
+        PageRangeType.OddPages,
+        PageRangeType.EvenPages,
+        PageRangeType.Custom
+    };
+
+    /// <summary>
     /// Triggered when configuration changes to update preview.
     /// </summary>
     partial void OnTextConfigChanged(TextWatermarkConfig value)
@@ -150,6 +365,14 @@ public partial class WatermarkViewModel : ObservableObject
     partial void OnSelectedTypeChanged(WatermarkType value)
     {
         _logger.LogInformation("SelectedType changed to {Type}", value);
+        OnPropertyChanged(nameof(IsTextMode));
+        OnPropertyChanged(nameof(IsImageMode));
+        OnPropertyChanged(nameof(OpacityPercentage));
+        OnPropertyChanged(nameof(Rotation));
+        OnPropertyChanged(nameof(BehindContent));
+        OnPropertyChanged(nameof(SelectedPosition));
+        OnPropertyChanged(nameof(CustomX));
+        OnPropertyChanged(nameof(CustomY));
         _ = GeneratePreviewAsync();
     }
 
@@ -184,6 +407,7 @@ public partial class WatermarkViewModel : ObservableObject
 
             ImageConfig.ImagePath = file.Path;
             OnPropertyChanged(nameof(ImageConfig));
+            OnPropertyChanged(nameof(HasImageSelected));
             await GeneratePreviewAsync();
         }
         catch (Exception ex)
@@ -226,15 +450,19 @@ public partial class WatermarkViewModel : ObservableObject
                 _logger.LogError("Failed to generate preview: {Errors}", result.Errors);
                 PreviewImage = null;
             }
+
+            OnPropertyChanged(nameof(HasPreview));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error while generating preview");
             PreviewImage = null;
+            OnPropertyChanged(nameof(HasPreview));
         }
         finally
         {
             IsLoading = false;
+            OnPropertyChanged(nameof(HasPreview));
         }
     }
 
