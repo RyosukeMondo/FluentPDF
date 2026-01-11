@@ -26,6 +26,12 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
   - Comments: Sticky note annotations
   - Lossless persistence directly to PDF files
   - Win2D GPU-accelerated rendering
+- **Thumbnails Sidebar**: Visual page navigation with thumbnail previews
+  - Click thumbnails to jump to any page
+  - Lazy loading with LRU cache (< 50MB memory for 100 pages)
+  - Keyboard navigation (Tab, Arrow keys, Enter)
+  - Full accessibility with screen reader support
+  - Bidirectional synchronization with main viewer
 - **Page Navigation**: Navigate through documents with previous/next buttons or arrow keys
 - **Zoom Controls**: Zoom in/out with preset levels (50% to 200%) or keyboard shortcuts
 - **File Picker Integration**: Open PDF files with native Windows file picker
