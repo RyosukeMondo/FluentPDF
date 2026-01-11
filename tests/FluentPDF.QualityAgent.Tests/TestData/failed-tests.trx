@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Results>
+    <UnitTestResult testName="Test1_ShouldPass" outcome="Passed" />
+    <UnitTestResult testName="Test2_ShouldFail" outcome="Failed">
+      <Output>
+        <ErrorInfo>
+          <Message>Expected: 5, Actual: 3</Message>
+          <StackTrace>   at FluentPDF.Tests.ExampleTest.Test2_ShouldFail() in ExampleTest.cs:line 42</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult testName="Test3_ShouldFail" outcome="Failed">
+      <Output>
+        <ErrorInfo>
+          <Message>NullReferenceException: Object reference not set to an instance of an object.</Message>
+          <StackTrace>   at FluentPDF.Core.PdfDocument.Save() in PdfDocument.cs:line 123
+   at FluentPDF.Tests.ExampleTest.Test3_ShouldFail() in ExampleTest.cs:line 58</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult testName="Test4_ShouldBeSkipped" outcome="NotExecuted" />
+  </Results>
+</TestRun>
