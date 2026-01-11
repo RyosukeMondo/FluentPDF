@@ -122,6 +122,37 @@ public class PageOperationsServiceTests : IDisposable
         Assert.Contains("not found", result.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData(RotationAngle.Rotate90)]
+    [InlineData(RotationAngle.Rotate180)]
+    [InlineData(RotationAngle.Rotate270)]
+    public async Task RotatePagesAsync_FailsForInvalidPdf(RotationAngle angle)
+    {
+        // Arrange
+        var document = CreateTestDocument();
+
+        // Act
+        var result = await _service.RotatePagesAsync(document, new[] { 0 }, angle);
+
+        // Assert - should fail because minimal PDF doesn't have actual pages
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task RotatePagesAsync_HandlesCancellation()
+    {
+        // Arrange
+        var document = CreateTestDocument();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _service.RotatePagesAsync(document, new[] { 0 }, RotationAngle.Rotate90, cts.Token);
+
+        // Assert
+        Assert.True(result.IsFailed);
+    }
+
     #endregion
 
     #region DeletePagesAsync Tests
@@ -205,6 +236,34 @@ public class PageOperationsServiceTests : IDisposable
         // Assert
         Assert.True(result.IsFailed);
         Assert.Contains("not found", result.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task DeletePagesAsync_FailsForInvalidPdf()
+    {
+        // Arrange
+        var document = CreateTestDocument();
+
+        // Act
+        var result = await _service.DeletePagesAsync(document, new[] { 0 });
+
+        // Assert - should fail because minimal PDF doesn't have actual pages
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task DeletePagesAsync_HandlesCancellation()
+    {
+        // Arrange
+        var document = CreateTestDocument();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _service.DeletePagesAsync(document, new[] { 0 }, cts.Token);
+
+        // Assert
+        Assert.True(result.IsFailed);
     }
 
     #endregion
@@ -292,6 +351,49 @@ public class PageOperationsServiceTests : IDisposable
         Assert.Contains("not found", result.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ReorderPagesAsync_FailsForInvalidPdf()
+    {
+        // Arrange
+        var document = CreateTestDocument();
+
+        // Act
+        var result = await _service.ReorderPagesAsync(document, new[] { 0 }, 1);
+
+        // Assert - should fail because minimal PDF doesn't have actual pages
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task ReorderPagesAsync_HandlesCancellation()
+    {
+        // Arrange
+        var document = CreateTestDocument();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _service.ReorderPagesAsync(document, new[] { 0 }, 1, cts.Token);
+
+        // Assert
+        Assert.True(result.IsFailed);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(100)]
+    public async Task ReorderPagesAsync_FailsForInvalidTargetIndex(int targetIndex)
+    {
+        // Arrange
+        var document = CreateTestDocument();
+
+        // Act
+        var result = await _service.ReorderPagesAsync(document, new[] { 0 }, targetIndex);
+
+        // Assert - should fail for out of range target index
+        Assert.True(result.IsFailed);
+    }
+
     #endregion
 
     #region InsertBlankPageAsync Tests
@@ -347,6 +449,53 @@ public class PageOperationsServiceTests : IDisposable
         // Assert
         Assert.True(result.IsFailed);
         Assert.Contains("not found", result.Errors[0].Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(PageSize.Letter)]
+    [InlineData(PageSize.A4)]
+    [InlineData(PageSize.Legal)]
+    [InlineData(PageSize.SameAsCurrent)]
+    public async Task InsertBlankPageAsync_FailsForInvalidPdf(PageSize pageSize)
+    {
+        // Arrange
+        var document = CreateTestDocument();
+
+        // Act
+        var result = await _service.InsertBlankPageAsync(document, 0, pageSize);
+
+        // Assert - should fail because minimal PDF doesn't have actual pages
+        Assert.True(result.IsFailed);
+    }
+
+    [Fact]
+    public async Task InsertBlankPageAsync_HandlesCancellation()
+    {
+        // Arrange
+        var document = CreateTestDocument();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _service.InsertBlankPageAsync(document, 0, PageSize.Letter, cts.Token);
+
+        // Assert
+        Assert.True(result.IsFailed);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(100)]
+    public async Task InsertBlankPageAsync_FailsForInvalidInsertIndex(int insertIndex)
+    {
+        // Arrange
+        var document = CreateTestDocument();
+
+        // Act
+        var result = await _service.InsertBlankPageAsync(document, insertIndex, PageSize.Letter);
+
+        // Assert - should fail for out of range insert index
+        Assert.True(result.IsFailed);
     }
 
     #endregion

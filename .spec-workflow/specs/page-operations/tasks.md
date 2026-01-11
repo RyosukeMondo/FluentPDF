@@ -87,7 +87,7 @@
   - _Requirements: 2.2-2.4_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 XAML Developer | Task: Create DeletePagesDialog with ContentDialog showing "Delete {count} page(s)?" message. Add Delete and Cancel buttons. Add static ShowAsync(XamlRoot, int pageCount) method. Return bool for confirmed. If pageCount equals total pages, show error instead. | Restrictions: Follow SaveConfirmationDialog pattern. Simple dialog only. | _Leverage: SaveConfirmationDialog pattern, ContentDialog | _Requirements: 2.2-2.4 | Success: Dialog shows page count, prevents full deletion, returns correct result. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 10. Add unit tests for PageOperationsService
+- [x] 10. Add unit tests for PageOperationsService
   - File: `tests/FluentPDF.Rendering.Tests/Services/PageOperationsServiceTests.cs`
   - Test each operation with mock QPDF
   - Test error scenarios
