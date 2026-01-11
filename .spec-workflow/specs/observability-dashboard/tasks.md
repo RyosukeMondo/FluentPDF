@@ -34,7 +34,7 @@
   - _Requirements: 3.1-3.10, 6.1-6.9, 9.1-9.8_
   - _Prompt: Role: Observability Engineer specializing in OpenTelemetry metrics | Task: Implement IMetricsCollectionService interface with methods (RecordFPS, RecordRenderTime, RecordMemoryUsage, GetCurrentMetrics, GetMetricsHistory, ExportMetricsAsync) following design.md Component 3 and 4, using IMeterFactory to create Meter and instruments (ObservableGauge for FPS and memory, Histogram for render times), implementing circular buffer for metrics history (array-based, 1000 samples, O(1) insertion), adding JSON export (System.Text.Json) and CSV export (manual CSV formatting), and writing unit tests with mocked IMeterFactory | Restrictions: Keep metrics overhead < 2% CPU, use async for export operations, log all metrics operations with structured data, follow Result<T> pattern for exports | Success: Service collects metrics correctly, OpenTelemetry instruments work, circular buffer handles overflow, exports produce valid JSON/CSV, tests verify all operations_
 
-- [ ] 3. Implement ILogExportService and LogExportService
+- [x] 3. Implement ILogExportService and LogExportService
   - Files:
     - `src/FluentPDF.Core/Services/ILogExportService.cs`
     - `src/FluentPDF.Rendering/Services/LogExportService.cs`
