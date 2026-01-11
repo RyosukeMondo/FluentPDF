@@ -39,7 +39,7 @@
   - _Requirements: 1.1-1.7, 5.1-5.5_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# WinUI 3 MVVM Developer | Task: Create ImageInsertionViewModel with: InsertImageCommand that shows FileOpenPicker with image filters then calls service, DeleteSelectedImageCommand, SelectedImage property with OnSelectedImageChanged, InsertedImages ObservableCollection. Inject IImageInsertionService. Notify PdfViewerViewModel on changes. | Restrictions: Follow AnnotationViewModel patterns. Use proper async patterns. | _Leverage: AnnotationViewModel pattern | _Requirements: 1.1-1.7, 5.1-5.5 | Success: Commands work, state properly managed, file picker functional. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 5. Create ImageManipulationOverlay control
+- [x] 5. Create ImageManipulationOverlay control
   - Files: `src/FluentPDF.App/Controls/ImageManipulationOverlay.xaml`, `src/FluentPDF.App/Controls/ImageManipulationOverlay.xaml.cs`
   - Render selection handles for selected image
   - Handle pointer events for move, scale, rotate
