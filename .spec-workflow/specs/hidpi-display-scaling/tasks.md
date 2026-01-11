@@ -2,7 +2,7 @@
 
 ## Implementation Tasks
 
-- [ ] 1. Create DisplayInfo and RenderingQuality models
+- [-] 1. Create DisplayInfo and RenderingQuality models
   - Files:
     - `src/FluentPDF.Core/Models/DisplayInfo.cs`
     - `src/FluentPDF.Core/Models/RenderingQuality.cs`
