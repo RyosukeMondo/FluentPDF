@@ -42,7 +42,7 @@
   - Requirements: DI integration
   - Instructions: Register IRecentFilesService, JumpListService, MainViewModel. Handle app launch arguments from Jump List.
 
-- [ ] 9. Integration testing with multiple tabs and persistence
+- [x] 9. Integration testing with multiple tabs and persistence
   - Files: `tests/FluentPDF.App.Tests/Integration/TabManagementIntegrationTests.cs`
   - Requirements: All
   - Instructions: Test opening multiple files in tabs, switching, closing. Test recent files persistence. Test Jump List integration.
