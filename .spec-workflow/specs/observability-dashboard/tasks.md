@@ -149,7 +149,7 @@
   - _Requirements: 4.1-4.10, 5.1-5.9, 7.1-7.9_
   - _Prompt: Role: WinUI MVVM Developer specializing in data filtering | Task: Create LogViewerViewModel following design.md Component 10, inheriting from ObservableObject, adding observable properties for all filters and log collection, implementing LoadLogsAsync (call ILogExportService.GetRecentLogsAsync(1000), populate LogEntries), implementing ApplyFiltersAsync (build LogFilterCriteria from filter properties, call FilterLogsAsync, update LogEntries), implementing ClearFilters (reset all filter properties to defaults), implementing ExportLogsAsync (show file picker, call ExportLogsAsync with filtered logs), implementing CopyCorrelationId (copy to clipboard using Windows.ApplicationModel.DataTransfer.Clipboard), adding search debouncing using Task.Delay(500ms) and CancellationToken, and writing tests with mocked ILogExportService | Restrictions: Do not block UI thread with filtering (use async), handle empty result sets gracefully, keep ViewModel under 500 lines, ensure filters are intuitive | Success: LoadLogsAsync populates collection correctly, filters work accurately, debounced search prevents excessive filtering, ExportLogsAsync exports filtered logs, CopyCorrelationId works, tests verify all operations_
 
-- [ ] 10. Integrate diagnostics panel and log viewer into PdfViewerPage
+- [-] 10. Integrate diagnostics panel and log viewer into PdfViewerPage
   - Files:
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml` (modify)
     - `src/FluentPDF.App/Views/PdfViewerPage.xaml.cs` (modify)

@@ -178,6 +178,24 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles Ctrl+Shift+D keyboard accelerator to toggle diagnostics panel.
+    /// </summary>
+    private void OnToggleDiagnosticsKeyboardAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        ViewModel.ToggleDiagnosticsCommand.Execute(null);
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Ctrl+Shift+L keyboard accelerator to open log viewer.
+    /// </summary>
+    private void OnOpenLogViewerKeyboardAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        _ = ViewModel.OpenLogViewerCommand.ExecuteAsync(null);
+        args.Handled = true;
+    }
+
+    /// <summary>
     /// Handles pointer pressed event to begin text selection.
     /// </summary>
     private void OnImagePointerPressed(object sender, PointerRoutedEventArgs e)

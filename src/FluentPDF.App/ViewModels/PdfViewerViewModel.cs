@@ -24,6 +24,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly ITextSearchService _searchService;
     private readonly ITextExtractionService _textExtractionService;
     private readonly ILogger<PdfViewerViewModel> _logger;
+    private readonly Core.Services.IMetricsCollectionService? _metricsService;
     private PdfDocument? _currentDocument;
     private bool _disposed;
     private CancellationTokenSource? _operationCts;
@@ -41,6 +42,16 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     public FormFieldViewModel FormFieldViewModel { get; }
 
     /// <summary>
+    /// Gets the diagnostics panel view model for observability metrics.
+    /// </summary>
+    public DiagnosticsPanelViewModel DiagnosticsPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the log viewer view model for viewing application logs.
+    /// </summary>
+    public LogViewerViewModel LogViewerViewModel { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
     /// </summary>
     /// <param name="documentService">Service for loading PDF documents.</param>
@@ -50,6 +61,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="textExtractionService">Service for extracting text from PDF pages.</param>
     /// <param name="bookmarksViewModel">View model for the bookmarks panel.</param>
     /// <param name="formFieldViewModel">View model for form field interactions.</param>
+    /// <param name="diagnosticsPanelViewModel">View model for the diagnostics panel.</param>
+    /// <param name="logViewerViewModel">View model for the log viewer.</param>
+    /// <param name="metricsService">Optional metrics collection service for observability.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
@@ -59,6 +73,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         ITextExtractionService textExtractionService,
         BookmarksViewModel bookmarksViewModel,
         FormFieldViewModel formFieldViewModel,
+        DiagnosticsPanelViewModel diagnosticsPanelViewModel,
+        LogViewerViewModel logViewerViewModel,
+        Core.Services.IMetricsCollectionService? metricsService,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
@@ -68,6 +85,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _textExtractionService = textExtractionService ?? throw new ArgumentNullException(nameof(textExtractionService));
         BookmarksViewModel = bookmarksViewModel ?? throw new ArgumentNullException(nameof(bookmarksViewModel));
         FormFieldViewModel = formFieldViewModel ?? throw new ArgumentNullException(nameof(formFieldViewModel));
+        DiagnosticsPanelViewModel = diagnosticsPanelViewModel ?? throw new ArgumentNullException(nameof(diagnosticsPanelViewModel));
+        LogViewerViewModel = logViewerViewModel ?? throw new ArgumentNullException(nameof(logViewerViewModel));
+        _metricsService = metricsService; // Optional service
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Set up navigation callback for bookmarks
@@ -417,6 +437,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
         IsLoading = true;
         StatusMessage = $"Rendering page {CurrentPageNumber}...";
+        var renderStartTime = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
@@ -435,9 +456,17 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 CurrentPageImage = bitmapImage;
                 StatusMessage = $"Page {CurrentPageNumber} of {TotalPages} - {ZoomLevel:P0}";
 
+                renderStartTime.Stop();
+
                 _logger.LogInformation(
-                    "Page rendered successfully. PageNumber={PageNumber}, ZoomLevel={ZoomLevel}",
-                    CurrentPageNumber, ZoomLevel);
+                    "Page rendered successfully. PageNumber={PageNumber}, ZoomLevel={ZoomLevel}, RenderTime={RenderTimeMs}ms",
+                    CurrentPageNumber, ZoomLevel, renderStartTime.ElapsedMilliseconds);
+
+                // Record render time metrics if metrics service is available
+                _metricsService?.RecordRenderTime(renderStartTime.ElapsedMilliseconds);
+
+                // Update current page number in diagnostics panel
+                DiagnosticsPanelViewModel.CurrentPageNumber = CurrentPageNumber;
 
                 // Get page dimensions for coordinate transformations
                 UpdateCurrentPageDimensions();
@@ -1208,6 +1237,52 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         HasSelectedText = false;
         SelectionStartPoint = new Windows.Foundation.Point();
         SelectionEndPoint = new Windows.Foundation.Point();
+    }
+
+    /// <summary>
+    /// Toggles the visibility of the diagnostics panel.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleDiagnostics()
+    {
+        _logger.LogInformation("ToggleDiagnostics command invoked");
+        DiagnosticsPanelViewModel.ToggleVisibilityCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// Opens the log viewer in a content dialog.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenLogViewerAsync()
+    {
+        _logger.LogInformation("OpenLogViewer command invoked");
+
+        try
+        {
+            // Load logs when opening the viewer
+            await LogViewerViewModel.LoadLogsCommand.ExecuteAsync(null);
+
+            // Create content dialog with log viewer control
+            var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+            {
+                Title = "Application Logs",
+                Content = new Controls.LogViewerControl
+                {
+                    DataContext = LogViewerViewModel,
+                    MinWidth = 800,
+                    MinHeight = 600
+                },
+                CloseButtonText = "Close",
+                XamlRoot = App.MainWindow.Content.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open log viewer");
+            await ShowErrorDialogAsync("Error", $"Failed to open log viewer: {ex.Message}");
+        }
     }
 
     /// <summary>

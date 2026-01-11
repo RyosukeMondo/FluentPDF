@@ -23,6 +23,8 @@
     <Page.KeyboardAccelerators>
         <KeyboardAccelerator Key="F" Modifiers="Control" Invoked="OnSearchKeyboardAccelerator" />
         <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="OnCopyKeyboardAccelerator" />
+        <KeyboardAccelerator Key="D" Modifiers="Control,Shift" Invoked="OnToggleDiagnosticsKeyboardAccelerator" />
+        <KeyboardAccelerator Key="L" Modifiers="Control,Shift" Invoked="OnOpenLogViewerKeyboardAccelerator" />
     </Page.KeyboardAccelerators>
 
     <SplitView
@@ -441,6 +443,16 @@
                 Visibility="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay, Converter={StaticResource InverseNullToVisibilityConverter}}"
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+            <!-- Diagnostics Panel Overlay -->
+            <controls:DiagnosticsPanelControl
+                Grid.Row="1"
+                x:Name="DiagnosticsPanelOverlay"
+                DataContext="{x:Bind ViewModel.DiagnosticsPanelViewModel, Mode=OneWay}"
+                IsVisible="{x:Bind ViewModel.DiagnosticsPanelViewModel.IsVisible, Mode=TwoWay}"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="16" />
                 </Grid>
             </Grid>
         </SplitView.Content>
