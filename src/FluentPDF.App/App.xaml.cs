@@ -71,6 +71,10 @@ namespace FluentPDF.App
                     services.AddSingleton<ITextExtractionService, TextExtractionService>();
                     services.AddSingleton<ITextSearchService, TextSearchService>();
 
+                    // Register HiDPI and rendering services
+                    services.AddSingleton<IDpiDetectionService, DpiDetectionService>();
+                    services.AddSingleton<IRenderingSettingsService, RenderingSettingsService>();
+
                     // Register conversion services
                     services.AddSingleton<Mammoth.IDocumentConverter>(provider => new Mammoth.DocumentConverter());
                     services.AddSingleton<IDocxParserService, DocxParserService>();

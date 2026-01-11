@@ -101,7 +101,7 @@
   - _Requirements: 6.1-6.9_
   - _Prompt: Role: WinUI Settings UI Developer | Task: Create settings UI for rendering quality selection | Restrictions: Must show descriptions, warn about performance, apply immediately | Success: Users can select quality and see changes applied_
 
-- [ ] 8. Register DPI and settings services in DI container
+- [-] 8. Register DPI and settings services in DI container
   - Files:
     - `src/FluentPDF.App/App.xaml.cs` (modify)
   - Register IDpiDetectionService and implementation
