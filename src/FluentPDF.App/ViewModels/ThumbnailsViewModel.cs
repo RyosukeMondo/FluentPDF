@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentPDF.App.Models;
+using FluentPDF.App.Views;
 using FluentPDF.Core.Caching;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
@@ -497,18 +498,19 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
         var selectedCount = selectedIndices.Length;
 
-        // Check if deleting all pages
-        if (selectedCount >= _document.PageCount)
-        {
-            _logger.LogWarning("Cannot delete all pages from document");
-            WeakReferenceMessenger.Default.Send(new AccessibilityNotificationMessage("Cannot delete all pages from document"));
-            return;
-        }
-
         _logger.LogInformation("Attempting to delete {Count} pages", selectedCount);
 
-        // TODO: Show confirmation dialog when dialog is implemented
-        // For now, proceed without confirmation
+        // Show confirmation dialog
+        var confirmed = await DeletePagesDialog.ShowAsync(
+            App.MainWindow.Content.XamlRoot,
+            selectedCount,
+            _document.PageCount);
+
+        if (!confirmed)
+        {
+            _logger.LogDebug("Page deletion cancelled by user");
+            return;
+        }
 
         var result = await _pageOperationsService.DeletePagesAsync(_document, selectedIndices);
 

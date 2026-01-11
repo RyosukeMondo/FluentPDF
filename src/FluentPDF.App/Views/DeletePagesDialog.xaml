@@ -1,0 +1,25 @@
+<ContentDialog
+    x:Class="FluentPDF.App.Views.DeletePagesDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Delete Pages"
+    PrimaryButtonText="Delete"
+    CloseButtonText="Cancel"
+    DefaultButton="Close">
+
+    <StackPanel Spacing="16">
+        <!-- Warning Icon -->
+        <FontIcon
+            Glyph="&#xE7BA;"
+            FontSize="48"
+            Foreground="{ThemeResource SystemErrorTextColor}"
+            HorizontalAlignment="Center"/>
+
+        <!-- Message -->
+        <TextBlock
+            x:Name="MessageTextBlock"
+            TextWrapping="Wrap"
+            HorizontalAlignment="Center"
+            TextAlignment="Center"/>
+    </StackPanel>
+</ContentDialog>

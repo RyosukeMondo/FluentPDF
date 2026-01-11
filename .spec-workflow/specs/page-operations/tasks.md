@@ -78,7 +78,7 @@
   - _Requirements: 1.7, 2.7, 3.6, 4.6_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# MVVM Developer | Task: Add HasPageModifications property to PdfViewerViewModel. Update HasUnsavedChanges to include HasPageModifications. Subscribe to ThumbnailsViewModel page operation events to set HasPageModifications=true. Reset on save. | Restrictions: Follow existing HasUnsavedChanges pattern from save-document spec. | _Leverage: save-document HasUnsavedChanges pattern | _Requirements: 1.7, 2.7, 3.6, 4.6 | Success: Page operations set HasUnsavedChanges, tab shows asterisk after operations. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 9. Add delete confirmation dialog
+- [~] 9. Add delete confirmation dialog
   - Files: `src/FluentPDF.App/Views/Dialogs/DeletePagesDialog.xaml`, `src/FluentPDF.App/Views/Dialogs/DeletePagesDialog.xaml.cs`
   - Show confirmation with page count
   - Prevent deleting all pages
