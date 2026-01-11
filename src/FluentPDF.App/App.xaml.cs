@@ -78,6 +78,7 @@ namespace FluentPDF.App
                     services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
                     services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
                     services.AddSingleton<IDocumentEditingService, DocumentEditingService>();
+                    services.AddSingleton<IPageOperationsService, PageOperationsService>();
                     services.AddSingleton<IBookmarkService, BookmarkService>();
                     services.AddSingleton<IPdfFormService, PdfFormService>();
                     services.AddSingleton<IFormValidationService, FormValidationService>();

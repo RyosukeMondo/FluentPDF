@@ -11,7 +11,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.7, 4.1-4.6_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Software Architect specializing in service interfaces | Task: Create IPageOperationsService interface with methods: RotatePagesAsync(PdfDocument, int[], RotationAngle), DeletePagesAsync(PdfDocument, int[]), ReorderPagesAsync(PdfDocument, int[], int targetIndex), InsertBlankPageAsync(PdfDocument, int, PageSize). Add RotationAngle enum (Rotate90, Rotate180, Rotate270) and PageSize enum (SameAsCurrent, Letter, A4, Legal). Follow FluentResults pattern. | Restrictions: Do not implement service, only interface. Follow existing service interface patterns. | _Leverage: IDocumentEditingService pattern | _Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.7, 4.1-4.6 | Success: Interface compiles, follows existing patterns, all methods defined with proper signatures. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 2. Implement PageOperationsService with QPDF
+- [x] 2. Implement PageOperationsService with QPDF
   - File: `src/FluentPDF.Rendering/Services/PageOperationsService.cs`
   - Implement IPageOperationsService using QPDF P/Invoke
   - Handle page rotation, deletion, reordering, and blank page insertion
@@ -20,7 +20,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.7, 4.1-4.6_
   - _Prompt: Implement the task for spec page-operations, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer with QPDF expertise | Task: Implement PageOperationsService using QPDF for all operations. RotatePagesAsync should use qpdf_init_write_page and rotation flags. DeletePagesAsync removes pages by index. ReorderPagesAsync reorders via qpdf_add_page. InsertBlankPageAsync creates blank page with specified dimensions. All operations return Result pattern. | Restrictions: Use existing QPDF interop, do not duplicate P/Invoke. Create backup before destructive operations. | _Leverage: QpdfInterop, DocumentEditingService patterns | _Requirements: 1.1-1.7, 2.1-2.7, 3.1-3.7, 4.1-4.6 | Success: All operations work correctly with QPDF, proper error handling, backups created. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 3. Register PageOperationsService in DI container
+- [x] 3. Register PageOperationsService in DI container
   - File: `src/FluentPDF.App/App.xaml.cs`
   - Register IPageOperationsService with PageOperationsService implementation
   - Purpose: Enable service injection throughout application
