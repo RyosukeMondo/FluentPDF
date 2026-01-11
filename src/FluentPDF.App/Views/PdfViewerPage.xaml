@@ -199,6 +199,15 @@
 
             <AppBarSeparator />
 
+            <!-- Insert Image -->
+            <AppBarButton
+                Icon="Pictures"
+                Label="Insert Image"
+                Command="{x:Bind ViewModel.ImageInsertionViewModel.InsertImageCommand, Mode=OneWay}"
+                ToolTipService.ToolTip="Insert an image into the PDF" />
+
+            <AppBarSeparator />
+
             <!-- Document Editing Operations -->
             <AppBarButton
                 Label="Merge"
@@ -568,6 +577,14 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         ViewModel="{x:Bind ViewModel.AnnotationViewModel, Mode=OneWay}"
+                        ZoomLevel="{x:Bind ViewModel.ZoomLevel, Mode=OneWay}" />
+
+                    <!-- Image manipulation overlay -->
+                    <controls:ImageManipulationOverlay
+                        x:Name="ImageManipulationOverlayControl"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        ViewModel="{x:Bind ViewModel.ImageInsertionViewModel, Mode=OneWay}"
                         ZoomLevel="{x:Bind ViewModel.ZoomLevel, Mode=OneWay}" />
                 </Grid>
             </ScrollViewer>

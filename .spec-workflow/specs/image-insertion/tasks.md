@@ -48,7 +48,7 @@
   - _Requirements: 2.1-2.6, 3.1-3.6, 4.1-4.5_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 Control Developer | Task: Create Canvas-based ImageManipulationOverlay. Draw selection rectangle and 8 resize handles when image selected. Draw rotation handle above selection. Handle PointerPressed/Moved/Released for drag (move), corner drag (scale), rotation handle drag (rotate). Transform coordinates from screen to PDF points. Bind to ImageInsertionViewModel. | Restrictions: Follow AnnotationLayer patterns. Use Canvas for rendering. | _Leverage: AnnotationLayer pattern | _Requirements: 2.1-2.6, 3.1-3.6, 4.1-4.5 | Success: Selection handles visible, drag/scale/rotate work, smooth real-time feedback. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 6. Integrate ImageManipulationOverlay with PdfViewerPage
+- [x] 6. Integrate ImageManipulationOverlay with PdfViewerPage
   - File: `src/FluentPDF.App/Views/PdfViewerPage.xaml`
   - Add ImageManipulationOverlay to page layout
   - Add "Insert Image" button to toolbar

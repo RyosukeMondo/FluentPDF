@@ -69,6 +69,11 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     public ThumbnailsViewModel ThumbnailsViewModel { get; }
 
     /// <summary>
+    /// Gets the image insertion view model for inserting images into PDF pages.
+    /// </summary>
+    public ImageInsertionViewModel ImageInsertionViewModel { get; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
     /// </summary>
     /// <param name="documentService">Service for loading PDF documents.</param>
@@ -82,6 +87,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="logViewerViewModel">View model for the log viewer.</param>
     /// <param name="annotationViewModel">View model for PDF annotations.</param>
     /// <param name="thumbnailsViewModel">View model for the thumbnails sidebar.</param>
+    /// <param name="imageInsertionViewModel">View model for image insertion operations.</param>
     /// <param name="metricsService">Optional metrics collection service for observability.</param>
     /// <param name="dpiDetectionService">Optional DPI detection service for HiDPI support.</param>
     /// <param name="renderingSettingsService">Optional rendering settings service for quality preferences.</param>
@@ -99,6 +105,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         LogViewerViewModel logViewerViewModel,
         AnnotationViewModel annotationViewModel,
         ThumbnailsViewModel thumbnailsViewModel,
+        ImageInsertionViewModel imageInsertionViewModel,
         Core.Services.IMetricsCollectionService? metricsService,
         IDpiDetectionService? dpiDetectionService,
         IRenderingSettingsService? renderingSettingsService,
@@ -116,6 +123,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         LogViewerViewModel = logViewerViewModel ?? throw new ArgumentNullException(nameof(logViewerViewModel));
         AnnotationViewModel = annotationViewModel ?? throw new ArgumentNullException(nameof(annotationViewModel));
         ThumbnailsViewModel = thumbnailsViewModel ?? throw new ArgumentNullException(nameof(thumbnailsViewModel));
+        ImageInsertionViewModel = imageInsertionViewModel ?? throw new ArgumentNullException(nameof(imageInsertionViewModel));
         _metricsService = metricsService; // Optional service
         _dpiDetectionService = dpiDetectionService; // Optional service
         _renderingSettingsService = renderingSettingsService; // Optional service
