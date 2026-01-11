@@ -623,7 +623,8 @@
                 VerticalAlignment="Top"
                 Margin="16" />
             </Grid>
-            </SplitView.Content>
+        </Grid>
+        </SplitView.Content>
         </SplitView>
     </Grid>
 </Page>

@@ -943,27 +943,27 @@
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.Name">
             <summary>
-            Gets the fully qualified field name (e.g., "Form.Section.FieldName").
+            Gets or sets the fully qualified field name (e.g., "Form.Section.FieldName").
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.Type">
             <summary>
-            Gets the type of form field.
+            Gets or sets the type of form field.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.PageNumber">
             <summary>
-            Gets the 1-based page number where this field is located.
+            Gets or sets the 1-based page number where this field is located.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.Bounds">
             <summary>
-            Gets the bounding rectangle of the field in PDF coordinates.
+            Gets or sets the bounding rectangle of the field in PDF coordinates.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.TabOrder">
             <summary>
-            Gets the tab order index for keyboard navigation.
+            Gets or sets the tab order index for keyboard navigation.
             Lower values are visited first. -1 indicates no tab order.
             </summary>
         </member>
@@ -981,36 +981,36 @@
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.IsRequired">
             <summary>
-            Gets whether this field is required to be filled.
+            Gets or sets whether this field is required to be filled.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.IsReadOnly">
             <summary>
-            Gets whether this field is read-only.
+            Gets or sets whether this field is read-only.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.MaxLength">
             <summary>
-            Gets the maximum character length for text fields.
+            Gets or sets the maximum character length for text fields.
             Null indicates no limit.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.FormatMask">
             <summary>
-            Gets the format mask/pattern for validation (e.g., regex pattern).
+            Gets or sets the format mask/pattern for validation (e.g., regex pattern).
             Null indicates no format restriction.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.GroupName">
             <summary>
-            Gets the group name for radio buttons.
+            Gets or sets the group name for radio buttons.
             All radio buttons with the same group name are mutually exclusive.
             Null for non-radio fields.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Models.PdfFormField.NativeHandle">
             <summary>
-            Gets the native PDFium handle for this field.
+            Gets or sets the native PDFium handle for this field.
             Used internally by the rendering layer.
             </summary>
         </member>
@@ -1346,42 +1346,42 @@
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.Timestamp">
             <summary>
-            Gets the timestamp when the log entry was created.
+            Gets or sets the timestamp when the log entry was created.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.Level">
             <summary>
-            Gets the log level (severity).
+            Gets or sets the log level (severity).
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.Message">
             <summary>
-            Gets the log message.
+            Gets or sets the log message.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.CorrelationId">
             <summary>
-            Gets the correlation ID for distributed tracing.
+            Gets or sets the correlation ID for distributed tracing.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.Component">
             <summary>
-            Gets the component (namespace) that generated the log.
+            Gets or sets the component (namespace) that generated the log.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.Context">
             <summary>
-            Gets the additional context data associated with the log entry.
+            Gets or sets the additional context data associated with the log entry.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.Exception">
             <summary>
-            Gets the exception message if an exception was logged.
+            Gets or sets the exception message if an exception was logged.
             </summary>
         </member>
         <member name="P:FluentPDF.Core.Observability.LogEntry.StackTrace">
             <summary>
-            Gets the stack trace if an exception was logged.
+            Gets or sets the stack trace if an exception was logged.
             </summary>
         </member>
         <member name="T:FluentPDF.Core.Observability.LogLevel">

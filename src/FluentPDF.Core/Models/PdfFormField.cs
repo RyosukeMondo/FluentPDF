@@ -7,30 +7,30 @@ namespace FluentPDF.Core.Models;
 public sealed class PdfFormField
 {
     /// <summary>
-    /// Gets the fully qualified field name (e.g., "Form.Section.FieldName").
+    /// Gets or sets the fully qualified field name (e.g., "Form.Section.FieldName").
     /// </summary>
-    public required string Name { get; init; }
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets the type of form field.
+    /// Gets or sets the type of form field.
     /// </summary>
-    public required FormFieldType Type { get; init; }
+    public FormFieldType Type { get; set; }
 
     /// <summary>
-    /// Gets the 1-based page number where this field is located.
+    /// Gets or sets the 1-based page number where this field is located.
     /// </summary>
-    public required int PageNumber { get; init; }
+    public int PageNumber { get; set; }
 
     /// <summary>
-    /// Gets the bounding rectangle of the field in PDF coordinates.
+    /// Gets or sets the bounding rectangle of the field in PDF coordinates.
     /// </summary>
-    public required PdfRectangle Bounds { get; init; }
+    public PdfRectangle Bounds { get; set; }
 
     /// <summary>
-    /// Gets the tab order index for keyboard navigation.
+    /// Gets or sets the tab order index for keyboard navigation.
     /// Lower values are visited first. -1 indicates no tab order.
     /// </summary>
-    public int TabOrder { get; init; } = -1;
+    public int TabOrder { get; set; } = -1;
 
     /// <summary>
     /// Gets or sets the text value of the field (for Text, ComboBox, ListBox).
@@ -45,39 +45,39 @@ public sealed class PdfFormField
     public bool? IsChecked { get; set; }
 
     /// <summary>
-    /// Gets whether this field is required to be filled.
+    /// Gets or sets whether this field is required to be filled.
     /// </summary>
-    public bool IsRequired { get; init; }
+    public bool IsRequired { get; set; }
 
     /// <summary>
-    /// Gets whether this field is read-only.
+    /// Gets or sets whether this field is read-only.
     /// </summary>
-    public bool IsReadOnly { get; init; }
+    public bool IsReadOnly { get; set; }
 
     /// <summary>
-    /// Gets the maximum character length for text fields.
+    /// Gets or sets the maximum character length for text fields.
     /// Null indicates no limit.
     /// </summary>
-    public int? MaxLength { get; init; }
+    public int? MaxLength { get; set; }
 
     /// <summary>
-    /// Gets the format mask/pattern for validation (e.g., regex pattern).
+    /// Gets or sets the format mask/pattern for validation (e.g., regex pattern).
     /// Null indicates no format restriction.
     /// </summary>
-    public string? FormatMask { get; init; }
+    public string? FormatMask { get; set; }
 
     /// <summary>
-    /// Gets the group name for radio buttons.
+    /// Gets or sets the group name for radio buttons.
     /// All radio buttons with the same group name are mutually exclusive.
     /// Null for non-radio fields.
     /// </summary>
-    public string? GroupName { get; init; }
+    public string? GroupName { get; set; }
 
     /// <summary>
-    /// Gets the native PDFium handle for this field.
+    /// Gets or sets the native PDFium handle for this field.
     /// Used internally by the rendering layer.
     /// </summary>
-    public IntPtr NativeHandle { get; init; }
+    public IntPtr NativeHandle { get; set; }
 
     /// <summary>
     /// Validates that the field has all required properties set correctly.

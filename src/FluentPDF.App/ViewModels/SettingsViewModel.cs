@@ -8,6 +8,8 @@ using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using Microsoft.Extensions.Logging;
 
+using CoreScrollMode = FluentPDF.Core.Models.ScrollMode;
+
 namespace FluentPDF.App.ViewModels;
 
 /// <summary>
@@ -106,7 +108,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Gets all available scroll mode values for the ComboBox.
     /// </summary>
-    public IReadOnlyList<ScrollMode> ScrollModes { get; } = Enum.GetValues<ScrollMode>();
+    public IReadOnlyList<CoreScrollMode> ScrollModes { get; } = Enum.GetValues<CoreScrollMode>();
 
     /// <summary>
     /// Gets or sets the selected rendering quality option.
@@ -129,7 +131,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     /// Gets or sets the scroll mode for document viewing.
     /// </summary>
     [ObservableProperty]
-    private ScrollMode _scrollMode;
+    private CoreScrollMode _scrollMode;
 
     /// <summary>
     /// Gets or sets the application theme preference.
@@ -246,7 +248,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     /// Called when the scroll mode changes.
     /// Saves the updated setting to persistent storage.
     /// </summary>
-    partial void OnScrollModeChanged(ScrollMode value)
+    partial void OnScrollModeChanged(CoreScrollMode value)
     {
         if (_isLoadingSettings)
             return;

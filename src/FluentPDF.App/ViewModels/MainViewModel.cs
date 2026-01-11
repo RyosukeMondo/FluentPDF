@@ -120,7 +120,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             ActivateTab(tabViewModel);
 
             // Load the document
-            await viewerViewModel.OpenDocumentAsync();
+            await viewerViewModel.OpenDocumentCommand.ExecuteAsync(null);
 
             // Add to recent files
             _recentFilesService.AddRecentFile(filePath);

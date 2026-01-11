@@ -227,7 +227,7 @@ public partial class BookmarksViewModel : ObservableObject
     /// Called when a property value changes.
     /// Saves panel state when width changes.
     /// </summary>
-    /// <param name="e">The property changed event arguments.</param>
+    /// <param name="value">The new panel width value.</param>
     partial void OnPanelWidthChanged(double value)
     {
         // Validate and clamp the width

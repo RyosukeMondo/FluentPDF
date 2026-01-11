@@ -4,7 +4,6 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="using:FluentPDF.App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     x:Name="RootPage">
@@ -18,35 +17,13 @@
                 FontSize="32"
                 FontWeight="Bold"
                 HorizontalAlignment="Center"
-                Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
+                Text="FluentPDF" />
 
             <!-- Status Message -->
             <TextBlock
                 FontSize="16"
                 HorizontalAlignment="Center"
-                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
-
-            <!-- Loading Indicator -->
-            <ProgressRing
-                Width="50"
-                Height="50"
-                HorizontalAlignment="Center"
-                IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
-
-            <!-- Action Buttons -->
-            <StackPanel
-                HorizontalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="10">
-                <Button
-                    Command="{x:Bind ViewModel.LoadDocumentCommand}"
-                    Content="Load Document"
-                    Style="{StaticResource AccentButtonStyle}" />
-                <Button
-                    Command="{x:Bind ViewModel.SaveCommand}"
-                    Content="Save"
-                    IsEnabled="{x:Bind ViewModel.SaveCommand.CanExecute(null), Mode=OneWay}" />
-            </StackPanel>
+                Text="Welcome to FluentPDF" />
         </StackPanel>
     </Page.Content>
 </Page>

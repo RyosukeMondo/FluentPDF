@@ -8,6 +8,8 @@ using FluentPDF.Core.Services;
 using Microsoft.Extensions.Logging;
 using Windows.Storage;
 
+using CoreScrollMode = FluentPDF.Core.Models.ScrollMode;
+
 namespace FluentPDF.App.Services;
 
 /// <summary>
@@ -203,10 +205,10 @@ public sealed class SettingsService : ISettingsService
         }
 
         // Validate ScrollMode enum
-        if (!Enum.IsDefined(typeof(ScrollMode), settings.ScrollMode))
+        if (!Enum.IsDefined(typeof(CoreScrollMode), settings.ScrollMode))
         {
             _logger.LogWarning("Invalid ScrollMode value: {Value}, resetting to default", settings.ScrollMode);
-            settings.ScrollMode = ScrollMode.Vertical;
+            settings.ScrollMode = CoreScrollMode.Vertical;
             hasInvalidValues = true;
         }
 

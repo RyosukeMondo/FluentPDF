@@ -95,8 +95,7 @@ public partial class FormFieldViewModel : ObservableObject
     /// Loads all form fields for the specified page.
     /// Updates FormFields collection and HasFormFields flag.
     /// </summary>
-    /// <param name="document">The PDF document containing the form.</param>
-    /// <param name="pageNumber">The 1-based page number to load fields from.</param>
+    /// <param name="parameter">A tuple of (PdfDocument, int) containing the document and 1-based page number.</param>
     [RelayCommand]
     private async Task LoadFormFieldsAsync(object? parameter)
     {

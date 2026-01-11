@@ -155,6 +155,23 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 });
         }
 
+        // Subscribe to property changes from child ViewModels to update HasUnsavedChanges
+        AnnotationViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(AnnotationViewModel.HasUnsavedChanges))
+            {
+                OnPropertyChanged(nameof(HasUnsavedChanges));
+            }
+        };
+
+        FormFieldViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(FormFieldViewModel.IsModified))
+            {
+                OnPropertyChanged(nameof(HasUnsavedChanges));
+            }
+        };
+
         _logger.LogInformation("PdfViewerViewModel initialized");
     }
 
@@ -304,6 +321,13 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private bool _isSidebarVisible = true;
+
+    /// <summary>
+    /// Gets a value indicating whether there are unsaved changes in the document.
+    /// Returns true if either annotations or form fields have been modified.
+    /// </summary>
+    public bool HasUnsavedChanges =>
+        AnnotationViewModel.HasUnsavedChanges || FormFieldViewModel.IsModified;
 
     /// <summary>
     /// Opens a file picker dialog and loads the selected PDF document.
@@ -585,7 +609,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                     CurrentPageNumber, ZoomLevel, effectiveDpi, renderStartTime.ElapsedMilliseconds);
 
                 // Record render time metrics if metrics service is available
-                _metricsService?.RecordRenderTime(renderStartTime.ElapsedMilliseconds);
+                _metricsService?.RecordRenderTime(CurrentPageNumber, renderStartTime.ElapsedMilliseconds);
 
                 // Update current page number in diagnostics panel
                 DiagnosticsPanelViewModel.CurrentPageNumber = CurrentPageNumber;

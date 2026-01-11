@@ -6,44 +6,44 @@ namespace FluentPDF.Core.Observability;
 public sealed class LogEntry
 {
     /// <summary>
-    /// Gets the timestamp when the log entry was created.
+    /// Gets or sets the timestamp when the log entry was created.
     /// </summary>
-    public required DateTime Timestamp { get; init; }
+    public DateTime Timestamp { get; set; }
 
     /// <summary>
-    /// Gets the log level (severity).
+    /// Gets or sets the log level (severity).
     /// </summary>
-    public required LogLevel Level { get; init; }
+    public LogLevel Level { get; set; }
 
     /// <summary>
-    /// Gets the log message.
+    /// Gets or sets the log message.
     /// </summary>
-    public required string Message { get; init; }
+    public string Message { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets the correlation ID for distributed tracing.
+    /// Gets or sets the correlation ID for distributed tracing.
     /// </summary>
-    public string? CorrelationId { get; init; }
+    public string? CorrelationId { get; set; }
 
     /// <summary>
-    /// Gets the component (namespace) that generated the log.
+    /// Gets or sets the component (namespace) that generated the log.
     /// </summary>
-    public required string Component { get; init; }
+    public string Component { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets the additional context data associated with the log entry.
+    /// Gets or sets the additional context data associated with the log entry.
     /// </summary>
-    public Dictionary<string, object> Context { get; init; } = new();
+    public Dictionary<string, object> Context { get; set; } = new();
 
     /// <summary>
-    /// Gets the exception message if an exception was logged.
+    /// Gets or sets the exception message if an exception was logged.
     /// </summary>
-    public string? Exception { get; init; }
+    public string? Exception { get; set; }
 
     /// <summary>
-    /// Gets the stack trace if an exception was logged.
+    /// Gets or sets the stack trace if an exception was logged.
     /// </summary>
-    public string? StackTrace { get; init; }
+    public string? StackTrace { get; set; }
 }
 
 /// <summary>

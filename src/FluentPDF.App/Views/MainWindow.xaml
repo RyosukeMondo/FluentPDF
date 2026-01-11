@@ -11,11 +11,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Window.Resources>
-        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
-    </Window.Resources>
-
     <Grid>
+        <Grid.Resources>
+            <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <!-- Menu bar -->
             <RowDefinition Height="Auto" />
@@ -40,11 +39,7 @@
                 <MenuFlyoutItem Text="Exit" Click="OnExitClick" />
             </MenuBarItem>
             <MenuBarItem Title="Tools">
-                <MenuFlyoutItem Text="Settings..." Click="OnSettingsClick">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Key="OemComma" Modifiers="Control" />
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Settings..." Click="OnSettingsClick" />
             </MenuBarItem>
         </MenuBar>
 
@@ -88,7 +83,8 @@
         <!-- Empty state overlay -->
         <Grid
             Grid.Row="1"
-            Visibility="{x:Bind ViewModel.Tabs.Count, Mode=OneWay, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=0}">
+            x:Name="EmptyStateOverlay"
+            Visibility="Visible">
             <StackPanel
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"

@@ -174,8 +174,8 @@ public partial class DiagnosticsPanelViewModel : ObservableObject, IDisposable
 
             // Determine format from file extension
             var format = file.FileType.ToLowerInvariant() == ".csv"
-                ? ExportFormat.CSV
-                : ExportFormat.JSON;
+                ? ExportFormat.Csv
+                : ExportFormat.Json;
 
             var result = await _metricsService.ExportMetricsAsync(file.Path, format);
 

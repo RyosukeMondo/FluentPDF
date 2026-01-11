@@ -39,6 +39,20 @@ public sealed partial class MainWindow : Window
 
         // Populate Recent Files menu
         PopulateRecentFilesMenu();
+
+        // Set up empty state visibility handling
+        ViewModel.Tabs.CollectionChanged += (s, e) => UpdateEmptyStateVisibility();
+        UpdateEmptyStateVisibility();
+    }
+
+    /// <summary>
+    /// Updates the visibility of the empty state overlay based on tab count.
+    /// </summary>
+    private void UpdateEmptyStateVisibility()
+    {
+        EmptyStateOverlay.Visibility = ViewModel.Tabs.Count == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     /// <summary>
@@ -46,6 +60,10 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private void SetupKeyboardAccelerators()
     {
+        // Get the root content element for adding keyboard accelerators
+        if (this.Content is not UIElement rootElement)
+            return;
+
         // Ctrl+Tab: Next tab
         var nextTabAccelerator = new KeyboardAccelerator
         {
@@ -53,7 +71,7 @@ public sealed partial class MainWindow : Window
             Modifiers = VirtualKeyModifiers.Control
         };
         nextTabAccelerator.Invoked += OnNextTabAccelerator;
-        this.KeyboardAccelerators.Add(nextTabAccelerator);
+        rootElement.KeyboardAccelerators.Add(nextTabAccelerator);
 
         // Ctrl+Shift+Tab: Previous tab
         var prevTabAccelerator = new KeyboardAccelerator
@@ -62,7 +80,7 @@ public sealed partial class MainWindow : Window
             Modifiers = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift
         };
         prevTabAccelerator.Invoked += OnPreviousTabAccelerator;
-        this.KeyboardAccelerators.Add(prevTabAccelerator);
+        rootElement.KeyboardAccelerators.Add(prevTabAccelerator);
 
         // Ctrl+W: Close current tab
         var closeTabAccelerator = new KeyboardAccelerator
@@ -71,7 +89,7 @@ public sealed partial class MainWindow : Window
             Modifiers = VirtualKeyModifiers.Control
         };
         closeTabAccelerator.Invoked += OnCloseTabAccelerator;
-        this.KeyboardAccelerators.Add(closeTabAccelerator);
+        rootElement.KeyboardAccelerators.Add(closeTabAccelerator);
 
         // Ctrl+O: Open file
         var openFileAccelerator = new KeyboardAccelerator
@@ -80,7 +98,7 @@ public sealed partial class MainWindow : Window
             Modifiers = VirtualKeyModifiers.Control
         };
         openFileAccelerator.Invoked += OnOpenFileAccelerator;
-        this.KeyboardAccelerators.Add(openFileAccelerator);
+        rootElement.KeyboardAccelerators.Add(openFileAccelerator);
     }
 
     /// <summary>
@@ -88,7 +106,7 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private void OnNextTabAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
-        if (ViewModel.Tabs.Count <= 1)
+        if (ViewModel.Tabs.Count <= 1 || ViewModel.ActiveTab is null)
         {
             args.Handled = true;
             return;
@@ -106,7 +124,7 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private void OnPreviousTabAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
-        if (ViewModel.Tabs.Count <= 1)
+        if (ViewModel.Tabs.Count <= 1 || ViewModel.ActiveTab is null)
         {
             args.Handled = true;
             return;

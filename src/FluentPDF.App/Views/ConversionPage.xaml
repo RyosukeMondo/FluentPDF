@@ -212,12 +212,12 @@
                                 Text="Pages:"
                                 FontWeight="SemiBold"
                                 Margin="0,0,12,0"
-                                Visibility="{x:Bind HasPageCount(ViewModel.Result.PageCount), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                Visibility="{x:Bind HasPageCount(ViewModel.Result.PageCount), Mode=OneWay}" />
                             <TextBlock
                                 Grid.Row="3"
                                 Grid.Column="1"
                                 Text="{x:Bind ViewModel.Result.PageCount, Mode=OneWay}"
-                                Visibility="{x:Bind HasPageCount(ViewModel.Result.PageCount), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                Visibility="{x:Bind HasPageCount(ViewModel.Result.PageCount), Mode=OneWay}" />
 
                             <!-- Quality Score (if available) -->
                             <TextBlock
@@ -226,11 +226,11 @@
                                 Text="Quality Score (SSIM):"
                                 FontWeight="SemiBold"
                                 Margin="0,0,12,0"
-                                Visibility="{x:Bind HasQualityScore(ViewModel.Result.QualityScore), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                Visibility="{x:Bind HasQualityScore(ViewModel.Result.QualityScore), Mode=OneWay}" />
                             <TextBlock
                                 Grid.Row="4"
                                 Grid.Column="1"
-                                Visibility="{x:Bind HasQualityScore(ViewModel.Result.QualityScore), Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                Visibility="{x:Bind HasQualityScore(ViewModel.Result.QualityScore), Mode=OneWay}">
                                 <Run Text="{x:Bind FormatQualityScore(ViewModel.Result.QualityScore), Mode=OneWay}" />
                                 <Run Text=" " />
                                 <Run Text="{x:Bind GetQualityRating(ViewModel.Result.QualityScore), Mode=OneWay}" Foreground="{x:Bind GetQualityColor(ViewModel.Result.QualityScore), Mode=OneWay}" />
@@ -241,13 +241,13 @@
                                 Grid.Row="5"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
-                                Content="Open PDF"
                                 Command="{x:Bind ViewModel.OpenPdfCommand}"
                                 HorizontalAlignment="Stretch"
                                 Margin="0,8,0,0">
-                                <Button.Icon>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <SymbolIcon Symbol="OpenFile" />
-                                </Button.Icon>
+                                    <TextBlock Text="Open PDF" VerticalAlignment="Center" />
+                                </StackPanel>
                             </Button>
                         </Grid>
                     </Border>

@@ -48,7 +48,7 @@ namespace FluentPDF.App.Views
             if (result == ContentDialogResult.Primary)
             {
                 // User confirmed, proceed with reset
-                await ViewModel.ResetToDefaultsAsync();
+                await ViewModel.ResetToDefaultsCommand.ExecuteAsync(null);
             }
         }
     }

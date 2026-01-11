@@ -40,11 +40,7 @@
             Style="{StaticResource SubtitleTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}">
             <TextBlock.Visibility>
-                <Binding Path="ViewModel.Bookmarks.Count" Converter="{StaticResource CountToVisibilityConverter}" ConverterParameter="0">
-                    <Binding.RelativeSource>
-                        <RelativeSource Mode="Self"/>
-                    </Binding.RelativeSource>
-                </Binding>
+                <Binding Path="ViewModel.Bookmarks.Count" ElementName="RootControl" Converter="{StaticResource CountToVisibilityConverter}" ConverterParameter="0" />
             </TextBlock.Visibility>
         </TextBlock>
 
@@ -64,11 +60,7 @@
             SelectionMode="Single"
             ItemInvoked="BookmarksTreeView_ItemInvoked">
             <TreeView.Visibility>
-                <Binding Path="ViewModel.Bookmarks.Count" Converter="{StaticResource InverseCountToVisibilityConverter}" ConverterParameter="0">
-                    <Binding.RelativeSource>
-                        <RelativeSource Mode="Self"/>
-                    </Binding.RelativeSource>
-                </Binding>
+                <Binding Path="ViewModel.Bookmarks.Count" ElementName="RootControl" Converter="{StaticResource InverseCountToVisibilityConverter}" ConverterParameter="0" />
             </TreeView.Visibility>
         </TreeView>
     </Grid>

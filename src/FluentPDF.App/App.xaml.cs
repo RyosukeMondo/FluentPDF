@@ -38,7 +38,19 @@ namespace FluentPDF.App
         /// </summary>
         public App()
         {
-            this.InitializeComponent();
+            System.Diagnostics.Debug.WriteLine("FluentPDF: App constructor starting...");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: App constructor starting\n");
+
+            try
+            {
+                this.InitializeComponent();
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: InitializeComponent completed\n");
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: InitializeComponent failed: {ex}\n");
+                throw;
+            }
 
             // Initialize Serilog before anything else
             Log.Logger = SerilogConfiguration.CreateLogger();
@@ -79,7 +91,7 @@ namespace FluentPDF.App
                     services.AddSingleton<IRenderingSettingsService, RenderingSettingsService>();
 
                     // Register conversion services
-                    services.AddSingleton<Mammoth.IDocumentConverter>(provider => new Mammoth.DocumentConverter());
+                    services.AddSingleton<Mammoth.DocumentConverter>(provider => new Mammoth.DocumentConverter());
                     services.AddSingleton<IDocxParserService, DocxParserService>();
                     services.AddSingleton<IHtmlToPdfService, HtmlToPdfService>();
                     services.AddSingleton<IQualityValidationService, LibreOfficeValidator>();
@@ -110,6 +122,11 @@ namespace FluentPDF.App
                 })
                 .Build();
         }
+
+        /// <summary>
+        /// Gets the service provider for dependency injection.
+        /// </summary>
+        public IServiceProvider Services => _host.Services;
 
         /// <summary>
         /// Gets a service from the dependency injection container.
@@ -175,7 +192,8 @@ namespace FluentPDF.App
             if (_window is null)
             {
                 var mainViewModel = GetService<MainViewModel>();
-                _window = new Views.MainWindow(mainViewModel);
+                var jumpListService = GetService<JumpListService>();
+                _window = new Views.MainWindow(mainViewModel, jumpListService);
                 MainWindow = _window;
                 _window.Closed += async (s, e) => await ShutdownAsync();
             }
@@ -344,14 +362,6 @@ namespace FluentPDF.App
         {
             try
             {
-                var requestedTheme = theme switch
-                {
-                    AppTheme.Light => ApplicationTheme.Light,
-                    AppTheme.Dark => ApplicationTheme.Dark,
-                    AppTheme.UseSystem => null, // null uses system default
-                    _ => null
-                };
-
                 // Note: RequestedTheme can only be set before the first window is created
                 // For runtime theme changes, we need to set it on the window's content
                 if (_window?.Content is FrameworkElement rootElement)

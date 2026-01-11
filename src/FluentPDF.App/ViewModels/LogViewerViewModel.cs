@@ -8,6 +8,8 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
+using CoreLogLevel = FluentPDF.Core.Observability.LogLevel;
+
 namespace FluentPDF.App.ViewModels;
 
 /// <summary>
@@ -36,7 +38,7 @@ public partial class LogViewerViewModel : ObservableObject
     /// Gets or sets the minimum log level filter.
     /// </summary>
     [ObservableProperty]
-    private LogLevel? _minimumLevel;
+    private CoreLogLevel? _minimumLevel;
 
     /// <summary>
     /// Gets or sets the correlation ID filter.
@@ -80,7 +82,7 @@ public partial class LogViewerViewModel : ObservableObject
         _ = DebouncedSearchAsync();
     }
 
-    partial void OnMinimumLevelChanged(LogLevel? value)
+    partial void OnMinimumLevelChanged(CoreLogLevel? value)
     {
         _ = ApplyFiltersAsync();
     }
@@ -192,6 +194,8 @@ public partial class LogViewerViewModel : ObservableObject
 
             _logger.LogInformation("Filters applied. Showing {Count} of {Total} logs",
                 LogEntries.Count, _allLogs.Count);
+
+            await Task.CompletedTask;
         }
         catch (Exception ex)
         {

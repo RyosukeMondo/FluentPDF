@@ -1,5 +1,7 @@
 using FluentPDF.App.ViewModels;
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
 namespace FluentPDF.App.Views;
@@ -64,20 +66,20 @@ public sealed partial class ConversionPage : Page
     /// Checks if page count is available.
     /// </summary>
     /// <param name="pageCount">Page count (nullable).</param>
-    /// <returns>True if page count has value, false otherwise.</returns>
-    private bool HasPageCount(int? pageCount)
+    /// <returns>Visibility.Visible if page count has value, Collapsed otherwise.</returns>
+    private Visibility HasPageCount(int? pageCount)
     {
-        return pageCount.HasValue;
+        return pageCount.HasValue ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>
     /// Checks if quality score is available.
     /// </summary>
     /// <param name="qualityScore">Quality score (nullable).</param>
-    /// <returns>True if quality score has value, false otherwise.</returns>
-    private bool HasQualityScore(double? qualityScore)
+    /// <returns>Visibility.Visible if quality score has value, Collapsed otherwise.</returns>
+    private Visibility HasQualityScore(double? qualityScore)
     {
-        return qualityScore.HasValue;
+        return qualityScore.HasValue ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>

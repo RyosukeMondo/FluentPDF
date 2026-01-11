@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.UI;
 using Windows.UI;
 
 namespace FluentPDF.App.ViewModels;
@@ -83,6 +84,12 @@ public partial class AnnotationViewModel : ObservableObject
     private bool _isToolbarVisible;
 
     /// <summary>
+    /// Gets or sets a value indicating whether there are unsaved annotation changes.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasUnsavedChanges;
+
+    /// <summary>
     /// Selects an annotation tool for creating new annotations.
     /// </summary>
     /// <param name="tool">The tool to activate.</param>
@@ -145,6 +152,7 @@ public partial class AnnotationViewModel : ObservableObject
             if (result.IsSuccess)
             {
                 Annotations.Add(result.Value);
+                HasUnsavedChanges = true;
                 _logger.LogInformation(
                     "Annotation created successfully. Id={Id}, Type={Type}",
                     result.Value.Id, result.Value.Type);
@@ -221,6 +229,7 @@ public partial class AnnotationViewModel : ObservableObject
             if (result.IsSuccess)
             {
                 Annotations.Add(result.Value);
+                HasUnsavedChanges = true;
                 _logger.LogInformation(
                     "Ink annotation created successfully. Id={Id}, PointCount={PointCount}",
                     result.Value.Id, result.Value.InkPoints.Count);
@@ -281,6 +290,7 @@ public partial class AnnotationViewModel : ObservableObject
             if (result.IsSuccess)
             {
                 Annotations.Remove(SelectedAnnotation);
+                HasUnsavedChanges = true;
                 _logger.LogInformation("Annotation deleted successfully. Id={Id}", SelectedAnnotation.Id);
                 SelectedAnnotation = null;
             }
@@ -326,6 +336,7 @@ public partial class AnnotationViewModel : ObservableObject
         {
             IsLoading = true;
             Annotations.Clear();
+            HasUnsavedChanges = false;
 
             var result = await _annotationService.GetAnnotationsAsync(_currentDocument, _currentPageNumber);
 
@@ -382,6 +393,7 @@ public partial class AnnotationViewModel : ObservableObject
 
             if (result.IsSuccess)
             {
+                HasUnsavedChanges = false;
                 _logger.LogInformation("Annotations saved successfully to {FilePath}", _currentDocument.FilePath);
             }
             else

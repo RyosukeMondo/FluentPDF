@@ -2,6 +2,7 @@ using FluentPDF.Core.Observability;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace FluentPDF.App.Converters;
 

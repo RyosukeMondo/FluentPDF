@@ -16,6 +16,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>FluentPDF.App</RootNamespace>
 
+        <!-- Suppress AOT compatibility warnings for WinUI MVVM Toolkit -->
+        <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
+
         <!-- App Options -->
         <UseRidGraph>true</UseRidGraph>
         <Platforms>x86;x64;ARM64</Platforms>
@@ -40,7 +43,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.*" />
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240428000" />
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.*" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
@@ -50,6 +53,7 @@
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.*" />
         <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.*" />
         <PackageReference Include="System.Reactive" Version="6.1.0" />
+        <PackageReference Include="Mammoth" Version="1.*" />
 
         <Manifest Include="$(ApplicationManifest)" />
     </ItemGroup>
