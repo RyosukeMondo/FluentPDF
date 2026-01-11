@@ -96,6 +96,116 @@
                     </TextBlock>
                 </StackPanel>
             </StackPanel>
+
+            <!-- Viewing Section -->
+            <StackPanel Spacing="12">
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="Viewing" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Configure default viewing preferences for newly opened documents."
+                    TextWrapping="Wrap" />
+
+                <!-- Default Zoom Level -->
+                <ComboBox
+                    MinWidth="300"
+                    HorizontalAlignment="Left"
+                    Header="Default Zoom Level"
+                    ItemsSource="{x:Bind ViewModel.ZoomLevels, Mode=OneTime}"
+                    SelectedItem="{x:Bind ViewModel.DefaultZoom, Mode=TwoWay}" />
+
+                <!-- Scroll Mode -->
+                <ComboBox
+                    MinWidth="300"
+                    HorizontalAlignment="Left"
+                    Header="Scroll Mode"
+                    ItemsSource="{x:Bind ViewModel.ScrollModes, Mode=OneTime}"
+                    SelectedItem="{x:Bind ViewModel.ScrollMode, Mode=TwoWay}" />
+            </StackPanel>
+
+            <!-- Appearance Section -->
+            <StackPanel Spacing="12">
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="Appearance" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Customize the application's visual theme."
+                    TextWrapping="Wrap" />
+
+                <!-- Theme RadioButtons -->
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Text="Theme" />
+                    <RadioButton
+                        Content="Light"
+                        GroupName="ThemeGroup"
+                        IsChecked="{x:Bind ViewModel.IsLightTheme, Mode=TwoWay}" />
+                    <RadioButton
+                        Content="Dark"
+                        GroupName="ThemeGroup"
+                        IsChecked="{x:Bind ViewModel.IsDarkTheme, Mode=TwoWay}" />
+                    <RadioButton
+                        Content="Use System"
+                        GroupName="ThemeGroup"
+                        IsChecked="{x:Bind ViewModel.IsSystemTheme, Mode=TwoWay}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Privacy Section -->
+            <StackPanel Spacing="12">
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="Privacy" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Control data collection and reporting. All data is anonymous."
+                    TextWrapping="Wrap" />
+
+                <!-- Telemetry Toggle -->
+                <ToggleSwitch
+                    Header="Telemetry"
+                    IsOn="{x:Bind ViewModel.TelemetryEnabled, Mode=TwoWay}"
+                    OffContent="Disabled"
+                    OnContent="Enabled" />
+                <TextBlock
+                    Margin="0,-8,0,0"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Helps improve FluentPDF by sending anonymous usage data."
+                    TextWrapping="Wrap" />
+
+                <!-- Crash Reporting Toggle -->
+                <ToggleSwitch
+                    Header="Crash Reporting"
+                    IsOn="{x:Bind ViewModel.CrashReportingEnabled, Mode=TwoWay}"
+                    OffContent="Disabled"
+                    OnContent="Enabled" />
+                <TextBlock
+                    Margin="0,-8,0,0"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Sends anonymous crash reports to help diagnose issues."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <!-- Reset Button -->
+            <StackPanel Spacing="12">
+                <Button
+                    x:Name="ResetButton"
+                    Click="ResetButton_Click"
+                    Content="Reset All Settings to Defaults" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Restores all settings to their original default values."
+                    TextWrapping="Wrap" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>

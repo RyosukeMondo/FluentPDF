@@ -99,6 +99,16 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<QualityOption> QualityOptions { get; }
 
     /// <summary>
+    /// Gets all available zoom level values for the ComboBox.
+    /// </summary>
+    public IReadOnlyList<ZoomLevel> ZoomLevels { get; } = Enum.GetValues<ZoomLevel>();
+
+    /// <summary>
+    /// Gets all available scroll mode values for the ComboBox.
+    /// </summary>
+    public IReadOnlyList<ScrollMode> ScrollModes { get; } = Enum.GetValues<ScrollMode>();
+
+    /// <summary>
     /// Gets or sets the selected rendering quality option.
     /// </summary>
     [ObservableProperty]
@@ -126,6 +136,51 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private AppTheme _theme;
+
+    /// <summary>
+    /// Gets or sets whether the Light theme is selected.
+    /// </summary>
+    public bool IsLightTheme
+    {
+        get => Theme == AppTheme.Light;
+        set
+        {
+            if (value)
+            {
+                Theme = AppTheme.Light;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the Dark theme is selected.
+    /// </summary>
+    public bool IsDarkTheme
+    {
+        get => Theme == AppTheme.Dark;
+        set
+        {
+            if (value)
+            {
+                Theme = AppTheme.Dark;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the System theme is selected.
+    /// </summary>
+    public bool IsSystemTheme
+    {
+        get => Theme == AppTheme.UseSystem;
+        set
+        {
+            if (value)
+            {
+                Theme = AppTheme.UseSystem;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets whether anonymous telemetry is enabled.
@@ -207,6 +262,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     /// </summary>
     partial void OnThemeChanged(AppTheme value)
     {
+        // Notify radio button properties
+        OnPropertyChanged(nameof(IsLightTheme));
+        OnPropertyChanged(nameof(IsDarkTheme));
+        OnPropertyChanged(nameof(IsSystemTheme));
+
         if (_isLoadingSettings)
             return;
 
