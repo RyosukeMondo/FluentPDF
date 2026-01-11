@@ -31,6 +31,17 @@
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator />
+                <MenuFlyoutItem x:Name="SaveMenuItem" Text="Save" Click="OnSaveClick">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="S" Modifiers="Control" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="SaveAsMenuItem" Text="Save As..." Click="OnSaveAsClick">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="S" Modifiers="Control,Shift" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator />
                 <MenuFlyoutSubItem x:Name="RecentFilesSubMenu" Text="Recent Files">
                     <!-- Dynamic recent files items will be added in code-behind -->
                 </MenuFlyoutSubItem>

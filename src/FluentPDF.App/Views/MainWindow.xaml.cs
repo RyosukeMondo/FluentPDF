@@ -43,6 +43,17 @@ public sealed partial class MainWindow : Window
         // Set up empty state visibility handling
         ViewModel.Tabs.CollectionChanged += (s, e) => UpdateEmptyStateVisibility();
         UpdateEmptyStateVisibility();
+
+        // Set up menu item state updates
+        ViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ViewModel.ActiveTab))
+            {
+                UpdateMenuItemStates();
+                SubscribeToActiveTabChanges();
+            }
+        };
+        UpdateMenuItemStates();
     }
 
     /// <summary>
@@ -300,5 +311,56 @@ public sealed partial class MainWindow : Window
         };
 
         await dialog.ShowAsync();
+    }
+
+    /// <summary>
+    /// Handles the Save menu item click.
+    /// </summary>
+    private async void OnSaveClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.ActiveTab?.ViewerViewModel?.SaveCommand is { } saveCommand && saveCommand.CanExecute(null))
+        {
+            await saveCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Handles the Save As menu item click.
+    /// </summary>
+    private async void OnSaveAsClick(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.ActiveTab?.ViewerViewModel?.SaveAsCommand is { } saveAsCommand)
+        {
+            await saveAsCommand.ExecuteAsync(null);
+        }
+    }
+
+    /// <summary>
+    /// Updates the enabled state of Save menu items based on active tab state.
+    /// </summary>
+    private void UpdateMenuItemStates()
+    {
+        var hasActiveTab = ViewModel.ActiveTab != null;
+        var hasUnsavedChanges = ViewModel.ActiveTab?.HasUnsavedChanges ?? false;
+
+        SaveMenuItem.IsEnabled = hasActiveTab && hasUnsavedChanges;
+        SaveAsMenuItem.IsEnabled = hasActiveTab;
+    }
+
+    /// <summary>
+    /// Subscribes to property changes on the active tab to update menu states.
+    /// </summary>
+    private void SubscribeToActiveTabChanges()
+    {
+        if (ViewModel.ActiveTab != null)
+        {
+            ViewModel.ActiveTab.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(TabViewModel.HasUnsavedChanges))
+                {
+                    UpdateMenuItemStates();
+                }
+            };
+        }
     }
 }
