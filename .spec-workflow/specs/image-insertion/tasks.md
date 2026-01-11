@@ -20,7 +20,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.6, 3.1-3.6, 4.1-4.5, 5.1-5.5_
   - _Prompt: Implement the task for spec image-insertion, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Software Architect | Task: Create IImageInsertionService with methods: InsertImageAsync(PdfDocument, int pageIndex, string imagePath, PointF position) returning Result<ImageObject>, MoveImageAsync(ImageObject, PointF), ScaleImageAsync(ImageObject, SizeF), RotateImageAsync(ImageObject, float degrees), DeleteImageAsync(ImageObject). Create ImageObject class with PageIndex, Position, Size, RotationDegrees, SourcePath properties. | Restrictions: Interface only, no implementation. Follow FluentResults pattern. | _Leverage: IAnnotationService pattern | _Requirements: 1.1-1.7, 2.1-2.6, 3.1-3.6, 4.1-4.5, 5.1-5.5 | Success: Interface and model compile, proper Result pattern usage. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 3. Implement ImageInsertionService
+- [x] 3. Implement ImageInsertionService
   - File: `src/FluentPDF.Rendering/Services/ImageInsertionService.cs`
   - Implement all IImageInsertionService methods using PDFium
   - Handle PNG, JPEG, BMP, GIF formats
