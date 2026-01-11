@@ -10,7 +10,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.5, 3.1-3.5, 4.1-4.7, 5.1-5.7_
   - _Prompt: Implement the task for spec watermarks, first run spec-workflow-guide to get the workflow guide then implement the task: Role: C# Developer | Task: Create WatermarkConfig.cs with classes: TextWatermarkConfig (Text, FontFamily, FontSize, Color, Opacity, RotationDegrees, Position, BehindContent), ImageWatermarkConfig (ImagePath, Scale, Opacity, RotationDegrees, Position, BehindContent), WatermarkPosition enum (Center, TopLeft, TopRight, BottomLeft, BottomRight, Custom), PageRange class with Type, SpecificPages, and static Parse method for "1-5, 10" format. | Restrictions: Models only, no logic. Follow existing model patterns. | _Leverage: Existing Core models | _Requirements: 1.1-1.7, 2.1-2.5, 3.1-3.5, 4.1-4.7, 5.1-5.7 | Success: All models compile, proper properties defined. Mark task in-progress in tasks.md before starting, log implementation with log-implementation tool after completion, then mark as complete._
 
-- [ ] 2. Create IWatermarkService interface
+- [x] 2. Create IWatermarkService interface
   - File: `src/FluentPDF.Core/Services/IWatermarkService.cs`
   - Define ApplyTextWatermarkAsync, ApplyImageWatermarkAsync, RemoveWatermarksAsync, GeneratePreviewAsync
   - Purpose: Establish service contract for watermark operations
