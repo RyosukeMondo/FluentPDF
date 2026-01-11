@@ -15,7 +15,7 @@
   - _Requirements: 1.1-1.7, 2.1-2.8_
   - _Prompt: Role: .NET Package Manager | Task: Add Win2D and OpenCvSharp packages to test projects | Restrictions: Use latest stable versions, verify native dependencies | Success: Packages restore and libraries initialize successfully_
 
-- [-] 2. Implement HeadlessRenderingService with Win2D
+- [x] 2. Implement HeadlessRenderingService with Win2D
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Services/IHeadlessRenderingService.cs`
     - `tests/FluentPDF.Rendering.Tests/Services/HeadlessRenderingService.cs`
