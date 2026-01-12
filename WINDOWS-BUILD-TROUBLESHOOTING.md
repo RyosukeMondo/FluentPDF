@@ -4,7 +4,24 @@ This guide helps diagnose and resolve WinUI 3 XAML compiler issues when building
 
 ## Quick Diagnostics
 
-Run the diagnostic build script:
+### Step 1: Validate XAML Files
+
+Before building, validate XAML files for common issues:
+
+```powershell
+.\validate-xaml-windows.ps1 -Verbose
+```
+
+This checks for:
+- Missing code-behind files
+- Non-existent converter/ViewModel references
+- Namespace declaration errors
+- Duplicate x:Name attributes
+- Common typos
+
+### Step 2: Run Diagnostic Build
+
+If validation passes, run the diagnostic build script:
 
 ```powershell
 .\build-diagnostics-windows.ps1 -Clean

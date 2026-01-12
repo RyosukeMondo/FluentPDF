@@ -22,7 +22,19 @@ Quick reference for building FluentPDF on Windows after syncing from Linux.
 
 ## Daily Build Workflow
 
-### Option 1: Use Diagnostic Script (Recommended)
+### Option 1: Validate then Build (Recommended)
+
+```powershell
+cd C:\dev\FluentPDF
+
+# First, validate XAML files for common issues
+.\validate-xaml-windows.ps1
+
+# If validation passes, build with diagnostics
+.\build-diagnostics-windows.ps1 -Clean
+```
+
+### Option 2: Quick Diagnostic Build
 
 ```powershell
 cd C:\dev\FluentPDF
@@ -34,7 +46,7 @@ cd C:\dev\FluentPDF
 .\build-diagnostics-windows.ps1
 ```
 
-### Option 2: Manual Commands
+### Option 3: Manual Commands
 
 ```powershell
 cd C:\dev\FluentPDF
@@ -55,14 +67,17 @@ If you see `MSB3073: XamlCompiler.exe exited with code 1`:
 
 ```powershell
 # Quick fix attempts:
-# 1. Clear NuGet cache
+# 1. Validate XAML files first
+.\validate-xaml-windows.ps1 -Verbose
+
+# 2. Clear NuGet cache
 dotnet nuget locals all --clear
 dotnet restore src\FluentPDF.App
 
-# 2. Clean rebuild
+# 3. Clean rebuild
 .\build-diagnostics-windows.ps1 -Clean
 
-# 3. If still failing, check the detailed troubleshooting guide:
+# 4. If still failing, check the detailed troubleshooting guide:
 # See: WINDOWS-BUILD-TROUBLESHOOTING.md
 ```
 
