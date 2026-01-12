@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "hEF64r18EPzVjQuGgdnUKC0VNhVdCJqSl4Wj5sO+hLNU2atSLbfAlwRGN+u2DmiJeUWBNpaNf3/5rSK1tOt2nQ==",
+  "dgSpecHash": "FDHsCLgiFoVb3xh678eeiJLrk9Wo6VxS+qTcNY61E6av0EYy9FtHKtiI9Fhm/2SPMr9uZZEz1EL5HrT28w2Zdw==",
   "success": true,
   "projectFilePath": "/home/rmondo/repos/FluentPDF/src/FluentPDF.Rendering/FluentPDF.Rendering.csproj",
   "expectedPackageFiles": [
@@ -39,9 +39,7 @@
     "/home/rmondo/.nuget/packages/system.diagnostics.diagnosticsource/10.0.0/system.diagnostics.diagnosticsource.10.0.0.nupkg.sha512",
     "/home/rmondo/.nuget/packages/system.io.packaging/8.0.1/system.io.packaging.8.0.1.nupkg.sha512",
     "/home/rmondo/.nuget/packages/system.reactive/6.1.0/system.reactive.6.1.0.nupkg.sha512",
-    "/home/rmondo/.nuget/packages/system.threading.tasks.extensions/4.5.4/system.threading.tasks.extensions.4.5.4.nupkg.sha512",
-    "/home/rmondo/.nuget/packages/microsoft.windowsdesktop.app.ref/8.0.22/microsoft.windowsdesktop.app.ref.8.0.22.nupkg.sha512",
-    "/home/rmondo/.nuget/packages/microsoft.windows.sdk.net.ref/10.0.19041.56/microsoft.windows.sdk.net.ref.10.0.19041.56.nupkg.sha512"
+    "/home/rmondo/.nuget/packages/system.threading.tasks.extensions/4.5.4/system.threading.tasks.extensions.4.5.4.nupkg.sha512"
   ],
   "logs": []
 }

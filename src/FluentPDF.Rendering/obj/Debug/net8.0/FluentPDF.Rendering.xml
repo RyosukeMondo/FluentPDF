@@ -1304,7 +1304,7 @@
         </member>
         <member name="T:FluentPDF.Rendering.Services.DocxParserService">
             <summary>
-            Service for DOCX document parsing using Mammoth.NET library.
+            Service for DOCX document parsing using DocumentFormat.OpenXml library.
             Implements asynchronous operations with comprehensive error handling and structured logging.
             Converts DOCX files to clean HTML with embedded images as base64 data URIs.
             </summary>
