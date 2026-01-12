@@ -209,7 +209,7 @@
   - _Requirements: US-11_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in form testing | Task: Create FormFillingTests that verify PDF form filling including text, checkbox, and radio inputs using FlaUI | Restrictions: Use test PDF with form fields, verify field values change, do not modify app code | Success: All form field types work, data persists on save | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 19. Add DOCX test file
+- [x] 19. Add DOCX test file
   - File: tests/FluentPDF.E2E.Tests/TestData/sample.docx
   - Create simple DOCX with known text content
   - Include: headings, paragraphs, basic formatting
