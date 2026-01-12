@@ -42,7 +42,7 @@
   - _Requirements: US-1, US-2, US-3, US-4_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 Developer specializing in accessibility and automation | Task: Add AutomationProperties.AutomationId to all interactive elements in MainWindow and PdfViewerPage XAML for FlaUI automation | Restrictions: Do not change element behavior or styling, use consistent naming convention, do not remove existing properties | Success: All buttons, inputs, panels have unique AutomationIds | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 5. Create app launch smoke test
+- [-] 5. Create app launch smoke test
   - File: tests/FluentPDF.E2E.Tests/Tests/AppLaunchTests.cs
   - Test app launches within 10 seconds
   - Test main window is visible and responsive
