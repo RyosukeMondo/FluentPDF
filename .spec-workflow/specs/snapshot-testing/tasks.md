@@ -44,12 +44,22 @@
   - _Requirements: 3.2, 3.3_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer | Task: Create ToolbarSnapshotTests with tests for toolbar appearance following requirements 3.2 and 3.3 | Restrictions: Extend SnapshotTestBase, test different toolbar states | Success: Tests generate and compare snapshots for toolbar | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 6. Create initial approved snapshots - **BLOCKED**
+- [ ] 6. Create initial approved snapshots - **READY FOR TESTING**
   - File: tests/FluentPDF.App.Tests/Snapshots/Verified/*.verified.txt
   - Run tests to generate initial snapshots
   - Review and approve baseline snapshots
   - Purpose: Establish baseline for regression detection
-  - **BLOCKER**: Windows build environment has XAML compiler failure (MSB3073: XamlCompiler.exe exits with code 1)
+  - **STATUS**: .NET 9 upgrade complete - ready for Windows testing
+  - **WINDOWS TESTING INSTRUCTIONS**:
+    1. Sync files to Windows PC: `scp -r src tests *.sln Directory.Build.props global.json ryosu@192.168.11.48:"C:/dev/FluentPDF/"`
+    2. SSH to Windows: `ssh ryosu@192.168.11.48`
+    3. Install .NET 9 SDK if not present: Download from https://dotnet.microsoft.com/download/dotnet/9.0
+    4. Verify .NET 9 SDK: `dotnet --version` (should show 9.0.100 or higher)
+    5. Clean and restore packages: `cd C:\dev\FluentPDF && dotnet clean && dotnet restore`
+    6. Build FluentPDF.App: `dotnet build src\FluentPDF.App\FluentPDF.App.csproj -p:Platform=x64`
+    7. If build succeeds, run snapshot tests: `dotnet test tests\FluentPDF.App.Tests\FluentPDF.App.Tests.csproj -p:Platform=x64`
+    8. Review generated snapshots and approve baselines
+  - **PREVIOUS BLOCKER** (now addressed): Windows build environment had XAML compiler failure (MSB3073: XamlCompiler.exe exits with code 1)
     - FluentPDF.App.csproj fails to build on Windows due to XAML compilation error
     - Error occurs in Microsoft.UI.Xaml.Markup.Compiler.interop.targets during MarkupCompilePass1
     - XamlCompiler.exe crashes silently with no diagnostic output (known WinUI 3 bug)
