@@ -26,7 +26,7 @@
   - _Requirements: 2.1, 2.2, 2.3_
   - _Prompt: Implement the task for spec flaui-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in Page Object Pattern | Task: Create MainWindowPage with methods for file open, navigation following requirements 2.1-2.3 | Restrictions: Use AutomationId selectors only, expose high-level actions not implementation | Success: Page object provides OpenFile, GetCurrentPage methods | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 4. Add AutomationId to key XAML controls
+- [x] 4. Add AutomationId to key XAML controls
   - File: src/FluentPDF.App/Views/MainWindow.xaml (and related)
   - Add x:AutomationId attributes to testable controls
   - Purpose: Enable FlaUI to locate UI elements reliably

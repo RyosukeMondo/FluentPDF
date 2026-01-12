@@ -89,6 +89,7 @@
             <AppBarButton
                 Icon="Previous"
                 Label="Previous"
+                AutomationProperties.AutomationId="PreviousPageButton"
                 Command="{x:Bind ViewModel.GoToPreviousPageCommand, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="Left" />
@@ -99,7 +100,8 @@
                 <TextBlock
                     VerticalAlignment="Center"
                     Margin="12,0"
-                    FontWeight="SemiBold">
+                    FontWeight="SemiBold"
+                    AutomationProperties.AutomationId="CurrentPageNumber">
                     <Run Text="Page " />
                     <Run Text="{x:Bind ViewModel.CurrentPageNumber, Mode=OneWay}" />
                     <Run Text=" of " />
@@ -110,6 +112,7 @@
             <AppBarButton
                 Icon="Next"
                 Label="Next"
+                AutomationProperties.AutomationId="NextPageButton"
                 Command="{x:Bind ViewModel.GoToNextPageCommand, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="Right" />

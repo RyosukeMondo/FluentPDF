@@ -24,8 +24,8 @@
 
         <!-- Menu Bar -->
         <MenuBar Grid.Row="0">
-            <MenuBarItem Title="File">
-                <MenuFlyoutItem Text="Open..." Click="OnOpenFileClick">
+            <MenuBarItem Title="File" AutomationProperties.AutomationId="FileMenuBarItem">
+                <MenuFlyoutItem Text="Open..." Click="OnOpenFileClick" AutomationProperties.AutomationId="OpenMenuItem">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="O" Modifiers="Control" />
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -58,6 +58,7 @@
         <TabView
             Grid.Row="1"
             x:Name="MainTabView"
+            AutomationProperties.AutomationId="MainTabView"
             TabItemsSource="{x:Bind ViewModel.Tabs, Mode=OneWay}"
             SelectedItem="{x:Bind ViewModel.ActiveTab, Mode=TwoWay}"
             CanDragTabs="True"
