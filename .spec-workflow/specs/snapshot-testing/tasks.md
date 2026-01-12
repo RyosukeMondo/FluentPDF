@@ -73,15 +73,30 @@
     - XAML validation script: `validate-xaml-windows.ps1` (validates XAML structure)
     - Known issue: [XamlCompiler.exe needs better logs #9813](https://github.com/microsoft/microsoft-ui-xaml/issues/9813)
     - Related: [Can't get error output from XamlCompiler.exe #10027](https://github.com/microsoft/microsoft-ui-xaml/issues/10027)
+  - **BINARY SEARCH INVESTIGATION** (2026-01-12 continued):
+    - ✅ Binary search completed on all 19 XAML files (excluding App.xaml)
+    - ✅ **CRITICAL FINDING**: ALL FluentPDF XAML files fail when copied to minimal project individually
+    - ✅ Tested Controls directory (10 files) - fails
+    - ✅ Tested Views directory (9 files) - fails
+    - ✅ Tested individual files (AnnotationLayer, PdfViewerControl, MainPage) - ALL fail
+    - **ROOT CAUSE IDENTIFIED**: XAML files fail in minimal project because they reference code-behind classes (e.g., `x:Class="FluentPDF.App.Views.MainPage"`) that don't exist in the minimal project
+    - **KEY INSIGHT**: The issue is NOT with individual XAML files - they fail in isolation only due to missing dependencies
+    - **REVISED HYPOTHESIS**: FluentPDF.App has all required files but XamlCompiler.exe still crashes, suggesting:
+      1. Project complexity (20 XAML files) exceeds XamlCompiler limits
+      2. Large input.json (152KB vs minimal's 100KB) triggers XamlCompiler bug
+      3. Specific NuGet package combination causes XamlCompiler crash
+      4. ProjectReferences to FluentPDF.Core and FluentPDF.Rendering cause issues
   - **NEXT INVESTIGATION STEPS**:
     1. ~~Check Windows Event Viewer for application crash details~~ (checked - no XamlCompiler crashes logged)
     2. Use Process Monitor to trace XamlCompiler.exe file/registry access patterns
     3. ~~Try building a minimal WinUI 3 project~~ (DONE - builds successfully, isolates issue to FluentPDF.App)
-    4. Binary search XAML files: Copy FluentPDF XAML files to minimal project one-by-one to identify problematic file
+    4. ~~Binary search XAML files~~ (DONE - all files fail individually due to missing code-behind, not XAML syntax errors)
     5. Examine input.json for FluentPDF.App vs minimal project to identify differences
     6. Check if specific NuGet package combinations trigger XamlCompiler bug (CommunityToolkit.Mvvm, Mammoth, etc.)
     7. Try building FluentPDF.App in Visual Studio 2022 IDE for better error diagnostics
-    8. Consider temporarily removing XAML files to isolate the problematic one
+    8. Try removing ProjectReferences temporarily to see if they cause XamlCompiler issues
+    9. Try removing NuGet packages one by one to identify problematic package
+    10. Consider creating a fresh WinUI 3 project and migrating files incrementally
   - _Leverage: all snapshot test files_
   - _Requirements: 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Run all snapshot tests to generate initial .received files, review them, and rename to .verified to approve following requirement 2.2 | Restrictions: Only approve correct snapshots, document any issues | Success: All snapshot tests pass with approved baselines | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
