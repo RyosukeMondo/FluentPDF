@@ -34,7 +34,7 @@
   - _Requirements: 2.3_
   - _Prompt: Implement the task for spec flaui-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: WinUI 3 Developer | Task: Add x:AutomationId attributes to key controls (OpenFileButton, PageNavigator, ZoomSlider) following requirement 2.3 | Restrictions: Do not change control functionality, use descriptive IDs | Success: Key controls have AutomationId, app builds and runs | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 5. Create basic UI test for file open workflow
+- [x] 5. Create basic UI test for file open workflow
   - File: tests/FluentPDF.App.Tests/E2E/FileOpenTests.cs
   - Implement test that opens a PDF file and verifies display
   - Use page objects for interactions
