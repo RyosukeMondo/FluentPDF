@@ -55,7 +55,7 @@
 
 ## Phase 2: Core Viewing Tests
 
-- [ ] 6. Add test PDF samples to TestData
+- [x] 6. Add test PDF samples to TestData
   - File: tests/FluentPDF.E2E.Tests/TestData/sample.pdf
   - File: tests/FluentPDF.E2E.Tests/TestData/multi-page.pdf
   - File: tests/FluentPDF.E2E.Tests/TestData/form.pdf
