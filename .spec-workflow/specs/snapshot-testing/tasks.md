@@ -26,7 +26,7 @@
   - _Requirements: 2.1, 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer with snapshot testing expertise | Task: Create SnapshotTestBase class with VerifyControl helper methods following requirements 2.1 and 2.2 | Restrictions: Use [UsesVerify] attribute, handle initial snapshot creation | Success: Base class provides reusable verification methods | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 4. Create PdfViewerSnapshotTests
+- [x] 4. Create PdfViewerSnapshotTests
   - File: tests/FluentPDF.App.Tests/Snapshots/PdfViewerSnapshotTests.cs
   - Implement snapshot tests for PdfViewerControl
   - Test default state and zoomed state
