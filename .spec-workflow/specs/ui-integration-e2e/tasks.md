@@ -197,7 +197,7 @@
 
 ## Phase 6: Advanced Features Tests
 
-- [ ] 18. Create form filling E2E test
+- [x] 18. Create form filling E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/FormFillingTests.cs
   - Test form fields are detected
   - Test text field input
