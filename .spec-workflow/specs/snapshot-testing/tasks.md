@@ -113,13 +113,16 @@
     - ❌ Updated filter script to also exclude WindowsBase.dll - now removes 22 assemblies but XamlCompiler still crashes
     - ❌ Tried DisableImplicitFrameworkReferences on FluentPDF.Rendering (breaks test project compatibility)
     - ❌ Tried ExcludeAssets=FrameworkReferences on ProjectReference (no effect, still 278 assemblies in input.json)
-  - **CURRENT STATUS** (2026-01-12 afternoon - CRITICAL FINDING):
+  - **CURRENT STATUS** (2026-01-12 evening - INVESTIGATION EXHAUSTED):
     - ✅ Upgraded entire project from .NET 8 to .NET 9 (commit a8e1852)
-    - ✅ Upgraded WindowsAppSDK from 1.6 to 1.8
+    - ✅ Upgraded WindowsAppSDK from 1.6 to 1.8 (commit 3c9a94a)
     - ✅ Filter script successfully removes 22 WPF assemblies from input.json (281 -> 259 assemblies)
     - ❌ **CRITICAL**: XamlCompiler STILL crashes even WITH WPF assemblies removed
-    - **ROOT CAUSE DISPROVEN**: WPF assemblies were a RED HERRING - not the actual cause of XamlCompiler crash
-    - **REAL ISSUE**: Something else in the project causes XamlCompiler.exe to crash (project complexity, specific XAML content, NuGet interactions, or assembly conflicts beyond WPF)
+    - ❌ **TESTED**: Removing ProjectReferences (FluentPDF.Core, FluentPDF.Rendering) - still crashes (227 assemblies)
+    - ❌ **TESTED**: Removing non-essential packages (OpenTelemetry, Serilog, System.Reactive) - still crashes
+    - **ROOT CAUSE DISPROVEN**: WPF assemblies, ProjectReferences, and NuGet packages are NOT the cause
+    - **CONCLUSION**: Issue is likely in XAML content itself, WinUI 3 XamlCompiler bug, or fundamental incompatibility
+    - **BLOCKER**: Cannot proceed with snapshot testing without Windows build succeeding
   - **ADDITIONAL INVESTIGATION** (2026-01-12 afternoon):
     - ✅ Changed FluentPDF.Rendering from net8.0-windows10.0.19041.0 to net8.0 - builds successfully on Linux
     - ❌ FluentPDF.App still fails with XamlCompiler exit code 1 - WPF assemblies still present (278 total)
