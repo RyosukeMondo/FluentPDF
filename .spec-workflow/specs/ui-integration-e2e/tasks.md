@@ -136,7 +136,7 @@
   - _Requirements: US-6_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in document operations | Task: Create MergeTests that verify PDF merge workflow including file selection, merge execution, and result verification | Restrictions: Use known test PDFs, verify page count after merge, do not modify app code | Success: Merge combines PDFs correctly, page count is sum of inputs | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 13. Create split E2E test
+- [x] 13. Create split E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/SplitTests.cs
   - Test Split button opens dialog
   - Test page range input accepts format

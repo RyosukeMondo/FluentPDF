@@ -478,14 +478,13 @@ namespace FluentPDF.App
             var mainViewModel = GetService<MainViewModel>();
             var activeTab = mainViewModel.ActiveTab;
 
-            if (activeTab?.Content is PdfViewerPage pdfViewerPage)
+            if (activeTab?.ViewerViewModel is PdfViewerViewModel viewModel)
             {
-                var viewModel = pdfViewerPage.ViewModel;
                 await viewModel.LoadDocumentFromPathAsync(filePath);
             }
             else
             {
-                throw new InvalidOperationException("No active PdfViewerPage found. Ensure a PDF viewer tab is open.");
+                throw new InvalidOperationException("No active PDF viewer tab found. Ensure a PDF viewer tab is open.");
             }
         }
 
@@ -511,10 +510,9 @@ namespace FluentPDF.App
             var mainViewModel = GetService<MainViewModel>();
             var activeTab = mainViewModel.ActiveTab;
 
-            if (activeTab?.Content is PdfViewerPage pdfViewerPage)
+            if (activeTab?.ViewerViewModel is PdfViewerViewModel viewModel)
             {
-                var viewModel = pdfViewerPage.ViewModel;
-                var editingService = GetService<FluentPDF.Core.Services.Interfaces.IEditingService>();
+                var editingService = GetService<IDocumentEditingService>();
 
                 // Perform the merge operation
                 var progress = new Progress<double>();
@@ -534,7 +532,65 @@ namespace FluentPDF.App
             }
             else
             {
-                throw new InvalidOperationException("No active PdfViewerPage found. Ensure a PDF viewer tab is open.");
+                throw new InvalidOperationException("No active PDF viewer tab found. Ensure a PDF viewer tab is open.");
+            }
+        }
+
+        /// <summary>
+        /// Test helper method to split a PDF document by page ranges.
+        /// This method is intended for E2E testing and bypasses the file picker UI and dialogs.
+        /// </summary>
+        /// <param name="inputPath">The path to the PDF file to split.</param>
+        /// <param name="pageRanges">Page ranges string (e.g., "1-5, 10, 15-20").</param>
+        /// <param name="outputPath">The path where the split PDF should be saved.</param>
+        public async Task SplitDocumentForTestingAsync(string inputPath, string pageRanges, string outputPath)
+        {
+            if (string.IsNullOrWhiteSpace(inputPath))
+            {
+                throw new ArgumentException("Input path cannot be null or empty.", nameof(inputPath));
+            }
+
+            if (string.IsNullOrWhiteSpace(pageRanges))
+            {
+                throw new ArgumentException("Page ranges cannot be null or empty.", nameof(pageRanges));
+            }
+
+            if (string.IsNullOrWhiteSpace(outputPath))
+            {
+                throw new ArgumentException("Output path cannot be null or empty.", nameof(outputPath));
+            }
+
+            // Load the document first
+            await LoadDocumentForTestingAsync(inputPath);
+
+            // Get the current PdfViewerViewModel from the active tab
+            var mainViewModel = GetService<MainViewModel>();
+            var activeTab = mainViewModel.ActiveTab;
+
+            if (activeTab?.ViewerViewModel is PdfViewerViewModel viewModel)
+            {
+                var editingService = GetService<IDocumentEditingService>();
+
+                // Perform the split operation
+                var progress = new Progress<double>();
+                var result = await editingService.SplitAsync(
+                    inputPath,
+                    pageRanges,
+                    outputPath,
+                    progress,
+                    CancellationToken.None);
+
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException($"Split failed: {result.Errors[0].Message}");
+                }
+
+                // Optionally load the split document to verify it
+                await viewModel.LoadDocumentFromPathAsync(outputPath);
+            }
+            else
+            {
+                throw new InvalidOperationException("No active PDF viewer tab found. Ensure a PDF viewer tab is open.");
             }
         }
     }
