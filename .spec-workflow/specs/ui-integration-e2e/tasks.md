@@ -159,7 +159,7 @@
 
 ## Phase 5: Content Creation Tests
 
-- [ ] 15. Create annotation E2E test
+- [x] 15. Create annotation E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/AnnotationTests.cs
   - Test annotation toolbar tool selection
   - Test highlight creation on text
