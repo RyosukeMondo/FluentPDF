@@ -73,7 +73,10 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\FluentPDF.Core\FluentPDF.Core.csproj" />
-      <ProjectReference Include="..\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
+      <ProjectReference Include="..\FluentPDF.Rendering\FluentPDF.Rendering.csproj">
+        <!-- Exclude WPF framework references from FluentPDF.Rendering -->
+        <ExcludeAssets>FrameworkReferences</ExcludeAssets>
+      </ProjectReference>
     </ItemGroup>
 
     <!-- Filter WPF assemblies from XamlCompiler input.json to prevent crashes -->

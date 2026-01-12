@@ -25,6 +25,7 @@ try {
         'System.Windows.Forms',
         'System.Windows.Presentation',
         'WindowsFormsIntegration',
+        'WindowsBase',
         'ReachFramework',
         'UIAutomation',
         'System.Xaml'

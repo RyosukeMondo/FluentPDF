@@ -99,11 +99,20 @@
     - ❌ Created FilterWpfReferences MSBuild target to filter ReferencePathWithRefAssemblies (target runs too late or wrong item group)
     - ❌ Set IncludePackageReferencesDuringMarkupCompilation=false (no effect)
     - ⚠️  Created filter-xaml-compiler-input.ps1 PowerShell script (runs successfully, removes 21 WPF assemblies, but changes don't persist - MSBuild regenerates input.json)
+    - ✅ Replaced Mammoth with DocumentFormat.OpenXml (commit 28c3b6f) - successfully eliminates Mammoth's WPF dependencies
+    - ❌ Updated filter script to also exclude WindowsBase.dll - now removes 22 assemblies but XamlCompiler still crashes
+    - ❌ Tried DisableImplicitFrameworkReferences on FluentPDF.Rendering (breaks test project compatibility)
+    - ❌ Tried ExcludeAssets=FrameworkReferences on ProjectReference (no effect, still 278 assemblies in input.json)
+  - **CURRENT STATUS** (2026-01-12):
+    - ✅ Mammoth replaced with DocumentFormat.OpenXml - eliminates direct WPF package dependencies
+    - ⚠️  WPF assemblies still present: microsoft.windowsdesktop.app.ref is implicitly included when targeting net8.0-windows
+    - ⚠️  Filter script successfully removes 22 WPF assemblies but XamlCompiler.exe still crashes with exit code 1
+    - **HYPOTHESIS**: XamlCompiler may cache input.json before filter runs, OR there's a different issue now that direct WPF dependencies are gone
   - **RECOMMENDED SOLUTIONS** (in order of preference):
-    1. **Replace Mammoth with DocumentFormat.OpenXml** - No WPF dependencies, Microsoft-supported, actively maintained
-    2. **Isolate Mammoth in separate process** - Run docx parsing in external process, communicate via IPC
-    3. **Find exact MSBuild hook** - Intercept right before XamlCompiler.exe invocation (requires deep MSBuild knowledge)
-    4. **Try Visual Studio 2022 IDE build** - May have workarounds for this issue
+    1. ~~Replace Mammoth with DocumentFormat.OpenXml~~ - ✅ COMPLETED (commit 28c3b6f) but insufficient to fix XamlCompiler crash
+    2. **Try Visual Studio 2022 IDE build** - May have workarounds or better error diagnostics for this XamlCompiler issue
+    3. **Find exact MSBuild hook** - Intercept right before XamlCompiler.exe invocation to ensure filtered input.json is used
+    4. **Isolate Mammoth in separate process** - No longer applicable (Mammoth removed)
   - **COMPLETED INVESTIGATION STEPS**:
     1. ~~Check Windows Event Viewer for application crash details~~ (checked - no XamlCompiler crashes logged)
     2. ~~Try building a minimal WinUI 3 project~~ (DONE - builds successfully, isolates issue to FluentPDF.App)
