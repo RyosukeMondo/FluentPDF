@@ -147,7 +147,7 @@
   - _Requirements: US-7_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in document operations | Task: Create SplitTests that verify PDF split workflow including dialog, page range input, and output verification | Restrictions: Use multi-page test PDF, verify output page count, do not modify app code | Success: Split creates files with correct page ranges | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 14. Add AutomationIds to dialogs
+- [x] 14. Add AutomationIds to dialogs
   - File: src/FluentPDF.App/Views/WatermarkDialog.xaml
   - File: src/FluentPDF.App/Views/DeletePagesDialog.xaml
   - File: src/FluentPDF.App/Views/SaveConfirmationDialog.xaml
