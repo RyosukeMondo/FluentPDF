@@ -27,7 +27,7 @@
   - _Requirements: 2.1, 2.2_
   - _Prompt: Implement the task for spec release-workflow, first run spec-workflow-guide to get the workflow guide then implement the task: Role: DevOps Engineer | Task: Add build-arm64 job to release.yml that builds for ARM64 in Release configuration following requirements 2.1 and 2.2 | Restrictions: Run parallel with x64 job, use windows-latest | Success: Job builds ARM64 successfully | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 4. Create package-msix.ps1 script
+- [x] 4. Create package-msix.ps1 script
   - File: tools/package-msix.ps1
   - PowerShell script to create MSIX package from build output
   - Support platform parameter (x64, arm64)
