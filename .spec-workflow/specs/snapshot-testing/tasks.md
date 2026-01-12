@@ -58,22 +58,27 @@
   - **ATTEMPTED FIXES** (2026-01-12):
     - ✅ Validated all XAML files with `validate-xaml-windows.ps1` - all checks passed
     - ✅ Added `global.json` to lock .NET SDK to 9.0.308 (was using preview 10.0.101)
-    - ✅ Updated WindowsAppSDK from 1.5.240428000 to 1.6.241114003
+    - ✅ Updated WindowsAppSDK from 1.5.240428000 to 1.6.241114003, then to 1.8.251106002
     - ✅ Cleared NuGet cache and restored packages
+    - ✅ Created minimal WinUI 3 project - **BUILDS SUCCESSFULLY** (proves environment is fine)
+    - ✅ Tried DisableXbfGeneration property - didn't prevent XamlCompiler execution
     - ❌ Issue persists across all attempted fixes
     - 📝 XamlCompiler.exe crashes before creating output.json (crash in process, not validation error)
+    - **KEY FINDING**: Issue is project-specific, not environment-specific (minimal WinUI 3 app compiles fine)
   - **TROUBLESHOOTING RESOURCES**:
     - Diagnostic build script: `build-diagnostics-windows.ps1` (generates detailed build logs)
     - XAML validation script: `validate-xaml-windows.ps1` (validates XAML structure)
     - Known issue: [XamlCompiler.exe needs better logs #9813](https://github.com/microsoft/microsoft-ui-xaml/issues/9813)
     - Related: [Can't get error output from XamlCompiler.exe #10027](https://github.com/microsoft/microsoft-ui-xaml/issues/10027)
   - **NEXT INVESTIGATION STEPS**:
-    1. Check Windows Event Viewer for application crash details
-    2. Use Process Monitor to trace XamlCompiler.exe file/registry access
-    3. Try building a minimal WinUI 3 project to isolate if it's environment-specific
-    4. Check if antivirus or security software is interfering with XamlCompiler.exe
-    5. Consider using x:Compile="False" temporarily to bypass XAML compilation
-    6. Attempt build in Visual Studio 2022 IDE (if available) instead of CLI
+    1. ~~Check Windows Event Viewer for application crash details~~ (checked - no XamlCompiler crashes logged)
+    2. Use Process Monitor to trace XamlCompiler.exe file/registry access patterns
+    3. ~~Try building a minimal WinUI 3 project~~ (DONE - builds successfully, isolates issue to FluentPDF.App)
+    4. Binary search XAML files: Copy FluentPDF XAML files to minimal project one-by-one to identify problematic file
+    5. Examine input.json for FluentPDF.App vs minimal project to identify differences
+    6. Check if specific NuGet package combinations trigger XamlCompiler bug (CommunityToolkit.Mvvm, Mammoth, etc.)
+    7. Try building FluentPDF.App in Visual Studio 2022 IDE for better error diagnostics
+    8. Consider temporarily removing XAML files to isolate the problematic one
   - _Leverage: all snapshot test files_
   - _Requirements: 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Run all snapshot tests to generate initial .received files, review them, and rename to .verified to approve following requirement 2.2 | Restrictions: Only approve correct snapshots, document any issues | Success: All snapshot tests pass with approved baselines | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
