@@ -640,6 +640,170 @@
             Represents four points defining a quadrilateral.
             </summary>
         </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.CreateImageObject(FluentPDF.Rendering.Interop.SafePdfDocumentHandle)">
+            <summary>
+            Creates a new image object.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <returns>Handle to the image object, or IntPtr.Zero if creation failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.LoadJpegFile(System.IntPtr[],System.Int32,System.IntPtr,System.String)">
+            <summary>
+            Loads a JPEG image from a file into an image object.
+            </summary>
+            <param name="pages">Array of page handles that will use this image (can be null).</param>
+            <param name="count">Number of pages in the array.</param>
+            <param name="imageObject">Handle to the image object.</param>
+            <param name="filePath">Path to the JPEG file.</param>
+            <returns>True if the image was loaded successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.LoadJpegFileInline(System.IntPtr[],System.Int32,System.IntPtr,System.String)">
+            <summary>
+            Loads a JPEG image from a file inline into an image object.
+            </summary>
+            <param name="pages">Array of page handles that will use this image (can be null).</param>
+            <param name="count">Number of pages in the array.</param>
+            <param name="imageObject">Handle to the image object.</param>
+            <param name="filePath">Path to the JPEG file.</param>
+            <returns>True if the image was loaded successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetImageBitmap(System.IntPtr[],System.Int32,System.IntPtr,System.IntPtr)">
+            <summary>
+            Sets a bitmap as the image content for an image object.
+            </summary>
+            <param name="pages">Array of page handles that will use this image (can be null).</param>
+            <param name="count">Number of pages in the array.</param>
+            <param name="imageObject">Handle to the image object.</param>
+            <param name="bitmap">Handle to the bitmap.</param>
+            <returns>True if the bitmap was set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.TransformPageObject(System.IntPtr,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Transforms a page object with a transformation matrix.
+            </summary>
+            <param name="pageObject">Handle to the page object.</param>
+            <param name="a">Matrix a component.</param>
+            <param name="b">Matrix b component.</param>
+            <param name="c">Matrix c component.</param>
+            <param name="d">Matrix d component.</param>
+            <param name="e">Matrix e component (x translation).</param>
+            <param name="f">Matrix f component (y translation).</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetPageObjectMatrix(System.IntPtr,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+            <summary>
+            Sets the transformation matrix for a page object.
+            </summary>
+            <param name="pageObject">Handle to the page object.</param>
+            <param name="a">Matrix a component.</param>
+            <param name="b">Matrix b component.</param>
+            <param name="c">Matrix c component.</param>
+            <param name="d">Matrix d component.</param>
+            <param name="e">Matrix e component (x translation).</param>
+            <param name="f">Matrix f component (y translation).</param>
+            <returns>True if the matrix was set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.InsertPageObject(FluentPDF.Rendering.Interop.SafePdfPageHandle,System.IntPtr)">
+            <summary>
+            Inserts a page object into a page.
+            </summary>
+            <param name="page">Handle to the PDF page.</param>
+            <param name="pageObject">Handle to the page object to insert.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.RemovePageObject(FluentPDF.Rendering.Interop.SafePdfPageHandle,System.IntPtr)">
+            <summary>
+            Removes a page object from a page.
+            </summary>
+            <param name="page">Handle to the PDF page.</param>
+            <param name="pageObject">Handle to the page object to remove.</param>
+            <returns>True if the object was removed successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetPageObjectBounds(System.IntPtr,System.Single@,System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Gets the bounding box of a page object.
+            </summary>
+            <param name="pageObject">Handle to the page object.</param>
+            <param name="left">Outputs the left coordinate.</param>
+            <param name="bottom">Outputs the bottom coordinate.</param>
+            <param name="right">Outputs the right coordinate.</param>
+            <param name="top">Outputs the top coordinate.</param>
+            <returns>True if the bounds were retrieved successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.DestroyPageObject(System.IntPtr)">
+            <summary>
+            Destroys a page object and releases its resources.
+            </summary>
+            <param name="pageObject">Handle to the page object.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.CreateTextObject(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.IntPtr,System.Single)">
+            <summary>
+            Creates a new text object.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="font">Handle to the font.</param>
+            <param name="fontSize">Font size in points.</param>
+            <returns>Handle to the text object, or IntPtr.Zero if creation failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.LoadStandardFont(FluentPDF.Rendering.Interop.SafePdfDocumentHandle,System.String)">
+            <summary>
+            Loads a standard font for use in text objects.
+            </summary>
+            <param name="document">Handle to the PDF document.</param>
+            <param name="fontName">Name of the standard font (e.g., "Arial", "Times-Roman", "Helvetica").</param>
+            <returns>Handle to the font, or IntPtr.Zero if loading failed.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetTextObjectText(System.IntPtr,System.String)">
+            <summary>
+            Sets the text content for a text object.
+            </summary>
+            <param name="textObject">Handle to the text object.</param>
+            <param name="text">Text content to set.</param>
+            <returns>True if the text was set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetPageObjectFillColor(System.IntPtr,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Sets the fill color for a page object (text or path).
+            </summary>
+            <param name="pageObject">Handle to the page object.</param>
+            <param name="r">Red component (0-255).</param>
+            <param name="g">Green component (0-255).</param>
+            <param name="b">Blue component (0-255).</param>
+            <param name="a">Alpha component (0-255).</param>
+            <returns>True if the color was set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.SetPageObjectStrokeColor(System.IntPtr,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>
+            Sets the stroke color for a page object.
+            </summary>
+            <param name="pageObject">Handle to the page object.</param>
+            <param name="r">Red component (0-255).</param>
+            <param name="g">Green component (0-255).</param>
+            <param name="b">Blue component (0-255).</param>
+            <param name="a">Alpha component (0-255).</param>
+            <returns>True if the color was set successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.MarkPageObjectDirty(FluentPDF.Rendering.Interop.SafePdfPageHandle,System.IntPtr)">
+            <summary>
+            Marks a page object for modification in the content stream.
+            Must be called after modifying a page object.
+            </summary>
+            <param name="page">Handle to the page.</param>
+            <param name="pageObject">Handle to the page object.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetPageObjectCount(FluentPDF.Rendering.Interop.SafePdfPageHandle)">
+            <summary>
+            Gets the number of page objects on a page.
+            </summary>
+            <param name="page">Handle to the page.</param>
+            <returns>Number of page objects.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.PdfiumInterop.GetPageObject(FluentPDF.Rendering.Interop.SafePdfPageHandle,System.Int32)">
+            <summary>
+            Gets a page object by index.
+            </summary>
+            <param name="page">Handle to the page.</param>
+            <param name="index">Zero-based index of the page object.</param>
+            <returns>Handle to the page object, or IntPtr.Zero if index is out of range.</returns>
+        </member>
         <member name="T:FluentPDF.Rendering.Interop.PdfiumInterop.ErrorCodes">
             <summary>
             PDFium error codes.
@@ -845,6 +1009,54 @@
             <summary>
             Out of memory.
             </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.RemovePages(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.String)">
+            <summary>
+            Removes pages from a document.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="pageRange">Page range specification (e.g., "1,3,5-7").</param>
+            <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.GetPageHandle(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.Int32)">
+            <summary>
+            Gets a page object handle for the specified page number (1-based).
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="pageNumber">1-based page number.</param>
+            <returns>Page object handle, or 0 on error.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.RotatePage(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.UInt64,System.Int32,System.Boolean)">
+            <summary>
+            Rotates a page by the specified angle (must be 0, 90, 180, or 270).
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="pageHandle">Page object handle from GetPageHandle.</param>
+            <param name="angle">Rotation angle (0, 90, 180, or 270 degrees).</param>
+            <param name="relative">If true, rotation is relative to current; if false, absolute.</param>
+            <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.GetPageMediaBox(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.UInt64)">
+            <summary>
+            Gets the media box for a page (returns array: [llx, lly, urx, ury]).
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="pageHandle">Page object handle from GetPageHandle.</param>
+            <returns>Array of 4 doubles [llx, lly, urx, ury] or null on error.</returns>
+        </member>
+        <member name="M:FluentPDF.Rendering.Interop.QpdfNative.AddBlankPage(FluentPDF.Rendering.Interop.SafeQpdfJobHandle,System.Double[],System.Int32)">
+            <summary>
+            Adds a new blank page to the document.
+            See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
+            </summary>
+            <param name="job">QPDF job handle.</param>
+            <param name="mediaBox">Media box array [llx, lly, urx, ury].</param>
+            <param name="position">Position to insert (1-based), or 0 to append.</param>
+            <returns>Page object handle for the new page, or 0 on error.</returns>
         </member>
         <member name="T:FluentPDF.Rendering.Interop.QpdfNative.ObjectStreamMode">
             <summary>
@@ -1179,6 +1391,33 @@
             Disposes the service and releases WebView2 resources.
             </summary>
         </member>
+        <member name="T:FluentPDF.Rendering.Services.ImageInsertionService">
+            <summary>
+            Service for inserting and manipulating images in PDF documents using PDFium.
+            Supports PNG, JPEG, BMP, and GIF formats with position, scale, and rotation operations.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ImageInsertionService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.ImageInsertionService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.ImageInsertionService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ImageInsertionService.InsertImageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,System.String,System.Drawing.PointF)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ImageInsertionService.MoveImageAsync(FluentPDF.Core.Models.ImageObject,System.Drawing.PointF)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ImageInsertionService.ScaleImageAsync(FluentPDF.Core.Models.ImageObject,System.Drawing.SizeF)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ImageInsertionService.RotateImageAsync(FluentPDF.Core.Models.ImageObject,System.Single)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.ImageInsertionService.DeleteImageAsync(FluentPDF.Core.Models.ImageObject)">
+            <inheritdoc />
+        </member>
         <member name="T:FluentPDF.Rendering.Services.LibreOfficeValidator">
             <summary>
             Validates PDF quality by comparing FluentPDF output against LibreOffice baseline using SSIM.
@@ -1267,6 +1506,30 @@
             A circular buffer with fixed capacity that overwrites oldest items when full.
             Provides O(1) insertion performance.
             </summary>
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.PageOperationsService">
+            <summary>
+            Service for PDF page-level manipulation operations using QPDF.
+            Provides rotating, deleting, reordering, and inserting pages with proper error handling.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PageOperationsService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.PageOperationsService})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.PageOperationsService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PageOperationsService.RotatePagesAsync(FluentPDF.Core.Models.PdfDocument,System.Int32[],FluentPDF.Core.Services.RotationAngle,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PageOperationsService.DeletePagesAsync(FluentPDF.Core.Models.PdfDocument,System.Int32[],System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PageOperationsService.ReorderPagesAsync(FluentPDF.Core.Models.PdfDocument,System.Int32[],System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.PageOperationsService.InsertBlankPageAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,FluentPDF.Core.Services.PageSize,System.Threading.CancellationToken)">
+            <inheritdoc />
         </member>
         <member name="T:FluentPDF.Rendering.Services.PdfDocumentService">
             <summary>
@@ -1396,6 +1659,31 @@
             <param name="logger">Logger for performance monitoring.</param>
         </member>
         <member name="M:FluentPDF.Rendering.Services.ThumbnailRenderingService.RenderThumbnailAsync(FluentPDF.Core.Models.PdfDocument,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="T:FluentPDF.Rendering.Services.WatermarkService">
+            <summary>
+            Service for applying text and image watermarks to PDF documents using PDFium.
+            Supports opacity, rotation, positioning, and page range selection.
+            </summary>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.WatermarkService.#ctor(Microsoft.Extensions.Logging.ILogger{FluentPDF.Rendering.Services.WatermarkService},FluentPDF.Core.Services.IPdfRenderingService)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FluentPDF.Rendering.Services.WatermarkService"/> class.
+            </summary>
+            <param name="logger">Logger for structured logging.</param>
+            <param name="renderingService">PDF rendering service for preview generation.</param>
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.WatermarkService.ApplyTextWatermarkAsync(FluentPDF.Core.Models.PdfDocument,FluentPDF.Core.Models.TextWatermarkConfig,FluentPDF.Core.Models.WatermarkPageRange)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.WatermarkService.ApplyImageWatermarkAsync(FluentPDF.Core.Models.PdfDocument,FluentPDF.Core.Models.ImageWatermarkConfig,FluentPDF.Core.Models.WatermarkPageRange)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.WatermarkService.RemoveWatermarksAsync(FluentPDF.Core.Models.PdfDocument,FluentPDF.Core.Models.WatermarkPageRange)">
+            <inheritdoc />
+        </member>
+        <member name="M:FluentPDF.Rendering.Services.WatermarkService.GeneratePreviewAsync(FluentPDF.Core.Models.PdfDocument,System.Int32,FluentPDF.Core.Models.TextWatermarkConfig,FluentPDF.Core.Models.ImageWatermarkConfig)">
             <inheritdoc />
         </member>
     </members>

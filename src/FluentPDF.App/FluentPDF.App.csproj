@@ -10,6 +10,12 @@
         <EnableMsixTooling>true</EnableMsixTooling>
         <WindowsPackageType>None</WindowsPackageType>
 
+        <!-- Disable WPF to prevent conflicts with WinUI 3 -->
+        <UseWPF>false</UseWPF>
+        <UseWindowsForms>false</UseWindowsForms>
+        <DisableImplicitFrameworkReferences>false</DisableImplicitFrameworkReferences>
+        <IncludePackageReferencesDuringMarkupCompilation>false</IncludePackageReferencesDuringMarkupCompilation>
+
         <!-- Project Options -->
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
@@ -70,6 +76,18 @@
       <ProjectReference Include="..\FluentPDF.Core\FluentPDF.Core.csproj" />
       <ProjectReference Include="..\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
     </ItemGroup>
+
+    <!-- Exclude WPF assemblies that conflict with WinUI 3 XamlCompiler -->
+    <Target Name="FilterWpfReferences" BeforeTargets="MarkupCompilePass1">
+      <ItemGroup>
+        <ReferencePathWithRefAssemblies Remove="@(ReferencePathWithRefAssemblies)" Condition="$([System.String]::Copy('%(Filename)').Contains('Presentation'))" />
+        <ReferencePathWithRefAssemblies Remove="@(ReferencePathWithRefAssemblies)" Condition="$([System.String]::Copy('%(Filename)').Contains('WindowsForms'))" />
+        <ReferencePathWithRefAssemblies Remove="@(ReferencePathWithRefAssemblies)" Condition="$([System.String]::Copy('%(Filename)').Contains('System.Windows.Forms'))" />
+        <ReferencePath Remove="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').Contains('Presentation'))" />
+        <ReferencePath Remove="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').Contains('WindowsForms'))" />
+        <ReferencePath Remove="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').Contains('System.Windows.Forms'))" />
+      </ItemGroup>
+    </Target>
 
     <!-- 
         Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
