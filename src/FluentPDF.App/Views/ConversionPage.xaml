@@ -49,14 +49,16 @@
                             Header="Input DOCX File"
                             Text="{x:Bind ViewModel.DocxFilePath, Mode=OneWay}"
                             IsReadOnly="True"
-                            PlaceholderText="No file selected" />
+                            PlaceholderText="No file selected"
+                            AutomationProperties.AutomationId="DocxFilePathTextBox" />
 
                         <Button
                             Grid.Column="1"
                             Content="Browse..."
                             Command="{x:Bind ViewModel.SelectDocxFileCommand}"
                             Margin="8,0,0,0"
-                            VerticalAlignment="Bottom" />
+                            VerticalAlignment="Bottom"
+                            AutomationProperties.AutomationId="SelectDocxFileButton" />
                     </Grid>
 
                     <!-- Output File Selection -->
@@ -71,14 +73,16 @@
                             Header="Output PDF File"
                             Text="{x:Bind ViewModel.OutputFilePath, Mode=OneWay}"
                             IsReadOnly="True"
-                            PlaceholderText="No output location selected" />
+                            PlaceholderText="No output location selected"
+                            AutomationProperties.AutomationId="OutputFilePathTextBox" />
 
                         <Button
                             Grid.Column="1"
                             Content="Browse..."
                             Command="{x:Bind ViewModel.SelectOutputPathCommand}"
                             Margin="8,0,0,0"
-                            VerticalAlignment="Bottom" />
+                            VerticalAlignment="Bottom"
+                            AutomationProperties.AutomationId="SelectOutputFileButton" />
                     </Grid>
                 </StackPanel>
 
@@ -111,7 +115,8 @@
                         Severity="Informational"
                         IsOpen="True"
                         IsClosable="False"
-                        Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" />
+                        Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                        AutomationProperties.AutomationId="ConversionStatusInfoBar" />
 
                     <!-- Progress Bar -->
                     <ProgressBar
@@ -120,14 +125,16 @@
                         IsIndeterminate="False"
                         ShowError="False"
                         ShowPaused="False"
-                        Visibility="{x:Bind ViewModel.IsConverting, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        Visibility="{x:Bind ViewModel.IsConverting, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                        AutomationProperties.AutomationId="ConversionProgressBar" />
 
                     <!-- Action Buttons -->
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button
                             Content="Convert to PDF"
                             Command="{x:Bind ViewModel.ConvertCommand}"
-                            Style="{StaticResource AccentButtonStyle}">
+                            Style="{StaticResource AccentButtonStyle}"
+                            AutomationProperties.AutomationId="ConvertToPdfButton">
                             <Button.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="C" Modifiers="Control,Shift" />
                             </Button.KeyboardAccelerators>
@@ -136,14 +143,16 @@
                         <Button
                             Content="Cancel"
                             Command="{x:Bind ViewModel.CancelConversionCommand}"
-                            Visibility="{x:Bind ViewModel.IsConverting, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            Visibility="{x:Bind ViewModel.IsConverting, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                            AutomationProperties.AutomationId="CancelConversionButton" />
                     </StackPanel>
                 </StackPanel>
 
                 <!-- Results Section -->
                 <StackPanel
                     Spacing="12"
-                    Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    Visibility="{x:Bind ViewModel.HasResults, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                    AutomationProperties.AutomationId="ConversionResultsPanel">
                     <TextBlock
                         Text="Conversion Results"
                         Style="{StaticResource SubtitleTextBlockStyle}" />
@@ -243,7 +252,8 @@
                                 Grid.ColumnSpan="2"
                                 Command="{x:Bind ViewModel.OpenPdfCommand}"
                                 HorizontalAlignment="Stretch"
-                                Margin="0,8,0,0">
+                                Margin="0,8,0,0"
+                                AutomationProperties.AutomationId="OpenConvertedPdfButton">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <SymbolIcon Symbol="OpenFile" />
                                     <TextBlock Text="Open PDF" VerticalAlignment="Center" />

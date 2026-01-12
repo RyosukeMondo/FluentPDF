@@ -218,7 +218,7 @@
   - _Requirements: US-12_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer specializing in test data | Task: Create simple DOCX test file with known content for conversion testing | Restrictions: Keep file small and simple, use basic formatting only, avoid complex features | Success: DOCX file exists, has predictable content for verification | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 20. Create DOCX conversion E2E test
+- [x] 20. Create DOCX conversion E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/ConversionTests.cs
   - Test Convert DOCX button opens file picker
   - Test conversion progress displays
