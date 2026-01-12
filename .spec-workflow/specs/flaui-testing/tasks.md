@@ -8,7 +8,7 @@
   - _Requirements: 1.1_
   - _Prompt: Implement the task for spec flaui-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer specializing in test infrastructure | Task: Add FlaUI.Core and FlaUI.UIA3 NuGet packages to FluentPDF.App.Tests.csproj following requirement 1.1 | Restrictions: Do not modify existing package references, use latest stable versions | Success: Packages added, project builds successfully | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 2. Create FlaUITestBase class
+- [x] 2. Create FlaUITestBase class
   - File: tests/FluentPDF.App.Tests/E2E/FlaUITestBase.cs
   - Implement base class with app lifecycle management
   - Add screenshot capture on failure
