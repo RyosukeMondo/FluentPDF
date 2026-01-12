@@ -62,9 +62,12 @@
     - ✅ Cleared NuGet cache and restored packages
     - ✅ Created minimal WinUI 3 project - **BUILDS SUCCESSFULLY** (proves environment is fine)
     - ✅ Tried DisableXbfGeneration property - didn't prevent XamlCompiler execution
+    - ✅ Copied FluentPDF App.xaml to minimal project - **BUILDS SUCCESSFULLY** (App.xaml is not the issue)
+    - ✅ Verified No Visual Studio available for better diagnostics
     - ❌ Issue persists across all attempted fixes
     - 📝 XamlCompiler.exe crashes before creating output.json (crash in process, not validation error)
     - **KEY FINDING**: Issue is project-specific, not environment-specific (minimal WinUI 3 app compiles fine)
+    - **HYPOTHESIS**: Issue likely caused by specific XAML file(s), NuGet package interaction, or project complexity (20 XAML files)
   - **TROUBLESHOOTING RESOURCES**:
     - Diagnostic build script: `build-diagnostics-windows.ps1` (generates detailed build logs)
     - XAML validation script: `validate-xaml-windows.ps1` (validates XAML structure)
