@@ -77,7 +77,7 @@
   - _Requirements: US-2_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in E2E testing | Task: Create DocumentLoadingTests that verify PDF loading workflow including file picker, page display, and thumbnails using FlaUI automation | Restrictions: Must programmatically set file path (bypass picker dialog), verify visible state changes, do not modify app code | Success: Test passes when PDF loads and displays correctly | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 8. Create navigation E2E test
+- [x] 8. Create navigation E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/NavigationTests.cs
   - Test Previous/Next page buttons
   - Test page number input navigation
