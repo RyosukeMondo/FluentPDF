@@ -9,7 +9,7 @@
   - _Requirements: 1.1, 1.2, 1.3_
   - _Prompt: Implement the task for spec release-workflow, first run spec-workflow-guide to get the workflow guide then implement the task: Role: DevOps Engineer with GitHub Actions expertise | Task: Create release.yml with tag trigger (v*.*.*), workflow_dispatch input for version, checkout step following requirements 1.1-1.3 | Restrictions: Follow existing workflow patterns from build.yml, use latest actions versions | Success: Workflow triggers on tag push and manual dispatch | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 2. Add x64 build job
+- [x] 2. Add x64 build job
   - File: .github/workflows/release.yml (modify)
   - Add job to build FluentPDF.App for x64 platform
   - Use Release configuration
