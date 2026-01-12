@@ -52,9 +52,26 @@
   - **BLOCKER**: Windows build environment has XAML compiler failure (MSB3073: XamlCompiler.exe exits with code 1)
     - FluentPDF.App.csproj fails to build on Windows due to XAML compilation error
     - Error occurs in Microsoft.UI.Xaml.Markup.Compiler.interop.targets during MarkupCompilePass1
-    - XamlCompiler.exe crashes silently with no diagnostic output
+    - XamlCompiler.exe crashes silently with no diagnostic output (known WinUI 3 bug)
     - All source files synced correctly, converters and ViewModels present
     - Requires Windows environment investigation/fix before snapshot tests can run
+  - **TROUBLESHOOTING RESOURCES**:
+    - Diagnostic build script: `build-diagnostics-windows.ps1` (generates detailed build logs)
+    - Known issue: [XamlCompiler.exe needs better logs #9813](https://github.com/microsoft/microsoft-ui-xaml/issues/9813)
+    - Related: [Can't get error output from XamlCompiler.exe #10027](https://github.com/microsoft/microsoft-ui-xaml/issues/10027)
+  - **TROUBLESHOOTING STEPS**:
+    1. On Windows machine: Run `.\build-diagnostics-windows.ps1 -Clean`
+    2. Review generated log file for XAML-specific errors:
+       - `Select-String -Path build-diagnostics-*.log -Pattern 'XamlCompiler' -Context 5,5`
+       - `Select-String -Path build-diagnostics-*.log -Pattern 'error' | Select-Object -First 20`
+    3. Check for common issues:
+       - Missing/mismatched Windows SDK versions
+       - Corrupted NuGet cache (try: `dotnet nuget locals all --clear`)
+       - XAML namespace errors in .xaml files
+       - Missing code-behind files (.xaml.cs)
+       - Invalid x:Name or x:Bind expressions
+    4. Verify all converter classes are compiled correctly
+    5. Check for circular references in XAML resource dictionaries
   - _Leverage: all snapshot test files_
   - _Requirements: 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Run all snapshot tests to generate initial .received files, review them, and rename to .verified to approve following requirement 2.2 | Restrictions: Only approve correct snapshots, document any issues | Success: All snapshot tests pass with approved baselines | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
