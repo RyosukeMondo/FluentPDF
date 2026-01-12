@@ -171,7 +171,7 @@
   - _Requirements: US-8_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in drawing/annotation testing | Task: Create AnnotationTests that verify annotation tools including highlight, shapes, and freehand using FlaUI automation | Restrictions: Simulate mouse interactions for drawing, verify annotations persist, do not modify app code | Success: Annotations created via each tool, saved and reloaded correctly | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 16. Create watermark E2E test
+- [x] 16. Create watermark E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/WatermarkTests.cs
   - Test Watermark button opens dialog
   - Test text watermark configuration

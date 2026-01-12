@@ -593,5 +593,76 @@ namespace FluentPDF.App
                 throw new InvalidOperationException("No active PDF viewer tab found. Ensure a PDF viewer tab is open.");
             }
         }
+
+        /// <summary>
+        /// Test helper method to apply a text watermark to a PDF document.
+        /// This method is intended for E2E testing and bypasses the watermark dialog UI.
+        /// </summary>
+        /// <param name="filePath">The path to the PDF file to watermark.</param>
+        /// <param name="text">The watermark text to apply.</param>
+        /// <param name="fontSize">The font size for the watermark text.</param>
+        /// <param name="opacity">The opacity percentage (0-100).</param>
+        public async Task ApplyTextWatermarkForTestingAsync(string filePath, string text, double fontSize, double opacity)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+            }
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                throw new ArgumentException("Watermark text cannot be null or empty.", nameof(text));
+            }
+
+            // Load the document first
+            await LoadDocumentForTestingAsync(filePath);
+
+            // Get the current PdfViewerViewModel from the active tab
+            var mainViewModel = GetService<MainViewModel>();
+            var activeTab = mainViewModel.ActiveTab;
+
+            if (activeTab?.ViewerViewModel is PdfViewerViewModel viewModel)
+            {
+                var watermarkService = GetService<IWatermarkService>();
+
+                // Create watermark configuration
+                var config = new WatermarkConfig
+                {
+                    Type = WatermarkType.Text,
+                    TextConfig = new TextWatermarkConfig
+                    {
+                        Text = text,
+                        FontFamily = "Arial",
+                        FontSize = fontSize,
+                        Color = System.Drawing.Color.FromArgb(128, 128, 128)
+                    },
+                    Position = WatermarkPosition.Center,
+                    Opacity = opacity / 100.0,
+                    Rotation = 45,
+                    BehindContent = false,
+                    PageRangeType = PageRangeType.AllPages
+                };
+
+                // Apply the watermark
+                var progress = new Progress<double>();
+                var result = await watermarkService.ApplyWatermarkAsync(
+                    viewModel.Document!,
+                    config,
+                    progress,
+                    CancellationToken.None);
+
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException($"Watermark application failed: {result.Errors[0].Message}");
+                }
+
+                // Reload the document to see the applied watermark
+                await viewModel.LoadDocumentFromPathAsync(filePath);
+            }
+            else
+            {
+                throw new InvalidOperationException("No active PDF viewer tab found. Ensure a PDF viewer tab is open.");
+            }
+        }
     }
 }
