@@ -36,7 +36,7 @@
   - _Requirements: 2.1_
   - _Prompt: Implement the task for spec release-workflow, first run spec-workflow-guide to get the workflow guide then implement the task: Role: PowerShell Developer with MSIX expertise | Task: Create package-msix.ps1 script that packages build output into MSIX using makeappx.exe following requirement 2.1 | Restrictions: Accept -Platform and -Configuration parameters, use Windows SDK tools | Success: Script creates valid MSIX package from build output | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 5. Add package job with signing
+- [x] 5. Add package job with signing
   - File: .github/workflows/release.yml (modify)
   - Add job to create and sign MSIX packages
   - Use GitHub secrets for certificate
