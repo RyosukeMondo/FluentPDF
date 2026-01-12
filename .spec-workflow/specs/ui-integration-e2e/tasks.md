@@ -113,7 +113,7 @@
   - _Requirements: US-5_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in search testing | Task: Create SearchTests that verify text search workflow including panel toggle, query input, highlighting, and match navigation | Restrictions: Use PDF with known text content, verify match count accuracy, do not modify app code | Success: Search finds expected text, navigation works, match count is accurate | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 11. Add AutomationIds to sidebar panels
+- [x] 11. Add AutomationIds to sidebar panels
   - File: src/FluentPDF.App/Controls/ThumbnailsSidebar.xaml
   - File: src/FluentPDF.App/Views/PdfViewerPage.xaml (bookmarks panel section)
   - Add AutomationIds to thumbnails, bookmark items

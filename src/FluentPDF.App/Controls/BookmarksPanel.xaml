@@ -18,7 +18,9 @@
 
         <!-- Hierarchical DataTemplate for BookmarkNode -->
         <DataTemplate x:Key="BookmarkNodeTemplate" x:DataType="models:BookmarkNode">
-            <TreeViewItem ItemsSource="{x:Bind Children, Mode=OneTime}">
+            <TreeViewItem
+                ItemsSource="{x:Bind Children, Mode=OneTime}"
+                AutomationProperties.Name="{x:Bind Title, Mode=OneTime}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE8A5;" FontSize="14"/>
                     <TextBlock
@@ -55,6 +57,7 @@
         <!-- TreeView (visible when bookmarks count > 0) -->
         <TreeView
             x:Name="BookmarksTreeView"
+            AutomationProperties.AutomationId="BookmarksTreeView"
             ItemsSource="{x:Bind ViewModel.Bookmarks, Mode=OneWay}"
             ItemTemplate="{StaticResource BookmarkNodeTemplate}"
             SelectionMode="Single"

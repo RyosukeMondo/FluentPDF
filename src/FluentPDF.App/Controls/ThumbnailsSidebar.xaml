@@ -22,6 +22,7 @@
         <DataTemplate x:Key="ThumbnailItemTemplate" x:DataType="models:ThumbnailItem">
             <Button
                 x:Name="ThumbnailButton"
+                AutomationProperties.Name="{x:Bind PageNumber, Mode=OneTime}"
                 Click="ThumbnailButton_Click"
                 Loaded="ThumbnailButton_Loaded"
                 Background="Transparent"
@@ -115,6 +116,7 @@
                         <Grid Width="150" Height="190" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                             <!-- Thumbnail image -->
                             <Image
+                                AutomationProperties.Name="{x:Bind PageNumber, Mode=OneTime}"
                                 Source="{x:Bind Thumbnail, Mode=OneWay}"
                                 Stretch="Uniform"
                                 HorizontalAlignment="Center"
@@ -149,11 +151,13 @@
         <!-- ScrollViewer with ItemsRepeater -->
         <ScrollViewer
             x:Name="ThumbnailsScrollViewer"
+            AutomationProperties.AutomationId="ThumbnailsScrollViewer"
             ViewChanged="ThumbnailsScrollViewer_ViewChanged"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled">
             <ItemsRepeater
                 x:Name="ThumbnailsRepeater"
+                AutomationProperties.AutomationId="ThumbnailsRepeater"
                 ItemsSource="{x:Bind ViewModel.Thumbnails, Mode=OneWay}"
                 ItemTemplate="{StaticResource ThumbnailItemTemplate}"
                 HorizontalAlignment="Center">
