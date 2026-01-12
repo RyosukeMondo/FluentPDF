@@ -101,7 +101,7 @@
 
 ## Phase 3: Search & Panels Tests
 
-- [ ] 10. Create search E2E test
+- [x] 10. Create search E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/SearchTests.cs
   - Test search panel toggle
   - Test search query input
