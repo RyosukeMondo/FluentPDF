@@ -231,7 +231,7 @@
 
 ## Phase 7: Integration Suite
 
-- [ ] 21. Create E2E test runner script
+- [x] 21. Create E2E test runner script
   - File: tests/run-e2e-tests.ps1
   - Build FluentPDF.App in Release mode
   - Run E2E test suite with xUnit
