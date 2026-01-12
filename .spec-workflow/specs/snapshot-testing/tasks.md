@@ -35,7 +35,7 @@
   - _Requirements: 3.1, 3.3_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer | Task: Create PdfViewerSnapshotTests with tests for default and zoomed states following requirements 3.1 and 3.3 | Restrictions: Extend SnapshotTestBase, create meaningful test scenarios | Success: Tests generate and compare snapshots for viewer control | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 5. Create ToolbarSnapshotTests
+- [x] 5. Create ToolbarSnapshotTests
   - File: tests/FluentPDF.App.Tests/Snapshots/ToolbarSnapshotTests.cs
   - Implement snapshot tests for toolbar controls
   - Test enabled and disabled states
