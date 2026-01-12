@@ -43,7 +43,7 @@
   - _Requirements: 3.1, 3.3_
   - _Prompt: Implement the task for spec flaui-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer | Task: Create FileOpenTests with test methods for opening PDF and verifying it displays correctly following requirements 3.1 and 3.3 | Restrictions: Use page objects, capture screenshot on failure, clean up after test | Success: Test passes when run locally, fails gracefully if app not found | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 6. Create navigation UI test
+- [x] 6. Create navigation UI test
   - File: tests/FluentPDF.App.Tests/E2E/NavigationTests.cs
   - Implement test for page navigation
   - Verify page number updates correctly
