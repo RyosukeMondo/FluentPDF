@@ -183,7 +183,7 @@
   - _Requirements: US-9_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer specializing in dialog workflow testing | Task: Create WatermarkTests that verify watermark dialog workflow including text/image configuration and application | Restrictions: Verify watermark visible on page after apply, do not modify app code | Success: Watermark configured, previewed, and applied correctly | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 17. Create image insertion E2E test
+- [x] 17. Create image insertion E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/ImageInsertionTests.cs
   - Test Insert Image button opens file picker
   - Test image displays on page

@@ -664,5 +664,58 @@ namespace FluentPDF.App
                 throw new InvalidOperationException("No active PDF viewer tab found. Ensure a PDF viewer tab is open.");
             }
         }
+
+        /// <summary>
+        /// Test helper method to insert an image into the current page of a PDF document.
+        /// This method is intended for E2E testing and bypasses the file picker UI.
+        /// </summary>
+        /// <param name="filePath">The path to the PDF file.</param>
+        /// <param name="imagePath">The path to the image file to insert.</param>
+        /// <param name="x">The X position for the image (in PDF points).</param>
+        /// <param name="y">The Y position for the image (in PDF points).</param>
+        public async Task InsertImageForTestingAsync(string filePath, string imagePath, float x = 300, float y = 400)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+            }
+
+            if (string.IsNullOrWhiteSpace(imagePath))
+            {
+                throw new ArgumentException("Image path cannot be null or empty.", nameof(imagePath));
+            }
+
+            // Load the document first
+            await LoadDocumentForTestingAsync(filePath);
+
+            // Get the current PdfViewerViewModel from the active tab
+            var mainViewModel = GetService<MainViewModel>();
+            var activeTab = mainViewModel.ActiveTab;
+
+            if (activeTab?.ViewerViewModel is PdfViewerViewModel viewModel)
+            {
+                var imageInsertionService = GetService<IImageInsertionService>();
+
+                // Insert the image at the specified position
+                var result = await imageInsertionService.InsertImageAsync(
+                    viewModel.Document!,
+                    viewModel.CurrentPageNumber,
+                    imagePath,
+                    new System.Drawing.PointF(x, y));
+
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException($"Image insertion failed: {result.Errors[0].Message}");
+                }
+
+                // Update the ViewModel's image collection
+                viewModel.ImageInsertionViewModel.InsertedImages.Add(result.Value);
+                viewModel.ImageInsertionViewModel.SelectedImage = result.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException("No active PDF viewer tab found. Ensure a PDF viewer tab is open.");
+            }
+        }
     }
 }
