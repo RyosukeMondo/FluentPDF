@@ -17,7 +17,7 @@
   - _Requirements: 1.2, 1.3_
   - _Prompt: Implement the task for spec flaui-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer with FlaUI expertise | Task: Create FlaUITestBase class implementing app launch, cleanup, and screenshot capture following requirements 1.2 and 1.3 | Restrictions: Must implement IDisposable, use UIA3Automation, handle app not found gracefully | Success: Base class compiles, can launch and close app | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 3. Create MainWindowPage page object
+- [x] 3. Create MainWindowPage page object
   - File: tests/FluentPDF.App.Tests/PageObjects/MainWindowPage.cs
   - Implement page object for main window interactions
   - Use AutomationId for element discovery
