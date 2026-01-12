@@ -45,7 +45,7 @@
   - _Requirements: 2.3_
   - _Prompt: Implement the task for spec release-workflow, first run spec-workflow-guide to get the workflow guide then implement the task: Role: DevOps Engineer with code signing expertise | Task: Add package job that runs package-msix.ps1 and signs with certificate from secrets following requirement 2.3 | Restrictions: Use signtool.exe, mask certificate password in logs | Success: Signed MSIX packages created as artifacts | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 6. Add release publishing job
+- [x] 6. Add release publishing job
   - File: .github/workflows/release.yml (modify)
   - Add job to create GitHub release with MSIX assets
   - Generate release notes from commits

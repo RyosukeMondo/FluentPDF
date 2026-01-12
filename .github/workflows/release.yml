@@ -332,3 +332,88 @@ jobs:
           name: FluentPDF-MSIX-${{ needs.prepare.outputs.version }}
           path: artifacts/msix/*.msix
           retention-days: 30
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [prepare, package]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
+
+      - name: Download MSIX packages
+        uses: actions/download-artifact@v4
+        with:
+          name: FluentPDF-MSIX-${{ needs.prepare.outputs.version }}
+          path: msix-packages
+
+      - name: Generate checksums
+        run: |
+          cd msix-packages
+          sha256sum *.msix > checksums.txt
+          cat checksums.txt
+          cd ..
+
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 ${{ needs.prepare.outputs.version }}^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "First release - generating notes from all commits"
+            COMMIT_RANGE="HEAD"
+          else
+            echo "Generating notes from $PREVIOUS_TAG to ${{ needs.prepare.outputs.version }}"
+            COMMIT_RANGE="$PREVIOUS_TAG..${{ needs.prepare.outputs.version }}"
+          fi
+
+          # Generate changelog
+          CHANGELOG=$(git log $COMMIT_RANGE --pretty=format:"- %s" --no-merges)
+
+          # Create release notes
+          cat > release-notes.md << 'EOF'
+          ## FluentPDF ${{ needs.prepare.outputs.version }}
+
+          ### Downloads
+
+          - **FluentPDF_x64_Release.msix** - For x64 Windows devices
+          - **FluentPDF_ARM64_Release.msix** - For ARM64 Windows devices (Surface Pro X, etc.)
+
+          ### Installation
+
+          1. Download the appropriate MSIX package for your platform
+          2. Double-click to install (requires developer mode or sideloading enabled)
+          3. Or submit to Microsoft Store Partner Center
+
+          ### Changes
+
+          EOF
+
+          echo "$CHANGELOG" >> release-notes.md
+
+          echo "" >> release-notes.md
+          echo "### Checksums (SHA256)" >> release-notes.md
+          echo "" >> release-notes.md
+          echo '```' >> release-notes.md
+          cat msix-packages/checksums.txt >> release-notes.md
+          echo '```' >> release-notes.md
+
+          cat release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.version }}
+          name: FluentPDF ${{ needs.prepare.outputs.version }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          files: |
+            msix-packages/*.msix
+            msix-packages/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
