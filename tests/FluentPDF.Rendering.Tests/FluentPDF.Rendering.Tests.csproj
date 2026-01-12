@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platform>x64</Platform>
@@ -13,7 +13,7 @@
     <OutputType>Exe</OutputType>
     <GenerateProgramFile>false</GenerateProgramFile>
 
-    <!-- Suppress NU1701 for Win2D package - it's UWP-targeted but works with .NET 8 -->
+    <!-- Suppress NU1701 for Win2D package - it's UWP-targeted but works with .NET 9 -->
     <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
