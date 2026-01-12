@@ -44,11 +44,17 @@
   - _Requirements: 3.2, 3.3_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer | Task: Create ToolbarSnapshotTests with tests for toolbar appearance following requirements 3.2 and 3.3 | Restrictions: Extend SnapshotTestBase, test different toolbar states | Success: Tests generate and compare snapshots for toolbar | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 6. Create initial approved snapshots
+- [ ] 6. Create initial approved snapshots - **BLOCKED**
   - File: tests/FluentPDF.App.Tests/Snapshots/Verified/*.verified.txt
   - Run tests to generate initial snapshots
   - Review and approve baseline snapshots
   - Purpose: Establish baseline for regression detection
+  - **BLOCKER**: Windows build environment has XAML compiler failure (MSB3073: XamlCompiler.exe exits with code 1)
+    - FluentPDF.App.csproj fails to build on Windows due to XAML compilation error
+    - Error occurs in Microsoft.UI.Xaml.Markup.Compiler.interop.targets during MarkupCompilePass1
+    - XamlCompiler.exe crashes silently with no diagnostic output
+    - All source files synced correctly, converters and ViewModels present
+    - Requires Windows environment investigation/fix before snapshot tests can run
   - _Leverage: all snapshot test files_
   - _Requirements: 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Run all snapshot tests to generate initial .received files, review them, and rename to .verified to approve following requirement 2.2 | Restrictions: Only approve correct snapshots, document any issues | Success: All snapshot tests pass with approved baselines | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
