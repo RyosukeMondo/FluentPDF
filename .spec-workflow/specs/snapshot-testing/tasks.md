@@ -119,15 +119,15 @@
     - **TIMING ISSUE**: MSBuild generates input.json, then our filter runs (sometimes finds it, sometimes doesn't), then XamlCompiler runs with unfiltered version
   - **RECOMMENDED SOLUTIONS** (in order of preference):
     1. ~~Replace Mammoth with DocumentFormat.OpenXml~~ - ✅ COMPLETED (commit 28c3b6f) but insufficient to fix XamlCompiler crash
-    2. **Upgrade to .NET 9** - May have fixes for WinUI 3 + implicit framework reference conflicts
-       - **PLAN** (2026-01-12):
-         - Update global.json to require .NET 9 SDK (9.0.x)
-         - Update FluentPDF.App from net8.0-windows10.0.19041.0 to net9.0-windows10.0.19041.0
-         - Update all cross-platform projects (Core, Rendering) from net8.0 to net9.0
-         - Update all test projects to net9.0
-         - Update Microsoft.WindowsAppSDK to latest version compatible with .NET 9
-         - Test build on Windows to verify XamlCompiler works with .NET 9's improved framework reference handling
-         - **RATIONALE**: .NET 9 may have improved handling of implicit framework references and better isolation between WinUI 3 and WPF assemblies
+    2. ~~**Upgrade to .NET 9**~~ - ✅ COMPLETED (commit a8e1852)
+       - **COMPLETED STEPS** (2026-01-12):
+         - ✅ Updated global.json to require .NET 9 SDK (9.0.100)
+         - ✅ Updated FluentPDF.App from net8.0-windows10.0.19041.0 to net9.0-windows10.0.19041.0
+         - ✅ Updated all cross-platform projects (Core, Rendering, Validation) from net8.0 to net9.0
+         - ✅ Updated all test projects to net9.0 or net9.0-windows
+         - ✅ Updated Microsoft.Extensions.Hosting from 8.* to 9.*
+         - ⏳ **NEXT**: Test build on Windows to verify XamlCompiler works with .NET 9's improved framework reference handling
+       - **RATIONALE**: .NET 9 may have improved handling of implicit framework references and better isolation between WinUI 3 and WPF assemblies
     3. **Try Visual Studio 2022 IDE build** - May have workarounds or better error diagnostics for this XamlCompiler issue
     4. **Custom MSBuild task** - Create custom MSBuild task (not Target) that hooks into GenerateXamlInputJson task to modify ReferenceAssemblies before input.json generation
     5. **Isolate Mammoth in separate process** - No longer applicable (Mammoth removed)
