@@ -137,3 +137,63 @@ jobs:
           name: FluentPDF-x64-${{ needs.prepare.outputs.version }}
           path: src/FluentPDF.App/bin/x64/Release
           retention-days: 7
+
+  build-arm64:
+    runs-on: windows-latest
+    needs: [prepare, checkout-and-setup]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Download cached dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dependencies
+          path: .
+
+      - name: Restore NuGet packages
+        run: dotnet restore FluentPDF.sln
+
+      - name: Build ARM64
+        shell: pwsh
+        run: |
+          msbuild src/FluentPDF.App/FluentPDF.App.csproj `
+            /p:Configuration=Release `
+            /p:Platform=ARM64 `
+            /p:AppxBundle=Never `
+            /p:AppxPackageSigningEnabled=false `
+            /p:Version=${{ needs.prepare.outputs.version }}
+
+      - name: Copy PDFium DLL to build output
+        shell: pwsh
+        run: |
+          # Note: ARM64 build uses x64 PDFium DLL for now
+          # ARM64 native PDFium would be ideal but x64 works via emulation
+          $pdfiumDll = "libs/x64/bin/pdfium.dll"
+          if (Test-Path $pdfiumDll) {
+            $appDirs = Get-ChildItem -Path "src/FluentPDF.App/bin/ARM64/Release" -Directory -Recurse -Filter "net8.0-windows*"
+            foreach ($dir in $appDirs) {
+              Copy-Item $pdfiumDll $dir.FullName -Force
+              Write-Host "Copied pdfium.dll to $($dir.FullName)"
+            }
+          } else {
+            Write-Error "PDFium DLL not found at $pdfiumDll"
+            exit 1
+          }
+
+      - name: Upload ARM64 build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: FluentPDF-ARM64-${{ needs.prepare.outputs.version }}
+          path: src/FluentPDF.App/bin/ARM64/Release
+          retention-days: 7

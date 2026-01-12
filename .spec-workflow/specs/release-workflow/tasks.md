@@ -18,7 +18,7 @@
   - _Requirements: 2.1, 2.2_
   - _Prompt: Implement the task for spec release-workflow, first run spec-workflow-guide to get the workflow guide then implement the task: Role: DevOps Engineer | Task: Add build-x64 job to release.yml that builds FluentPDF.App for x64 in Release configuration following requirements 2.1 and 2.2 | Restrictions: Use windows-latest runner, cache NuGet packages | Success: Job builds x64 successfully, artifacts uploaded | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 3. Add ARM64 build job
+- [x] 3. Add ARM64 build job
   - File: .github/workflows/release.yml (modify)
   - Add job to build FluentPDF.App for ARM64 platform
   - Run in parallel with x64 build
