@@ -17,7 +17,7 @@
   - _Requirements: 1.2, 2.3_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer with Verify framework expertise | Task: Create ModuleInitializer class with [ModuleInitializer] attribute to configure Verify settings following requirements 1.2 and 2.3 | Restrictions: Use VerifierSettings.UseDirectory for snapshots, scrub GUIDs | Success: Verify configured globally, snapshots saved to correct directory | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [-] 3. Create SnapshotTestBase class
+- [x] 3. Create SnapshotTestBase class
   - File: tests/FluentPDF.App.Tests/Snapshots/SnapshotTestBase.cs
   - Implement base class with helper methods for control verification
   - Add [UsesVerify] attribute handling
