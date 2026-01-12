@@ -39,6 +39,7 @@
         <controls:ThumbnailsSidebar
             Grid.Column="0"
             x:Name="ThumbnailsSidebarControl"
+            AutomationProperties.AutomationId="ThumbnailsSidebar"
             Visibility="{x:Bind ViewModel.IsSidebarVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
             Width="200" />
 
@@ -52,7 +53,7 @@
 
             <!-- Left Pane: Bookmarks Panel -->
             <SplitView.Pane>
-                <controls:BookmarksPanel/>
+                <controls:BookmarksPanel AutomationProperties.AutomationId="BookmarksPanel"/>
             </SplitView.Pane>
 
             <!-- Main Content -->
@@ -72,11 +73,12 @@
                 </Grid.RowDefinitions>
 
                 <!-- Toolbar -->
-                <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
+                <CommandBar Grid.Row="0" DefaultLabelPosition="Right" AutomationProperties.AutomationId="MainToolbar">
             <!-- Open File -->
             <AppBarButton
                 Icon="OpenFile"
                 Label="Open"
+                AutomationProperties.AutomationId="OpenDocumentButton"
                 Command="{x:Bind ViewModel.OpenDocumentCommand, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="O" Modifiers="Control" />
@@ -101,7 +103,7 @@
                     VerticalAlignment="Center"
                     Margin="12,0"
                     FontWeight="SemiBold"
-                    AutomationProperties.AutomationId="CurrentPageNumber">
+                    AutomationProperties.AutomationId="PageNumberTextBox">
                     <Run Text="Page " />
                     <Run Text="{x:Bind ViewModel.CurrentPageNumber, Mode=OneWay}" />
                     <Run Text=" of " />
@@ -124,6 +126,7 @@
             <!-- Toggle Thumbnails -->
             <AppBarButton
                 Label="Thumbnails"
+                AutomationProperties.AutomationId="ThumbnailsToggle"
                 Command="{x:Bind ViewModel.ToggleSidebarCommand, Mode=OneWay}"
                 ToolTipService.ToolTip="Toggle thumbnails sidebar">
                 <AppBarButton.Icon>
@@ -138,6 +141,7 @@
             <AppBarButton
                 Icon="AlignLeft"
                 Label="Bookmarks"
+                AutomationProperties.AutomationId="BookmarksToggle"
                 Command="{x:Bind ViewModel.BookmarksViewModel.TogglePanelCommand, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="B" Modifiers="Control" />
@@ -148,6 +152,7 @@
             <AppBarButton
                 Icon="Find"
                 Label="Search"
+                AutomationProperties.AutomationId="SearchPanelToggle"
                 Command="{x:Bind ViewModel.ToggleSearchPanelCommand, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="F" Modifiers="Control" />
@@ -159,6 +164,7 @@
             <!-- Zoom Controls -->
             <AppBarButton
                 Label="Zoom Out"
+                AutomationProperties.AutomationId="ZoomOutButton"
                 Command="{x:Bind ViewModel.ZoomOutCommand, Mode=OneWay}">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE71F;" />
@@ -175,11 +181,13 @@
                     Margin="12,0"
                     FontWeight="SemiBold"
                     MinWidth="50"
-                    TextAlignment="Center" />
+                    TextAlignment="Center"
+                    AutomationProperties.AutomationId="ZoomLevelText" />
             </AppBarElementContainer>
 
             <AppBarButton
                 Label="Zoom In"
+                AutomationProperties.AutomationId="ZoomInButton"
                 Command="{x:Bind ViewModel.ZoomInCommand, Mode=OneWay}">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE71E;" />
@@ -191,6 +199,7 @@
 
             <AppBarButton
                 Label="Reset Zoom"
+                AutomationProperties.AutomationId="ResetZoomButton"
                 Command="{x:Bind ViewModel.ResetZoomCommand, Mode=OneWay}">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE8A0;" />
@@ -206,12 +215,14 @@
             <AppBarButton
                 Icon="Pictures"
                 Label="Insert Image"
+                AutomationProperties.AutomationId="InsertImageButton"
                 Command="{x:Bind ViewModel.ImageInsertionViewModel.InsertImageCommand, Mode=OneWay}"
                 ToolTipService.ToolTip="Insert an image into the PDF" />
 
             <!-- Add Watermark -->
             <AppBarButton
                 Label="Watermark"
+                AutomationProperties.AutomationId="WatermarkButton"
                 Click="OnWatermarkClick"
                 ToolTipService.ToolTip="Add text or image watermark to pages">
                 <AppBarButton.Icon>
@@ -224,6 +235,7 @@
             <!-- Document Editing Operations -->
             <AppBarButton
                 Label="Merge"
+                AutomationProperties.AutomationId="MergeButton"
                 Command="{x:Bind ViewModel.MergeDocumentsCommand, Mode=OneWay}"
                 ToolTipService.ToolTip="Merge multiple PDF files">
                 <AppBarButton.Icon>
@@ -233,6 +245,7 @@
 
             <AppBarButton
                 Label="Split"
+                AutomationProperties.AutomationId="SplitButton"
                 Command="{x:Bind ViewModel.SplitDocumentCommand, Mode=OneWay}"
                 ToolTipService.ToolTip="Split PDF by page ranges">
                 <AppBarButton.Icon>
@@ -242,6 +255,7 @@
 
             <AppBarButton
                 Label="Optimize"
+                AutomationProperties.AutomationId="OptimizeButton"
                 Command="{x:Bind ViewModel.OptimizeDocumentCommand, Mode=OneWay}"
                 ToolTipService.ToolTip="Optimize PDF to reduce file size">
                 <AppBarButton.Icon>
@@ -254,6 +268,7 @@
             <!-- DOCX Conversion -->
             <AppBarButton
                 Label="Convert DOCX"
+                AutomationProperties.AutomationId="ConvertDocxButton"
                 Click="OnConvertDocxClick"
                 ToolTipService.ToolTip="Convert DOCX files to PDF">
                 <AppBarButton.Icon>
@@ -266,10 +281,11 @@
         </CommandBar>
 
         <!-- Annotation Toolbar -->
-        <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
+        <CommandBar Grid.Row="1" DefaultLabelPosition="Right" AutomationProperties.AutomationId="AnnotationToolbar">
             <!-- Highlight -->
             <AppBarButton
                 Label="Highlight"
+                AutomationProperties.AutomationId="HighlightButton"
                 ToolTipService.ToolTip="Highlight text"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Highlight">
@@ -281,6 +297,7 @@
             <!-- Underline -->
             <AppBarButton
                 Label="Underline"
+                AutomationProperties.AutomationId="UnderlineButton"
                 ToolTipService.ToolTip="Underline text"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Underline">
@@ -292,6 +309,7 @@
             <!-- Strikethrough -->
             <AppBarButton
                 Label="Strikethrough"
+                AutomationProperties.AutomationId="StrikethroughButton"
                 ToolTipService.ToolTip="Strikethrough text"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Strikethrough">
@@ -305,6 +323,7 @@
             <!-- Comment -->
             <AppBarButton
                 Label="Comment"
+                AutomationProperties.AutomationId="CommentButton"
                 ToolTipService.ToolTip="Add text comment"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Comment">
@@ -318,6 +337,7 @@
             <!-- Rectangle -->
             <AppBarButton
                 Label="Rectangle"
+                AutomationProperties.AutomationId="RectangleButton"
                 ToolTipService.ToolTip="Draw rectangle"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Rectangle">
@@ -329,6 +349,7 @@
             <!-- Circle -->
             <AppBarButton
                 Label="Circle"
+                AutomationProperties.AutomationId="CircleButton"
                 ToolTipService.ToolTip="Draw circle"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Circle">
@@ -340,6 +361,7 @@
             <!-- Freehand -->
             <AppBarButton
                 Label="Freehand"
+                AutomationProperties.AutomationId="FreehandButton"
                 ToolTipService.ToolTip="Draw freehand"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Freehand">
@@ -359,6 +381,7 @@
                         Style="{StaticResource BodyTextBlockStyle}" />
                     <ColorPicker
                         x:Name="AnnotationColorPicker"
+                        AutomationProperties.AutomationId="AnnotationColorPicker"
                         ColorSpectrumShape="Ring"
                         IsMoreButtonVisible="False"
                         IsColorSliderVisible="True"
@@ -376,6 +399,7 @@
         <Grid
             Grid.Row="2"
             Padding="12,8"
+            AutomationProperties.AutomationId="SearchPanel"
             Background="{ThemeResource LayerFillColorDefaultBrush}"
             Visibility="{x:Bind ViewModel.IsSearchPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
             <Grid.ColumnDefinitions>
@@ -390,6 +414,7 @@
             <TextBox
                 x:Name="SearchTextBox"
                 Grid.Column="0"
+                AutomationProperties.AutomationId="SearchTextBox"
                 PlaceholderText="Search..."
                 Text="{x:Bind ViewModel.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 Width="300"
@@ -405,6 +430,7 @@
                 Grid.Column="1"
                 VerticalAlignment="Center"
                 Margin="8,0"
+                AutomationProperties.AutomationId="SearchMatchCounter"
                 Style="{StaticResource BodyTextBlockStyle}">
                 <Run Text="{x:Bind ViewModel.CurrentMatchIndex, Mode=OneWay, Converter={StaticResource MatchCounterConverter}}" />
                 <Run Text=" of " />
@@ -419,6 +445,7 @@
                 Margin="8,0">
                 <Button
                     Content="Previous"
+                    AutomationProperties.AutomationId="SearchPreviousButton"
                     Command="{x:Bind ViewModel.GoToPreviousMatchCommand, Mode=OneWay}"
                     ToolTipService.ToolTip="Previous match (Shift+F3)"
                     Style="{StaticResource AccentButtonStyle}"
@@ -429,6 +456,7 @@
                 </Button>
                 <Button
                     Content="Next"
+                    AutomationProperties.AutomationId="SearchNextButton"
                     Command="{x:Bind ViewModel.GoToNextMatchCommand, Mode=OneWay}"
                     ToolTipService.ToolTip="Next match (F3)"
                     Style="{StaticResource AccentButtonStyle}"
@@ -443,6 +471,7 @@
             <CheckBox
                 Grid.Column="3"
                 Content="Case sensitive"
+                AutomationProperties.AutomationId="SearchCaseSensitiveCheckBox"
                 IsChecked="{x:Bind ViewModel.CaseSensitive, Mode=TwoWay}"
                 VerticalAlignment="Center"
                 Margin="8,0" />
@@ -451,6 +480,7 @@
             <Button
                 Grid.Column="4"
                 Content="&#xE711;"
+                AutomationProperties.AutomationId="SearchCloseButton"
                 FontFamily="Segoe MDL2 Assets"
                 Command="{x:Bind ViewModel.ToggleSearchPanelCommand, Mode=OneWay}"
                 ToolTipService.ToolTip="Close search (Escape)"

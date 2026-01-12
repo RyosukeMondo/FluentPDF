@@ -31,26 +31,26 @@
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator />
-                <MenuFlyoutItem x:Name="SaveMenuItem" Text="Save" Click="OnSaveClick">
+                <MenuFlyoutItem x:Name="SaveMenuItem" Text="Save" Click="OnSaveClick" AutomationProperties.AutomationId="SaveMenuItem">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="S" Modifiers="Control" />
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="SaveAsMenuItem" Text="Save As..." Click="OnSaveAsClick">
+                <MenuFlyoutItem x:Name="SaveAsMenuItem" Text="Save As..." Click="OnSaveAsClick" AutomationProperties.AutomationId="SaveAsMenuItem">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="S" Modifiers="Control,Shift" />
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator />
-                <MenuFlyoutSubItem x:Name="RecentFilesSubMenu" Text="Recent Files">
+                <MenuFlyoutSubItem x:Name="RecentFilesSubMenu" Text="Recent Files" AutomationProperties.AutomationId="RecentFilesSubMenu">
                     <!-- Dynamic recent files items will be added in code-behind -->
                 </MenuFlyoutSubItem>
-                <MenuFlyoutItem Text="Clear Recent Files..." Click="OnClearRecentFilesClick" />
+                <MenuFlyoutItem Text="Clear Recent Files..." Click="OnClearRecentFilesClick" AutomationProperties.AutomationId="ClearRecentFilesMenuItem" />
                 <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Exit" Click="OnExitClick" />
+                <MenuFlyoutItem Text="Exit" Click="OnExitClick" AutomationProperties.AutomationId="ExitMenuItem" />
             </MenuBarItem>
-            <MenuBarItem Title="Tools">
-                <MenuFlyoutItem Text="Settings..." Click="OnSettingsClick" />
+            <MenuBarItem Title="Tools" AutomationProperties.AutomationId="ToolsMenuBarItem">
+                <MenuFlyoutItem Text="Settings..." Click="OnSettingsClick" AutomationProperties.AutomationId="SettingsMenuItem" />
             </MenuBarItem>
         </MenuBar>
 
@@ -113,6 +113,7 @@
                 <Button
                     Content="Open File"
                     Click="OnOpenFileClick"
+                    AutomationProperties.AutomationId="EmptyStateOpenButton"
                     Style="{StaticResource AccentButtonStyle}" />
             </StackPanel>
         </Grid>
