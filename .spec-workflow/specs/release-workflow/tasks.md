@@ -1,6 +1,6 @@
 # Tasks Document
 
-- [ ] 1. Create release.yml workflow file
+- [x] 1. Create release.yml workflow file
   - File: .github/workflows/release.yml
   - Set up workflow trigger on version tags and manual dispatch
   - Add initial checkout and setup steps
