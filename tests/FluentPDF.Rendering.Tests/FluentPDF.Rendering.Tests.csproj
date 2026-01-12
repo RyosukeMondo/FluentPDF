@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <Platform>x64</Platform>
     <Platforms>x64</Platforms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>

@@ -1,20 +1,22 @@
 using FluentPDF.Core.ErrorHandling;
 using FluentPDF.Core.Services;
 using FluentResults;
-using Mammoth;
 using Microsoft.Extensions.Logging;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
+using System.Text;
+using System.Net;
 
 namespace FluentPDF.Rendering.Services;
 
 /// <summary>
-/// Service for DOCX document parsing using Mammoth.NET library.
+/// Service for DOCX document parsing using DocumentFormat.OpenXml library.
 /// Implements asynchronous operations with comprehensive error handling and structured logging.
 /// Converts DOCX files to clean HTML with embedded images as base64 data URIs.
 /// </summary>
 public sealed class DocxParserService : IDocxParserService
 {
     private readonly ILogger<DocxParserService> _logger;
-    private readonly DocumentConverter _documentConverter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DocxParserService"/> class.
@@ -23,7 +25,6 @@ public sealed class DocxParserService : IDocxParserService
     public DocxParserService(ILogger<DocxParserService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _documentConverter = new DocumentConverter();
     }
 
     /// <inheritdoc />
@@ -77,25 +78,25 @@ public sealed class DocxParserService : IDocxParserService
             // Parse DOCX on background thread
             var html = await Task.Run(() =>
             {
-                using var fileStream = File.OpenRead(filePath);
-                var result = _documentConverter.ConvertToHtml(fileStream);
+                using var doc = WordprocessingDocument.Open(filePath, false);
+                var body = doc.MainDocumentPart?.Document?.Body;
 
-                // Check for conversion warnings (non-fatal)
-                if (result.Warnings.Any())
+                if (body == null)
                 {
-                    _logger.LogWarning(
-                        "DOCX conversion completed with warnings. CorrelationId={CorrelationId}, WarningCount={WarningCount}",
-                        correlationId, result.Warnings.Count());
-
-                    foreach (var warning in result.Warnings)
-                    {
-                        _logger.LogDebug(
-                            "Conversion warning: {Warning}. CorrelationId={CorrelationId}",
-                            warning, correlationId);
-                    }
+                    return "<html><body></body></html>";
                 }
 
-                return result.Value;
+                var htmlBuilder = new StringBuilder();
+                htmlBuilder.AppendLine("<html>");
+                htmlBuilder.AppendLine("<head><meta charset='utf-8'></head>");
+                htmlBuilder.AppendLine("<body>");
+
+                ConvertBodyToHtml(body, htmlBuilder, doc.MainDocumentPart);
+
+                htmlBuilder.AppendLine("</body>");
+                htmlBuilder.AppendLine("</html>");
+
+                return htmlBuilder.ToString();
             });
 
             var htmlLength = html.Length;
@@ -107,7 +108,7 @@ public sealed class DocxParserService : IDocxParserService
 
             return Result.Ok(html);
         }
-        catch (InvalidDataException ex)
+        catch (OpenXmlPackageException ex)
         {
             var error = new PdfError(
                 "DOCX_INVALID_FORMAT",
@@ -158,5 +159,156 @@ public sealed class DocxParserService : IDocxParserService
 
             return Result.Fail(error);
         }
+    }
+
+    private void ConvertBodyToHtml(Body body, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
+    {
+        foreach (var element in body.Elements())
+        {
+            switch (element)
+            {
+                case Paragraph paragraph:
+                    ConvertParagraphToHtml(paragraph, htmlBuilder, mainPart);
+                    break;
+                case Table table:
+                    ConvertTableToHtml(table, htmlBuilder, mainPart);
+                    break;
+            }
+        }
+    }
+
+    private void ConvertParagraphToHtml(Paragraph paragraph, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
+    {
+        var hasContent = paragraph.Elements<Run>().Any() || paragraph.Elements<Hyperlink>().Any();
+        if (!hasContent)
+        {
+            htmlBuilder.AppendLine("<p>&nbsp;</p>");
+            return;
+        }
+
+        htmlBuilder.Append("<p>");
+
+        foreach (var element in paragraph.Elements())
+        {
+            switch (element)
+            {
+                case Run run:
+                    ConvertRunToHtml(run, htmlBuilder, mainPart);
+                    break;
+                case Hyperlink hyperlink:
+                    ConvertHyperlinkToHtml(hyperlink, htmlBuilder, mainPart);
+                    break;
+            }
+        }
+
+        htmlBuilder.AppendLine("</p>");
+    }
+
+    private void ConvertRunToHtml(Run run, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
+    {
+        var runProperties = run.RunProperties;
+        var isBold = runProperties?.Bold != null;
+        var isItalic = runProperties?.Italic != null;
+        var isUnderline = runProperties?.Underline != null;
+
+        if (isBold) htmlBuilder.Append("<strong>");
+        if (isItalic) htmlBuilder.Append("<em>");
+        if (isUnderline) htmlBuilder.Append("<u>");
+
+        foreach (var element in run.Elements())
+        {
+            switch (element)
+            {
+                case Text text:
+                    htmlBuilder.Append(WebUtility.HtmlEncode(text.Text));
+                    break;
+                case Break:
+                    htmlBuilder.Append("<br/>");
+                    break;
+                case Drawing drawing:
+                    ConvertDrawingToHtml(drawing, htmlBuilder, mainPart);
+                    break;
+            }
+        }
+
+        if (isUnderline) htmlBuilder.Append("</u>");
+        if (isItalic) htmlBuilder.Append("</em>");
+        if (isBold) htmlBuilder.Append("</strong>");
+    }
+
+    private void ConvertHyperlinkToHtml(Hyperlink hyperlink, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
+    {
+        var id = hyperlink.Id?.Value;
+        string? url = null;
+
+        if (!string.IsNullOrEmpty(id) && mainPart != null)
+        {
+            var relationship = mainPart.HyperlinkRelationships.FirstOrDefault(r => r.Id == id);
+            url = relationship?.Uri?.ToString();
+        }
+
+        if (!string.IsNullOrEmpty(url))
+        {
+            htmlBuilder.Append($"<a href=\"{WebUtility.HtmlEncode(url)}\">");
+        }
+
+        foreach (var run in hyperlink.Elements<Run>())
+        {
+            ConvertRunToHtml(run, htmlBuilder, mainPart);
+        }
+
+        if (!string.IsNullOrEmpty(url))
+        {
+            htmlBuilder.Append("</a>");
+        }
+    }
+
+    private void ConvertDrawingToHtml(Drawing drawing, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
+    {
+        if (mainPart == null) return;
+
+        var blip = drawing.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().FirstOrDefault();
+        if (blip?.Embed?.Value == null) return;
+
+        try
+        {
+            var imagePart = mainPart.GetPartById(blip.Embed.Value) as ImagePart;
+            if (imagePart == null) return;
+
+            using var stream = imagePart.GetStream();
+            using var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            var imageBytes = memoryStream.ToArray();
+            var base64 = Convert.ToBase64String(imageBytes);
+            var contentType = imagePart.ContentType;
+
+            htmlBuilder.Append($"<img src=\"data:{contentType};base64,{base64}\" />");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to convert drawing to HTML image");
+        }
+    }
+
+    private void ConvertTableToHtml(Table table, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
+    {
+        htmlBuilder.AppendLine("<table border='1' style='border-collapse: collapse;'>");
+
+        foreach (var row in table.Elements<TableRow>())
+        {
+            htmlBuilder.AppendLine("<tr>");
+            foreach (var cell in row.Elements<TableCell>())
+            {
+                htmlBuilder.Append("<td>");
+                foreach (var paragraph in cell.Elements<Paragraph>())
+                {
+                    ConvertParagraphToHtml(paragraph, htmlBuilder, mainPart);
+                }
+                htmlBuilder.AppendLine("</td>");
+            }
+            htmlBuilder.AppendLine("</tr>");
+        }
+
+        htmlBuilder.AppendLine("</table>");
     }
 }

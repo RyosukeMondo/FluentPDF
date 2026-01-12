@@ -120,7 +120,7 @@ public sealed class DocxParserServiceTests : IDisposable
         result.IsFailed.Should().BeTrue();
         var error = result.Errors[0] as PdfError;
         error.Should().NotBeNull();
-        // Could be DOCX_INVALID_FORMAT or DOCX_PARSE_FAILED depending on Mammoth's error
+        // Could be DOCX_INVALID_FORMAT or DOCX_PARSE_FAILED depending on DocumentFormat.OpenXml's error
         error!.ErrorCode.Should().Match(code =>
             code == "DOCX_INVALID_FORMAT" || code == "DOCX_PARSE_FAILED");
     }
@@ -132,7 +132,7 @@ public sealed class DocxParserServiceTests : IDisposable
         // are covered in the integration test suite where we use real DOCX documents.
         //
         // Unit tests here focus on validation logic (file existence, extension checking)
-        // since testing the actual Mammoth conversion requires real DOCX files.
+        // since testing the actual DocumentFormat.OpenXml conversion requires real DOCX files.
         Assert.True(true);
     }
 
