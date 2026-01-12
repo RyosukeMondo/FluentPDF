@@ -13,7 +13,8 @@
     CloseButtonText="Cancel"
     DefaultButton="Primary"
     IsPrimaryButtonEnabled="True"
-    Style="{StaticResource DefaultContentDialogStyle}">
+    Style="{StaticResource DefaultContentDialogStyle}"
+    AutomationProperties.AutomationId="WatermarkDialog">
 
     <ContentDialog.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
@@ -31,10 +32,10 @@
         <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
             <TextBlock Text="Quick Presets" FontWeight="SemiBold" />
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="CONFIDENTIAL" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="CONFIDENTIAL" />
-                <Button Content="DRAFT" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="DRAFT" />
-                <Button Content="COPY" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="COPY" />
-                <Button Content="APPROVED" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="APPROVED" />
+                <Button Content="CONFIDENTIAL" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="CONFIDENTIAL" AutomationProperties.AutomationId="PresetConfidentialButton" />
+                <Button Content="DRAFT" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="DRAFT" AutomationProperties.AutomationId="PresetDraftButton" />
+                <Button Content="COPY" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="COPY" AutomationProperties.AutomationId="PresetCopyButton" />
+                <Button Content="APPROVED" Command="{x:Bind ViewModel.ApplyPresetCommand}" CommandParameter="APPROVED" AutomationProperties.AutomationId="PresetApprovedButton" />
             </StackPanel>
         </StackPanel>
 
@@ -51,9 +52,9 @@
                     <!-- Watermark Type -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="Watermark Type" FontWeight="SemiBold" />
-                        <RadioButtons SelectedIndex="{x:Bind ViewModel.SelectedType, Mode=TwoWay, Converter={StaticResource EnumToIntConverter}}">
-                            <RadioButton Content="Text" Tag="0" />
-                            <RadioButton Content="Image" Tag="1" />
+                        <RadioButtons SelectedIndex="{x:Bind ViewModel.SelectedType, Mode=TwoWay, Converter={StaticResource EnumToIntConverter}}" AutomationProperties.AutomationId="WatermarkTypeRadioButtons">
+                            <RadioButton Content="Text" Tag="0" AutomationProperties.AutomationId="TextTypeRadioButton" />
+                            <RadioButton Content="Image" Tag="1" AutomationProperties.AutomationId="ImageTypeRadioButton" />
                         </RadioButtons>
                     </StackPanel>
 
@@ -66,14 +67,16 @@
                             Header="Watermark Text"
                             PlaceholderText="Enter watermark text"
                             Text="{x:Bind ViewModel.TextConfig.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            MaxLength="100" />
+                            MaxLength="100"
+                            AutomationProperties.AutomationId="WatermarkTextBox" />
 
                         <!-- Font Family -->
                         <ComboBox
                             Header="Font Family"
                             ItemsSource="{x:Bind ViewModel.AvailableFonts, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.TextConfig.FontFamily, Mode=TwoWay}"
-                            HorizontalAlignment="Stretch" />
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.AutomationId="FontFamilyComboBox" />
 
                         <!-- Font Size -->
                         <StackPanel Spacing="4">
@@ -86,7 +89,8 @@
                                 Minimum="12"
                                 Maximum="144"
                                 StepFrequency="1"
-                                Value="{x:Bind ViewModel.TextConfig.FontSize, Mode=TwoWay}" />
+                                Value="{x:Bind ViewModel.TextConfig.FontSize, Mode=TwoWay}"
+                                AutomationProperties.AutomationId="FontSizeSlider" />
                         </StackPanel>
 
                         <!-- Color Picker -->
@@ -94,7 +98,8 @@
                             <TextBlock Text="Text Color" />
                             <ColorPicker
                                 x:Name="TextColorPicker"
-                                ColorChanged="OnTextColorChanged" />
+                                ColorChanged="OnTextColorChanged"
+                                AutomationProperties.AutomationId="TextColorPicker" />
                         </StackPanel>
                     </StackPanel>
 
@@ -106,7 +111,8 @@
                         <Button
                             Content="Select Image"
                             Command="{x:Bind ViewModel.SelectImageCommand}"
-                            HorizontalAlignment="Stretch" />
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.AutomationId="SelectImageButton" />
 
                         <TextBlock
                             Text="{x:Bind ViewModel.ImageConfig.ImagePath, Mode=OneWay}"
@@ -125,7 +131,8 @@
                                 Minimum="10"
                                 Maximum="200"
                                 StepFrequency="5"
-                                Value="{x:Bind ViewModel.ImageScalePercentage, Mode=TwoWay}" />
+                                Value="{x:Bind ViewModel.ImageScalePercentage, Mode=TwoWay}"
+                                AutomationProperties.AutomationId="ImageScaleSlider" />
                         </StackPanel>
                     </StackPanel>
 
@@ -138,7 +145,8 @@
                             Header="Position"
                             ItemsSource="{x:Bind ViewModel.AvailablePositions, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedPosition, Mode=TwoWay}"
-                            HorizontalAlignment="Stretch" />
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.AutomationId="PositionComboBox" />
 
                         <!-- Custom Position -->
                         <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.IsCustomPosition, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -147,13 +155,15 @@
                                 Minimum="0"
                                 Maximum="100"
                                 SpinButtonPlacementMode="Inline"
-                                Value="{x:Bind ViewModel.CustomX, Mode=TwoWay}" />
+                                Value="{x:Bind ViewModel.CustomX, Mode=TwoWay}"
+                                AutomationProperties.AutomationId="CustomXNumberBox" />
                             <NumberBox
                                 Header="Y Position (%)"
                                 Minimum="0"
                                 Maximum="100"
                                 SpinButtonPlacementMode="Inline"
-                                Value="{x:Bind ViewModel.CustomY, Mode=TwoWay}" />
+                                Value="{x:Bind ViewModel.CustomY, Mode=TwoWay}"
+                                AutomationProperties.AutomationId="CustomYNumberBox" />
                         </StackPanel>
 
                         <!-- Opacity -->
@@ -167,7 +177,8 @@
                                 Minimum="0"
                                 Maximum="100"
                                 StepFrequency="5"
-                                Value="{x:Bind ViewModel.OpacityPercentage, Mode=TwoWay}" />
+                                Value="{x:Bind ViewModel.OpacityPercentage, Mode=TwoWay}"
+                                AutomationProperties.AutomationId="OpacitySlider" />
                         </StackPanel>
 
                         <!-- Rotation -->
@@ -184,19 +195,22 @@
                                     HorizontalAlignment="Right"
                                     Style="{StaticResource AccentButtonStyle}"
                                     FontSize="12"
-                                    Padding="8,4" />
+                                    Padding="8,4"
+                                    AutomationProperties.AutomationId="DiagonalButton" />
                             </Grid>
                             <Slider
                                 Minimum="-180"
                                 Maximum="180"
                                 StepFrequency="5"
-                                Value="{x:Bind ViewModel.Rotation, Mode=TwoWay}" />
+                                Value="{x:Bind ViewModel.Rotation, Mode=TwoWay}"
+                                AutomationProperties.AutomationId="RotationSlider" />
                         </StackPanel>
 
                         <!-- Behind/Above Content -->
                         <CheckBox
                             Content="Place behind content"
-                            IsChecked="{x:Bind ViewModel.BehindContent, Mode=TwoWay}" />
+                            IsChecked="{x:Bind ViewModel.BehindContent, Mode=TwoWay}"
+                            AutomationProperties.AutomationId="BehindContentCheckBox" />
                     </StackPanel>
 
                     <!-- Page Range -->
@@ -207,14 +221,16 @@
                             Header="Page Range"
                             ItemsSource="{x:Bind ViewModel.AvailablePageRangeTypes, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.PageRangeType, Mode=TwoWay}"
-                            HorizontalAlignment="Stretch" />
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.AutomationId="PageRangeComboBox" />
 
                         <!-- Custom Range Input -->
                         <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.IsCustomPageRange, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                             <TextBox
                                 Header="Page Range (e.g., 1-5, 10, 15-20)"
                                 PlaceholderText="Enter page range"
-                                Text="{x:Bind ViewModel.CustomPageRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                Text="{x:Bind ViewModel.CustomPageRange, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                AutomationProperties.AutomationId="CustomPageRangeTextBox" />
                             <TextBlock
                                 Text="{x:Bind ViewModel.PageRangeError, Mode=OneWay}"
                                 Foreground="{ThemeResource SystemErrorTextColor}"
@@ -260,7 +276,7 @@
 
                         <!-- Preview Image -->
                         <Viewbox Stretch="Uniform" Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}">
-                            <Image x:Name="PreviewImage" />
+                            <Image x:Name="PreviewImage" AutomationProperties.AutomationId="PreviewImage" />
                         </Viewbox>
 
                         <!-- No Preview Message -->

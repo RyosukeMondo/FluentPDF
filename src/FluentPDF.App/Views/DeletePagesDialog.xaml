@@ -5,7 +5,8 @@
     Title="Delete Pages"
     PrimaryButtonText="Delete"
     CloseButtonText="Cancel"
-    DefaultButton="Close">
+    DefaultButton="Close"
+    AutomationProperties.AutomationId="DeletePagesDialog">
 
     <StackPanel Spacing="16">
         <!-- Warning Icon -->
@@ -13,13 +14,15 @@
             Glyph="&#xE7BA;"
             FontSize="48"
             Foreground="{ThemeResource SystemErrorTextColor}"
-            HorizontalAlignment="Center"/>
+            HorizontalAlignment="Center"
+            AutomationProperties.AutomationId="WarningIcon"/>
 
         <!-- Message -->
         <TextBlock
             x:Name="MessageTextBlock"
             TextWrapping="Wrap"
             HorizontalAlignment="Center"
-            TextAlignment="Center"/>
+            TextAlignment="Center"
+            AutomationProperties.AutomationId="MessageTextBlock"/>
     </StackPanel>
 </ContentDialog>

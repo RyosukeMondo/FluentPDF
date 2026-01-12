@@ -6,7 +6,8 @@
     PrimaryButtonText="Save"
     SecondaryButtonText="Don't Save"
     CloseButtonText="Cancel"
-    DefaultButton="Primary">
+    DefaultButton="Primary"
+    AutomationProperties.AutomationId="SaveConfirmationDialog">
 
     <StackPanel Spacing="16">
         <!-- Warning Icon -->
@@ -14,13 +15,15 @@
             Glyph="&#xE7BA;"
             FontSize="48"
             Foreground="{ThemeResource SystemAccentColor}"
-            HorizontalAlignment="Center"/>
+            HorizontalAlignment="Center"
+            AutomationProperties.AutomationId="WarningIcon"/>
 
         <!-- Message -->
         <TextBlock
             x:Name="MessageTextBlock"
             TextWrapping="Wrap"
             HorizontalAlignment="Center"
-            TextAlignment="Center"/>
+            TextAlignment="Center"
+            AutomationProperties.AutomationId="MessageTextBlock"/>
     </StackPanel>
 </ContentDialog>
