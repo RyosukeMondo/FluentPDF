@@ -488,5 +488,54 @@ namespace FluentPDF.App
                 throw new InvalidOperationException("No active PdfViewerPage found. Ensure a PDF viewer tab is open.");
             }
         }
+
+        /// <summary>
+        /// Test helper method to merge multiple PDF documents.
+        /// This method is intended for E2E testing and bypasses the file picker UI.
+        /// </summary>
+        /// <param name="inputPaths">The paths to the PDF files to merge.</param>
+        /// <param name="outputPath">The path where the merged PDF should be saved.</param>
+        public async Task MergeDocumentsForTestingAsync(string[] inputPaths, string outputPath)
+        {
+            if (inputPaths == null || inputPaths.Length < 2)
+            {
+                throw new ArgumentException("At least 2 PDF files are required for merging.", nameof(inputPaths));
+            }
+
+            if (string.IsNullOrWhiteSpace(outputPath))
+            {
+                throw new ArgumentException("Output path cannot be null or empty.", nameof(outputPath));
+            }
+
+            // Get the current PdfViewerViewModel from the active tab
+            var mainViewModel = GetService<MainViewModel>();
+            var activeTab = mainViewModel.ActiveTab;
+
+            if (activeTab?.Content is PdfViewerPage pdfViewerPage)
+            {
+                var viewModel = pdfViewerPage.ViewModel;
+                var editingService = GetService<FluentPDF.Core.Services.Interfaces.IEditingService>();
+
+                // Perform the merge operation
+                var progress = new Progress<double>();
+                var result = await editingService.MergeAsync(
+                    inputPaths.ToList(),
+                    outputPath,
+                    progress,
+                    CancellationToken.None);
+
+                if (!result.IsSuccess)
+                {
+                    throw new InvalidOperationException($"Merge failed: {result.Errors[0].Message}");
+                }
+
+                // Optionally load the merged document
+                await viewModel.LoadDocumentFromPathAsync(outputPath);
+            }
+            else
+            {
+                throw new InvalidOperationException("No active PdfViewerPage found. Ensure a PDF viewer tab is open.");
+            }
+        }
     }
 }

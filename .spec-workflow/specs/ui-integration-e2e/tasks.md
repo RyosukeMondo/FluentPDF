@@ -125,7 +125,7 @@
 
 ## Phase 4: Editing Operations Tests
 
-- [ ] 12. Create merge E2E test
+- [x] 12. Create merge E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/MergeTests.cs
   - Test Merge button opens file picker
   - Test merging two PDFs
