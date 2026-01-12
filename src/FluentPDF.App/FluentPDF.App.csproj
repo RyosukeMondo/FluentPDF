@@ -49,7 +49,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.*" />
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.*" />
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.*" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.*" />
@@ -84,7 +84,7 @@
     </ItemGroup>
 
     <!-- Filter WPF assemblies from XamlCompiler input.json to prevent crashes -->
-    <Target Name="FilterXamlCompilerInput" AfterTargets="_PrepareForMarkupCompilation" BeforeTargets="MarkupCompilePass1">
+    <Target Name="FilterXamlCompilerInput" AfterTargets="GenerateXamlInputJson" BeforeTargets="MarkupCompilePass1">
       <PropertyGroup>
         <_InputJsonPath>$(IntermediateOutputPath)input.json</_InputJsonPath>
       </PropertyGroup>

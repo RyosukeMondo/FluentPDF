@@ -44,7 +44,7 @@
   - _Requirements: 3.2, 3.3_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer | Task: Create ToolbarSnapshotTests with tests for toolbar appearance following requirements 3.2 and 3.3 | Restrictions: Extend SnapshotTestBase, test different toolbar states | Success: Tests generate and compare snapshots for toolbar | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [ ] 6. Create initial approved snapshots - **READY FOR TESTING**
+- [-] 6. Create initial approved snapshots - **READY FOR TESTING**
   - File: tests/FluentPDF.App.Tests/Snapshots/Verified/*.verified.txt
   - Run tests to generate initial snapshots
   - Review and approve baseline snapshots
@@ -113,11 +113,13 @@
     - ❌ Updated filter script to also exclude WindowsBase.dll - now removes 22 assemblies but XamlCompiler still crashes
     - ❌ Tried DisableImplicitFrameworkReferences on FluentPDF.Rendering (breaks test project compatibility)
     - ❌ Tried ExcludeAssets=FrameworkReferences on ProjectReference (no effect, still 278 assemblies in input.json)
-  - **CURRENT STATUS** (2026-01-12):
-    - ✅ Mammoth replaced with DocumentFormat.OpenXml - eliminates direct WPF package dependencies
-    - ⚠️  WPF assemblies still present: microsoft.windowsdesktop.app.ref is implicitly included when targeting net8.0-windows
-    - ⚠️  Filter script successfully removes 22 WPF assemblies but XamlCompiler.exe still crashes with exit code 1
-    - **HYPOTHESIS**: XamlCompiler may cache input.json before filter runs, OR there's a different issue now that direct WPF dependencies are gone
+  - **CURRENT STATUS** (2026-01-12 afternoon - CRITICAL FINDING):
+    - ✅ Upgraded entire project from .NET 8 to .NET 9 (commit a8e1852)
+    - ✅ Upgraded WindowsAppSDK from 1.6 to 1.8
+    - ✅ Filter script successfully removes 22 WPF assemblies from input.json (281 -> 259 assemblies)
+    - ❌ **CRITICAL**: XamlCompiler STILL crashes even WITH WPF assemblies removed
+    - **ROOT CAUSE DISPROVEN**: WPF assemblies were a RED HERRING - not the actual cause of XamlCompiler crash
+    - **REAL ISSUE**: Something else in the project causes XamlCompiler.exe to crash (project complexity, specific XAML content, NuGet interactions, or assembly conflicts beyond WPF)
   - **ADDITIONAL INVESTIGATION** (2026-01-12 afternoon):
     - ✅ Changed FluentPDF.Rendering from net8.0-windows10.0.19041.0 to net8.0 - builds successfully on Linux
     - ❌ FluentPDF.App still fails with XamlCompiler exit code 1 - WPF assemblies still present (278 total)
@@ -127,20 +129,22 @@
     - **ARCHITECTURAL LIMITATION**: No MSBuild property can prevent implicit WPF reference inclusion in net8.0-windows
     - **KEY INSIGHT**: Filter script runs AfterTargets="_PrepareForMarkupCompilation" but input.json is created AFTER this target
     - **TIMING ISSUE**: MSBuild generates input.json, then our filter runs (sometimes finds it, sometimes doesn't), then XamlCompiler runs with unfiltered version
-  - **RECOMMENDED SOLUTIONS** (in order of preference):
-    1. ~~Replace Mammoth with DocumentFormat.OpenXml~~ - ✅ COMPLETED (commit 28c3b6f) but insufficient to fix XamlCompiler crash
-    2. ~~**Upgrade to .NET 9**~~ - ✅ COMPLETED (commit a8e1852)
-       - **COMPLETED STEPS** (2026-01-12):
-         - ✅ Updated global.json to require .NET 9 SDK (9.0.100)
-         - ✅ Updated FluentPDF.App from net8.0-windows10.0.19041.0 to net9.0-windows10.0.19041.0
-         - ✅ Updated all cross-platform projects (Core, Rendering, Validation) from net8.0 to net9.0
-         - ✅ Updated all test projects to net9.0 or net9.0-windows
-         - ✅ Updated Microsoft.Extensions.Hosting from 8.* to 9.*
-         - ⏳ **NEXT**: Test build on Windows to verify XamlCompiler works with .NET 9's improved framework reference handling
-       - **RATIONALE**: .NET 9 may have improved handling of implicit framework references and better isolation between WinUI 3 and WPF assemblies
-    3. **Try Visual Studio 2022 IDE build** - May have workarounds or better error diagnostics for this XamlCompiler issue
-    4. **Custom MSBuild task** - Create custom MSBuild task (not Target) that hooks into GenerateXamlInputJson task to modify ReferenceAssemblies before input.json generation
-    5. **Isolate Mammoth in separate process** - No longer applicable (Mammoth removed)
+  - **RECOMMENDED SOLUTIONS** (updated with new findings - in order of preference):
+    1. ~~Replace Mammoth with DocumentFormat.OpenXml~~ - ✅ COMPLETED (commit 28c3b6f) but WPF not the root cause
+    2. ~~**Upgrade to .NET 9**~~ - ✅ COMPLETED (commit a8e1852) but XamlCompiler still crashes
+    3. ~~Upgrade WindowsAppSDK to 1.8~~ - ✅ COMPLETED but XamlCompiler still crashes
+    4. ~~Filter WPF assemblies~~ - ✅ TESTED (successfully removes 22 WPF assemblies) but XamlCompiler still crashes
+    5. **NEW APPROACH NEEDED**: Since WPF removal doesn't fix the crash, investigate other potential causes:
+       - **Option A**: Binary search to identify problematic XAML file or control causing crash
+       - **Option B**: Try Visual Studio 2022 IDE build for better diagnostics
+       - **Option C**: Simplify project by temporarily removing complex controls/features to isolate issue
+       - **Option D**: Check if specific NuGet package (System.Reactive, OpenTelemetry, etc.) conflicts with XamlCompiler
+       - **Option E**: Create a fresh WinUI 3 project and incrementally add FluentPDF components until crash reproduces
+       - **Option F**: Investigate if there's a known XamlCompiler bug in WindowsAppSDK 1.6-1.8 that matches this symptom
+    6. **FALLBACK**: If XamlCompiler cannot be fixed, consider alternative approaches:
+       - Skip snapshot testing for now and focus on other test types
+       - Use runtime screenshot testing instead of compile-time snapshot testing
+       - Develop UI tests on a different platform (e.g., Avalonia with cross-platform snapshot testing)
   - **COMPLETED INVESTIGATION STEPS**:
     1. ~~Check Windows Event Viewer for application crash details~~ (checked - no XamlCompiler crashes logged)
     2. ~~Try building a minimal WinUI 3 project~~ (DONE - builds successfully, isolates issue to FluentPDF.App)
