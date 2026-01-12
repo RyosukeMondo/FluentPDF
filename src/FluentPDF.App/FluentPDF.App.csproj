@@ -77,16 +77,16 @@
       <ProjectReference Include="..\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
     </ItemGroup>
 
-    <!-- Exclude WPF assemblies that conflict with WinUI 3 XamlCompiler -->
-    <Target Name="FilterWpfReferences" BeforeTargets="MarkupCompilePass1">
-      <ItemGroup>
-        <ReferencePathWithRefAssemblies Remove="@(ReferencePathWithRefAssemblies)" Condition="$([System.String]::Copy('%(Filename)').Contains('Presentation'))" />
-        <ReferencePathWithRefAssemblies Remove="@(ReferencePathWithRefAssemblies)" Condition="$([System.String]::Copy('%(Filename)').Contains('WindowsForms'))" />
-        <ReferencePathWithRefAssemblies Remove="@(ReferencePathWithRefAssemblies)" Condition="$([System.String]::Copy('%(Filename)').Contains('System.Windows.Forms'))" />
-        <ReferencePath Remove="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').Contains('Presentation'))" />
-        <ReferencePath Remove="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').Contains('WindowsForms'))" />
-        <ReferencePath Remove="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').Contains('System.Windows.Forms'))" />
-      </ItemGroup>
+    <!-- Filter WPF assemblies from XamlCompiler input.json to prevent crashes -->
+    <Target Name="FilterXamlCompilerInput" AfterTargets="_PrepareForMarkupCompilation" BeforeTargets="MarkupCompilePass1">
+      <PropertyGroup>
+        <_InputJsonPath>$(IntermediateOutputPath)input.json</_InputJsonPath>
+      </PropertyGroup>
+      <Message Text="FilterXamlCompilerInput: Looking for input.json at: $(_InputJsonPath)" Importance="high" />
+      <Message Text="FilterXamlCompilerInput: File exists: $([System.IO.File]::Exists('$(_InputJsonPath)'))" Importance="high" />
+      <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\build-scripts\filter-xaml-compiler-input.ps1&quot; -InputJsonPath &quot;$(_InputJsonPath)&quot;"
+            Condition="Exists('$(_InputJsonPath)')"
+            IgnoreExitCode="false" />
     </Target>
 
     <!-- 

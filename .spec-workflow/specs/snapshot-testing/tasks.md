@@ -86,17 +86,31 @@
       2. Large input.json (152KB vs minimal's 100KB) triggers XamlCompiler bug
       3. Specific NuGet package combination causes XamlCompiler crash
       4. ProjectReferences to FluentPDF.Core and FluentPDF.Rendering cause issues
+  - **ROOT CAUSE IDENTIFIED** (2026-01-12):
+    - ✅ **CONFIRMED**: Mammoth package transitively pulls in WPF assemblies (PresentationCore, PresentationFramework, System.Windows.Forms, etc.)
+    - ✅ FluentPDF.App input.json contains 277 reference assemblies (including 11+ WPF assemblies)
+    - ✅ Minimal WinUI 3 project input.json contains only 201 assemblies with ZERO WPF assemblies
+    - ✅ XamlCompiler.exe crashes when it encounters WPF assemblies in WinUI 3 project's reference list
+    - **WHY**: Mammoth is a .NET library for .docx processing that depends on WPF for document rendering
+    - **IMPACT**: WPF and WinUI 3 XamlCompiler are incompatible when WPF assemblies appear in XamlCompiler's input.json
+  - **ATTEMPTED FIXES** (2026-01-12):
+    - ❌ Changed FluentPDF.Rendering from net8.0 to net8.0-windows10.0.19041.0 (WPF assemblies still present)
+    - ❌ Added UseWPF=false and UseWindowsForms=false properties (doesn't prevent transitive references)
+    - ❌ Created FilterWpfReferences MSBuild target to filter ReferencePathWithRefAssemblies (target runs too late or wrong item group)
+    - ❌ Set IncludePackageReferencesDuringMarkupCompilation=false (no effect)
   - **NEXT INVESTIGATION STEPS**:
     1. ~~Check Windows Event Viewer for application crash details~~ (checked - no XamlCompiler crashes logged)
     2. Use Process Monitor to trace XamlCompiler.exe file/registry access patterns
     3. ~~Try building a minimal WinUI 3 project~~ (DONE - builds successfully, isolates issue to FluentPDF.App)
     4. ~~Binary search XAML files~~ (DONE - all files fail individually due to missing code-behind, not XAML syntax errors)
-    5. Examine input.json for FluentPDF.App vs minimal project to identify differences
-    6. Check if specific NuGet package combinations trigger XamlCompiler bug (CommunityToolkit.Mvvm, Mammoth, etc.)
+    5. ~~Examine input.json for FluentPDF.App vs minimal project to identify differences~~ (DONE - found WPF assemblies)
+    6. ~~Check if specific NuGet package combinations trigger XamlCompiler bug~~ (DONE - Mammoth brings WPF)
     7. Try building FluentPDF.App in Visual Studio 2022 IDE for better error diagnostics
-    8. Try removing ProjectReferences temporarily to see if they cause XamlCompiler issues
-    9. Try removing NuGet packages one by one to identify problematic package
-    10. Consider creating a fresh WinUI 3 project and migrating files incrementally
+    8. **Create custom MSBuild target that intercepts and modifies XamlCompiler input.json** to remove WPF assemblies
+    9. **Find alternative to Mammoth** without WPF dependencies (e.g., Open XML SDK, DocumentFormat.OpenXml)
+    10. **Isolate Mammoth in separate service/process** so WPF assemblies don't reach XamlCompiler
+    11. Try using Reference Remove with specific WPF assembly names before MarkupCompilePass1
+    12. Consider creating a fresh WinUI 3 project and migrating files incrementally
   - _Leverage: all snapshot test files_
   - _Requirements: 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Run all snapshot tests to generate initial .received files, review them, and rename to .verified to approve following requirement 2.2 | Restrictions: Only approve correct snapshots, document any issues | Success: All snapshot tests pass with approved baselines | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
