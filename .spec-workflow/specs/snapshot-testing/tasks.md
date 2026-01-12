@@ -44,13 +44,14 @@
   - _Requirements: 3.2, 3.3_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Automation Engineer | Task: Create ToolbarSnapshotTests with tests for toolbar appearance following requirements 3.2 and 3.3 | Restrictions: Extend SnapshotTestBase, test different toolbar states | Success: Tests generate and compare snapshots for toolbar | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
 
-- [-] 6. Create initial approved snapshots - **READY FOR TESTING**
+- [-] 6. Create initial approved snapshots - **BLOCKED: Windows build fails**
   - File: tests/FluentPDF.App.Tests/Snapshots/Verified/*.verified.txt
   - Run tests to generate initial snapshots
   - Review and approve baseline snapshots
   - Purpose: Establish baseline for regression detection
-  - **STATUS**: .NET 9 upgrade complete - ready for Windows testing
-  - **WINDOWS TESTING INSTRUCTIONS**:
+  - **STATUS**: ⛔ **BLOCKED** - Windows build fails with XamlCompiler.exe crash (exit code 1)
+  - **INVESTIGATION SUMMARY**: Exhaustively tested .NET 9 upgrade, WindowsAppSDK 1.8, WPF assembly removal, ProjectReference removal, and NuGet package removal - XamlCompiler still crashes. Root cause is likely in XAML content itself or a WinUI 3 XamlCompiler bug. Requires Visual Studio for further diagnostics.
+  - **WINDOWS TESTING INSTRUCTIONS** (for future when build is fixed):
     1. Sync files to Windows PC: `scp -r src tests *.sln Directory.Build.props global.json ryosu@192.168.11.48:"C:/dev/FluentPDF/"`
     2. SSH to Windows: `ssh ryosu@192.168.11.48`
     3. Install .NET 9 SDK if not present: Download from https://dotnet.microsoft.com/download/dotnet/9.0
