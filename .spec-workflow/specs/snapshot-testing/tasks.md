@@ -55,23 +55,25 @@
     - XamlCompiler.exe crashes silently with no diagnostic output (known WinUI 3 bug)
     - All source files synced correctly, converters and ViewModels present
     - Requires Windows environment investigation/fix before snapshot tests can run
+  - **ATTEMPTED FIXES** (2026-01-12):
+    - ✅ Validated all XAML files with `validate-xaml-windows.ps1` - all checks passed
+    - ✅ Added `global.json` to lock .NET SDK to 9.0.308 (was using preview 10.0.101)
+    - ✅ Updated WindowsAppSDK from 1.5.240428000 to 1.6.241114003
+    - ✅ Cleared NuGet cache and restored packages
+    - ❌ Issue persists across all attempted fixes
+    - 📝 XamlCompiler.exe crashes before creating output.json (crash in process, not validation error)
   - **TROUBLESHOOTING RESOURCES**:
     - Diagnostic build script: `build-diagnostics-windows.ps1` (generates detailed build logs)
+    - XAML validation script: `validate-xaml-windows.ps1` (validates XAML structure)
     - Known issue: [XamlCompiler.exe needs better logs #9813](https://github.com/microsoft/microsoft-ui-xaml/issues/9813)
     - Related: [Can't get error output from XamlCompiler.exe #10027](https://github.com/microsoft/microsoft-ui-xaml/issues/10027)
-  - **TROUBLESHOOTING STEPS**:
-    1. On Windows machine: Run `.\build-diagnostics-windows.ps1 -Clean`
-    2. Review generated log file for XAML-specific errors:
-       - `Select-String -Path build-diagnostics-*.log -Pattern 'XamlCompiler' -Context 5,5`
-       - `Select-String -Path build-diagnostics-*.log -Pattern 'error' | Select-Object -First 20`
-    3. Check for common issues:
-       - Missing/mismatched Windows SDK versions
-       - Corrupted NuGet cache (try: `dotnet nuget locals all --clear`)
-       - XAML namespace errors in .xaml files
-       - Missing code-behind files (.xaml.cs)
-       - Invalid x:Name or x:Bind expressions
-    4. Verify all converter classes are compiled correctly
-    5. Check for circular references in XAML resource dictionaries
+  - **NEXT INVESTIGATION STEPS**:
+    1. Check Windows Event Viewer for application crash details
+    2. Use Process Monitor to trace XamlCompiler.exe file/registry access
+    3. Try building a minimal WinUI 3 project to isolate if it's environment-specific
+    4. Check if antivirus or security software is interfering with XamlCompiler.exe
+    5. Consider using x:Compile="False" temporarily to bypass XAML compilation
+    6. Attempt build in Visual Studio 2022 IDE (if available) instead of CLI
   - _Leverage: all snapshot test files_
   - _Requirements: 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Run all snapshot tests to generate initial .received files, review them, and rename to .verified to approve following requirement 2.2 | Restrictions: Only approve correct snapshots, document any issues | Success: All snapshot tests pass with approved baselines | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
