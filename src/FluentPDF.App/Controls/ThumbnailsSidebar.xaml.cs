@@ -2,6 +2,7 @@ using System.Linq;
 using FluentPDF.App.Models;
 using FluentPDF.App.ViewModels;
 using FluentPDF.Core.Models;
+using FluentPDF.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;

@@ -89,7 +89,7 @@ public sealed partial class WatermarkDialog : ContentDialog
         _viewModel.TextConfig.Color = System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
 
         // Trigger preview update
-        _viewModel.OnPropertyChanged(nameof(_viewModel.TextConfig));
+        _ = _viewModel.GeneratePreviewCommand.ExecuteAsync(null);
     }
 
     /// <summary>

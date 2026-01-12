@@ -359,34 +359,34 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         AnnotationViewModel.HasUnsavedChanges || FormFieldViewModel.IsModified || ImageInsertionViewModel.HasUnsavedChanges || HasPageModifications;
 
     /// <summary>
-    /// Opens a file picker dialog and loads the selected PDF document.
+    /// Gets the currently loaded PDF document, or null if no document is loaded.
     /// </summary>
-    [RelayCommand]
-    private async Task OpenDocumentAsync()
+    public PdfDocument? CurrentDocument => _currentDocument;
+
+    /// <summary>
+    /// Marks the current page as modified and refreshes the display.
+    /// Used after applying watermarks or other page-level modifications.
+    /// </summary>
+    public async Task RefreshCurrentPageAsync()
     {
-        _logger.LogInformation("OpenDocument command invoked");
+        HasPageModifications = true;
+        await RenderCurrentPageAsync();
+    }
+
+    /// <summary>
+    /// Loads a PDF document from the specified file path.
+    /// This method is primarily used for testing and programmatic document loading.
+    /// </summary>
+    /// <param name="filePath">The path to the PDF file to load.</param>
+    public async Task LoadDocumentFromPathAsync(string filePath)
+    {
+        _logger.LogInformation("Loading document from path: {FilePath}", filePath);
+
+        IsLoading = true;
+        StatusMessage = "Loading document...";
 
         try
         {
-            // Create file picker
-            var picker = new FileOpenPicker();
-            picker.FileTypeFilter.Add(".pdf");
-            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
-
-            // Get window handle for WinUI 3
-            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
-            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-
-            var file = await picker.PickSingleFileAsync();
-            if (file == null)
-            {
-                _logger.LogInformation("File picker cancelled");
-                return;
-            }
-
-            IsLoading = true;
-            StatusMessage = "Loading document...";
-
             // Close previous document if any
             if (_currentDocument != null)
             {
@@ -395,15 +395,13 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             }
 
             // Load document
-            var result = await _documentService.LoadDocumentAsync(file.Path);
+            var result = await _documentService.LoadDocumentAsync(filePath);
 
             if (result.IsFailed)
             {
                 _logger.LogError("Failed to load document: {Errors}", result.Errors);
                 StatusMessage = $"Failed to load document: {result.Errors[0].Message}";
-
-                // Show error dialog
-                await ShowErrorDialogAsync("Failed to Load Document", result.Errors[0].Message);
+                IsLoading = false;
                 return;
             }
 
@@ -435,18 +433,60 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
             // Load annotations for first page
             await AnnotationViewModel.LoadAnnotationsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
+
+            StatusMessage = "Document loaded successfully";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error while opening document");
-            StatusMessage = "Unexpected error while opening document";
-            await ShowErrorDialogAsync("Error", $"An unexpected error occurred: {ex.Message}");
+            _logger.LogError(ex, "Exception loading document from path: {FilePath}", filePath);
+            StatusMessage = $"Failed to load document: {ex.Message}";
         }
         finally
         {
             IsLoading = false;
         }
     }
+
+    /// <summary>
+    /// Opens a file picker dialog and loads the selected PDF document.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenDocumentAsync()
+    {
+        _logger.LogInformation("OpenDocument command invoked");
+
+        try
+        {
+            // Create file picker
+            var picker = new FileOpenPicker();
+            picker.FileTypeFilter.Add(".pdf");
+            picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+
+            // Get window handle for WinUI 3
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+            var file = await picker.PickSingleFileAsync();
+            if (file == null)
+            {
+                _logger.LogInformation("File picker cancelled");
+                return;
+            }
+
+            // Use the new public method to load the document
+            await LoadDocumentFromPathAsync(file.Path);
+            return;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception in OpenDocumentAsync");
+            IsLoading = false;
+            StatusMessage = $"Failed to open document: {ex.Message}";
+            await ShowErrorDialogAsync("Error Opening Document", ex.Message);
+            return;
+        }
+    }
+
 
     /// <summary>
     /// Navigates to the previous page in the document.

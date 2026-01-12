@@ -12,7 +12,7 @@
     PrimaryButtonText="Apply"
     CloseButtonText="Cancel"
     DefaultButton="Primary"
-    IsPrimaryButtonEnabled="{x:Bind ViewModel.ApplyCommand.CanExecute(null), Mode=OneWay}"
+    IsPrimaryButtonEnabled="True"
     Style="{StaticResource DefaultContentDialogStyle}">
 
     <ContentDialog.Resources>
@@ -90,10 +90,12 @@
                         </StackPanel>
 
                         <!-- Color Picker -->
-                        <ColorPicker
-                            Header="Text Color"
-                            x:Name="TextColorPicker"
-                            ColorChanged="OnTextColorChanged" />
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Text Color" />
+                            <ColorPicker
+                                x:Name="TextColorPicker"
+                                ColorChanged="OnTextColorChanged" />
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- Image Configuration -->

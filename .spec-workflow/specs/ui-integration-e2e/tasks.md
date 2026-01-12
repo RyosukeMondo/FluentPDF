@@ -66,7 +66,7 @@
   - _Requirements: US-2, US-3, US-11_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer specializing in test data management | Task: Add or copy PDF test files to E2E TestData folder, including single-page, multi-page, and form PDFs | Restrictions: Use small file sizes for fast tests, ensure files are valid PDFs, do not use copyrighted content | Success: Test files exist, are valid PDFs, have predictable content | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 7. Create document loading E2E test
+- [x] 7. Create document loading E2E test
   - File: tests/FluentPDF.E2E.Tests/Tests/DocumentLoadingTests.cs
   - Test Open button invokes file picker
   - Test loading sample.pdf displays first page

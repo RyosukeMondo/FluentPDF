@@ -24,7 +24,7 @@ public sealed class RecentFilesService : IRecentFilesService
     private const int MaxRecentFiles = 10;
 
     private readonly ILogger<RecentFilesService> _logger;
-    private readonly ApplicationDataContainer _settings;
+    private readonly ApplicationDataContainer? _settings;
     private List<RecentFileEntry> _recentFiles;
 
     /// <summary>
@@ -34,10 +34,18 @@ public sealed class RecentFilesService : IRecentFilesService
     public RecentFilesService(ILogger<RecentFilesService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _settings = ApplicationData.Current.LocalSettings;
         _recentFiles = new List<RecentFileEntry>();
 
-        LoadRecentFiles();
+        try
+        {
+            _settings = ApplicationData.Current.LocalSettings;
+            LoadRecentFiles();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to access ApplicationData.LocalSettings. Recent files will not be persisted.");
+            // _settings will remain null, and we'll operate without persistence
+        }
     }
 
     /// <inheritdoc/>
@@ -119,6 +127,8 @@ public sealed class RecentFilesService : IRecentFilesService
 
     private void LoadRecentFiles()
     {
+        if (_settings is null) return;
+
         try
         {
             if (_settings.Values.TryGetValue(StorageKey, out var storedValue) &&
@@ -163,6 +173,8 @@ public sealed class RecentFilesService : IRecentFilesService
 
     private void SaveRecentFiles()
     {
+        if (_settings is null) return;
+
         try
         {
             var entries = _recentFiles.Select(entry => new StoredEntry

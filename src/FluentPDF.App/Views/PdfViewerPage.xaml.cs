@@ -141,10 +141,7 @@ public sealed partial class PdfViewerPage : Page, IDisposable
 
             if (applied)
             {
-                // Mark document as modified
-                ViewModel.HasUnsavedChanges = true;
-
-                // Refresh the current page display
+                // Refresh the current page display (this also marks the document as modified)
                 await ViewModel.RefreshCurrentPageAsync();
             }
         }

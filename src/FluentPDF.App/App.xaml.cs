@@ -6,7 +6,6 @@ using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
 using FluentPDF.Rendering.Services;
-using Mammoth;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -53,14 +52,27 @@ namespace FluentPDF.App
             }
 
             // Initialize Serilog before anything else
-            Log.Logger = SerilogConfiguration.CreateLogger();
+            try
+            {
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Creating Serilog logger...\n");
+                Log.Logger = SerilogConfiguration.CreateLogger();
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Serilog logger created\n");
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Serilog creation failed: {ex}\n");
+                throw;
+            }
 
             Log.Information("FluentPDF application starting");
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Setting up exception handlers...\n");
 
             // Configure global exception handlers
             SetupExceptionHandlers();
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Exception handlers configured\n");
 
             // Configure dependency injection container
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Creating Host...\n");
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
@@ -94,7 +106,6 @@ namespace FluentPDF.App
                     services.AddSingleton<IRenderingSettingsService, RenderingSettingsService>();
 
                     // Register conversion services
-                    services.AddSingleton<Mammoth.DocumentConverter>(provider => new Mammoth.DocumentConverter());
                     services.AddSingleton<IDocxParserService, DocxParserService>();
                     services.AddSingleton<IHtmlToPdfService, HtmlToPdfService>();
                     services.AddSingleton<IQualityValidationService, LibreOfficeValidator>();
@@ -126,6 +137,7 @@ namespace FluentPDF.App
                     services.AddTransient<WatermarkViewModel>();
                 })
                 .Build();
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Host built successfully. Constructor complete.\n");
         }
 
         /// <summary>
@@ -151,17 +163,24 @@ namespace FluentPDF.App
         /// <param name="e">Details about the launch request and process.</param>
         protected override async void OnLaunched(LaunchActivatedEventArgs e)
         {
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: OnLaunched called\n");
+
             // Initialize PDFium library before starting the application
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Initializing PDFium...\n");
             var initialized = PdfiumInterop.Initialize();
             if (!initialized)
             {
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: PDFium initialization FAILED\n");
                 Log.Fatal("Failed to initialize PDFium library");
                 throw new InvalidOperationException("Failed to initialize PDFium. Please ensure pdfium.dll is available.");
             }
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: PDFium initialized successfully\n");
             Log.Information("PDFium library initialized successfully");
 
             // Start the host
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Starting host...\n");
             await _host.StartAsync();
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Host started\n");
 
             // Initialize and load settings
             try
@@ -194,16 +213,23 @@ namespace FluentPDF.App
             // Log form services registration
             Log.Information("Form services registered: IPdfFormService, IFormValidationService, FormFieldViewModel");
 
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Creating window...\n");
             if (_window is null)
             {
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Getting MainViewModel from DI...\n");
                 var mainViewModel = GetService<MainViewModel>();
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Got MainViewModel. Getting JumpListService...\n");
                 var jumpListService = GetService<JumpListService>();
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Got JumpListService. Creating MainWindow instance...\n");
                 _window = new Views.MainWindow(mainViewModel, jumpListService);
+                System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow created\n");
                 MainWindow = _window;
                 _window.Closed += async (s, e) => await ShutdownAsync();
             }
 
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Activating window...\n");
             _window.Activate();
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Window activated\n");
 
             // Handle file activation from Jump List or command line
             await HandleFileActivationAsync();
@@ -438,6 +464,28 @@ namespace FluentPDF.App
             {
                 // Graceful fallback: log error but continue without OpenTelemetry
                 Log.Warning(ex, "Failed to configure OpenTelemetry. Application will continue without OTLP export to Aspire Dashboard.");
+            }
+        }
+
+        /// <summary>
+        /// Test helper method to load a document from a file path.
+        /// This method is intended for E2E testing and bypasses the file picker UI.
+        /// </summary>
+        /// <param name="filePath">The path to the PDF file to load.</param>
+        public async Task LoadDocumentForTestingAsync(string filePath)
+        {
+            // Get the current PdfViewerViewModel from the active tab
+            var mainViewModel = GetService<MainViewModel>();
+            var activeTab = mainViewModel.ActiveTab;
+
+            if (activeTab?.Content is PdfViewerPage pdfViewerPage)
+            {
+                var viewModel = pdfViewerPage.ViewModel;
+                await viewModel.LoadDocumentFromPathAsync(filePath);
+            }
+            else
+            {
+                throw new InvalidOperationException("No active PdfViewerPage found. Ensure a PDF viewer tab is open.");
             }
         }
     }

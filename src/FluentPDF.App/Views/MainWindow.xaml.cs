@@ -27,17 +27,23 @@ public sealed partial class MainWindow : Window
     /// <param name="jumpListService">Service for Windows Jump List integration.</param>
     public MainWindow(MainViewModel viewModel, JumpListService jumpListService)
     {
+        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow constructor starting\n");
+
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _jumpListService = jumpListService ?? throw new ArgumentNullException(nameof(jumpListService));
 
+        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow InitializeComponent starting\n");
         this.InitializeComponent();
+        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow InitializeComponent completed\n");
 
         Title = "FluentPDF";
 
         // Set up keyboard shortcuts
+        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Setting up keyboard accelerators\n");
         SetupKeyboardAccelerators();
 
         // Populate Recent Files menu
+        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Populating recent files menu\n");
         PopulateRecentFilesMenu();
 
         // Set up empty state visibility handling
@@ -45,6 +51,7 @@ public sealed partial class MainWindow : Window
         UpdateEmptyStateVisibility();
 
         // Set up menu item state updates
+        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Setting up menu item state updates\n");
         ViewModel.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(ViewModel.ActiveTab))
@@ -54,6 +61,7 @@ public sealed partial class MainWindow : Window
             }
         };
         UpdateMenuItemStates();
+        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow constructor completed\n");
     }
 
     /// <summary>

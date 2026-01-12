@@ -1,0 +1,21 @@
+Usage: rembg i [OPTIONS] [INPUT] [OUTPUT]
+
+  for a file as input
+
+Options:
+  -m, --model [birefnet-general|birefnet-general-lite|birefnet-portrait|birefnet-dis|birefnet-hrsod|birefnet-cod|birefnet-massive|isnet-anime|dis_custom|isnet-general-use|sam|silueta|u2net_cloth_seg|u2net_custom|u2net_human_seg|u2net|u2netp|bria-rmbg|ben_custom]
+                                  model name  [default: u2net]
+  -a, --alpha-matting             use alpha matting
+  -af, --alpha-matting-foreground-threshold INTEGER
+                                  trimap fg threshold  [default: 240]
+  -ab, --alpha-matting-background-threshold INTEGER
+                                  trimap bg threshold  [default: 10]
+  -ae, --alpha-matting-erode-size INTEGER
+                                  erode size  [default: 10]
+  -om, --only-mask                output only the mask
+  -ppm, --post-process-mask       post process the mask
+  -bgc, --bgcolor <INTEGER INTEGER INTEGER INTEGER>...
+                                  Background color (R G B A) to replace the
+                                  removed background with
+  -x, --extras TEXT
+  --help                          Show this message and exit.

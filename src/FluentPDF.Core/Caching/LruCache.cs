@@ -118,6 +118,29 @@ public sealed class LruCache<TKey, TValue> : IDisposable
     }
 
     /// <summary>
+    /// Removes a specific item from the cache and disposes it if found.
+    /// </summary>
+    /// <param name="key">The key of the item to remove.</param>
+    /// <returns>True if the item was found and removed, otherwise false.</returns>
+    public bool Remove(TKey key)
+    {
+        lock (_lock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            if (_cache.TryGetValue(key, out var node))
+            {
+                _lruList.Remove(node);
+                _cache.Remove(key);
+                node.Value.Value.Dispose();
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Removes all items from the cache and disposes them.
     /// </summary>
     public void Clear()

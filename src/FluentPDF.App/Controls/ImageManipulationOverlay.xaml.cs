@@ -1,5 +1,4 @@
 using System.Collections.Specialized;
-using System.Drawing;
 using FluentPDF.App.ViewModels;
 using FluentPDF.Core.Models;
 using Microsoft.UI;
@@ -8,6 +7,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using PointF = System.Drawing.PointF;
+using SizeF = System.Drawing.SizeF;
 
 namespace FluentPDF.App.Controls;
 
@@ -41,7 +42,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
     private const double RotationHandleOffset = 20.0;
     private const double SelectionPadding = 4.0;
 
-    private enum ManipulationMode
+    private enum ImageManipulationMode
     {
         None,
         Move,
@@ -56,7 +57,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
         Rotate
     }
 
-    private ManipulationMode _currentMode = ManipulationMode.None;
+    private ImageManipulationMode _currentMode = ImageManipulationMode.None;
     private PointF _manipulationStartPoint;
     private PointF _imageStartPosition;
     private SizeF _imageStartSize;
@@ -221,16 +222,16 @@ public sealed partial class ImageManipulationOverlay : UserControl
         ManipulationCanvas.Children.Add(selectionRect);
 
         // Corner resize handles
-        AddHandle(left, top, ManipulationMode.ResizeTopLeft);
-        AddHandle(left + width, top, ManipulationMode.ResizeTopRight);
-        AddHandle(left, top + height, ManipulationMode.ResizeBottomLeft);
-        AddHandle(left + width, top + height, ManipulationMode.ResizeBottomRight);
+        AddHandle(left, top, ImageManipulationMode.ResizeTopLeft);
+        AddHandle(left + width, top, ImageManipulationMode.ResizeTopRight);
+        AddHandle(left, top + height, ImageManipulationMode.ResizeBottomLeft);
+        AddHandle(left + width, top + height, ImageManipulationMode.ResizeBottomRight);
 
         // Edge resize handles
-        AddHandle(left + width / 2, top, ManipulationMode.ResizeTop);
-        AddHandle(left + width / 2, top + height, ManipulationMode.ResizeBottom);
-        AddHandle(left, top + height / 2, ManipulationMode.ResizeLeft);
-        AddHandle(left + width, top + height / 2, ManipulationMode.ResizeRight);
+        AddHandle(left + width / 2, top, ImageManipulationMode.ResizeTop);
+        AddHandle(left + width / 2, top + height, ImageManipulationMode.ResizeBottom);
+        AddHandle(left, top + height / 2, ImageManipulationMode.ResizeLeft);
+        AddHandle(left + width, top + height / 2, ImageManipulationMode.ResizeRight);
 
         // Rotation handle
         var rotationHandle = new Ellipse
@@ -240,8 +241,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
             Fill = new SolidColorBrush(Colors.Green),
             Stroke = new SolidColorBrush(Colors.White),
             StrokeThickness = 2,
-            Tag = ManipulationMode.Rotate,
-            Cursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Hand)
+            Tag = ImageManipulationMode.Rotate
         };
         Canvas.SetLeft(rotationHandle, left + width / 2 - HandleSize / 2);
         Canvas.SetTop(rotationHandle, top - RotationHandleOffset - HandleSize / 2);
@@ -252,7 +252,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
     /// <summary>
     /// Adds a resize handle at the specified position.
     /// </summary>
-    private void AddHandle(double x, double y, ManipulationMode mode)
+    private void AddHandle(double x, double y, ImageManipulationMode mode)
     {
         var handle = new Rectangle
         {
@@ -261,32 +261,12 @@ public sealed partial class ImageManipulationOverlay : UserControl
             Fill = new SolidColorBrush(Colors.White),
             Stroke = new SolidColorBrush(Colors.Blue),
             StrokeThickness = 2,
-            Tag = mode,
-            Cursor = GetCursorForMode(mode)
+            Tag = mode
         };
         Canvas.SetLeft(handle, x - HandleSize / 2);
         Canvas.SetTop(handle, y - HandleSize / 2);
         handle.PointerPressed += OnHandlePressed;
         ManipulationCanvas.Children.Add(handle);
-    }
-
-    /// <summary>
-    /// Gets the appropriate cursor for a manipulation mode.
-    /// </summary>
-    private Microsoft.UI.Input.InputSystemCursor GetCursorForMode(ManipulationMode mode)
-    {
-        return mode switch
-        {
-            ManipulationMode.ResizeTopLeft or ManipulationMode.ResizeBottomRight =>
-                Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeNorthwestSoutheast),
-            ManipulationMode.ResizeTopRight or ManipulationMode.ResizeBottomLeft =>
-                Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeNortheastSouthwest),
-            ManipulationMode.ResizeTop or ManipulationMode.ResizeBottom =>
-                Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeNorthSouth),
-            ManipulationMode.ResizeLeft or ManipulationMode.ResizeRight =>
-                Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast),
-            _ => Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow)
-        };
     }
 
     /// <summary>
@@ -321,7 +301,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
         var image = ViewModel.SelectedImage;
         if (IsPointInImage(pdfPoint, image))
         {
-            _currentMode = ManipulationMode.Move;
+            _currentMode = ImageManipulationMode.Move;
             _manipulationStartPoint = pdfPoint;
             _imageStartPosition = image.Position;
             ManipulationCanvas.CapturePointer(e.Pointer);
@@ -339,7 +319,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
             return;
         }
 
-        if (sender is FrameworkElement handle && handle.Tag is ManipulationMode mode)
+        if (sender is FrameworkElement handle && handle.Tag is ImageManipulationMode mode)
         {
             _currentMode = mode;
             var point = e.GetCurrentPoint(ManipulationCanvas);
@@ -359,7 +339,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
     /// </summary>
     private void OnPointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (_currentMode == ManipulationMode.None || ViewModel?.SelectedImage == null)
+        if (_currentMode == ImageManipulationMode.None || ViewModel?.SelectedImage == null)
         {
             return;
         }
@@ -371,20 +351,20 @@ public sealed partial class ImageManipulationOverlay : UserControl
 
         switch (_currentMode)
         {
-            case ManipulationMode.Move:
+            case ImageManipulationMode.Move:
                 HandleMove(currentPoint);
                 break;
-            case ManipulationMode.ResizeTopLeft:
-            case ManipulationMode.ResizeTopRight:
-            case ManipulationMode.ResizeBottomLeft:
-            case ManipulationMode.ResizeBottomRight:
-            case ManipulationMode.ResizeTop:
-            case ManipulationMode.ResizeBottom:
-            case ManipulationMode.ResizeLeft:
-            case ManipulationMode.ResizeRight:
+            case ImageManipulationMode.ResizeTopLeft:
+            case ImageManipulationMode.ResizeTopRight:
+            case ImageManipulationMode.ResizeBottomLeft:
+            case ImageManipulationMode.ResizeBottomRight:
+            case ImageManipulationMode.ResizeTop:
+            case ImageManipulationMode.ResizeBottom:
+            case ImageManipulationMode.ResizeLeft:
+            case ImageManipulationMode.ResizeRight:
                 HandleResize(currentPoint);
                 break;
-            case ManipulationMode.Rotate:
+            case ImageManipulationMode.Rotate:
                 HandleRotate(currentPoint);
                 break;
         }
@@ -397,7 +377,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
     /// </summary>
     private async void OnPointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        if (_currentMode == ManipulationMode.None || ViewModel?.SelectedImage == null)
+        if (_currentMode == ImageManipulationMode.None || ViewModel?.SelectedImage == null)
         {
             return;
         }
@@ -407,26 +387,26 @@ public sealed partial class ImageManipulationOverlay : UserControl
         // Apply the final transformation
         switch (_currentMode)
         {
-            case ManipulationMode.Move:
+            case ImageManipulationMode.Move:
                 if (image.Position != _imageStartPosition)
                 {
                     await ViewModel.MoveImageCommand.ExecuteAsync(image.Position);
                 }
                 break;
-            case ManipulationMode.ResizeTopLeft:
-            case ManipulationMode.ResizeTopRight:
-            case ManipulationMode.ResizeBottomLeft:
-            case ManipulationMode.ResizeBottomRight:
-            case ManipulationMode.ResizeTop:
-            case ManipulationMode.ResizeBottom:
-            case ManipulationMode.ResizeLeft:
-            case ManipulationMode.ResizeRight:
+            case ImageManipulationMode.ResizeTopLeft:
+            case ImageManipulationMode.ResizeTopRight:
+            case ImageManipulationMode.ResizeBottomLeft:
+            case ImageManipulationMode.ResizeBottomRight:
+            case ImageManipulationMode.ResizeTop:
+            case ImageManipulationMode.ResizeBottom:
+            case ImageManipulationMode.ResizeLeft:
+            case ImageManipulationMode.ResizeRight:
                 if (image.Size != _imageStartSize)
                 {
                     await ViewModel.ScaleImageCommand.ExecuteAsync(image.Size);
                 }
                 break;
-            case ManipulationMode.Rotate:
+            case ImageManipulationMode.Rotate:
                 if (image.RotationDegrees != _imageStartRotation)
                 {
                     var rotationDelta = image.RotationDegrees - _imageStartRotation;
@@ -435,7 +415,7 @@ public sealed partial class ImageManipulationOverlay : UserControl
                 break;
         }
 
-        _currentMode = ManipulationMode.None;
+        _currentMode = ImageManipulationMode.None;
         ManipulationCanvas.ReleasePointerCapture(e.Pointer);
         e.Handled = true;
     }
@@ -491,40 +471,40 @@ public sealed partial class ImageManipulationOverlay : UserControl
 
         switch (_currentMode)
         {
-            case ManipulationMode.ResizeBottomRight:
+            case ImageManipulationMode.ResizeBottomRight:
                 newSize = new SizeF(
                     Math.Max(10, _imageStartSize.Width + delta.X),
                     Math.Max(10, _imageStartSize.Height + delta.Y));
                 break;
-            case ManipulationMode.ResizeBottomLeft:
+            case ImageManipulationMode.ResizeBottomLeft:
                 newSize = new SizeF(
                     Math.Max(10, _imageStartSize.Width - delta.X),
                     Math.Max(10, _imageStartSize.Height + delta.Y));
                 newPosition = new PointF(_imageStartPosition.X + delta.X, _imageStartPosition.Y);
                 break;
-            case ManipulationMode.ResizeTopRight:
+            case ImageManipulationMode.ResizeTopRight:
                 newSize = new SizeF(
                     Math.Max(10, _imageStartSize.Width + delta.X),
                     Math.Max(10, _imageStartSize.Height - delta.Y));
                 newPosition = new PointF(_imageStartPosition.X, _imageStartPosition.Y + delta.Y);
                 break;
-            case ManipulationMode.ResizeTopLeft:
+            case ImageManipulationMode.ResizeTopLeft:
                 newSize = new SizeF(
                     Math.Max(10, _imageStartSize.Width - delta.X),
                     Math.Max(10, _imageStartSize.Height - delta.Y));
                 newPosition = new PointF(_imageStartPosition.X + delta.X, _imageStartPosition.Y + delta.Y);
                 break;
-            case ManipulationMode.ResizeRight:
+            case ImageManipulationMode.ResizeRight:
                 newSize = new SizeF(Math.Max(10, _imageStartSize.Width + delta.X), _imageStartSize.Height);
                 break;
-            case ManipulationMode.ResizeLeft:
+            case ImageManipulationMode.ResizeLeft:
                 newSize = new SizeF(Math.Max(10, _imageStartSize.Width - delta.X), _imageStartSize.Height);
                 newPosition = new PointF(_imageStartPosition.X + delta.X, _imageStartPosition.Y);
                 break;
-            case ManipulationMode.ResizeBottom:
+            case ImageManipulationMode.ResizeBottom:
                 newSize = new SizeF(_imageStartSize.Width, Math.Max(10, _imageStartSize.Height + delta.Y));
                 break;
-            case ManipulationMode.ResizeTop:
+            case ImageManipulationMode.ResizeTop:
                 newSize = new SizeF(_imageStartSize.Width, Math.Max(10, _imageStartSize.Height - delta.Y));
                 newPosition = new PointF(_imageStartPosition.X, _imageStartPosition.Y + delta.Y);
                 break;

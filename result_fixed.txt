@@ -1,0 +1,4 @@
+Usage: rembg i [OPTIONS] [INPUT] [OUTPUT]
+Try 'rembg i --help' for help.
+
+Error: No such option: -h
