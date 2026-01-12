@@ -98,19 +98,19 @@
     - ❌ Added UseWPF=false and UseWindowsForms=false properties (doesn't prevent transitive references)
     - ❌ Created FilterWpfReferences MSBuild target to filter ReferencePathWithRefAssemblies (target runs too late or wrong item group)
     - ❌ Set IncludePackageReferencesDuringMarkupCompilation=false (no effect)
-  - **NEXT INVESTIGATION STEPS**:
+    - ⚠️  Created filter-xaml-compiler-input.ps1 PowerShell script (runs successfully, removes 21 WPF assemblies, but changes don't persist - MSBuild regenerates input.json)
+  - **RECOMMENDED SOLUTIONS** (in order of preference):
+    1. **Replace Mammoth with DocumentFormat.OpenXml** - No WPF dependencies, Microsoft-supported, actively maintained
+    2. **Isolate Mammoth in separate process** - Run docx parsing in external process, communicate via IPC
+    3. **Find exact MSBuild hook** - Intercept right before XamlCompiler.exe invocation (requires deep MSBuild knowledge)
+    4. **Try Visual Studio 2022 IDE build** - May have workarounds for this issue
+  - **COMPLETED INVESTIGATION STEPS**:
     1. ~~Check Windows Event Viewer for application crash details~~ (checked - no XamlCompiler crashes logged)
-    2. Use Process Monitor to trace XamlCompiler.exe file/registry access patterns
-    3. ~~Try building a minimal WinUI 3 project~~ (DONE - builds successfully, isolates issue to FluentPDF.App)
-    4. ~~Binary search XAML files~~ (DONE - all files fail individually due to missing code-behind, not XAML syntax errors)
-    5. ~~Examine input.json for FluentPDF.App vs minimal project to identify differences~~ (DONE - found WPF assemblies)
-    6. ~~Check if specific NuGet package combinations trigger XamlCompiler bug~~ (DONE - Mammoth brings WPF)
-    7. Try building FluentPDF.App in Visual Studio 2022 IDE for better error diagnostics
-    8. **Create custom MSBuild target that intercepts and modifies XamlCompiler input.json** to remove WPF assemblies
-    9. **Find alternative to Mammoth** without WPF dependencies (e.g., Open XML SDK, DocumentFormat.OpenXml)
-    10. **Isolate Mammoth in separate service/process** so WPF assemblies don't reach XamlCompiler
-    11. Try using Reference Remove with specific WPF assembly names before MarkupCompilePass1
-    12. Consider creating a fresh WinUI 3 project and migrating files incrementally
+    2. ~~Try building a minimal WinUI 3 project~~ (DONE - builds successfully, isolates issue to FluentPDF.App)
+    3. ~~Binary search XAML files~~ (DONE - all files fail individually due to missing code-behind, not XAML syntax errors)
+    4. ~~Examine input.json for FluentPDF.App vs minimal project to identify differences~~ (DONE - found WPF assemblies)
+    5. ~~Check if specific NuGet package combinations trigger XamlCompiler bug~~ (DONE - Mammoth brings WPF)
+    6. ~~Create custom MSBuild target that intercepts and modifies XamlCompiler input.json~~ (DONE - script works but changes don't persist)
   - _Leverage: all snapshot test files_
   - _Requirements: 2.2_
   - _Prompt: Implement the task for spec snapshot-testing, first run spec-workflow-guide to get the workflow guide then implement the task: Role: QA Engineer | Task: Run all snapshot tests to generate initial .received files, review them, and rename to .verified to approve following requirement 2.2 | Restrictions: Only approve correct snapshots, document any issues | Success: All snapshot tests pass with approved baselines | After implementation: Mark task as in-progress in tasks.md before starting, use log-implementation tool to record what was done, then mark as complete_
