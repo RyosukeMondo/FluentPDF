@@ -32,7 +32,7 @@
   - _Requirements: US-1_
   - _Prompt: Implement the task for spec ui-integration-e2e, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer specializing in logging and diagnostics | Task: Create LogVerifier that parses Serilog JSON logs and asserts no ERROR level entries during test execution | Restrictions: Must handle missing log files gracefully, parse JSON format correctly, do not modify app logging | Success: LogVerifier correctly identifies error entries, provides useful diagnostic output | Mark task [ ] to [-] in tasks.md before starting, use log-implementation tool after completion, then mark [-] to [x]_
 
-- [ ] 4. Add AutomationIds to MainWindow and toolbar
+- [x] 4. Add AutomationIds to MainWindow and toolbar
   - File: src/FluentPDF.App/Views/MainWindow.xaml
   - File: src/FluentPDF.App/Views/PdfViewerPage.xaml
   - Add AutomationProperties.AutomationId to all interactive elements
