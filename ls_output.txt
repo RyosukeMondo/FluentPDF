@@ -1,2 +1,0 @@
-.rw-rw-r-- 451k rmondo 12  1月 20:12 master_no_bg.png
-.rw-r--r-- 346k rmondo 12  1月 20:12 master_with_bg.png
