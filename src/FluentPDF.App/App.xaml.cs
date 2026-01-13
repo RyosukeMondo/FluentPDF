@@ -626,30 +626,24 @@ namespace FluentPDF.App
                 var watermarkService = GetService<IWatermarkService>();
 
                 // Create watermark configuration
-                var config = new WatermarkConfig
+                var config = new TextWatermarkConfig
                 {
-                    Type = WatermarkType.Text,
-                    TextConfig = new TextWatermarkConfig
-                    {
-                        Text = text,
-                        FontFamily = "Arial",
-                        FontSize = fontSize,
-                        Color = System.Drawing.Color.FromArgb(128, 128, 128)
-                    },
+                    Text = text,
+                    FontFamily = "Arial",
+                    FontSize = (float)fontSize,
+                    Color = System.Drawing.Color.FromArgb(128, 128, 128),
+                    Opacity = (float)(opacity / 100.0),
+                    RotationDegrees = 45f,
                     Position = WatermarkPosition.Center,
-                    Opacity = opacity / 100.0,
-                    Rotation = 45,
-                    BehindContent = false,
-                    PageRangeType = PageRangeType.AllPages
+                    BehindContent = false
                 };
 
-                // Apply the watermark
-                var progress = new Progress<double>();
-                var result = await watermarkService.ApplyWatermarkAsync(
-                    viewModel.Document!,
+                // Apply the watermark to all pages
+                var pageRange = WatermarkPageRange.All;
+                var result = await watermarkService.ApplyTextWatermarkAsync(
+                    viewModel.CurrentDocument!,
                     config,
-                    progress,
-                    CancellationToken.None);
+                    pageRange);
 
                 if (!result.IsSuccess)
                 {
@@ -698,7 +692,7 @@ namespace FluentPDF.App
 
                 // Insert the image at the specified position
                 var result = await imageInsertionService.InsertImageAsync(
-                    viewModel.Document!,
+                    viewModel.CurrentDocument!,
                     viewModel.CurrentPageNumber,
                     imagePath,
                     new System.Drawing.PointF(x, y));

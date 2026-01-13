@@ -187,10 +187,20 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private async void OnOpenFileClick(object sender, RoutedEventArgs? e)
     {
-        await ViewModel.OpenFileInNewTabCommand.ExecuteAsync(null);
-        // Refresh Recent Files menu and Jump List
-        PopulateRecentFilesMenu();
-        await UpdateJumpListAsync();
+        var debugLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log");
+        try
+        {
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OnOpenFileClick invoked\n");
+            await ViewModel.OpenFileInNewTabCommand.ExecuteAsync(null);
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OpenFileInNewTabCommand completed\n");
+            // Refresh Recent Files menu and Jump List
+            PopulateRecentFilesMenu();
+            await UpdateJumpListAsync();
+        }
+        catch (Exception ex)
+        {
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OnOpenFileClick ERROR: {ex.Message}\n{ex.StackTrace}\n");
+        }
     }
 
     /// <summary>
@@ -337,18 +347,30 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private async void OnSettingsClick(object sender, RoutedEventArgs e)
     {
-        var settingsPage = new SettingsPage();
-
-        var dialog = new ContentDialog
+        var debugLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log");
+        try
         {
-            Title = "Settings",
-            Content = settingsPage,
-            CloseButtonText = "Close",
-            DefaultButton = ContentDialogButton.Close,
-            XamlRoot = this.Content.XamlRoot
-        };
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OnSettingsClick invoked\n");
+            var settingsPage = new SettingsPage();
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: SettingsPage created\n");
 
-        await dialog.ShowAsync();
+            var dialog = new ContentDialog
+            {
+                Title = "Settings",
+                Content = settingsPage,
+                CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.Content.XamlRoot
+            };
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: ContentDialog created, showing...\n");
+
+            await dialog.ShowAsync();
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: ContentDialog closed\n");
+        }
+        catch (Exception ex)
+        {
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Settings ERROR: {ex.Message}\n{ex.StackTrace}\n");
+        }
     }
 
     /// <summary>

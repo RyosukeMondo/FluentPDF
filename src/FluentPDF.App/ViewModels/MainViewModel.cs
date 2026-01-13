@@ -56,28 +56,37 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task OpenFileInNewTabAsync()
     {
+        var debugLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log");
+        System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OpenFileInNewTab command invoked\n");
         _logger.LogInformation("OpenFileInNewTab command invoked");
 
         try
         {
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Creating FileOpenPicker\n");
             var picker = new FileOpenPicker();
             picker.FileTypeFilter.Add(".pdf");
             picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
 
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Getting window handle\n");
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Initializing picker with window handle\n");
             WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Showing file picker\n");
             var file = await picker.PickSingleFileAsync();
             if (file == null)
             {
+                System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: File picker cancelled\n");
                 _logger.LogInformation("File picker cancelled");
                 return;
             }
 
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: File selected: {file.Path}\n");
             await OpenFileInTabAsync(file.Path);
         }
         catch (Exception ex)
         {
+            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: ERROR: {ex.Message}\n{ex.StackTrace}\n");
             _logger.LogError(ex, "Failed to open file in new tab");
         }
     }

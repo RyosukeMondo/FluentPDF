@@ -1,5 +1,6 @@
-using FlaUI.Core.Application;
-using FlaUI.Core.Definitions;
+using FlaUI.Core;
+using FlaUI.Core.AutomationElements;
+using FlaUI.UIA3;
 
 namespace FluentPDF.E2E.Tests.Fixtures;
 
