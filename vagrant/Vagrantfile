@@ -1,0 +1,206 @@
+# FluentPDF Windows Development VM
+# Provides automated build, test, and E2E testing environment
+
+Vagrant.configure("2") do |config|
+  # Windows 11 Enterprise (latest stable)
+  config.vm.box = "gusztavvargadr/windows-11-23h2-enterprise"
+
+  config.vm.define "fluentpdf-dev" do |win|
+    win.vm.hostname = "fluentpdf-dev"
+  end
+
+  # Sync FluentPDF project to VM
+  config.vm.synced_folder "..", "/fluentpdf",
+    type: "rsync",
+    rsync__exclude: [
+      ".git/",
+      "**/bin/",
+      "**/obj/",
+      ".vs/",
+      "TestResults/",
+      ".vagrant/",
+      "**/node_modules/"
+    ],
+    rsync__args: ["--verbose", "--archive", "--delete", "-z"]
+
+  # Network configuration
+  config.vm.network "private_network", type: "dhcp"
+
+  # Port forwarding
+  config.vm.network "forwarded_port", guest: 3389, host: 23389, host_ip: "0.0.0.0"  # RDP
+
+  # Provider configuration - Optimized for WinUI 3
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.cpus = 4
+    libvirt.memory = 16384  # 16GB for WinUI 3 builds
+    libvirt.machine_virtual_size = 100  # 100GB disk
+
+    # Graphics (required for E2E UI tests)
+    libvirt.graphics_type = "spice"
+    libvirt.video_type = "qxl"
+    libvirt.video_vram = 65536  # 64MB VRAM for GUI
+    libvirt.input :type => "tablet", :bus => "usb"
+    libvirt.channel :type => 'spicevmc', :target_name => 'com.redhat.spice.0', :target_type => 'virtio'
+
+    # Performance
+    libvirt.cpu_mode = "host-passthrough"
+    libvirt.nested = true
+    libvirt.disk_bus = "virtio"
+    libvirt.nic_model_type = "virtio"
+    libvirt.disk_driver :cache => 'none'
+  end
+
+  # VirtualBox fallback (if libvirt not available)
+  config.vm.provider :virtualbox do |vb|
+    vb.cpus = 4
+    vb.memory = 16384
+    vb.gui = true  # Need GUI for E2E tests
+    vb.customize ["modifyvm", :id, "--vram", "128"]
+    vb.customize ["modifyvm", :id, "--accelerate3d", "on"]
+  end
+
+  # === PROVISIONING ===
+
+  # 1. Install Chocolatey
+  config.vm.provision "shell", privileged: true, name: "install-chocolatey", inline: <<-SHELL
+    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+      Write-Host "Installing Chocolatey..."
+      Set-ExecutionPolicy Bypass -Scope Process -Force
+      [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+      iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+    }
+  SHELL
+
+  # 2. Install development tools
+  config.vm.provision "shell", privileged: true, name: "install-dev-tools", inline: <<-SHELL
+    Write-Host "Installing development tools..."
+    choco install -y git dotnet-8.0-sdk visualstudio2022buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools --add Microsoft.VisualStudio.Workload.UniversalBuildTools"
+
+    # Refresh environment
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+  SHELL
+
+  # 3. Install Windows App SDK Runtime
+  config.vm.provision "shell", privileged: true, name: "install-wasdk", inline: <<-SHELL
+    Write-Host "Installing Windows App SDK Runtime..."
+    $installerPath = "$env:TEMP\\windowsappruntimeinstall.exe"
+    Invoke-WebRequest -Uri "https://aka.ms/windowsappsdk/1.7/latest/windowsappruntimeinstall-x64.exe" -OutFile $installerPath
+    Start-Process -FilePath $installerPath -ArgumentList "/quiet" -Wait
+    Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
+    Write-Host "Windows App SDK Runtime installed"
+  SHELL
+
+  # 4. Download native dependencies (pdfium, qpdf)
+  config.vm.provision "shell", privileged: false, name: "download-native-deps", inline: <<-SHELL
+    $fluentPdfPath = "C:\\fluentpdf"
+    $libsPath = "$fluentPdfPath\\libs\\x64\\bin"
+
+    # Create libs directory
+    New-Item -ItemType Directory -Force -Path $libsPath | Out-Null
+
+    # Download PDFium
+    Write-Host "Downloading PDFium..."
+    $pdfiumZip = "$env:TEMP\\pdfium.tgz"
+    Invoke-WebRequest -Uri "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-win-x64.tgz" -OutFile $pdfiumZip
+
+    # Extract PDFium (tgz requires two steps)
+    $extractPath = "$env:TEMP\\pdfium-extract"
+    New-Item -ItemType Directory -Force -Path $extractPath | Out-Null
+    tar -xzf $pdfiumZip -C $extractPath
+
+    # Find and copy pdfium.dll
+    $pdfiumDll = Get-ChildItem -Path $extractPath -Recurse -Filter "pdfium.dll" | Select-Object -First 1
+    if ($pdfiumDll) {
+      Copy-Item $pdfiumDll.FullName "$libsPath\\pdfium.dll" -Force
+      Write-Host "PDFium installed: $libsPath\\pdfium.dll"
+    }
+
+    # Download QPDF
+    Write-Host "Downloading QPDF..."
+    $qpdfZip = "$env:TEMP\\qpdf.zip"
+    Invoke-WebRequest -Uri "https://github.com/qpdf/qpdf/releases/download/v11.9.1/qpdf-11.9.1-msvc64.zip" -OutFile $qpdfZip
+    Expand-Archive -Path $qpdfZip -DestinationPath "$env:TEMP\\qpdf-extract" -Force
+
+    # Find and copy qpdf dll (it's named qpdf29.dll)
+    $qpdfDll = Get-ChildItem -Path "$env:TEMP\\qpdf-extract" -Recurse -Filter "qpdf*.dll" | Where-Object { $_.Name -match "qpdf\\d+\\.dll" } | Select-Object -First 1
+    if ($qpdfDll) {
+      Copy-Item $qpdfDll.FullName "$libsPath\\qpdf.dll" -Force
+      Write-Host "QPDF installed: $libsPath\\qpdf.dll"
+    }
+
+    # Cleanup
+    Remove-Item $pdfiumZip, $qpdfZip -Force -ErrorAction SilentlyContinue
+    Remove-Item "$env:TEMP\\pdfium-extract", "$env:TEMP\\qpdf-extract" -Recurse -Force -ErrorAction SilentlyContinue
+
+    Write-Host "Native dependencies installed!"
+  SHELL
+
+  # 5. Enable RDP
+  config.vm.provision "shell", privileged: true, name: "enable-rdp", inline: <<-SHELL
+    Write-Host "Enabling Remote Desktop..."
+    Set-ItemProperty -Path "HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server" -Name "fDenyTSConnections" -Value 0
+    Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    Restart-Service TermService -Force
+    Write-Host "RDP enabled - Connect to localhost:23389 (vagrant/vagrant)"
+  SHELL
+
+  # 6. Build FluentPDF
+  config.vm.provision "shell", privileged: false, name: "build-fluentpdf", inline: <<-SHELL
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+
+    Set-Location "C:\\fluentpdf"
+
+    Write-Host "Building FluentPDF..."
+    dotnet restore
+    dotnet build src\\FluentPDF.App\\FluentPDF.App.csproj -c Debug -p:Platform=x64
+
+    # Copy native DLLs to output
+    $outputDir = "src\\FluentPDF.App\\bin\\x64\\Debug\\net8.0-windows10.0.19041.0\\win-x64"
+    Copy-Item "libs\\x64\\bin\\pdfium.dll" "$outputDir\\" -Force -ErrorAction SilentlyContinue
+    Copy-Item "libs\\x64\\bin\\qpdf.dll" "$outputDir\\" -Force -ErrorAction SilentlyContinue
+
+    Write-Host "FluentPDF build complete!"
+  SHELL
+
+  # 7. Verify setup (runs on every vagrant up)
+  config.vm.provision "shell", run: "always", privileged: false, name: "verify-setup", inline: <<-SHELL
+    Write-Host ""
+    Write-Host "=== FluentPDF Dev VM Status ===" -ForegroundColor Cyan
+
+    # Check project sync
+    if (Test-Path "C:\\fluentpdf\\FluentPDF.sln") {
+      Write-Host "[OK] FluentPDF project synced" -ForegroundColor Green
+    } else {
+      Write-Host "[!!] FluentPDF not synced - run: vagrant rsync" -ForegroundColor Red
+    }
+
+    # Check native DLLs
+    $libsPath = "C:\\fluentpdf\\libs\\x64\\bin"
+    if (Test-Path "$libsPath\\pdfium.dll") {
+      Write-Host "[OK] pdfium.dll available" -ForegroundColor Green
+    } else {
+      Write-Host "[!!] pdfium.dll missing" -ForegroundColor Red
+    }
+
+    if (Test-Path "$libsPath\\qpdf.dll") {
+      Write-Host "[OK] qpdf.dll available" -ForegroundColor Green
+    } else {
+      Write-Host "[!!] qpdf.dll missing" -ForegroundColor Red
+    }
+
+    # Check build output
+    $exePath = "C:\\fluentpdf\\src\\FluentPDF.App\\bin\\x64\\Debug\\net8.0-windows10.0.19041.0\\win-x64\\FluentPDF.App.exe"
+    if (Test-Path $exePath) {
+      Write-Host "[OK] FluentPDF.App.exe built" -ForegroundColor Green
+    } else {
+      Write-Host "[!!] App not built - run: vagrant provision --provision-with build-fluentpdf" -ForegroundColor Yellow
+    }
+
+    Write-Host ""
+    Write-Host "Commands:" -ForegroundColor Yellow
+    Write-Host "  vagrant ssh              - SSH into VM"
+    Write-Host "  vagrant rsync            - Sync files to VM"
+    Write-Host "  RDP: localhost:23389     - GUI access (vagrant/vagrant)"
+    Write-Host ""
+  SHELL
+end
