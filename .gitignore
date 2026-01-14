@@ -17,6 +17,8 @@ bld/
 # Visual Studio cache/options
 .vs/
 .vscode/
+!.vscode/tasks.json
+!.vscode/launch.json
 *.suo
 *.user
 *.userosscache
@@ -183,3 +185,12 @@ riderModule.iml
 # Application data (generated at runtime)
 AppData/
 LocalState/
+
+# Build logs and temporary error reports
+build_errors.txt
+build_errors_app.txt
+build_errors_app_final.txt
+final_build_attempt.txt
+
+# Benchmark artifacts
+BenchmarkDotNet.Artifacts/

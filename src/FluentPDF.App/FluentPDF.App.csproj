@@ -65,6 +65,11 @@
 
         <Manifest Include="$(ApplicationManifest)" />
     </ItemGroup>
+ 
+    <ItemGroup>
+        <None Include="..\..\libs\$(Platform)\bin\pdfium.dll" Link="pdfium.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\libs\$(Platform)\bin\pdfium.dll')" />
+        <None Include="..\..\libs\$(Platform)\bin\qpdf.dll" Link="qpdf.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\libs\$(Platform)\bin\qpdf.dll')" />
+    </ItemGroup>
 
     <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <ProjectCapability Include="Msix" />

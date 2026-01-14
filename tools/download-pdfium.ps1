@@ -42,7 +42,7 @@ if ($pdfiumDll) {
 
     # Copy to libs directory
     $rootPath = Split-Path $PSScriptRoot -Parent
-    $libsPath = Join-Path $rootPath "libs" $Architecture "bin"
+    $libsPath = Join-Path (Join-Path (Join-Path $rootPath "libs") $Architecture) "bin"
 
     if (-not (Test-Path $libsPath)) {
         New-Item -Path $libsPath -ItemType Directory -Force | Out-Null
