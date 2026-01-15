@@ -21,7 +21,7 @@ namespace FluentPDF.Rendering.Services;
 public sealed class PdfRenderingService : IPdfRenderingService
 {
     private readonly ILogger<PdfRenderingService> _logger;
-    private static readonly ActivitySource ActivitySource = new("FluentPDF.Rendering");
+    private static readonly ActivitySource _activitySource = new("FluentPDF.Rendering");
     private const int SlowRenderThresholdMs = 2000;
     private const double StandardDpi = 96.0;
     private const double HighDpiThreshold = 144.0; // 1.5x scaling
@@ -42,7 +42,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
         double zoomLevel,
         double dpi = 96)
     {
-        using var activity = ActivitySource.StartActivity("RenderPage");
+        using var activity = _activitySource.StartActivity("RenderPage");
 
         if (document == null)
         {
@@ -90,7 +90,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
             try
             {
                 // Load page (0-based index)
-                using (var loadPageActivity = ActivitySource.StartActivity("LoadPage"))
+                using (var loadPageActivity = _activitySource.StartActivity("LoadPage"))
                 {
                     loadPageActivity?.SetTag("page.number", pageNumber);
 
@@ -159,7 +159,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                 var attemptedFallback = false;
 
                 // Render page to bitmap
-                using (var renderBitmapActivity = ActivitySource.StartActivity("RenderBitmap"))
+                using (var renderBitmapActivity = _activitySource.StartActivity("RenderBitmap"))
                 {
                     renderBitmapActivity?.SetTag("output.width", outputWidth);
                     renderBitmapActivity?.SetTag("output.height", outputHeight);
@@ -236,7 +236,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
 
                 // Convert bitmap to PNG stream
                 Stream imageStream;
-                using (var convertImageActivity = ActivitySource.StartActivity("ConvertToImage"))
+                using (var convertImageActivity = _activitySource.StartActivity("ConvertToImage"))
                 {
                     convertImageActivity?.SetTag("output.format", "PNG");
                     imageStream = await ConvertToPngStreamAsync(bitmap, effectiveWidth, effectiveHeight);

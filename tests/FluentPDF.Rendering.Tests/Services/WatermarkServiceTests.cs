@@ -508,7 +508,10 @@ public sealed class WatermarkServiceTests : IDisposable
                 image[x, y] = SixLabors.ImageSharp.Color.Red;
             }
         }
-        image.Save(filePath, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+        using (var fileStream = File.Create(filePath))
+        {
+            image.Save(fileStream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+        }
 
         return filePath;
     }

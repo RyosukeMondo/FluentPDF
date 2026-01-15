@@ -1,10 +1,10 @@
+using System.Diagnostics;
 using FluentPDF.Core.ErrorHandling;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
 using FluentResults;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
 namespace FluentPDF.Rendering.Services;
 

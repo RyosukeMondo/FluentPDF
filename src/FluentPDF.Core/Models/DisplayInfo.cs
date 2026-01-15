@@ -82,8 +82,8 @@ public sealed class DisplayInfo
     /// <returns>A DisplayInfo instance with calculated effective DPI.</returns>
     public static DisplayInfo FromScale(double scale)
     {
-        const double baseDpi = 96.0;
-        var effectiveDpi = baseDpi * scale;
+        const double BaseDpi = 96.0;
+        var effectiveDpi = BaseDpi * scale;
         return Create(scale, effectiveDpi);
     }
 

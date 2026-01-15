@@ -82,10 +82,9 @@ public class VisualTestPerformanceBenchmarks
 
         // Setup services
         var renderingLogger = new LoggerFactory().CreateLogger<HeadlessRenderingService>();
-        var comparisonLogger = new LoggerFactory().CreateLogger<VisualComparisonService>();
 
         _renderingService = new HeadlessRenderingService(renderingLogger);
-        _comparisonService = new VisualComparisonService(comparisonLogger);
+        _comparisonService = new VisualComparisonService();
 
         // Setup paths - navigate from bin/Release/net8.0 to Fixtures
         _fixturesPath = Path.Combine(

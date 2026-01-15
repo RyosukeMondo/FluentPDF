@@ -18,7 +18,7 @@ namespace FluentPDF.Rendering.Services;
 public sealed class DpiDetectionService : IDpiDetectionService, IDisposable
 {
     private readonly ILogger<DpiDetectionService> _logger;
-    private static readonly ActivitySource ActivitySource = new("FluentPDF.Rendering");
+    private static readonly ActivitySource _activitySource = new("FluentPDF.Rendering");
     private const double BaseDpi = 96.0;
     private const double MinDpi = 50.0;
     private const double MaxDpi = 576.0;
@@ -38,7 +38,7 @@ public sealed class DpiDetectionService : IDpiDetectionService, IDisposable
     /// <inheritdoc />
     public Result<DisplayInfo> GetCurrentDisplayInfo(object? xamlRoot)
     {
-        using var activity = ActivitySource.StartActivity("GetCurrentDisplayInfo");
+        using var activity = _activitySource.StartActivity("GetCurrentDisplayInfo");
         var correlationId = Guid.NewGuid();
 
         _logger.LogDebug("Getting current display info. CorrelationId={CorrelationId}", correlationId);
@@ -115,7 +115,7 @@ public sealed class DpiDetectionService : IDpiDetectionService, IDisposable
     /// <inheritdoc />
     public Result<IObservable<DisplayInfo>> MonitorDpiChanges(object? xamlRoot, int throttleMilliseconds = 500)
     {
-        using var activity = ActivitySource.StartActivity("MonitorDpiChanges");
+        using var activity = _activitySource.StartActivity("MonitorDpiChanges");
         var correlationId = Guid.NewGuid();
 
         _logger.LogDebug(
@@ -209,7 +209,7 @@ public sealed class DpiDetectionService : IDpiDetectionService, IDisposable
     /// <inheritdoc />
     public Result<double> CalculateEffectiveDpi(DisplayInfo displayInfo, double zoomLevel, RenderingQuality quality)
     {
-        using var activity = ActivitySource.StartActivity("CalculateEffectiveDpi");
+        using var activity = _activitySource.StartActivity("CalculateEffectiveDpi");
         var correlationId = Guid.NewGuid();
 
         try

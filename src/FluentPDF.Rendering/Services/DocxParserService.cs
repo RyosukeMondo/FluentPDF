@@ -1,11 +1,11 @@
+using System.Net;
+using System.Text;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 using FluentPDF.Core.ErrorHandling;
 using FluentPDF.Core.Services;
 using FluentResults;
 using Microsoft.Extensions.Logging;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
-using System.Text;
-using System.Net;
 
 namespace FluentPDF.Rendering.Services;
 
@@ -211,9 +211,12 @@ public sealed class DocxParserService : IDocxParserService
         var isItalic = runProperties?.Italic != null;
         var isUnderline = runProperties?.Underline != null;
 
-        if (isBold) htmlBuilder.Append("<strong>");
-        if (isItalic) htmlBuilder.Append("<em>");
-        if (isUnderline) htmlBuilder.Append("<u>");
+        if (isBold)
+            htmlBuilder.Append("<strong>");
+        if (isItalic)
+            htmlBuilder.Append("<em>");
+        if (isUnderline)
+            htmlBuilder.Append("<u>");
 
         foreach (var element in run.Elements())
         {
@@ -231,9 +234,12 @@ public sealed class DocxParserService : IDocxParserService
             }
         }
 
-        if (isUnderline) htmlBuilder.Append("</u>");
-        if (isItalic) htmlBuilder.Append("</em>");
-        if (isBold) htmlBuilder.Append("</strong>");
+        if (isUnderline)
+            htmlBuilder.Append("</u>");
+        if (isItalic)
+            htmlBuilder.Append("</em>");
+        if (isBold)
+            htmlBuilder.Append("</strong>");
     }
 
     private void ConvertHyperlinkToHtml(Hyperlink hyperlink, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
@@ -265,15 +271,18 @@ public sealed class DocxParserService : IDocxParserService
 
     private void ConvertDrawingToHtml(Drawing drawing, StringBuilder htmlBuilder, MainDocumentPart? mainPart)
     {
-        if (mainPart == null) return;
+        if (mainPart == null)
+            return;
 
         var blip = drawing.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().FirstOrDefault();
-        if (blip?.Embed?.Value == null) return;
+        if (blip?.Embed?.Value == null)
+            return;
 
         try
         {
             var imagePart = mainPart.GetPartById(blip.Embed.Value) as ImagePart;
-            if (imagePart == null) return;
+            if (imagePart == null)
+                return;
 
             using var stream = imagePart.GetStream();
             using var memoryStream = new MemoryStream();

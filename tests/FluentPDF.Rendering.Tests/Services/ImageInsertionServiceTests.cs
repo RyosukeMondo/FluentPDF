@@ -365,7 +365,10 @@ public sealed class ImageInsertionServiceTests
         // Create a minimal 1x1 PNG image
         using var image = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(1, 1);
         image[0, 0] = SixLabors.ImageSharp.Color.Red;
-        image.SaveAsPng(filePath);
+        using (var fileStream = File.Create(filePath))
+        {
+            image.Save(fileStream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+        }
 
         return filePath;
     }

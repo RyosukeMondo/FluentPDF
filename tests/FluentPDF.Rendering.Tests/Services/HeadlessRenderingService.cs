@@ -131,7 +131,7 @@ public sealed class HeadlessRenderingService : IHeadlessRenderingService
                     var error = new PdfError(
                         "PDF_LOAD_FAILED",
                         $"Failed to load PDF. PDFium error code: {errorCode}",
-                        ErrorCategory.External,
+                        ErrorCategory.Rendering,
                         ErrorSeverity.Error)
                         .WithContext("PdfPath", pdfPath)
                         .WithContext("ErrorCode", errorCode)
@@ -166,7 +166,7 @@ public sealed class HeadlessRenderingService : IHeadlessRenderingService
                     var error = new PdfError(
                         "PAGE_LOAD_FAILED",
                         $"Failed to load page {pageNumber}",
-                        ErrorCategory.External,
+                        ErrorCategory.Rendering,
                         ErrorSeverity.Error)
                         .WithContext("PageNumber", pageNumber)
                         .WithContext("CorrelationId", correlationId);
@@ -193,7 +193,7 @@ public sealed class HeadlessRenderingService : IHeadlessRenderingService
                     var error = new PdfError(
                         "RENDERING_FAILED",
                         "Failed to create bitmap",
-                        ErrorCategory.External,
+                        ErrorCategory.Rendering,
                         ErrorSeverity.Error)
                         .WithContext("Width", pixelWidth)
                         .WithContext("Height", pixelHeight)
@@ -250,7 +250,7 @@ public sealed class HeadlessRenderingService : IHeadlessRenderingService
                 return Result.Fail(new PdfError(
                     "OPERATION_CANCELLED",
                     "Rendering operation was cancelled",
-                    ErrorCategory.User,
+                    ErrorCategory.Validation,
                     ErrorSeverity.Warning)
                     .WithContext("CorrelationId", correlationId));
             }
@@ -259,7 +259,7 @@ public sealed class HeadlessRenderingService : IHeadlessRenderingService
                 var error = new PdfError(
                     "RENDERING_FAILED",
                     $"Unexpected error during rendering: {ex.Message}",
-                    ErrorCategory.External,
+                    ErrorCategory.Rendering,
                     ErrorSeverity.Error)
                     .WithContext("Exception", ex.GetType().Name)
                     .WithContext("CorrelationId", correlationId);

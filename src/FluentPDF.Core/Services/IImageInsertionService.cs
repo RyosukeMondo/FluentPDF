@@ -1,6 +1,6 @@
+using System.Drawing;
 using FluentPDF.Core.Models;
 using FluentResults;
-using System.Drawing;
 
 namespace FluentPDF.Core.Services;
 
