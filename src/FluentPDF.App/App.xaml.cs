@@ -152,6 +152,9 @@ namespace FluentPDF.App
                     services.AddSingleton<RenderingObservabilityService>();
                     services.AddSingleton<UIBindingVerifier>();
 
+                    // Register diagnostic command handler
+                    services.AddSingleton<DiagnosticCommandHandler>();
+
                     // Register rendering strategies
                     services.AddTransient<IRenderingStrategy, WriteableBitmapRenderingStrategy>();
                     services.AddTransient<IRenderingStrategy, FileBasedRenderingStrategy>();
@@ -251,6 +254,13 @@ namespace FluentPDF.App
             System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Starting host...\n");
             await _host.StartAsync();
             System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Host started\n");
+
+            // Handle CLI diagnostic commands (execute and exit before UI initialization)
+            if (await HandleDiagnosticCommandsAsync())
+            {
+                // Diagnostic command executed, exit gracefully
+                return;
+            }
 
             // Initialize and load settings
             try
@@ -441,6 +451,57 @@ namespace FluentPDF.App
 
             // Cannot prevent crash in this handler, but log is saved
             Log.CloseAndFlush();
+        }
+
+        /// <summary>
+        /// Handles CLI diagnostic commands and returns true if a command was executed.
+        /// </summary>
+        /// <returns>True if a diagnostic command was executed; otherwise, false.</returns>
+        private async Task<bool> HandleDiagnosticCommandsAsync()
+        {
+            var options = CommandLineOptions;
+
+            // Check for verbose mode and increase logging level
+            if (options.VerboseLogging)
+            {
+                Log.Information("Verbose logging enabled for diagnostic commands");
+            }
+
+            // Handle --diagnostics command
+            if (options.Diagnostics)
+            {
+                Log.Information("Executing diagnostics command");
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleDiagnosticsAsync();
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-render command
+            if (!string.IsNullOrEmpty(options.TestRender))
+            {
+                Log.Information("Executing test-render command for file: {FilePath}", options.TestRender);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestRenderAsync(options.TestRender);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --render-test command
+            if (!string.IsNullOrEmpty(options.RenderTest))
+            {
+                Log.Information("Executing render-test command for file: {FilePath}", options.RenderTest);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRenderTestAsync(options.RenderTest, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // No diagnostic command found
+            return false;
         }
 
         /// <summary>
