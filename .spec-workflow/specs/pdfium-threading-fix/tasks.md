@@ -54,7 +54,7 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer specializing in text processing and encoding | Task: Remove Task.Run wrappers from TextExtractionService ExtractTextAsync method, replace with await Task.Yield(), inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: Preserve text encoding handling, maintain formatting preservation logic, do not change extraction accuracy | Success: Service inherits base class, text extraction works without crashes, extracted text quality unchanged | Instructions: Mark in-progress, fix threading, verify text extraction, log implementation, mark complete
 
-- [ ] 7. Fix PdfFormService - Remove Task.Run
+- [x] 7. Fix PdfFormService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/PdfFormService.cs
   - Replace Task.Run with Task.Yield in form field operations
   - Make service inherit from PdfiumServiceBase
