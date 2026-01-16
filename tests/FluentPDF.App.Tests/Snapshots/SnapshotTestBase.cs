@@ -8,7 +8,6 @@ namespace FluentPDF.App.Tests.Snapshots;
 /// Base class for snapshot tests using Verify framework.
 /// Provides helper methods for WinUI 3 control verification.
 /// </summary>
-[UsesVerify]
 public abstract class SnapshotTestBase
 {
     /// <summary>
