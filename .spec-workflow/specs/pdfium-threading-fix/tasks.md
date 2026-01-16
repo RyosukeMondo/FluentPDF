@@ -45,7 +45,7 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer with PDF manipulation and graphics experience | Task: Remove Task.Run from WatermarkService AddWatermarkAsync and related methods, use await Task.Yield(), inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: Preserve watermark positioning and transparency logic, maintain text and image watermark support, do not change watermark rendering quality | Success: WatermarkService inherits base class, watermarks apply without crashes, visual quality maintained | Instructions: Mark in-progress, implement threading fix, test watermark application, log implementation details, mark complete
 
-- [ ] 6. Fix TextExtractionService - Remove Task.Run
+- [x] 6. Fix TextExtractionService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/TextExtractionService.cs
   - Replace Task.Run with Task.Yield in text extraction
   - Make service inherit from PdfiumServiceBase
