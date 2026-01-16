@@ -42,7 +42,7 @@
 
 ## Phase 2: Rendering Strategies
 
-- [ ] 5. Extract WriteableBitmapRenderingStrategy from existing code
+- [x] 5. Extract WriteableBitmapRenderingStrategy from existing code
   - File: src/FluentPDF.App/Services/RenderingStrategies/WriteableBitmapRenderingStrategy.cs
   - Extract current WriteableBitmap + ImageSharp rendering logic from PdfViewerViewModel
   - Implement IRenderingStrategy interface
