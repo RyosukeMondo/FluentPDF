@@ -18,7 +18,7 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer with expertise in async/await patterns and service architecture | Task: Remove Task.Run wrapper from BookmarkService.LoadBookmarksAsync method (around line 43), replace with await Task.Yield(), and make the service inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: Do not change public method signatures, preserve all error handling and logging, maintain FluentResults return types | Success: BookmarkService compiles, inherits PdfiumServiceBase, uses Task.Yield instead of Task.Run, bookmark loading works without crashes | Instructions: Mark task in-progress in tasks.md, implement changes, test bookmark loading, use log-implementation to record modifications to BookmarkService.cs including method signature changes, then mark complete
 
-- [ ] 3. Fix TextSearchService - Remove Task.Run
+- [x] 3. Fix TextSearchService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/TextSearchService.cs
   - Find and replace all Task.Run calls with Task.Yield
   - Make service inherit from PdfiumServiceBase
