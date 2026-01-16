@@ -56,37 +56,28 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task OpenFileInNewTabAsync()
     {
-        var debugLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log");
-        System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OpenFileInNewTab command invoked\n");
         _logger.LogInformation("OpenFileInNewTab command invoked");
 
         try
         {
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Creating FileOpenPicker\n");
             var picker = new FileOpenPicker();
             picker.FileTypeFilter.Add(".pdf");
             picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
 
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Getting window handle\n");
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Initializing picker with window handle\n");
             WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Showing file picker\n");
             var file = await picker.PickSingleFileAsync();
             if (file == null)
             {
-                System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: File picker cancelled\n");
                 _logger.LogInformation("File picker cancelled");
                 return;
             }
 
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: File selected: {file.Path}\n");
             await OpenFileInTabAsync(file.Path);
         }
         catch (Exception ex)
         {
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: ERROR: {ex.Message}\n{ex.StackTrace}\n");
             _logger.LogError(ex, "Failed to open file in new tab");
         }
     }
@@ -115,6 +106,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
+        TabViewModel? tabViewModel = null;
         try
         {
             // Create PdfViewerViewModel for the new tab
@@ -122,14 +114,17 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             // Create TabViewModel
             var tabLogger = _serviceProvider.GetRequiredService<ILogger<TabViewModel>>();
-            var tabViewModel = new TabViewModel(filePath, viewerViewModel, tabLogger);
+            tabViewModel = new TabViewModel(filePath, viewerViewModel, tabLogger);
 
             // Add tab and activate it
             Tabs.Add(tabViewModel);
             ActivateTab(tabViewModel);
+            _logger.LogInformation("Tab created and activated. About to load document from path...");
 
-            // Load the document
-            await viewerViewModel.OpenDocumentCommand.ExecuteAsync(null);
+            // Load the document from the specified path
+            _logger.LogInformation("Calling LoadDocumentFromPathAsync for: {FilePath}", filePath);
+            await viewerViewModel.LoadDocumentFromPathAsync(filePath);
+            _logger.LogInformation("LoadDocumentFromPathAsync completed successfully");
 
             // Add to recent files
             _recentFilesService.AddRecentFile(filePath);
@@ -138,8 +133,22 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to open file in tab: {FilePath}", filePath);
-            throw;
+            _logger.LogError(ex, "CRITICAL ERROR: Failed to open file in tab: {FilePath}. Exception: {ExceptionType}, Message: {Message}, StackTrace: {StackTrace}",
+                filePath, ex.GetType().Name, ex.Message, ex.StackTrace);
+
+            // Remove failed tab to prevent broken UI state
+            if (tabViewModel != null && Tabs.Contains(tabViewModel))
+            {
+                _logger.LogInformation("Removing failed tab from UI");
+                Tabs.Remove(tabViewModel);
+                tabViewModel.Dispose();
+            }
+
+            // Temporarily disabled to test core functionality via logs
+            // await ShowErrorDialogAsync("Error Opening File",
+            //     $"Failed to open {Path.GetFileName(filePath)}:\n{ex.Message}");
+
+            _logger.LogError("Error details logged. Check logs for full error information.");
         }
     }
 
@@ -276,5 +285,50 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Tabs.Clear();
 
         _disposed = true;
+    }
+
+    /// <summary>
+    /// Shows an error dialog to the user.
+    /// </summary>
+    private static async Task ShowErrorDialogAsync(string title, string message)
+    {
+        try
+        {
+            // Initial delay to let window fully initialize
+            await Task.Delay(200);
+
+            // Wait for XamlRoot to be available with retries (up to 2 seconds)
+            Microsoft.UI.Xaml.XamlRoot? xamlRoot = null;
+            for (int i = 0; i < 20; i++)
+            {
+                xamlRoot = App.MainWindow?.Content?.XamlRoot;
+                if (xamlRoot != null)
+                    break;
+
+                await Task.Delay(100);
+            }
+
+            if (xamlRoot == null)
+            {
+                // XamlRoot not available, log and return
+                System.Diagnostics.Debug.WriteLine($"Error: Unable to show dialog - XamlRoot not available after retries. Title: {title}, Message: {message}");
+                return;
+            }
+
+            var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = "OK",
+                XamlRoot = xamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            // If dialog fails, at least log it
+            System.Diagnostics.Debug.WriteLine($"Failed to show error dialog: {ex.Message}. Original error - Title: {title}, Message: {message}");
+        }
     }
 }

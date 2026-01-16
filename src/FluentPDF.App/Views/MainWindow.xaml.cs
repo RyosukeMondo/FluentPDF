@@ -27,23 +27,17 @@ public sealed partial class MainWindow : Window
     /// <param name="jumpListService">Service for Windows Jump List integration.</param>
     public MainWindow(MainViewModel viewModel, JumpListService jumpListService)
     {
-        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow constructor starting\n");
-
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _jumpListService = jumpListService ?? throw new ArgumentNullException(nameof(jumpListService));
 
-        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow InitializeComponent starting\n");
         this.InitializeComponent();
-        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow InitializeComponent completed\n");
 
         Title = "FluentPDF";
 
         // Set up keyboard shortcuts
-        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Setting up keyboard accelerators\n");
         SetupKeyboardAccelerators();
 
         // Populate Recent Files menu
-        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Populating recent files menu\n");
         PopulateRecentFilesMenu();
 
         // Set up empty state visibility handling
@@ -51,7 +45,6 @@ public sealed partial class MainWindow : Window
         UpdateEmptyStateVisibility();
 
         // Set up menu item state updates
-        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Setting up menu item state updates\n");
         ViewModel.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(ViewModel.ActiveTab))
@@ -61,7 +54,6 @@ public sealed partial class MainWindow : Window
             }
         };
         UpdateMenuItemStates();
-        System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: MainWindow constructor completed\n");
     }
 
     /// <summary>
@@ -187,19 +179,15 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private async void OnOpenFileClick(object sender, RoutedEventArgs? e)
     {
-        var debugLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log");
         try
         {
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OnOpenFileClick invoked\n");
             await ViewModel.OpenFileInNewTabCommand.ExecuteAsync(null);
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OpenFileInNewTabCommand completed\n");
             // Refresh Recent Files menu and Jump List
             PopulateRecentFilesMenu();
             await UpdateJumpListAsync();
         }
-        catch (Exception ex)
+        catch
         {
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OnOpenFileClick ERROR: {ex.Message}\n{ex.StackTrace}\n");
         }
     }
 
@@ -347,12 +335,9 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private async void OnSettingsClick(object sender, RoutedEventArgs e)
     {
-        var debugLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log");
         try
         {
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: OnSettingsClick invoked\n");
             var settingsPage = new SettingsPage();
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: SettingsPage created\n");
 
             var dialog = new ContentDialog
             {
@@ -362,14 +347,11 @@ public sealed partial class MainWindow : Window
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.Content.XamlRoot
             };
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: ContentDialog created, showing...\n");
 
             await dialog.ShowAsync();
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: ContentDialog closed\n");
         }
-        catch (Exception ex)
+        catch
         {
-            System.IO.File.AppendAllText(debugLog, $"{DateTime.Now}: Settings ERROR: {ex.Message}\n{ex.StackTrace}\n");
         }
     }
 
