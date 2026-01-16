@@ -1,4 +1,6 @@
+using FluentPDF.App.Interfaces;
 using FluentPDF.App.Services;
+using FluentPDF.App.Services.RenderingStrategies;
 using FluentPDF.App.ViewModels;
 using FluentPDF.App.Views;
 using FluentPDF.Core.Logging;
@@ -32,6 +34,11 @@ namespace FluentPDF.App
         public static Window MainWindow { get; private set; } = null!;
 
         /// <summary>
+        /// Gets the parsed command-line options.
+        /// </summary>
+        public static CommandLineOptions CommandLineOptions { get; private set; } = null!;
+
+        /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
@@ -39,6 +46,18 @@ namespace FluentPDF.App
         {
             System.Diagnostics.Debug.WriteLine("FluentPDF: App constructor starting...");
             System.IO.File.WriteAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: App constructor starting\n");
+
+            // Parse command-line options early
+            var args = Environment.GetCommandLineArgs();
+            CommandLineOptions = CommandLineOptions.Parse(args);
+            System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"),
+                $"{DateTime.Now}: CLI args parsed - OpenFile: {CommandLineOptions.OpenFilePath ?? "none"}, AutoClose: {CommandLineOptions.AutoClose}, Console: {CommandLineOptions.EnableConsoleLogging}\n");
+
+            // Attach console if requested (for CLI automation scenarios)
+            if (CommandLineOptions.EnableConsoleLogging)
+            {
+                AttachConsole();
+            }
 
             try
             {
@@ -55,7 +74,10 @@ namespace FluentPDF.App
             try
             {
                 System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Creating Serilog logger...\n");
-                Log.Logger = SerilogConfiguration.CreateLogger();
+                Log.Logger = SerilogConfiguration.CreateLogger(
+                    CommandLineOptions.VerboseLogging ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information,
+                    CommandLineOptions.LogOutputPath,
+                    CommandLineOptions.EnableConsoleLogging);
                 System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Serilog logger created\n");
             }
             catch (Exception ex)
@@ -65,6 +87,11 @@ namespace FluentPDF.App
             }
 
             Log.Information("FluentPDF application starting");
+            Log.Information("Command-line options: OpenFile={OpenFile}, AutoClose={AutoClose}, Console={Console}, Verbose={Verbose}",
+                CommandLineOptions.OpenFilePath ?? "none",
+                CommandLineOptions.AutoClose,
+                CommandLineOptions.EnableConsoleLogging,
+                CommandLineOptions.VerboseLogging);
             System.IO.File.AppendAllText(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"), $"{DateTime.Now}: Setting up exception handlers...\n");
 
             // Configure global exception handlers
@@ -121,6 +148,14 @@ namespace FluentPDF.App
                     // Register observability services
                     services.AddSingleton<IMetricsCollectionService, MetricsCollectionService>();
                     services.AddSingleton<ILogExportService, LogExportService>();
+                    services.AddSingleton<MemoryMonitor>();
+                    services.AddSingleton<RenderingObservabilityService>();
+
+                    // Register rendering strategies
+                    services.AddTransient<IRenderingStrategy, WriteableBitmapRenderingStrategy>();
+                    services.AddTransient<IRenderingStrategy, FileBasedRenderingStrategy>();
+                    services.AddSingleton<RenderingStrategyFactory>();
+                    services.AddSingleton<RenderingCoordinator>();
 
                     // Register ViewModels
                     services.AddSingleton<MainViewModel>(); // Singleton for main window state
@@ -154,6 +189,40 @@ namespace FluentPDF.App
         public T GetService<T>() where T : notnull
         {
             return _host.Services.GetRequiredService<T>();
+        }
+
+        /// <summary>
+        /// Attaches a console window for console output (useful for CLI automation).
+        /// </summary>
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool AllocConsole();
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool AttachConsole(int dwProcessId);
+
+        private const int ATTACH_PARENT_PROCESS = -1;
+
+        private void AttachConsole()
+        {
+            try
+            {
+                // Try to attach to parent process console first (if launched from cmd/PowerShell)
+                if (!AttachConsole(ATTACH_PARENT_PROCESS))
+                {
+                    // If no parent console, allocate a new one
+                    AllocConsole();
+                }
+
+                // Redirect console output
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] FluentPDF Console Logging Enabled");
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Debug log: {Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log")}");
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FluentPDF_Debug.log"),
+                    $"{DateTime.Now}: Failed to attach console: {ex.Message}\n");
+            }
         }
 
         /// <summary>
@@ -242,27 +311,52 @@ namespace FluentPDF.App
         {
             try
             {
-                // Check command line arguments for file paths
-                // This handles both Jump List and file association activation
-                var args = Environment.GetCommandLineArgs();
+                string? fileToOpen = null;
 
-                // First argument is the executable path, check for file paths after that
-                for (int i = 1; i < args.Length; i++)
+                // Check command-line options first
+                if (!string.IsNullOrEmpty(CommandLineOptions.OpenFilePath))
                 {
-                    var arg = args[i];
-
-                    // Skip flags/options that start with - or /
-                    if (arg.StartsWith("-") || arg.StartsWith("/"))
+                    fileToOpen = CommandLineOptions.OpenFilePath;
+                    Log.Information("Opening file from CLI option: {FilePath}", fileToOpen);
+                }
+                else
+                {
+                    // Fallback: check raw command line arguments for file paths
+                    var args = Environment.GetCommandLineArgs();
+                    for (int i = 1; i < args.Length; i++)
                     {
-                        continue;
+                        var arg = args[i];
+
+                        // Skip flags/options that start with - or /
+                        if (arg.StartsWith("-") || arg.StartsWith("/"))
+                        {
+                            continue;
+                        }
+
+                        // Check if it's a valid PDF file path
+                        if (File.Exists(arg) && arg.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                        {
+                            fileToOpen = arg;
+                            Log.Information("Opening file from argument: {FilePath}", arg);
+                            break;
+                        }
                     }
+                }
 
-                    // Check if it's a valid PDF file path
-                    if (File.Exists(arg) && arg.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                // Open the file if found
+                if (!string.IsNullOrEmpty(fileToOpen))
+                {
+                    var mainViewModel = GetService<MainViewModel>();
+                    await mainViewModel.OpenRecentFileCommand.ExecuteAsync(fileToOpen);
+
+                    // Auto-close if requested (for automated testing)
+                    if (CommandLineOptions.AutoClose)
                     {
-                        Log.Information("Opening file from activation: {FilePath}", arg);
-                        var mainViewModel = GetService<MainViewModel>();
-                        await mainViewModel.OpenRecentFileCommand.ExecuteAsync(arg);
+                        Log.Information("Auto-close enabled. Waiting {Delay} seconds before closing...", CommandLineOptions.AutoCloseDelay);
+                        await Task.Delay(CommandLineOptions.AutoCloseDelay * 1000);
+                        Log.Information("Auto-close: Closing application now");
+                        await ShutdownAsync();
+                        Environment.Exit(0);
                     }
                 }
             }
