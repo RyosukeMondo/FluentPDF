@@ -69,20 +69,20 @@ public sealed class RenderingCoordinator
         try
         {
             // Step 1: Render PDF page to PNG stream using PdfRenderingService
-            using var renderOperation = _observabilityService.BeginRenderOperation("RenderPage", context);
-
             var renderResult = await _pdfRenderingService.RenderPageAsync(document, pageNumber, zoomLevel, dpi);
 
             if (renderResult.IsFailed)
             {
                 // PNG generation failed - log and return null
                 var error = renderResult.Errors.FirstOrDefault();
-                renderOperation.SetFailure(new Exception($"PDF rendering failed: {error?.Message ?? "Unknown error"}"));
+                _observabilityService.LogRenderFailure(
+                    "RenderPage",
+                    new Exception($"PDF rendering failed: {error?.Message ?? "Unknown error"}"),
+                    context);
                 return null;
             }
 
             pngStream = renderResult.Value;
-            renderOperation.SetSuccess(pngStream.Length);
 
             // Step 2: Try each rendering strategy in priority order
             var strategies = _strategyFactory.GetStrategies().ToList();
