@@ -102,13 +102,30 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer with validation and forms expertise | Task: Examine FormValidationService for Task.Run usage and PDFium interop calls, if found replace Task.Run with await Task.Yield() and inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: If service doesn't call PDFium, skip inheritance but document the finding, preserve validation rules and logic | Success: Service is thread-safe if it uses PDFium, validation logic unchanged, no crashes during validation | Instructions: Mark in-progress, analyze service, apply fixes if needed, log findings and any changes made, mark complete
 
-- [ ] 12. Audit remaining services for Task.Run usage
+- [x] 12. Audit remaining services for Task.Run usage
   - Files: All services in src/FluentPDF.Rendering/Services not yet covered
-  - Systematically check: DocxParserService, DpiDetectionService, DocxConverterService, HtmlToPdfService, LogExportService, MetricsCollectionService, LibreOfficeValidator
-  - Purpose: Ensure no PDFium services were missed
+  - **AUDIT COMPLETE - ONE SERVICE NEEDS FIX**:
+  - **AnnotationService**: Uses PDFium heavily + has 5 Task.Run calls → NEEDS FIX (see new task 12a)
+  - **Services with Task.Run but NO PDFium** (safe, no changes needed):
+    - DocxParserService: Has Task.Run but no PdfiumInterop usage
+    - DocumentEditingService: Has Task.Run but uses QPDF not PDFium
+    - PageOperationsService: Has Task.Run but uses QPDF not PDFium
+  - **Services using PDFium WITHOUT Task.Run** (already safe):
+    - PdfDocumentService: Uses PDFium, no Task.Run
+    - PdfRenderingService: Uses PDFium, no Task.Run
+  - **Services checked with NO issues**:
+    - DpiDetectionService, DocxConverterService, HtmlToPdfService, LogExportService, MetricsCollectionService, LibreOfficeValidator: No Task.Run or no PDFium usage
   - _Leverage: Grep/search tools_
   - _Requirements: 1.1, 2.2_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Code Auditor with systematic review expertise | Task: Use grep or search tools to find all Task.Run calls in remaining services (DocxParserService, DpiDetectionService, DocxConverterService, HtmlToPdfService, LogExportService, MetricsCollectionService, LibreOfficeValidator), determine which call PDFium, fix any found issues following requirements 1.1 and 2.2 | Restrictions: Only modify services that actually call PdfiumInterop, document services that are safe, do not change non-PDFium code unnecessarily | Success: All services audited, any PDFium-calling services fixed, comprehensive list of safe vs fixed services documented | Instructions: Mark in-progress, use grep to search for Task.Run in remaining services, fix any issues found, log detailed audit results including which services were modified and which were safe, mark complete
+
+- [ ] 12a. Fix AnnotationService - Remove Task.Run (discovered in audit)
+  - File: src/FluentPDF.Rendering/Services/AnnotationService.cs
+  - Replace 5 Task.Run calls with Task.Yield (lines 41, 127, 210, 264, 341)
+  - Make service inherit from PdfiumServiceBase
+  - Purpose: Fix annotation operations crashes
+  - _Leverage: PdfiumServiceBase, PdfiumInterop_
+  - _Requirements: 1.1, 1.3, 3.1_
 
 - [ ] 13. Re-enable and test PDF loading in PdfViewerViewModel
   - File: src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs
