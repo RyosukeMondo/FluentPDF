@@ -119,7 +119,7 @@
   - _Requirements: 1.1, 2.2_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Code Auditor with systematic review expertise | Task: Use grep or search tools to find all Task.Run calls in remaining services (DocxParserService, DpiDetectionService, DocxConverterService, HtmlToPdfService, LogExportService, MetricsCollectionService, LibreOfficeValidator), determine which call PDFium, fix any found issues following requirements 1.1 and 2.2 | Restrictions: Only modify services that actually call PdfiumInterop, document services that are safe, do not change non-PDFium code unnecessarily | Success: All services audited, any PDFium-calling services fixed, comprehensive list of safe vs fixed services documented | Instructions: Mark in-progress, use grep to search for Task.Run in remaining services, fix any issues found, log detailed audit results including which services were modified and which were safe, mark complete
 
-- [ ] 12a. Fix AnnotationService - Remove Task.Run (discovered in audit)
+- [x] 12a. Fix AnnotationService - Remove Task.Run (discovered in audit)
   - File: src/FluentPDF.Rendering/Services/AnnotationService.cs
   - Replace 5 Task.Run calls with Task.Yield (lines 41, 127, 210, 264, 341)
   - Make service inherit from PdfiumServiceBase
