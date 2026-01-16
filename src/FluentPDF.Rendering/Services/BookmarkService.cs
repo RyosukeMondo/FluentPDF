@@ -2,6 +2,7 @@ using FluentPDF.Core.ErrorHandling;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
+using FluentPDF.Rendering.Services.Base;
 using FluentResults;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,11 @@ namespace FluentPDF.Rendering.Services;
 /// Service for extracting hierarchical bookmark structures from PDF documents using PDFium.
 /// Implements iterative tree traversal to avoid stack overflow with deeply nested bookmarks.
 /// </summary>
-public sealed class BookmarkService : IBookmarkService
+/// <remarks>
+/// This service calls PDFium native library and must execute on the calling thread.
+/// See <see cref="PdfiumServiceBase"/> for threading requirements.
+/// </remarks>
+public sealed class BookmarkService : PdfiumServiceBase, IBookmarkService
 {
     private readonly ILogger<BookmarkService> _logger;
     private const int MaxDepth = 20; // Prevent infinite loops from malformed PDFs
@@ -40,75 +45,76 @@ public sealed class BookmarkService : IBookmarkService
 
         var startTime = DateTime.UtcNow;
 
-        return await Task.Run(() =>
+        // CRITICAL: Use Task.Yield() instead of Task.Run to keep PDFium calls on calling thread.
+        // Task.Run would cause AccessViolation crashes in .NET 9.0 WinUI 3 self-contained deployments.
+        await Task.Yield();
+
+        try
         {
-            try
-            {
-                var documentHandle = (SafePdfDocumentHandle)document.Handle;
+            var documentHandle = (SafePdfDocumentHandle)document.Handle;
 
-                if (documentHandle.IsInvalid)
-                {
-                    var error = new PdfError(
-                        "BOOKMARK_INVALID_HANDLE",
-                        "Invalid document handle for bookmark extraction.",
-                        ErrorCategory.Validation,
-                        ErrorSeverity.Error)
-                        .WithContext("FilePath", document.FilePath)
-                        .WithContext("CorrelationId", correlationId);
-
-                    _logger.LogError(
-                        "Invalid document handle. CorrelationId={CorrelationId}",
-                        correlationId);
-
-                    return Result.Fail<List<BookmarkNode>>(error);
-                }
-
-                var rootBookmarks = new List<BookmarkNode>();
-                var firstBookmark = PdfiumInterop.GetFirstChildBookmark(documentHandle, IntPtr.Zero);
-
-                if (firstBookmark == IntPtr.Zero)
-                {
-                    // No bookmarks in document - this is not an error
-                    var elapsed = DateTime.UtcNow - startTime;
-                    _logger.LogInformation(
-                        "No bookmarks found. CorrelationId={CorrelationId}, ElapsedMs={ElapsedMs}",
-                        correlationId, elapsed.TotalMilliseconds);
-
-                    return Result.Ok(rootBookmarks);
-                }
-
-                // Extract bookmarks using iterative algorithm
-                ExtractBookmarksIterative(documentHandle, firstBookmark, rootBookmarks, correlationId);
-
-                var totalCount = rootBookmarks.Sum(b => b.GetTotalNodeCount());
-                var elapsedTime = DateTime.UtcNow - startTime;
-
-                _logger.LogInformation(
-                    "Bookmarks extracted successfully. CorrelationId={CorrelationId}, " +
-                    "RootCount={RootCount}, TotalCount={TotalCount}, ElapsedMs={ElapsedMs}",
-                    correlationId, rootBookmarks.Count, totalCount, elapsedTime.TotalMilliseconds);
-
-                return Result.Ok(rootBookmarks);
-            }
-            catch (Exception ex)
+            if (documentHandle.IsInvalid)
             {
                 var error = new PdfError(
-                    "BOOKMARK_EXTRACTION_FAILED",
-                    $"Failed to extract bookmarks: {ex.Message}",
-                    ErrorCategory.Rendering,
+                    "BOOKMARK_INVALID_HANDLE",
+                    "Invalid document handle for bookmark extraction.",
+                    ErrorCategory.Validation,
                     ErrorSeverity.Error)
                     .WithContext("FilePath", document.FilePath)
-                    .WithContext("CorrelationId", correlationId)
-                    .WithContext("Exception", ex.ToString());
+                    .WithContext("CorrelationId", correlationId);
 
                 _logger.LogError(
-                    ex,
-                    "Bookmark extraction failed. CorrelationId={CorrelationId}, FilePath={FilePath}",
-                    correlationId, document.FilePath);
+                    "Invalid document handle. CorrelationId={CorrelationId}",
+                    correlationId);
 
                 return Result.Fail<List<BookmarkNode>>(error);
             }
-        });
+
+            var rootBookmarks = new List<BookmarkNode>();
+            var firstBookmark = PdfiumInterop.GetFirstChildBookmark(documentHandle, IntPtr.Zero);
+
+            if (firstBookmark == IntPtr.Zero)
+            {
+                // No bookmarks in document - this is not an error
+                var elapsed = DateTime.UtcNow - startTime;
+                _logger.LogInformation(
+                    "No bookmarks found. CorrelationId={CorrelationId}, ElapsedMs={ElapsedMs}",
+                    correlationId, elapsed.TotalMilliseconds);
+
+                return Result.Ok(rootBookmarks);
+            }
+
+            // Extract bookmarks using iterative algorithm
+            ExtractBookmarksIterative(documentHandle, firstBookmark, rootBookmarks, correlationId);
+
+            var totalCount = rootBookmarks.Sum(b => b.GetTotalNodeCount());
+            var elapsedTime = DateTime.UtcNow - startTime;
+
+            _logger.LogInformation(
+                "Bookmarks extracted successfully. CorrelationId={CorrelationId}, " +
+                "RootCount={RootCount}, TotalCount={TotalCount}, ElapsedMs={ElapsedMs}",
+                correlationId, rootBookmarks.Count, totalCount, elapsedTime.TotalMilliseconds);
+
+            return Result.Ok(rootBookmarks);
+        }
+        catch (Exception ex)
+        {
+            var error = new PdfError(
+                "BOOKMARK_EXTRACTION_FAILED",
+                $"Failed to extract bookmarks: {ex.Message}",
+                ErrorCategory.Rendering,
+                ErrorSeverity.Error)
+                .WithContext("FilePath", document.FilePath)
+                .WithContext("CorrelationId", correlationId)
+                .WithContext("Exception", ex.ToString());
+
+            _logger.LogError(
+                ex,
+                "Bookmark extraction failed. CorrelationId={CorrelationId}, FilePath={FilePath}",
+                correlationId, document.FilePath);
+
+            return Result.Fail<List<BookmarkNode>>(error);
+        }
     }
 
     /// <summary>

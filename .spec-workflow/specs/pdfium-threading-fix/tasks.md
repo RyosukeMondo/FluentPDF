@@ -9,7 +9,7 @@
   - _Requirements: 1.1, 2.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Architect specializing in cross-platform native interop and WinUI 3 | Task: Create PdfiumServiceBase abstract class in src/FluentPDF.Rendering/Services/Base/ with ExecutePdfiumOperationAsync<T> helper method and comprehensive XML documentation explaining that PDFium cannot be called from Task.Run threads in .NET 9.0 WinUI 3 self-contained deployments due to AccessViolation crashes | Restrictions: Do not modify existing service interfaces, maintain async/await patterns, only provide helper methods and documentation | Success: Base class compiles successfully, documentation is clear and prominent, provides reusable pattern for services to use | Instructions: After starting, edit tasks.md to mark this task as in-progress [-], then implement the code. When complete, use log-implementation tool to record: file created (PdfiumServiceBase.cs), artifacts (classes: PdfiumServiceBase with ExecutePdfiumOperationAsync method), and mark task as complete [x] in tasks.md
 
-- [ ] 2. Fix BookmarkService - Remove Task.Run
+- [x] 2. Fix BookmarkService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/BookmarkService.cs
   - Replace Task.Run with Task.Yield in LoadBookmarksAsync
   - Make service inherit from PdfiumServiceBase
