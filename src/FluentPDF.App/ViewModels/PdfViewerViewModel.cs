@@ -390,56 +390,73 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             // Close previous document if any
             if (_currentDocument != null)
             {
+                _logger.LogInformation("Closing previous document");
                 _documentService.CloseDocument(_currentDocument);
                 _currentDocument = null;
             }
 
             // Load document
+            _logger.LogInformation("Loading document from service");
             var result = await _documentService.LoadDocumentAsync(filePath);
 
             if (result.IsFailed)
             {
-                _logger.LogError("Failed to load document: {Errors}", result.Errors);
-                StatusMessage = $"Failed to load document: {result.Errors[0].Message}";
+                _logger.LogError("Failed to load document. Error count: {ErrorCount}", result.Errors.Count);
+                foreach (var error in result.Errors)
+                {
+                    _logger.LogError("Error detail: {ErrorMessage}", error.Message);
+                }
+
+                var errorMessage = result.Errors.Count > 0
+                    ? result.Errors[0].Message
+                    : "Unknown error occurred";
+
+                StatusMessage = $"Failed to load document: {errorMessage}";
                 IsLoading = false;
+
+                await ShowErrorDialogAsync("Error Loading Document",
+                    $"Could not load the PDF document:\n\n{errorMessage}");
+
                 return;
             }
 
             _currentDocument = result.Value;
             TotalPages = _currentDocument.PageCount;
             CurrentPageNumber = 1;
+            _logger.LogInformation("Document loaded. Pages: {PageCount}, Current page set to 1", TotalPages);
 
             // Reset page modification flag when loading new document
             HasPageModifications = false;
 
-            _logger.LogInformation(
-                "Document loaded successfully. FilePath={FilePath}, PageCount={PageCount}",
-                _currentDocument.FilePath, _currentDocument.PageCount);
-
-            // Load bookmarks
+            _logger.LogInformation("Loading bookmarks");
             await BookmarksViewModel.LoadBookmarksCommand.ExecuteAsync(_currentDocument);
 
-            // Load thumbnails
+            _logger.LogInformation("Loading thumbnails");
             await ThumbnailsViewModel.LoadThumbnailsAsync(_currentDocument);
 
-            // Apply default settings if settings service is available
+            _logger.LogInformation("Applying default settings");
             ApplyDefaultSettings();
 
-            // Render first page
+            _logger.LogInformation("Rendering first page");
             await RenderCurrentPageAsync();
 
-            // Load form fields for first page
+            _logger.LogInformation("Loading form fields");
             await FormFieldViewModel.LoadFormFieldsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
 
-            // Load annotations for first page
+            _logger.LogInformation("Loading annotations");
             await AnnotationViewModel.LoadAnnotationsCommand.ExecuteAsync((_currentDocument, CurrentPageNumber));
 
             StatusMessage = "Document loaded successfully";
+            _logger.LogInformation("Document loaded successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Exception loading document from path: {FilePath}", filePath);
+            _logger.LogError(ex, "Exception loading document. Type: {ExceptionType}, Message: {Message}",
+                ex.GetType().Name, ex.Message);
             StatusMessage = $"Failed to load document: {ex.Message}";
+
+            await ShowErrorDialogAsync("Error Loading Document",
+                $"An unexpected error occurred:\n\n{ex.Message}");
         }
         finally
         {
@@ -734,15 +751,44 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     private static async Task ShowErrorDialogAsync(string title, string message)
     {
-        var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+        try
         {
-            Title = title,
-            Content = message,
-            CloseButtonText = "OK",
-            XamlRoot = App.MainWindow.Content.XamlRoot
-        };
+            // Initial delay to let window fully initialize
+            await Task.Delay(200);
 
-        await dialog.ShowAsync();
+            // Wait for XamlRoot to be available with retries (up to 2 seconds)
+            Microsoft.UI.Xaml.XamlRoot? xamlRoot = null;
+            for (int i = 0; i < 20; i++)
+            {
+                xamlRoot = App.MainWindow?.Content?.XamlRoot;
+                if (xamlRoot != null)
+                    break;
+
+                await Task.Delay(100);
+            }
+
+            if (xamlRoot == null)
+            {
+                // XamlRoot not available, log and return
+                System.Diagnostics.Debug.WriteLine($"Error: Unable to show dialog - XamlRoot not available after retries. Title: {title}, Message: {message}");
+                return;
+            }
+
+            var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = "OK",
+                XamlRoot = xamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            // If dialog fails, at least log it
+            System.Diagnostics.Debug.WriteLine($"Failed to show error dialog: {ex.Message}. Original error - Title: {title}, Message: {message}");
+        }
     }
 
     /// <summary>

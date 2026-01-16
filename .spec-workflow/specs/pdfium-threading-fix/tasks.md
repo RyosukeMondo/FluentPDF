@@ -127,7 +127,7 @@
   - _Leverage: PdfiumServiceBase, PdfiumInterop_
   - _Requirements: 1.1, 1.3, 3.1_
 
-- [ ] 13. Re-enable and test PDF loading in PdfViewerViewModel
+- [x] 13. Re-enable and test PDF loading in PdfViewerViewModel
   - File: src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs
   - Uncomment bookmarks, thumbnails, rendering, form fields, annotations loading
   - Remove debug logging statements
