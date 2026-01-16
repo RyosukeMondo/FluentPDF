@@ -105,7 +105,7 @@
 
 ## Phase 4: CLI Enhancements
 
-- [ ] 11. Extend CommandLineOptions with diagnostic commands
+- [x] 11. Extend CommandLineOptions with diagnostic commands
   - File: src/FluentPDF.App/CommandLineOptions.cs
   - Add properties: TestRender, Diagnostics, Verbose, RenderTest, OutputDirectory, CaptureCrashDump
   - Add command line argument parsing for new options
