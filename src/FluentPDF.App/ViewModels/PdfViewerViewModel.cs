@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Runtime.InteropServices.WindowsRuntime;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -29,6 +30,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly IDpiDetectionService? _dpiDetectionService;
     private readonly IRenderingSettingsService? _renderingSettingsService;
     private readonly Core.Services.ISettingsService? _settingsService;
+    private readonly RenderingCoordinator _renderingCoordinator;
+    private readonly UIBindingVerifier _uiBindingVerifier;
     private PdfDocument? _currentDocument;
     private bool _disposed;
     private CancellationTokenSource? _operationCts;
@@ -92,6 +95,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="dpiDetectionService">Optional DPI detection service for HiDPI support.</param>
     /// <param name="renderingSettingsService">Optional rendering settings service for quality preferences.</param>
     /// <param name="settingsService">Optional settings service for user preferences.</param>
+    /// <param name="renderingCoordinator">Coordinator for rendering with fallback strategies.</param>
+    /// <param name="uiBindingVerifier">Service for verifying UI binding updates.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
@@ -110,6 +115,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         IDpiDetectionService? dpiDetectionService,
         IRenderingSettingsService? renderingSettingsService,
         Core.Services.ISettingsService? settingsService,
+        RenderingCoordinator renderingCoordinator,
+        UIBindingVerifier uiBindingVerifier,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
@@ -128,6 +135,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _dpiDetectionService = dpiDetectionService; // Optional service
         _renderingSettingsService = renderingSettingsService; // Optional service
         _settingsService = settingsService; // Optional service
+        _renderingCoordinator = renderingCoordinator ?? throw new ArgumentNullException(nameof(renderingCoordinator));
+        _uiBindingVerifier = uiBindingVerifier ?? throw new ArgumentNullException(nameof(uiBindingVerifier));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Set up navigation callback for bookmarks
@@ -199,9 +208,10 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Gets or sets the current page image displayed in the viewer.
+    /// Changed from BitmapImage to ImageSource to support SoftwareBitmapSource workaround.
     /// </summary>
     [ObservableProperty]
-    private BitmapImage? _currentPageImage;
+    private Microsoft.UI.Xaml.Media.ImageSource? _currentPageImage;
 
     /// <summary>
     /// Gets or sets the current page number (1-based).
@@ -632,6 +642,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Renders the current page at the current zoom level.
+    /// Uses RenderingCoordinator for automatic fallback and UIBindingVerifier for binding verification.
     /// </summary>
     private async Task RenderCurrentPageAsync()
     {
@@ -672,20 +683,28 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 }
             }
 
-            var result = await _renderingService.RenderPageAsync(
+            // Create rendering context for observability
+            var context = new Core.Models.RenderContext(
+                DocumentPath: _currentDocument.FilePath,
+                PageNumber: CurrentPageNumber,
+                TotalPages: TotalPages,
+                RenderDpi: effectiveDpi,
+                RequestSource: "MainViewer",
+                RequestTime: DateTime.UtcNow,
+                OperationId: Guid.NewGuid()
+            );
+
+            // Use RenderingCoordinator with fallback strategies
+            var imageSource = await _renderingCoordinator.RenderWithFallbackAsync(
                 _currentDocument,
                 CurrentPageNumber,
                 ZoomLevel,
-                effectiveDpi);
+                effectiveDpi,
+                context);
 
-            if (result.IsSuccess)
+            if (imageSource != null)
             {
-                // Convert Stream to BitmapImage for WinUI
-                var bitmapImage = new BitmapImage();
-                var randomAccessStream = await ConvertStreamToRandomAccessStreamAsync(result.Value);
-                await bitmapImage.SetSourceAsync(randomAccessStream);
-
-                CurrentPageImage = bitmapImage;
+                CurrentPageImage = imageSource;
                 StatusMessage = $"Page {CurrentPageNumber} of {TotalPages} - {ZoomLevel:P0}";
 
                 renderStartTime.Stop();
@@ -696,6 +715,22 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 _logger.LogInformation(
                     "Page rendered successfully. PageNumber={PageNumber}, ZoomLevel={ZoomLevel}, EffectiveDpi={EffectiveDpi}, RenderTime={RenderTimeMs}ms",
                     CurrentPageNumber, ZoomLevel, effectiveDpi, renderStartTime.ElapsedMilliseconds);
+
+                // Verify UI binding update
+                var bindingVerified = await _uiBindingVerifier.VerifyPropertyUpdateAsync(
+                    this,
+                    nameof(CurrentPageImage),
+                    TimeSpan.FromMilliseconds(500));
+
+                if (!bindingVerified)
+                {
+                    _logger.LogWarning(
+                        "UI binding verification failed for CurrentPageImage. Forcing property change notification. PageNumber={PageNumber}",
+                        CurrentPageNumber);
+
+                    // Force UI refresh by re-notifying property change
+                    OnPropertyChanged(nameof(CurrentPageImage));
+                }
 
                 // Record render time metrics if metrics service is available
                 _metricsService?.RecordRenderTime(CurrentPageNumber, renderStartTime.ElapsedMilliseconds);
@@ -714,9 +749,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             }
             else
             {
-                _logger.LogError("Failed to render page: {Errors}", result.Errors);
+                _logger.LogError("Failed to render page: All rendering strategies failed");
                 StatusMessage = "Failed to render page";
-                await ShowErrorDialogAsync("Rendering Error", result.Errors[0].Message);
+                await ShowErrorDialogAsync("Rendering Error", "All rendering strategies failed. Please check the logs for details.");
             }
         }
         catch (Exception ex)

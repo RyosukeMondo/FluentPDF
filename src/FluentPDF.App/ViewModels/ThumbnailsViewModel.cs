@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices.WindowsRuntime;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -147,15 +148,26 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
 
             if (result.IsSuccess && result.Value != null)
             {
-                var bitmap = new BitmapImage();
-                var randomAccessStream = await ConvertStreamToRandomAccessStreamAsync(result.Value);
-                await bitmap.SetSourceAsync(randomAccessStream);
+                // Workaround for WinUI 3 InMemoryRandomAccessStream crash issues
+                // Decode PNG using ImageSharp and create WriteableBitmap directly
+                result.Value.Seek(0, System.IO.SeekOrigin.Begin);
+                var image = await SixLabors.ImageSharp.Image.LoadAsync<SixLabors.ImageSharp.PixelFormats.Bgra32>(result.Value);
 
-                item.Thumbnail = bitmap;
+                var writeableBitmap = new Microsoft.UI.Xaml.Media.Imaging.WriteableBitmap(image.Width, image.Height);
+
+                using (var bufferAccessor = writeableBitmap.PixelBuffer.AsStream())
+                {
+                    var pixelData = new byte[image.Width * image.Height * 4];
+                    image.CopyPixelDataTo(pixelData);
+                    bufferAccessor.Write(pixelData, 0, pixelData.Length);
+                }
+                writeableBitmap.Invalidate();
+
+                item.Thumbnail = writeableBitmap;
                 item.IsLoading = false;
 
                 // Cache the thumbnail and track memory
-                var disposableImage = new DisposableBitmapImage(bitmap);
+                var disposableImage = new DisposableBitmapImage(writeableBitmap);
                 _cache.Add(item.PageNumber, disposableImage);
 
                 // Estimate memory usage (typical thumbnail ~150x200 pixels, 4 bytes per pixel)
