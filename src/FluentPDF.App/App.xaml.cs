@@ -150,6 +150,7 @@ namespace FluentPDF.App
                     services.AddSingleton<ILogExportService, LogExportService>();
                     services.AddSingleton<MemoryMonitor>();
                     services.AddSingleton<RenderingObservabilityService>();
+                    services.AddSingleton<UIBindingVerifier>();
 
                     // Register rendering strategies
                     services.AddTransient<IRenderingStrategy, WriteableBitmapRenderingStrategy>();
