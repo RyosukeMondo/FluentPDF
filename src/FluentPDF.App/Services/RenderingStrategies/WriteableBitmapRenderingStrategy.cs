@@ -34,7 +34,7 @@ public sealed class WriteableBitmapRenderingStrategy : IRenderingStrategy
 
             // Decode PNG using ImageSharp instead of WinUI's BitmapDecoder
             // This avoids all WinUI image decoding APIs that have reliability issues
-            var image = await Image.LoadAsync<Bgra32>(pngStream);
+            var image = await SixLabors.ImageSharp.Image.LoadAsync<Bgra32>(pngStream);
 
             // Create WriteableBitmap with the same dimensions
             var writeableBitmap = new WriteableBitmap(image.Width, image.Height);
