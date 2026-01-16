@@ -39,6 +39,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
     <ProjectReference Include="..\..\src\FluentPDF.Core\FluentPDF.Core.csproj" />
+    <ProjectReference Include="..\..\src\FluentPDF.App\FluentPDF.App.csproj" />
   </ItemGroup>
 
 </Project>
