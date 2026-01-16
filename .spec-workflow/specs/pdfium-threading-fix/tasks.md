@@ -36,7 +36,7 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer specializing in image processing and rendering | Task: Remove Task.Run wrappers from ThumbnailRenderingService rendering methods, replace with await Task.Yield(), inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: Do not change thumbnail sizing logic, preserve image quality settings, maintain caching behavior | Success: Service compiles with base class inheritance, thumbnails render without crashes, thumbnail quality unchanged | Instructions: Mark in-progress, fix threading, test thumbnail generation, log implementation with method details, mark complete
 
-- [ ] 5. Fix WatermarkService - Remove Task.Run
+- [x] 5. Fix WatermarkService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/WatermarkService.cs
   - Replace Task.Run with Task.Yield in watermark operations
   - Make service inherit from PdfiumServiceBase
