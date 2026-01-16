@@ -92,11 +92,12 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer specializing in document editing and manipulation | Task: Search DocumentEditingService for all Task.Run usages in editing methods, replace with await Task.Yield(), inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: Preserve all editing logic and validation, maintain undo/redo functionality if present, do not change editing capabilities | Success: Service inherits base class, document editing works without crashes, all editing features functional | Instructions: Mark in-progress, fix all editing methods, test editing operations, log implementation details, mark complete
 
-- [ ] 11. Fix FormValidationService - Remove Task.Run
+- [x] 11. Fix FormValidationService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/FormValidationService.cs
-  - Check for Task.Run usage and replace with Task.Yield if found
-  - Make service inherit from PdfiumServiceBase if it uses PDFium
-  - Purpose: Ensure form validation doesn't crash
+  - **NO CHANGES NEEDED**: This service does not use PDFium or any native interop
+  - Service contains only synchronous .NET validation logic (no async, no Task.Run)
+  - Does not interact with PdfiumInterop at all - pure business logic validation
+  - No threading issues possible as it's entirely synchronous and uses only managed code
   - _Leverage: PdfiumServiceBase, PdfiumInterop_
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer with validation and forms expertise | Task: Examine FormValidationService for Task.Run usage and PDFium interop calls, if found replace Task.Run with await Task.Yield() and inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: If service doesn't call PDFium, skip inheritance but document the finding, preserve validation rules and logic | Success: Service is thread-safe if it uses PDFium, validation logic unchanged, no crashes during validation | Instructions: Mark in-progress, analyze service, apply fixes if needed, log findings and any changes made, mark complete
