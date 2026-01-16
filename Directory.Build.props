@@ -14,7 +14,7 @@
 
     <!-- Build Output -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);1591;IDE0011;IDE0019;IDE0161;IDE0031;IDE0270</NoWarn> <!-- Missing XML comment; IDE style rules -->
+    <NoWarn>$(NoWarn);1591;IDE0008;IDE0011;IDE0019;IDE0161;IDE0031;IDE0270</NoWarn> <!-- Missing XML comment; IDE style rules -->
 
     <!--
       Code Quality Metrics (from CLAUDE.md):

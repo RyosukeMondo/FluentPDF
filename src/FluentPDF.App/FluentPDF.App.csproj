@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+        <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
         <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
         <OutputType>WinExe</OutputType>
 
@@ -9,6 +9,11 @@
         <UseWinUI>true</UseWinUI>
         <EnableMsixTooling>true</EnableMsixTooling>
         <WindowsPackageType>None</WindowsPackageType>
+
+        <!-- Self-contained deployment - includes Windows App Runtime -->
+        <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+        <SelfContained>true</SelfContained>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
         <!-- Project Options -->
         <Nullable>enable</Nullable>
@@ -24,8 +29,7 @@
         <Platforms>x86;x64;ARM64</Platforms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <PublishProfile>win-$(Platform).pubxml</PublishProfile>
-        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>
@@ -67,9 +71,28 @@
     </ItemGroup>
  
     <ItemGroup>
-        <None Include="..\..\libs\$(Platform)\bin\pdfium.dll" Link="pdfium.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\libs\$(Platform)\bin\pdfium.dll')" />
-        <None Include="..\..\libs\$(Platform)\bin\qpdf.dll" Link="qpdf.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\libs\$(Platform)\bin\qpdf.dll')" />
+        <None Include="..\..\libs\$(Platform)\bin\pdfium.dll" Link="pdfium.dll" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="..\..\libs\$(Platform)\bin\qpdf.dll" Link="qpdf.dll" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+
+    <Target Name="ValidateNativeDependencies" BeforeTargets="BeforeBuild">
+        <PropertyGroup>
+            <PdfiumDllPath>$(MSBuildProjectDirectory)\..\..\libs\$(Platform)\bin\pdfium.dll</PdfiumDllPath>
+            <QpdfDllPath>$(MSBuildProjectDirectory)\..\..\libs\$(Platform)\bin\qpdf.dll</QpdfDllPath>
+            <BuildLibsScript>$(MSBuildProjectDirectory)\..\..\tools\build-libs.ps1</BuildLibsScript>
+        </PropertyGroup>
+
+        <!-- Check pdfium.dll (critical for app startup) -->
+        <Error Condition="!Exists('$(PdfiumDllPath)')"
+               Text="Native dependency missing: pdfium.dll not found at $(PdfiumDllPath)%0A%0ATo build native dependencies, run:%0A  pwsh $(BuildLibsScript) -Triplet $(Platform)-windows%0A%0AFor more information, see: tools\build-libs.ps1" />
+
+        <!-- Check qpdf.dll -->
+        <Error Condition="!Exists('$(QpdfDllPath)')"
+               Text="Native dependency missing: qpdf.dll not found at $(QpdfDllPath)%0A%0ATo build native dependencies, run:%0A  pwsh $(BuildLibsScript) -Triplet $(Platform)-windows" />
+
+        <Message Importance="high"
+                 Text="✓ Native dependencies validated: pdfium.dll, qpdf.dll [Platform: $(Platform)]" />
+    </Target>
 
     <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <ProjectCapability Include="Msix" />

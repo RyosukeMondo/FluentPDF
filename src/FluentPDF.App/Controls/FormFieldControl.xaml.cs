@@ -237,9 +237,11 @@ public sealed partial class FormFieldControl : UserControl
     }
 
     /// <summary>
-    /// Raises the ValueChanged event.
+    /// Raises the ValueChanged event. 
+    /// Should be called by inheriting controls when their internal value changes.
     /// </summary>
-    internal void RaiseValueChanged(string? newValue)
+    /// <param name="newValue">The new field value.</param>
+    public void RaiseValueChanged(string? newValue)
     {
         ValueChanged?.Invoke(this, newValue);
     }

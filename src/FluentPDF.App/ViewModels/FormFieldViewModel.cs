@@ -171,7 +171,7 @@ public partial class FormFieldViewModel : ObservableObject
     /// </summary>
     /// <param name="parameter">Tuple of (field, newValue).</param>
     [RelayCommand]
-    private async Task UpdateFieldValueAsync(object? parameter)
+    public async Task UpdateFieldValueAsync(object? parameter)
     {
         if (parameter is not (PdfFormField field, string newValue))
         {
@@ -239,7 +239,7 @@ public partial class FormFieldViewModel : ObservableObject
     /// </summary>
     /// <param name="field">The checkbox or radio button field to toggle.</param>
     [RelayCommand]
-    private async Task ToggleCheckboxAsync(PdfFormField? field)
+    public async Task ToggleCheckboxAsync(PdfFormField? field)
     {
         if (field == null)
         {

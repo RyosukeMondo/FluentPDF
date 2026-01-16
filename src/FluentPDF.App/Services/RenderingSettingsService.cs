@@ -22,9 +22,11 @@ public sealed class RenderingSettingsService : IRenderingSettingsService, IDispo
     private const RenderingQuality DefaultQuality = RenderingQuality.Auto;
 
     private readonly ILogger<RenderingSettingsService> _logger;
-    private readonly ApplicationDataContainer _settings;
+    private readonly ApplicationDataContainer? _settings;
     private readonly BehaviorSubject<RenderingQuality> _qualitySubject;
+    private readonly Dictionary<string, object> _fallbackStorage = new();
     private bool _disposed;
+    private readonly bool _isPackaged;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderingSettingsService"/> class.
@@ -33,7 +35,21 @@ public sealed class RenderingSettingsService : IRenderingSettingsService, IDispo
     public RenderingSettingsService(ILogger<RenderingSettingsService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _settings = ApplicationData.Current.LocalSettings;
+
+        // Try to access ApplicationData.Current (only works in packaged apps)
+        try
+        {
+            _settings = ApplicationData.Current.LocalSettings;
+            _isPackaged = true;
+            _logger.LogInformation("Running as packaged app, using ApplicationData.LocalSettings");
+        }
+        catch (InvalidOperationException)
+        {
+            // Fallback for unpackaged/development scenarios
+            _settings = null;
+            _isPackaged = false;
+            _logger.LogWarning("Running unpackaged, using in-memory settings storage");
+        }
 
         // Load current quality and initialize subject
         var currentQuality = LoadQualityFromStorage();
@@ -71,8 +87,15 @@ public sealed class RenderingSettingsService : IRenderingSettingsService, IDispo
 
             _logger.LogInformation("Setting rendering quality to: {Quality}", quality);
 
-            // Save to storage
-            _settings.Values[StorageKey] = (int)quality;
+            // Save to storage (packaged or fallback)
+            if (_isPackaged && _settings != null)
+            {
+                _settings.Values[StorageKey] = (int)quality;
+            }
+            else
+            {
+                _fallbackStorage[StorageKey] = (int)quality;
+            }
 
             // Notify observers if value changed
             if (_qualitySubject.Value != quality)
@@ -106,8 +129,19 @@ public sealed class RenderingSettingsService : IRenderingSettingsService, IDispo
     {
         try
         {
-            if (_settings.Values.TryGetValue(StorageKey, out var storedValue) &&
-                storedValue is int qualityInt)
+            object? storedValue = null;
+
+            // Try to load from packaged storage or fallback
+            if (_isPackaged && _settings != null)
+            {
+                _settings.Values.TryGetValue(StorageKey, out storedValue);
+            }
+            else
+            {
+                _fallbackStorage.TryGetValue(StorageKey, out storedValue);
+            }
+
+            if (storedValue is int qualityInt)
             {
                 if (Enum.IsDefined(typeof(RenderingQuality), qualityInt))
                 {

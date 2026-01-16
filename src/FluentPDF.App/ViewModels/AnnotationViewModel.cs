@@ -92,12 +92,28 @@ public partial class AnnotationViewModel : ObservableObject
     /// <summary>
     /// Selects an annotation tool for creating new annotations.
     /// </summary>
-    /// <param name="tool">The tool to activate.</param>
+    /// <param name="tool">The tool to activate (can be AnnotationTool enum or string).</param>
     [RelayCommand]
-    private void SelectTool(AnnotationTool tool)
+    private void SelectTool(object tool)
     {
-        _logger.LogInformation("Selected annotation tool: {Tool}", tool);
-        ActiveTool = tool;
+        AnnotationTool toolEnum;
+
+        if (tool is AnnotationTool enumValue)
+        {
+            toolEnum = enumValue;
+        }
+        else if (tool is string toolString && Enum.TryParse<AnnotationTool>(toolString, out var parsedTool))
+        {
+            toolEnum = parsedTool;
+        }
+        else
+        {
+            _logger.LogWarning("Invalid annotation tool parameter: {Tool}", tool);
+            return;
+        }
+
+        _logger.LogInformation("Selected annotation tool: {Tool}", toolEnum);
+        ActiveTool = toolEnum;
 
         // Deselect current annotation when switching tools
         if (SelectedAnnotation != null)

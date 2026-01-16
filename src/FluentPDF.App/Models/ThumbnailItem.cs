@@ -15,9 +15,10 @@ public partial class ThumbnailItem : ObservableObject
 
     /// <summary>
     /// Gets or sets the thumbnail image for the page.
+    /// Changed from BitmapImage to ImageSource to support SoftwareBitmapSource.
     /// </summary>
     [ObservableProperty]
-    private BitmapImage? _thumbnail;
+    private Microsoft.UI.Xaml.Media.ImageSource? _thumbnail;
 
     /// <summary>
     /// Gets or sets a value indicating whether the thumbnail is currently loading.

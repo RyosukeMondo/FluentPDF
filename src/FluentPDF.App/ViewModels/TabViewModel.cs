@@ -69,11 +69,15 @@ public partial class TabViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isActive;
 
+    private bool _hasUnsavedChanges;
     /// <summary>
-    /// Gets a value indicating whether this tab has unsaved changes.
-    /// Delegates to the ViewerViewModel's HasUnsavedChanges property.
+    /// Gets or sets a value indicating whether this tab has unsaved changes.
     /// </summary>
-    public bool HasUnsavedChanges => ViewerViewModel.HasUnsavedChanges;
+    public bool HasUnsavedChanges
+    {
+        get => _hasUnsavedChanges;
+        set => SetProperty(ref _hasUnsavedChanges, value);
+    }
 
     /// <summary>
     /// Gets the display name for the tab header.

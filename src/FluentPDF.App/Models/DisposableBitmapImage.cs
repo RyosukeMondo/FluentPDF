@@ -1,24 +1,25 @@
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace FluentPDF.App.Models;
 
 /// <summary>
-/// Wrapper for BitmapImage that implements IDisposable to work with LruCache.
+/// Wrapper for ImageSource (BitmapImage or SoftwareBitmapSource) that implements IDisposable to work with LruCache.
 /// </summary>
 public sealed class DisposableBitmapImage : IDisposable
 {
     private bool _disposed;
 
     /// <summary>
-    /// Gets the wrapped BitmapImage.
+    /// Gets the wrapped ImageSource.
     /// </summary>
-    public BitmapImage Image { get; }
+    public ImageSource Image { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DisposableBitmapImage"/> class.
     /// </summary>
-    /// <param name="image">The BitmapImage to wrap.</param>
-    public DisposableBitmapImage(BitmapImage image)
+    /// <param name="image">The ImageSource to wrap.</param>
+    public DisposableBitmapImage(ImageSource image)
     {
         Image = image ?? throw new ArgumentNullException(nameof(image));
     }

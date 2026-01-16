@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using FluentPDF.Core.Models;
-using FluentPDF.Rendering.Services;
+using FluentPDF.Core.Services;
 using FluentResults;
 using Microsoft.UI.Xaml.Media;
 
@@ -14,7 +14,7 @@ public sealed class RenderingCoordinator
 {
     private readonly RenderingStrategyFactory _strategyFactory;
     private readonly RenderingObservabilityService _observabilityService;
-    private readonly PdfRenderingService _pdfRenderingService;
+    private readonly IPdfRenderingService _pdfRenderingService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderingCoordinator"/> class.
@@ -25,7 +25,7 @@ public sealed class RenderingCoordinator
     public RenderingCoordinator(
         RenderingStrategyFactory strategyFactory,
         RenderingObservabilityService observabilityService,
-        PdfRenderingService pdfRenderingService)
+        IPdfRenderingService pdfRenderingService)
     {
         _strategyFactory = strategyFactory ?? throw new ArgumentNullException(nameof(strategyFactory));
         _observabilityService = observabilityService ?? throw new ArgumentNullException(nameof(observabilityService));
