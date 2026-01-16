@@ -30,6 +30,8 @@ public class PdfViewerViewModelTests : IDisposable
         _viewModel = new PdfViewerViewModel(
             _documentServiceMock.Object,
             _renderingServiceMock.Object,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _loggerMock.Object);
     }
 
@@ -52,6 +54,8 @@ public class PdfViewerViewModelTests : IDisposable
         Action act = () => new PdfViewerViewModel(
             null!,
             _renderingServiceMock.Object,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _loggerMock.Object);
 
         // Assert
@@ -66,6 +70,8 @@ public class PdfViewerViewModelTests : IDisposable
         Action act = () => new PdfViewerViewModel(
             _documentServiceMock.Object,
             null!,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _loggerMock.Object);
 
         // Assert

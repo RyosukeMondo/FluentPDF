@@ -343,6 +343,8 @@ public class MainViewModelTests
             textExtractionServiceMock.Object,
             bookmarksViewModelMock.Object,
             formFieldViewModelMock.Object,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _viewerLoggerMock.Object);
     }
 }

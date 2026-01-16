@@ -84,6 +84,8 @@ public class PdfViewerViewModelDpiTests : IDisposable
             null, // metrics service
             _dpiDetectionServiceMock.Object,
             _renderingSettingsServiceMock.Object,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _loggerMock.Object);
     }
 
@@ -189,6 +191,8 @@ public class PdfViewerViewModelDpiTests : IDisposable
             null, // metrics service
             null, // no DPI service
             _renderingSettingsServiceMock.Object,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _loggerMock.Object);
 
         // Act

@@ -61,6 +61,8 @@ public class TabViewModelTests : IDisposable
             _textExtractionServiceMock.Object,
             bookmarksViewModel,
             formFieldViewModel,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _viewerLoggerMock.Object);
     }
 
@@ -318,6 +320,8 @@ public class TabViewModelTests : IDisposable
             _textExtractionServiceMock.Object,
             bookmarksViewModel,
             formFieldViewModel,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _viewerLoggerMock.Object);
 
         var tabViewModel = new TabViewModel(

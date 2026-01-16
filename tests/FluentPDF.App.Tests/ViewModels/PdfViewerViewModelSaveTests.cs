@@ -103,6 +103,8 @@ public class PdfViewerViewModelSaveTests : IDisposable
             null, // dpiDetectionService
             null, // renderingSettingsService
             null, // settingsService
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _viewerLoggerMock.Object);
     }
 

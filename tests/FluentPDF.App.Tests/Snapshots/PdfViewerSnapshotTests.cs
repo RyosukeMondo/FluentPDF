@@ -89,6 +89,8 @@ public class PdfViewerSnapshotTests : SnapshotTestBase
             null, // Optional DPI detection service
             null, // Optional rendering settings service
             null, // Optional settings service
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _mockLogger.Object);
 
         var control = new PdfViewerControl

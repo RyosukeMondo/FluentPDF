@@ -45,6 +45,8 @@ public class PdfViewerViewModelSearchTests : IDisposable
             _searchServiceMock.Object,
             _bookmarksViewModelMock.Object,
             _formFieldViewModelMock.Object,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _loggerMock.Object);
 
         // Create a test document
@@ -80,6 +82,8 @@ public class PdfViewerViewModelSearchTests : IDisposable
             null!,
             _bookmarksViewModelMock.Object,
             _formFieldViewModelMock.Object,
+            Mock.Of<FluentPDF.App.Services.RenderingCoordinator>(),
+            Mock.Of<FluentPDF.App.Services.UIBindingVerifier>(),
             _loggerMock.Object);
 
         // Assert
