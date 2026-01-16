@@ -73,7 +73,7 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer specializing in document manipulation | Task: Remove Task.Run from PageOperationsService methods (DeletePageAsync, RotatePageAsync, ExtractPageAsync, etc.), replace with await Task.Yield(), inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: Preserve page manipulation logic, maintain document integrity checks, do not change operation success criteria | Success: Service inherits base class, page operations work without crashes, document integrity maintained | Instructions: Mark in-progress, fix all page operation methods, test operations, log implementation with all modified methods, mark complete
 
-- [ ] 9. Fix ImageInsertionService - Remove Task.Run
+- [x] 9. Fix ImageInsertionService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/ImageInsertionService.cs
   - Replace Task.Run with Task.Yield in image insertion methods
   - Make service inherit from PdfiumServiceBase
