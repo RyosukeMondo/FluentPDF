@@ -103,11 +103,13 @@ public sealed class RenderingReliabilityTests : IDisposable
         var document = documentResult.Value!;
 
         var context = new RenderContext(
-            DocumentName: "simple-text.pdf",
+            DocumentPath: fullPdfPath,
             PageNumber: 1,
             TotalPages: document.PageCount,
-            ZoomLevel: 1.0,
-            OperationId: Guid.NewGuid().ToString()
+            RenderDpi: 96.0,
+            RequestSource: "Test",
+            RequestTime: DateTime.UtcNow,
+            OperationId: Guid.NewGuid()
         );
 
         try
@@ -273,11 +275,13 @@ public sealed class RenderingReliabilityTests : IDisposable
         var document = documentResult.Value!;
 
         var context = new RenderContext(
-            DocumentName: "simple-text.pdf",
+            DocumentPath: fullPdfPath,
             PageNumber: 1,
             TotalPages: document.PageCount,
-            ZoomLevel: 1.0,
-            OperationId: Guid.NewGuid().ToString()
+            RenderDpi: 96.0,
+            RequestSource: "Test",
+            RequestTime: DateTime.UtcNow,
+            OperationId: Guid.NewGuid()
         );
 
         try
@@ -319,11 +323,13 @@ public sealed class RenderingReliabilityTests : IDisposable
         var document = documentResult.Value!;
 
         var context = new RenderContext(
-            DocumentName: "simple-text.pdf",
+            DocumentPath: fullPdfPath,
             PageNumber: 1,
             TotalPages: document.PageCount,
-            ZoomLevel: 1.0,
-            OperationId: Guid.NewGuid().ToString()
+            RenderDpi: 96.0,
+            RequestSource: "Test",
+            RequestTime: DateTime.UtcNow,
+            OperationId: Guid.NewGuid()
         );
 
         try
@@ -402,11 +408,13 @@ public sealed class RenderingReliabilityTests : IDisposable
         var observabilityService = new RenderingObservabilityService(_observabilityLoggerMock.Object, memoryMonitor);
 
         var context = new RenderContext(
-            DocumentName: "test.pdf",
+            DocumentPath: "test.pdf",
             PageNumber: 1,
             TotalPages: 10,
-            ZoomLevel: 1.5,
-            OperationId: Guid.NewGuid().ToString()
+            RenderDpi: 96.0,
+            RequestSource: "Test",
+            RequestTime: DateTime.UtcNow,
+            OperationId: Guid.NewGuid()
         );
 
         // Act

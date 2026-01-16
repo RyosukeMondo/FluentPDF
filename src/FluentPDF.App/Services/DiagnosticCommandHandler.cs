@@ -105,12 +105,15 @@ public sealed class DiagnosticCommandHandler
             Console.WriteLine();
             Console.WriteLine("Step 2: Rendering first page...");
 
-            var context = new RenderContext
-            {
-                DocumentName = Path.GetFileName(filePath),
-                PageNumber = 1,
-                OperationName = "TestRender"
-            };
+            var context = new RenderContext(
+                DocumentPath: filePath,
+                PageNumber: 1,
+                TotalPages: document.PageCount,
+                RenderDpi: 96.0,
+                RequestSource: "CLI-TestRender",
+                RequestTime: DateTime.UtcNow,
+                OperationId: Guid.NewGuid()
+            );
 
             var stopwatch = Stopwatch.StartNew();
             var imageSource = await _renderingCoordinator.RenderWithFallbackAsync(
@@ -302,12 +305,15 @@ public sealed class DiagnosticCommandHandler
             {
                 Console.Write($"Rendering page {pageNum}/{document.PageCount}... ");
 
-                var context = new RenderContext
-                {
-                    DocumentName = Path.GetFileName(filePath),
-                    PageNumber = pageNum,
-                    OperationName = "RenderTest"
-                };
+                var context = new RenderContext(
+                    DocumentPath: filePath,
+                    PageNumber: pageNum,
+                    TotalPages: document.PageCount,
+                    RenderDpi: 96.0,
+                    RequestSource: "CLI-RenderTest",
+                    RequestTime: DateTime.UtcNow,
+                    OperationId: Guid.NewGuid()
+                );
 
                 var pageStopwatch = Stopwatch.StartNew();
 
