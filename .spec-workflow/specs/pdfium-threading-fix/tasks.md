@@ -27,7 +27,7 @@
   - _Requirements: 1.1, 1.3, 3.1_
   - _Prompt: Implement the task for spec pdfium-threading-fix, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Developer with expertise in text processing and async patterns | Task: Search TextSearchService for all Task.Run usages, replace with await Task.Yield(), make service inherit from PdfiumServiceBase following requirements 1.1, 1.3, and 3.1 | Restrictions: Preserve existing search algorithm logic, do not change search result types, maintain error handling patterns | Success: TextSearchService compiles and inherits base class, no Task.Run calls remain, text search functionality works without crashes | Instructions: Mark in-progress, implement changes, verify search works, log implementation details including all modified methods, mark complete
 
-- [ ] 4. Fix ThumbnailRenderingService - Remove Task.Run
+- [x] 4. Fix ThumbnailRenderingService - Remove Task.Run
   - File: src/FluentPDF.Rendering/Services/ThumbnailRenderingService.cs
   - Replace Task.Run with Task.Yield in thumbnail rendering
   - Make service inherit from PdfiumServiceBase
