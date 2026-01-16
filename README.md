@@ -180,6 +180,29 @@ dotnet restore FluentPDF.sln
 dotnet build FluentPDF.sln
 ```
 
+### Common Build Errors
+
+#### "Native dependency missing: pdfium.dll not found"
+
+**Cause**: The native PDF rendering library hasn't been built yet.
+
+**Solution**: Build native dependencies first:
+```powershell
+pwsh tools\build-libs.ps1 -Triplet x64-windows
+```
+
+**Note**: As of the latest update, the build will **fail immediately** if native dependencies are missing, preventing runtime errors. This ensures you can't accidentally build an incomplete application.
+
+#### "Native dependency missing: qpdf.dll not found"
+
+**Cause**: The QPDF library for document operations hasn't been built.
+
+**Solution**: Same as above - run the build-libs.ps1 script.
+
+#### First-time build is slow
+
+**Expected behavior**: The first native dependency build takes 30-60 minutes as vcpkg compiles PDFium and QPDF from source. Subsequent builds are much faster with binary caching.
+
 ## Usage
 
 ### Opening a PDF
@@ -584,6 +607,7 @@ FluentPDF
 - **MVVM pattern**: ViewModels use CommunityToolkit.Mvvm source generators (`[ObservableProperty]`, `[RelayCommand]`)
 - **Error handling**: FluentResults `Result<T>` pattern instead of exceptions for expected failures
 - **Observability**: Structured logging with Serilog (JSON format) + OpenTelemetry
+- **PDFium threading constraint**: All PDFium services use `Task.Yield()` instead of `Task.Run` to prevent AccessViolation crashes in .NET 9.0 WinUI 3 self-contained deployments. See [ARCHITECTURE.md](docs/ARCHITECTURE.md#pdfium-threading-constraints) for details.
 
 ## Testing
 

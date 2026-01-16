@@ -1216,6 +1216,161 @@ graph TB
     PageHandle -.cleanup.-> PDFium
 ```
 
+### PDFium Threading Constraints
+
+**CRITICAL: PDFium calls CANNOT be executed from Task.Run threads in .NET 9.0 WinUI 3 self-contained deployments.**
+
+#### Problem Statement
+
+When PDFium native library calls are executed from background thread pool threads (via `Task.Run`), the application crashes with AccessViolation exceptions in .NET 9.0 WinUI 3 self-contained deployment mode. This is a critical constraint that affects all services making PDFium interop calls.
+
+**Crash Symptoms**:
+- Immediate application termination
+- AccessViolation exceptions in native code
+- No managed exception handling possible
+- Occurs only in .NET 9.0 WinUI 3 self-contained deployments
+- Does NOT occur in framework-dependent deployments
+
+#### Root Cause
+
+The issue stems from how .NET 9.0 handles native interop in self-contained WinUI 3 applications. When PDFium functions are called from thread pool threads:
+1. Thread pool thread executes managed code via `Task.Run`
+2. P/Invoke marshaller attempts to call PDFium native function
+3. Native interop layer fails due to threading model incompatibility
+4. Process terminates with AccessViolation
+
+#### Solution: Task.Yield() Pattern
+
+**CORRECT PATTERN** - Use `Task.Yield()` instead of `Task.Run`:
+
+```csharp
+public async Task<Result<List<BookmarkNode>>> ExtractBookmarksAsync(PdfDocument document)
+{
+    // CORRECT: Task.Yield() provides async behavior WITHOUT thread switching
+    await Task.Yield();
+
+    var documentHandle = (SafePdfDocumentHandle)document.Handle;
+    var bookmarks = PdfiumInterop.GetBookmarks(documentHandle);  // Safe: on calling thread
+    return Result.Ok(bookmarks);
+}
+```
+
+**INCORRECT PATTERN** - DO NOT use `Task.Run`:
+
+```csharp
+public async Task<Result<List<BookmarkNode>>> ExtractBookmarksAsync(PdfDocument document)
+{
+    // ❌ WRONG: Task.Run switches to thread pool, causes crash
+    return await Task.Run(() =>
+    {
+        var documentHandle = (SafePdfDocumentHandle)document.Handle;
+        var bookmarks = PdfiumInterop.GetBookmarks(documentHandle);  // ❌ CRASH
+        return Result.Ok(bookmarks);
+    });
+}
+```
+
+#### Why Task.Yield() Works
+
+**Task.Yield() provides async behavior WITHOUT thread switching**:
+- Yields control back to the scheduler without switching threads
+- Provides async behavior for UI responsiveness
+- Keeps PDFium calls on the original calling thread
+- Maintains compatibility with WinUI 3 threading model
+- Prevents AccessViolation crashes
+
+**Task.Run() causes crashes**:
+- Switches execution to thread pool thread
+- PDFium calls execute on wrong thread
+- Native interop layer fails
+- Process terminates
+
+#### Architectural Safeguards
+
+To prevent future introduction of threading bugs, the following safeguards are in place:
+
+**1. PdfiumServiceBase Abstract Class**
+
+All services calling PDFium MUST inherit from `PdfiumServiceBase`:
+
+```csharp
+public abstract class PdfiumServiceBase
+{
+    protected static async Task<T> ExecutePdfiumOperationAsync<T>(Func<T> operation)
+    {
+        // Yield to provide async behavior without thread switching
+        await Task.Yield();
+        return operation();
+    }
+}
+```
+
+**Location**: `src/FluentPDF.Rendering/Services/Base/PdfiumServiceBase.cs`
+
+**2. Service Inheritance Requirement**
+
+All PDFium-calling services inherit from `PdfiumServiceBase`:
+- `BookmarkService` : `PdfiumServiceBase`
+- `TextSearchService` : `PdfiumServiceBase`
+- `ThumbnailRenderingService` : `PdfiumServiceBase`
+- `WatermarkService` : `PdfiumServiceBase`
+- `TextExtractionService` : `PdfiumServiceBase`
+- `PdfFormService` : `PdfiumServiceBase`
+- `ImageInsertionService` : `PdfiumServiceBase`
+- `AnnotationService` : `PdfiumServiceBase`
+
+**3. Code Comments**
+
+Critical service methods include explanatory comments:
+
+```csharp
+// CRITICAL: Use Task.Yield() instead of Task.Run to keep PDFium calls on calling thread.
+// Task.Run would cause AccessViolation crashes in .NET 9.0 WinUI 3 self-contained deployments.
+await Task.Yield();
+```
+
+**4. XML Documentation**
+
+`PdfiumServiceBase` includes comprehensive XML documentation explaining the threading requirements, correct patterns, and why `Task.Yield()` is used instead of `Task.Run`.
+
+#### Services Fixed
+
+The following services were fixed by replacing `Task.Run` with `Task.Yield()`:
+1. BookmarkService - Bookmark extraction
+2. TextSearchService - Text search operations
+3. ThumbnailRenderingService - Thumbnail generation
+4. WatermarkService - Watermark application
+5. TextExtractionService - Text extraction
+6. PdfFormService - Form field operations
+7. ImageInsertionService - Image insertion
+8. AnnotationService - Annotation operations
+
+#### Services Excluded
+
+The following services use QPDF (not PDFium) and were NOT modified:
+- `PageOperationsService` - Uses QpdfNative for page operations
+- `DocumentEditingService` - Uses QpdfNative for document editing
+
+QPDF has different threading requirements and does not exhibit the same crash behavior.
+
+#### Testing Results
+
+After implementing the fix:
+- ✅ All PDF loading operations work without crashes
+- ✅ Bookmarks, thumbnails, forms, annotations load successfully
+- ✅ Application remains stable during sustained operation (5+ minutes)
+- ✅ All integration tests pass
+- ✅ No AccessViolation exceptions observed
+
+#### Future Development Guidelines
+
+When adding new services that call PDFium:
+1. **ALWAYS inherit from `PdfiumServiceBase`**
+2. **NEVER use `Task.Run`, `Parallel.For`, or similar thread-switching constructs**
+3. **Use `await Task.Yield()` for async behavior without thread switching**
+4. **Add code comments explaining threading requirements**
+5. **Reference `PdfiumServiceBase` XML documentation for patterns**
+
 ### Component Breakdown
 
 #### 1. PdfiumInterop (Low-Level P/Invoke)
