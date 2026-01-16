@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VerifyXunit;
 
 namespace FluentPDF.App.Tests.Snapshots;
 
