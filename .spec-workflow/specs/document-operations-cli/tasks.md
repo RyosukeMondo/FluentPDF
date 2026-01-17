@@ -21,7 +21,7 @@
   - _Requirements: 2_
   - _Prompt: Role: Search Functionality Test Developer | Task: Implement SearchCliTest verifying PDF search from requirement 2 | Restrictions: Verify match count, page numbers, positions, handle zero results gracefully | Success: Search works, results verified, metrics reported_
 
-- [ ] 4. Create PageOperationsCliTests in FluentPDF.App/Testing/Tests/PageOperationsCliTest.cs
+- [x] 4. Create PageOperationsCliTests in FluentPDF.App/Testing/Tests/PageOperationsCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/PageOperationsCliTest.cs
   - Implement ICliTest for page rotate, delete, reorder
   - Create separate test methods or test classes
