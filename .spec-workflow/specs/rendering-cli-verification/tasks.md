@@ -1,11 +1,11 @@
 # Tasks Document
 
-- [ ] 1. Comply with tasks-template structure
+- [x] 1. Comply with tasks-template structure
   - Purpose: Ensure tasks document follows spec-workflow template standards
   - _Requirements: N/A_
   - _Prompt: Role: Spec Workflow Compliance Officer | Task: Verify this tasks.md complies with template | Restrictions: Verify only, don't modify | Success: All required fields present_
 
-- [ ] 2. Create PageRenderCliTest in FluentPDF.App/Testing/Tests/PageRenderCliTest.cs
+- [x] 2. Create PageRenderCliTest in FluentPDF.App/Testing/Tests/PageRenderCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/PageRenderCliTest.cs
   - Implement ICliTest for page rendering verification
   - Render page, check dimensions, file size
