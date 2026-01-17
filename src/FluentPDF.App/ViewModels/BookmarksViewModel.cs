@@ -57,6 +57,12 @@ public partial class BookmarksViewModel : ObservableObject
     private BookmarkNode? _selectedBookmark;
 
     /// <summary>
+    /// Gets a value indicating whether the document has any bookmarks.
+    /// Used to hide the panel and disable the toggle button when there are no bookmarks.
+    /// </summary>
+    public bool HasBookmarks => Bookmarks != null && Bookmarks.Count > 0;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="BookmarksViewModel"/> class.
     /// </summary>
     /// <param name="bookmarkService">Service for extracting bookmarks from PDF documents.</param>
@@ -106,11 +112,20 @@ public partial class BookmarksViewModel : ObservableObject
             if (result.IsSuccess)
             {
                 Bookmarks = result.Value;
+                OnPropertyChanged(nameof(HasBookmarks));
+
                 var totalCount = Bookmarks.Sum(b => b.GetTotalNodeCount());
                 _logger.LogInformation("Loaded {RootCount} root bookmarks ({TotalCount} total) from {FilePath}",
                     Bookmarks.Count,
                     totalCount,
                     document.FilePath);
+
+                // Auto-hide panel if no bookmarks
+                if (!HasBookmarks)
+                {
+                    IsPanelVisible = false;
+                    _logger.LogInformation("No bookmarks found - panel auto-hidden");
+                }
             }
             else
             {
@@ -118,12 +133,16 @@ public partial class BookmarksViewModel : ObservableObject
                     document.FilePath,
                     string.Join(", ", result.Errors));
                 Bookmarks = new List<BookmarkNode>();
+                OnPropertyChanged(nameof(HasBookmarks));
+                IsPanelVisible = false; // Auto-hide when no bookmarks
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception occurred while loading bookmarks from {FilePath}", document.FilePath);
             Bookmarks = new List<BookmarkNode>();
+            OnPropertyChanged(nameof(HasBookmarks));
+            IsPanelVisible = false; // Auto-hide when no bookmarks
         }
         finally
         {

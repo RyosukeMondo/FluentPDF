@@ -197,6 +197,49 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles scroll viewer size changes to maintain viewer grid minimum size.
+    /// Ensures the grid always fills the viewport even when the PDF image is smaller.
+    /// </summary>
+    private void OnScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        UpdateViewerGridSize();
+    }
+
+    /// <summary>
+    /// Handles PDF image size changes to update the viewer grid size.
+    /// Ensures the grid is at least as large as the viewport.
+    /// </summary>
+    private void OnPdfImageSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        UpdateViewerGridSize();
+    }
+
+    /// <summary>
+    /// Updates the viewer grid size to be at least as large as the ScrollViewer viewport.
+    /// This keeps the viewer area constant - only the image scales with zoom.
+    /// </summary>
+    private void UpdateViewerGridSize()
+    {
+        if (PdfScrollViewer == null || PdfViewerGrid == null || PdfPageImage == null)
+        {
+            return;
+        }
+
+        // Get the viewport size
+        var viewportWidth = PdfScrollViewer.ViewportWidth;
+        var viewportHeight = PdfScrollViewer.ViewportHeight;
+
+        // Get the image size
+        var imageWidth = PdfPageImage.ActualWidth;
+        var imageHeight = PdfPageImage.ActualHeight;
+
+        // Set grid minimum size to at least the viewport size
+        // This ensures the grid doesn't shrink when the image is smaller than viewport
+        PdfViewerGrid.MinWidth = Math.Max(viewportWidth, imageWidth);
+        PdfViewerGrid.MinHeight = Math.Max(viewportHeight, imageHeight);
+    }
+
+    /// <summary>
     /// Handles "Go to field" requests from the validation error panel.
     /// Focuses the specified form field.
     /// </summary>

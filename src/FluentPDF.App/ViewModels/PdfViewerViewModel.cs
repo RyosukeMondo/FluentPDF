@@ -1394,7 +1394,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
         try
         {
-            IsSearching = true;
+            // Update UI from UI thread to avoid cross-thread marshalling errors
+            App.MainWindow.DispatcherQueue.TryEnqueue(() => IsSearching = true);
+
             _logger.LogInformation("Executing search. Query={Query}, CaseSensitive={CaseSensitive}",
                 SearchQuery, CaseSensitive);
 
@@ -1442,7 +1444,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            IsSearching = false;
+            // Update UI from UI thread to avoid cross-thread marshalling errors
+            App.MainWindow.DispatcherQueue.TryEnqueue(() => IsSearching = false);
         }
     }
 

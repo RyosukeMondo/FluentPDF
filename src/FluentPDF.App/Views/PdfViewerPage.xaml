@@ -112,7 +112,8 @@
                 Icon="AlignLeft"
                 Label="Bookmarks"
                 AutomationProperties.AutomationId="BookmarksToggle"
-                Command="{x:Bind ViewModel.BookmarksViewModel.TogglePanelCommand, Mode=OneWay}">
+                Command="{x:Bind ViewModel.BookmarksViewModel.TogglePanelCommand, Mode=OneWay}"
+                IsEnabled="{x:Bind ViewModel.BookmarksViewModel.HasBookmarks, Mode=OneWay}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="B" Modifiers="Control" />
                 </AppBarButton.KeyboardAccelerators>
@@ -557,8 +558,9 @@
                 HorizontalScrollBarVisibility="Auto"
                 VerticalScrollBarVisibility="Auto"
                 Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                ViewChanged="OnScrollViewerViewChanged">
-                <Grid>
+                ViewChanged="OnScrollViewerViewChanged"
+                SizeChanged="OnScrollViewerSizeChanged">
+                <Grid x:Name="PdfViewerGrid">
                     <!-- PDF page image -->
                     <Image
                         x:Name="PdfPageImage"
@@ -569,7 +571,8 @@
                         VerticalAlignment="Center"
                         PointerPressed="OnImagePointerPressed"
                         PointerMoved="OnImagePointerMoved"
-                        PointerReleased="OnImagePointerReleased">
+                        PointerReleased="OnImagePointerReleased"
+                        SizeChanged="OnPdfImageSizeChanged">
                         <Image.ContextFlyout>
                             <MenuFlyout>
                                 <MenuFlyout.Items>
