@@ -157,7 +157,7 @@ namespace FluentPDF.App
                     services.AddTransient<DiagnosticsPanelViewModel>();
                     services.AddTransient<LogViewerViewModel>();
                     services.AddTransient<SettingsViewModel>();
-                    services.AddTransient<ThumbnailsViewModel>();
+                    services.AddSingleton<ThumbnailsViewModel>();
                     services.AddTransient<ImageInsertionViewModel>();
                     services.AddTransient<WatermarkViewModel>();
                 })
@@ -457,12 +457,34 @@ namespace FluentPDF.App
                 return true;
             }
 
+            // Handle --test-thumbnails command
+            if (!string.IsNullOrEmpty(options.TestThumbnails))
+            {
+                Log.Information("Executing test-thumbnails command for file: {FilePath}", options.TestThumbnails);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestThumbnailsAsync(options.TestThumbnails);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
             // Handle --render-test command
             if (!string.IsNullOrEmpty(options.RenderTest))
             {
                 Log.Information("Executing render-test command for file: {FilePath}", options.RenderTest);
                 var handler = GetService<DiagnosticCommandHandler>();
                 var exitCode = await handler.HandleRenderTestAsync(options.RenderTest, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --verify-marshalling command
+            if (options.VerifyMarshalling)
+            {
+                Log.Information("Executing verify-marshalling command");
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleVerifyMarshallingAsync();
                 await ShutdownAsync();
                 Environment.Exit(exitCode);
                 return true;

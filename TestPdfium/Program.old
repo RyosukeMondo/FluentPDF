@@ -1,0 +1,69 @@
+using System;
+using System.Runtime.InteropServices;
+
+class Program
+{
+    const string DllName = "pdfium.dll";
+
+    [DllImport(DllName)]
+    static extern void FPDF_InitLibrary();
+
+    [DllImport(DllName)]
+    static extern void FPDF_DestroyLibrary();
+
+    [DllImport(DllName, CharSet = CharSet.Ansi)]
+    static extern IntPtr FPDF_LoadDocument(
+        [MarshalAs(UnmanagedType.LPStr)] string file_path,
+        [MarshalAs(UnmanagedType.LPStr)] string password);
+
+    [DllImport(DllName)]
+    static extern void FPDF_CloseDocument(IntPtr document);
+
+    [DllImport(DllName)]
+    static extern int FPDF_GetPageCount(IntPtr document);
+
+    [DllImport(DllName)]
+    static extern uint FPDF_GetLastError();
+
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Testing PDFium DLL...");
+
+        try
+        {
+            Console.WriteLine("1. Initializing PDFium...");
+            FPDF_InitLibrary();
+            Console.WriteLine("   SUCCESS: PDFium initialized");
+
+            Console.WriteLine("2. Loading document...");
+            var doc = FPDF_LoadDocument(@"C:\Users\ryosu\Downloads\test.pdf", null);
+
+            if (doc == IntPtr.Zero)
+            {
+                var error = FPDF_GetLastError();
+                Console.WriteLine($"   FAILED: Could not load document. Error code: {error}");
+                // Error codes: 1=file error, 2=format error, 3=password, 4=security, 5=page
+            }
+            else
+            {
+                Console.WriteLine("   SUCCESS: Document loaded");
+
+                var pageCount = FPDF_GetPageCount(doc);
+                Console.WriteLine($"   Page count: {pageCount}");
+
+                FPDF_CloseDocument(doc);
+                Console.WriteLine("   Document closed");
+            }
+
+            FPDF_DestroyLibrary();
+            Console.WriteLine("3. PDFium shutdown complete");
+
+            Console.WriteLine("\nAll tests PASSED!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"\nFAILED: {ex.GetType().Name}: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+        }
+    }
+}

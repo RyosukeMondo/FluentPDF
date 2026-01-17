@@ -1,0 +1,7 @@
+  復元対象のプロジェクトを決定しています...
+  復元対象のすべてのプロジェクトは最新です。
+  ✓ Native dependencies validated: pdfium.dll, qpdf.dll [Platform: x64]
+  FluentPDF.Core -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Core\bin\x64\Debug\net8.0\FluentPDF.Core.dll
+  FluentPDF.Rendering -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Rendering\bin\x64\Debug\net8.0\FluentPDF.Rendering.dll
+  FluentPDF.App -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.App\bin\x64\Debug\net9.0-windows10.0.19041.0\win-x64\FluentPDF.App.dll
+C:\Users\ryosu\.nuget\packages\microsoft.windowsappsdk\1.7.260114001\buildTransitive\MrtCore.PriGen.targets(914,5): error MSB4062: "Microsoft.Build.Packaging.Pri.Tasks.ExpandPriContent" タスクをアセンブリ C:\Program Files\dotnet\sdk\9.0.308\\Microsoft\VisualStudio\v17.0\AppxPackage\\Microsoft.Build.Packaging.Pri.Tasks.dll から読み込めませんでした。Could not load file or assembly 'C:\Program Files\dotnet\sdk\9.0.308\Microsoft\VisualStudio\v17.0\AppxPackage\Microsoft.Build.Packaging.Pri.Tasks.dll'. 指定されたパスが見つかりません。 <UsingTask> 宣言が正しいこと、アセンブリとその依存関係が使用可能であること、および Microsoft.Build.Framework.ITask を実装するパブリック クラスがタスクに含まれていることを確認してください。 [C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\FluentPDF.App.Tests.csproj]

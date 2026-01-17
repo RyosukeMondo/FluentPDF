@@ -1,0 +1,14 @@
+FluentPDF Test Render Diagnostic Report
+========================================
+
+Timestamp: 2026/01/17 9:12:00
+FilePath: tests/Fixtures/bookmarked.pdf
+MachineName: WIN-GH7TMG4DCJK
+OSVersion: Microsoft Windows NT 10.0.26200.0
+.NET Version: 9.0.11
+LoadResult: Success
+PageCount: 5
+FileSizeBytes: 5178
+RenderResult: Success
+RenderTimeMs: 159
+UIBindingResult: Success

@@ -1,0 +1,6 @@
+  復元対象のプロジェクトを決定しています...
+C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.E2E.Tests\FluentPDF.E2E.Tests.csproj : error NU1201: プロジェクト FluentPDF.App は net8.0-windows10.0.19041 (.NETCoreApp,Version=v8.0) と互換性がありません。 プロジェクト FluentPDF.App がサポートするもの: net9.0-windows10.0.19041 (.NETCoreApp,Version=v9.0)
+C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.E2E.Tests\FluentPDF.E2E.Tests.csproj : error NU1201: プロジェクト FluentPDF.App は net8.0-windows10.0.19041 (.NETCoreApp,Version=v8.0) / win-arm64 と互換性がありません。 プロジェクト FluentPDF.App がサポートするもの: net9.0-windows10.0.19041 (.NETCoreApp,Version=v9.0)
+C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.E2E.Tests\FluentPDF.E2E.Tests.csproj : error NU1201: プロジェクト FluentPDF.App は net8.0-windows10.0.19041 (.NETCoreApp,Version=v8.0) / win-x64 と互換性がありません。 プロジェクト FluentPDF.App がサポートするもの: net9.0-windows10.0.19041 (.NETCoreApp,Version=v9.0)
+  C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.E2E.Tests\FluentPDF.E2E.Tests.csproj を復元できませんでした (1.19 秒)。
+  4 個中 3 個の復元対象のプロジェクトは最新です。

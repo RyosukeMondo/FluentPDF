@@ -1,0 +1,14 @@
+FluentPDF Test Render Diagnostic Report
+========================================
+
+Timestamp: 2026/01/17 9:16:44
+FilePath: C:\Users\ryosu\repos\FluentPDF\tests\Fixtures\images-graphics.pdf
+MachineName: WIN-GH7TMG4DCJK
+OSVersion: Microsoft Windows NT 10.0.26200.0
+.NET Version: 9.0.11
+LoadResult: Success
+PageCount: 1
+FileSizeBytes: 15822
+RenderResult: Success
+RenderTimeMs: 162
+UIBindingResult: Success

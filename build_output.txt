@@ -1,0 +1,16 @@
+  蠕ｩ蜈・ｯｾ雎｡縺ｮ繝励Ο繧ｸ繧ｧ繧ｯ繝医ｒ豎ｺ螳壹＠縺ｦ縺・∪縺・..
+  蠕ｩ蜈・ｯｾ雎｡縺ｮ縺吶∋縺ｦ縺ｮ繝励Ο繧ｸ繧ｧ繧ｯ繝医・譛譁ｰ縺ｧ縺吶・
+  FluentPDF.Core -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Core\bin\Debug\net8.0\FluentPDF.Core.dll
+  FluentPDF.Rendering -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Rendering\bin\Debug\net8.0\FluentPDF.Rendering.dll
+  FluentPDF.App -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.App\bin\Debug\net8.0-windows10.0.19041.0\FluentPDF.App.dll
+C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\Snapshots\SnapshotTestBase.cs(10,2): error CS0246: 蝙九∪縺溘・蜷榊燕遨ｺ髢薙・蜷榊燕 'UsesVerifyAttribute' 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縺ｧ縺励◆ (using 繝・ぅ繝ｬ繧ｯ繝・ぅ繝悶∪縺溘・繧｢繧ｻ繝ｳ繝悶Μ蜿ら・縺梧欠螳壹＆繧後※縺・ｋ縺薙→繧堤｢ｺ隱阪＠縺ｦ縺上□縺輔＞) [C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\FluentPDF.App.Tests.csproj]
+C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\Snapshots\SnapshotTestBase.cs(10,2): error CS0246: 蝙九∪縺溘・蜷榊燕遨ｺ髢薙・蜷榊燕 'UsesVerify' 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縺ｧ縺励◆ (using 繝・ぅ繝ｬ繧ｯ繝・ぅ繝悶∪縺溘・繧｢繧ｻ繝ｳ繝悶Μ蜿ら・縺梧欠螳壹＆繧後※縺・ｋ縺薙→繧堤｢ｺ隱阪＠縺ｦ縺上□縺輔＞) [C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\FluentPDF.App.Tests.csproj]
+
+繝薙Ν繝峨↓螟ｱ謨励＠縺ｾ縺励◆縲・
+
+C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\Snapshots\SnapshotTestBase.cs(10,2): error CS0246: 蝙九∪縺溘・蜷榊燕遨ｺ髢薙・蜷榊燕 'UsesVerifyAttribute' 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縺ｧ縺励◆ (using 繝・ぅ繝ｬ繧ｯ繝・ぅ繝悶∪縺溘・繧｢繧ｻ繝ｳ繝悶Μ蜿ら・縺梧欠螳壹＆繧後※縺・ｋ縺薙→繧堤｢ｺ隱阪＠縺ｦ縺上□縺輔＞) [C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\FluentPDF.App.Tests.csproj]
+C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\Snapshots\SnapshotTestBase.cs(10,2): error CS0246: 蝙九∪縺溘・蜷榊燕遨ｺ髢薙・蜷榊燕 'UsesVerify' 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縺ｧ縺励◆ (using 繝・ぅ繝ｬ繧ｯ繝・ぅ繝悶∪縺溘・繧｢繧ｻ繝ｳ繝悶Μ蜿ら・縺梧欠螳壹＆繧後※縺・ｋ縺薙→繧堤｢ｺ隱阪＠縺ｦ縺上□縺輔＞) [C:\Users\ryosu\repos\FluentPDF\tests\FluentPDF.App.Tests\FluentPDF.App.Tests.csproj]
+    0 蛟九・隴ｦ蜻・
+    2 繧ｨ繝ｩ繝ｼ
+
+邨碁℃譎る俣 00:00:03.04

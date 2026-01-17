@@ -73,6 +73,18 @@ public class CommandLineOptions
     public bool CaptureCrashDump { get; set; }
 
     /// <summary>
+    /// Gets or sets the file path for thumbnail testing.
+    /// When set, application will load the PDF, render all thumbnails, and report results.
+    /// </summary>
+    public string? TestThumbnails { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to run P/Invoke marshalling verification.
+    /// When set, application will verify all PDFium P/Invoke signatures and marshalling correctness.
+    /// </summary>
+    public bool VerifyMarshalling { get; set; }
+
+    /// <summary>
     /// Parses command-line arguments into structured options.
     /// </summary>
     /// <param name="args">Command-line arguments from Environment.GetCommandLineArgs().</param>
@@ -155,6 +167,17 @@ public class CommandLineOptions
                     options.CaptureCrashDump = true;
                     break;
 
+                case "--test-thumbnails":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestThumbnails = args[++i];
+                    }
+                    break;
+
+                case "--verify-marshalling":
+                    options.VerifyMarshalling = true;
+                    break;
+
                 default:
                     // If it's a PDF file path without flag, treat as --open-file
                     if (!arg.StartsWith("-") && !arg.StartsWith("/") &&
@@ -192,10 +215,14 @@ General Options:
 Diagnostic Commands:
   --test-render <path>          Test render first page of PDF and save diagnostic info
                                 Returns exit code: 0=success, 1=load fail, 2=render fail, 3=UI fail
+  --test-thumbnails <path>      Test thumbnail generation for all pages
+                                Returns exit code: 0=success, 1=fail
   --diagnostics                 Output system diagnostics (OS, .NET, memory, PDFium version)
   --render-test <path>          Render all pages to PNG files in output directory
   --output <path>               Output directory for render test (used with --render-test)
   --capture-crash-dump          Capture crash dump on application failure for debugging
+  --verify-marshalling          Verify P/Invoke marshalling correctness for PDFium API
+                                Returns exit code: 0=success, 1=verification failed
 
 Examples:
   # Open a PDF file

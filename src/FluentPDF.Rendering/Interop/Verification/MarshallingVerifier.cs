@@ -102,18 +102,16 @@ public class MarshallingVerifier : IDisposable
         string? testPdfPath = null,
         CancellationToken cancellationToken = default)
     {
-        List<VerificationResult> results;
-
-        await Task.Run(() =>
+        return await Task.Run(() =>
         {
             try
             {
                 using var tester = new DataMarshallerTester(testPdfPath);
-                results = tester.RunAllTests();
+                return tester.RunAllTests();
             }
             catch (Exception ex)
             {
-                results = new List<VerificationResult>
+                return new List<VerificationResult>
                 {
                     new VerificationResult
                     {
@@ -132,8 +130,6 @@ public class MarshallingVerifier : IDisposable
                 };
             }
         }, cancellationToken);
-
-        return results;
     }
 
     /// <summary>

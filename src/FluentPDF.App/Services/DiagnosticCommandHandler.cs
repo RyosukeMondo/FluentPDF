@@ -6,10 +6,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading.Tasks;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
+using FluentPDF.Rendering.Interop.Verification;
 using FluentPDF.Rendering.Services;
 using Microsoft.Extensions.Logging;
 
@@ -25,6 +27,7 @@ public sealed class DiagnosticCommandHandler
     private readonly RenderingCoordinator _renderingCoordinator;
     private readonly RenderingObservabilityService _observabilityService;
     private readonly IPdfRenderingService _pdfRenderingService;
+    private readonly IThumbnailRenderingService _thumbnailRenderingService;
     private readonly ILogger<DiagnosticCommandHandler> _logger;
 
     /// <summary>
@@ -34,18 +37,21 @@ public sealed class DiagnosticCommandHandler
     /// <param name="renderingCoordinator">Coordinator for rendering with fallback strategies.</param>
     /// <param name="observabilityService">Service for observability and diagnostics logging.</param>
     /// <param name="pdfRenderingService">Service for rendering PDF pages to PNG streams.</param>
+    /// <param name="thumbnailRenderingService">Service for rendering thumbnails.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
     public DiagnosticCommandHandler(
         IPdfDocumentService pdfDocumentService,
         RenderingCoordinator renderingCoordinator,
         RenderingObservabilityService observabilityService,
         IPdfRenderingService pdfRenderingService,
+        IThumbnailRenderingService thumbnailRenderingService,
         ILogger<DiagnosticCommandHandler> logger)
     {
         _pdfDocumentService = pdfDocumentService ?? throw new ArgumentNullException(nameof(pdfDocumentService));
         _renderingCoordinator = renderingCoordinator ?? throw new ArgumentNullException(nameof(renderingCoordinator));
         _observabilityService = observabilityService ?? throw new ArgumentNullException(nameof(observabilityService));
         _pdfRenderingService = pdfRenderingService ?? throw new ArgumentNullException(nameof(pdfRenderingService));
+        _thumbnailRenderingService = thumbnailRenderingService ?? throw new ArgumentNullException(nameof(thumbnailRenderingService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -375,6 +381,230 @@ public sealed class DiagnosticCommandHandler
             Console.WriteLine($"ERROR: Unexpected exception: {ex.Message}");
             _logger.LogError(ex, "Render test failed with exception");
             return 2;
+        }
+    }
+
+    /// <summary>
+    /// Handles the test-thumbnails command: loads PDF and renders all thumbnail images.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <returns>Exit code: 0 = success, 1 = failure.</returns>
+    public async Task<int> HandleTestThumbnailsAsync(string filePath)
+    {
+        Console.WriteLine($"FluentPDF Thumbnail Test");
+        Console.WriteLine($"========================");
+        Console.WriteLine($"File: {filePath}");
+        Console.WriteLine();
+
+        // Validate file exists
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine($"ERROR: File not found: {filePath}");
+            return 1;
+        }
+
+        PdfDocument? document = null;
+        try
+        {
+            // Step 1: Load document
+            Console.WriteLine("Step 1: Loading PDF document...");
+            var loadResult = await _pdfDocumentService.LoadDocumentAsync(filePath);
+
+            if (loadResult.IsFailed)
+            {
+                var error = loadResult.Errors.FirstOrDefault();
+                Console.WriteLine($"ERROR: Failed to load PDF: {error?.Message ?? "Unknown error"}");
+                return 1;
+            }
+
+            document = loadResult.Value;
+            Console.WriteLine($"SUCCESS: Loaded PDF with {document.PageCount} pages");
+            Console.WriteLine();
+
+            // Step 2: Render thumbnails for all pages
+            Console.WriteLine($"Step 2: Rendering thumbnails for all {document.PageCount} pages...");
+            var stopwatch = Stopwatch.StartNew();
+
+            var successCount = 0;
+            var failCount = 0;
+            var totalBytes = 0L;
+
+            for (int pageNum = 1; pageNum <= document.PageCount; pageNum++)
+            {
+                var pageStopwatch = Stopwatch.StartNew();
+                var result = await _thumbnailRenderingService.RenderThumbnailAsync(document, pageNum);
+                pageStopwatch.Stop();
+
+                if (result.IsSuccess && result.Value != null)
+                {
+                    var bytes = result.Value.Length;
+                    totalBytes += bytes;
+                    successCount++;
+
+                    Console.WriteLine($"  Page {pageNum}: SUCCESS ({bytes:N0} bytes, {pageStopwatch.ElapsedMilliseconds}ms)");
+                }
+                else
+                {
+                    failCount++;
+                    var error = result.Errors.FirstOrDefault();
+                    Console.WriteLine($"  Page {pageNum}: FAILED - {error?.Message ?? "Unknown error"}");
+                }
+
+                result.Value?.Dispose();
+            }
+
+            stopwatch.Stop();
+            Console.WriteLine();
+            Console.WriteLine("Summary:");
+            Console.WriteLine($"  Total pages: {document.PageCount}");
+            Console.WriteLine($"  Successful: {successCount}");
+            Console.WriteLine($"  Failed: {failCount}");
+            Console.WriteLine($"  Total size: {totalBytes:N0} bytes ({totalBytes / 1024.0:F2} KB)");
+            Console.WriteLine($"  Total time: {stopwatch.ElapsedMilliseconds}ms");
+            Console.WriteLine($"  Average: {(successCount > 0 ? stopwatch.ElapsedMilliseconds / (double)successCount : 0):F1}ms per thumbnail");
+            Console.WriteLine();
+
+            if (failCount > 0)
+            {
+                Console.WriteLine($"RESULT: {failCount} thumbnail(s) failed to render");
+                return 1;
+            }
+
+            Console.WriteLine("RESULT: All thumbnails rendered successfully!");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Unexpected exception: {ex.Message}");
+            _logger.LogError(ex, "Thumbnail test failed with exception");
+            return 1;
+        }
+        finally
+        {
+            document?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Handles the verify-marshalling command: verifies P/Invoke marshalling correctness.
+    /// </summary>
+    /// <returns>Exit code: 0 = success, 1 = verification failed.</returns>
+    public async Task<int> HandleVerifyMarshallingAsync()
+    {
+        Console.WriteLine("FluentPDF P/Invoke Marshalling Verification");
+        Console.WriteLine("============================================");
+        Console.WriteLine();
+
+        try
+        {
+            // Initialize PDFium before verification
+            Console.WriteLine("Initializing PDFium library...");
+            var initialized = PdfiumInterop.Initialize();
+            if (!initialized)
+            {
+                Console.WriteLine("ERROR: Failed to initialize PDFium library");
+                return 1;
+            }
+            Console.WriteLine("PDFium initialized successfully");
+            Console.WriteLine();
+
+            // Create verifier for PdfiumInterop type
+            Console.WriteLine("Creating marshalling verifier...");
+            using var verifier = new MarshallingVerifier(typeof(PdfiumInterop));
+            Console.WriteLine();
+
+            // Get expected signatures from PDFium API specification
+            Console.WriteLine("Loading PDFium API specifications...");
+            var expectedSignatures = PdfiumApiSpec.GetAllSpecs()
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => new SignatureDetails
+                    {
+                        ReturnType = kvp.Value.ReturnType.Name,
+                        CallingConvention = kvp.Value.CallingConvention.ToString(),
+                        EntryPoint = kvp.Value.FunctionName,
+                        CharSet = kvp.Value.CharSet?.ToString(),
+                        Parameters = kvp.Value.Parameters.Select(p => new ParameterDetails
+                        {
+                            Name = p.Name,
+                            Type = p.Type.Name,
+                            IsOut = false,
+                            IsRef = p.IsByRef,
+                            MarshalAs = p.MarshalAs?.ToString()
+                        }).ToList()
+                    });
+            Console.WriteLine($"Loaded {expectedSignatures.Count} API specifications");
+            Console.WriteLine();
+
+            // Find a test PDF file from fixtures if available
+            string? testPdfPath = null;
+            var fixturesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "Fixtures");
+            if (Directory.Exists(fixturesDir))
+            {
+                var pdfFiles = Directory.GetFiles(fixturesDir, "*.pdf");
+                if (pdfFiles.Length > 0)
+                {
+                    testPdfPath = pdfFiles[0];
+                    Console.WriteLine($"Using test PDF: {Path.GetFileName(testPdfPath)}");
+                    Console.WriteLine();
+                }
+            }
+
+            // Run complete verification
+            Console.WriteLine("Running verification (signature analysis + marshalling tests)...");
+            var stopwatch = Stopwatch.StartNew();
+            var report = await verifier.VerifyAndReportAsync(expectedSignatures, testPdfPath);
+            stopwatch.Stop();
+            Console.WriteLine($"Verification completed in {stopwatch.ElapsedMilliseconds}ms");
+            Console.WriteLine();
+
+            // Display console summary
+            var summary = verifier.GenerateConsoleSummary(report);
+            Console.WriteLine(summary);
+            Console.WriteLine();
+
+            // Generate and display JSON output for machine parsing
+            var jsonOutput = new
+            {
+                timestamp = report.GeneratedAt,
+                summary = new
+                {
+                    totalFunctions = report.TotalFunctions,
+                    verifiedFunctions = report.VerifiedFunctions,
+                    testedFunctions = report.TestedFunctions,
+                    passedFunctions = report.PassedFunctions,
+                    failedFunctions = report.FailedFunctions,
+                    untestedCount = report.UntestedFunctions.Count
+                },
+                failedFunctionNames = report.FailedFunctionNames,
+                untestedFunctions = report.UntestedFunctions
+            };
+
+            Console.WriteLine("JSON Output (for CI/CD parsing):");
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(jsonOutput, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+            Console.WriteLine();
+
+            // Return exit code based on results
+            if (report.FailedFunctions > 0)
+            {
+                Console.WriteLine($"FAILED: {report.FailedFunctions} function(s) failed verification");
+                return 1;
+            }
+
+            Console.WriteLine("SUCCESS: All verified functions passed");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Verification failed with exception: {ex.Message}");
+            _logger.LogError(ex, "Marshalling verification failed");
+            Console.WriteLine();
+            Console.WriteLine("Exception details:");
+            Console.WriteLine(ex.ToString());
+            return 1;
         }
     }
 

@@ -66,7 +66,7 @@
   - _Requirements: All_
   - _Prompt: Role: Software Architect and Orchestration Specialist | Task: Create MarshallingVerifier orchestrator that coordinates all verification components (SignatureAnalyzer, DataMarshallerTester, CoverageReporter) to provide unified verification interface covering all requirements | Restrictions: Must handle component failures gracefully, provide progress feedback for long operations, support cancellation tokens for async operations | Success: All components integrated smoothly, verification runs end-to-end, results aggregated correctly, error handling robust_
 
-- [ ] 8. Add CLI command --verify-marshalling in CommandLineOptions.cs and DiagnosticCommandHandler.cs
+- [x] 8. Add CLI command --verify-marshalling in CommandLineOptions.cs and DiagnosticCommandHandler.cs
   - Files: src/FluentPDF.App/CommandLineOptions.cs, src/FluentPDF.App/Services/DiagnosticCommandHandler.cs
   - Add VerifyMarshalling property to CommandLineOptions
   - Implement HandleVerifyMarshallingAsync in DiagnosticCommandHandler

@@ -1,0 +1,14 @@
+FluentPDF Test Render Diagnostic Report
+========================================
+
+Timestamp: 2026/01/17 9:16:27
+FilePath: C:\Users\ryosu\repos\FluentPDF\tests\Fixtures\complex-layout.pdf
+MachineName: WIN-GH7TMG4DCJK
+OSVersion: Microsoft Windows NT 10.0.26200.0
+.NET Version: 9.0.11
+LoadResult: Success
+PageCount: 4
+FileSizeBytes: 66608
+RenderResult: Success
+RenderTimeMs: 168
+UIBindingResult: Success
