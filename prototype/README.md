@@ -1,5 +1,7 @@
 # FluentPDF React Prototype
 
+[![React Prototype Build](https://github.com/FluentPDF/FluentPDF/actions/workflows/prototype-build.yml/badge.svg)](https://github.com/FluentPDF/FluentPDF/actions/workflows/prototype-build.yml)
+
 React + TypeScript prototype environment for rapid FluentPDF UI iteration with instant hot reload.
 
 ## Purpose

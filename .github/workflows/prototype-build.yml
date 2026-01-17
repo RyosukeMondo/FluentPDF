@@ -1,0 +1,53 @@
+name: React Prototype Build
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'prototype/**'
+      - 'design-tokens/**'
+      - '.github/workflows/prototype-build.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'prototype/**'
+      - 'design-tokens/**'
+      - '.github/workflows/prototype-build.yml'
+
+jobs:
+  build:
+    name: Build and typecheck React prototype
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: prototype
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: prototype/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run TypeScript type checking
+      run: npm run typecheck
+
+    - name: Build production bundle
+      run: npm run build
+
+    - name: Verify build output
+      run: |
+        if [ ! -d "dist" ]; then
+          echo "Error: dist directory not found after build"
+          exit 1
+        fi
+        echo "Build output verified successfully"
+        ls -lh dist/
