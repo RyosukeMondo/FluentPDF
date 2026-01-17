@@ -13,7 +13,7 @@
   - _Requirements: 1_
   - _Prompt: Role: PDF Rendering Test Developer | Task: Implement PageRenderCliTest verifying single page rendering from requirement 1 | Restrictions: Must verify image dimensions match PDF page size, check file size >1KB, cleanup temp files | Success: Test renders page, verifies output correctness, reports metrics_
 
-- [ ] 3. Create ThumbnailAllPagesCliTest in FluentPDF.App/Testing/Tests/ThumbnailAllPagesCliTest.cs
+- [x] 3. Create ThumbnailAllPagesCliTest in FluentPDF.App/Testing/Tests/ThumbnailAllPagesCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/ThumbnailAllPagesCliTest.cs
   - Implement ICliTest for all-page thumbnail verification
   - Generate thumbnails for all pages, verify count and dimensions
