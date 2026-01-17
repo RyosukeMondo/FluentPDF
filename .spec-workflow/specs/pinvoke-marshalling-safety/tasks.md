@@ -96,7 +96,7 @@
   - _Requirements: All_
   - _Prompt: Role: Quality Assurance Engineer with .NET Testing Expertise | Task: Create comprehensive unit tests for all marshalling verification components covering all requirements, including tests for the FPDF_GetPageWidthF issue that was discovered | Restrictions: Must mock PDFium where appropriate, use deterministic test data, test both success and failure scenarios, ensure tests run in isolation | Success: All verification components tested, edge cases covered, tests detect known issues (like float API problem), all tests pass consistently_
 
-- [ ] 11. Add MSBuild pre-build verification target in Directory.Build.targets
+- [x] 11. Add MSBuild pre-build verification target in Directory.Build.targets
   - File: Directory.Build.targets (create or modify)
   - Add MSBuild target that runs marshalling verification before build
   - Execute MarshallingVerifier via console app

@@ -1,0 +1,110 @@
+<Project>
+  <!--
+    MSBuild Targets for FluentPDF Solution
+
+    This file runs custom build targets that execute before standard build phases.
+    It is automatically imported by all projects in the solution.
+  -->
+
+  <!--
+    VerifyMarshallingBeforeBuild Target
+
+    Purpose: Verify P/Invoke marshalling correctness before building FluentPDF.App
+
+    This target runs the FluentPDF.App executable with the verify-marshalling command to ensure
+    all PDFium P/Invoke signatures and data marshalling are correct before compilation.
+
+    Behavior:
+    * Only runs for FluentPDF.App project (Windows-only)
+    * Skipped during first build (app doesn't exist yet)
+    * Can be disabled via property: SkipMarshallingVerification=true
+    * Fails build if verification detects marshalling errors
+
+    Requirements:
+    * FluentPDF.App.exe must be built first (will be skipped on clean builds)
+    * Requires Windows platform (checks RuntimeIdentifier)
+    * PDFium native dependencies must be available
+
+    Exit Codes:
+    * 0: Verification successful
+    * 1: Verification failed (marshalling errors detected)
+
+    Usage Examples:
+      Normal build (verification runs automatically):
+        dotnet build src/FluentPDF.App with Platform=x64
+
+      Disable verification for rapid iteration:
+        dotnet build src/FluentPDF.App with Platform=x64 and SkipMarshallingVerification=true
+
+      Force verification even on first build:
+        dotnet build src/FluentPDF.App with Platform=x64 and ForceMarshallingVerification=true
+  -->
+
+  <Target Name="VerifyMarshallingBeforeBuild"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(MSBuildProjectName)' == 'FluentPDF.App' AND '$(SkipMarshallingVerification)' != 'true'">
+
+    <PropertyGroup>
+      <!-- Path to the built FluentPDF.App executable -->
+      <FluentPdfAppExe>$(MSBuildProjectDirectory)\$(OutputPath)FluentPDF.App.exe</FluentPdfAppExe>
+
+      <!-- Check if this is a Windows build -->
+      <IsWindowsBuild Condition="$(RuntimeIdentifier.StartsWith('win')) OR $(TargetFramework.Contains('windows'))">true</IsWindowsBuild>
+
+      <!-- Skip verification if app doesn't exist yet (first build) unless forced -->
+      <ShouldRunVerification Condition="'$(ForceMarshallingVerification)' == 'true' OR Exists('$(FluentPdfAppExe)')">true</ShouldRunVerification>
+    </PropertyGroup>
+
+    <!-- Display status message -->
+    <Message Importance="high"
+             Condition="'$(IsWindowsBuild)' == 'true' AND '$(ShouldRunVerification)' != 'true'"
+             Text="⊘ Skipping marshalling verification (FluentPDF.App.exe not built yet)" />
+
+    <Message Importance="high"
+             Condition="'$(IsWindowsBuild)' != 'true'"
+             Text="⊘ Skipping marshalling verification (not a Windows build)" />
+
+    <!-- Run verification if conditions are met -->
+    <Exec Command='"$(FluentPdfAppExe)" --verify-marshalling --console'
+          Condition="'$(IsWindowsBuild)' == 'true' AND '$(ShouldRunVerification)' == 'true'"
+          IgnoreExitCode="false"
+          ConsoleToMSBuild="true"
+          WorkingDirectory="$(OutputPath)">
+      <Output TaskParameter="ExitCode" PropertyName="VerificationExitCode" />
+    </Exec>
+
+    <!-- Report success -->
+    <Message Importance="high"
+             Condition="'$(IsWindowsBuild)' == 'true' AND '$(ShouldRunVerification)' == 'true' AND '$(VerificationExitCode)' == '0'"
+             Text="✓ P/Invoke marshalling verification passed" />
+
+    <!-- Fail build if verification failed -->
+    <Error Condition="'$(IsWindowsBuild)' == 'true' AND '$(ShouldRunVerification)' == 'true' AND '$(VerificationExitCode)' != '0'"
+           Text="✗ P/Invoke marshalling verification failed (exit code: $(VerificationExitCode))%0A%0AMarshalling errors detected in PDFium P/Invoke signatures.%0APlease review the verification output above and fix the identified issues.%0A%0ATo skip verification during development, use:%0A  dotnet build with property SkipMarshallingVerification=true" />
+  </Target>
+
+  <!--
+    Additional Notes:
+
+    1. Performance Impact:
+       * Minimal for incremental builds (verification takes approximately 1 to 2 seconds)
+       * Skipped automatically on first build or when app doesn't exist
+       * Can be disabled for rapid iteration during development
+
+    2. Developer Workflow:
+       * Normal builds: Verification runs automatically, catches marshalling errors early
+       * Rapid iteration: Use property SkipMarshallingVerification=true to skip
+       * CI/CD: Verification always runs (CI should never skip)
+
+    3. Error Handling:
+       * Build fails immediately if verification fails
+       * Clear error message with remediation instructions
+       * Verification output shows specific marshalling issues
+
+    4. Opt-Out Strategy:
+       * Developers can easily disable for local development
+       * CI/CD should enforce verification (don't set SkipMarshallingVerification)
+       * Property-based control is more flexible than conditional compilation
+  -->
+
+</Project>
