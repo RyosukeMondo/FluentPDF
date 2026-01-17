@@ -130,7 +130,7 @@
   - _Requirements: 5.0_
   - _Prompt: Implement the task for spec pdfium-library-verification, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Software Architect with expertise in framework design and documentation | Task: Create extensibility guide in docs/verification/extending-verification.md showing how to verify other libraries following requirement 5.0 | Restrictions: Must include step-by-step tutorial, provide template code, document all framework extension points | Success: Guide enables developers to create new verifiers, includes complete example, documents all interfaces and base classes | Instructions: (1) Edit tasks.md to mark this task as in-progress [-], (2) implement the code, (3) use log-implementation tool with detailed artifacts after completion, (4) mark as complete [x] in tasks.md_
 
-- [ ] 16. Add fix for FPDF_GetPageWidthF issue
+- [x] 16. Add fix for FPDF_GetPageWidthF issue
   - File: src/FluentPDF.Rendering/Interop/PdfiumInterop.cs
   - Update to use FPDF_GetPageWidth/Height instead of Float versions
   - Purpose: Fix the original issue that motivated this tool
