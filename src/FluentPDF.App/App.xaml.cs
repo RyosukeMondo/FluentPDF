@@ -501,6 +501,39 @@ namespace FluentPDF.App
                 return true;
             }
 
+            // Handle --list-tests command
+            if (options.ListTests)
+            {
+                Log.Information("Executing list-tests command");
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleListTestsAsync();
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --run-test command
+            if (!string.IsNullOrEmpty(options.RunTest))
+            {
+                Log.Information("Executing run-test command for test: {TestName}", options.RunTest);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRunTestAsync(options.RunTest);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --run-all-tests command
+            if (options.RunAllTests)
+            {
+                Log.Information("Executing run-all-tests command");
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRunAllTestsAsync();
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
             // No diagnostic command found
             return false;
         }

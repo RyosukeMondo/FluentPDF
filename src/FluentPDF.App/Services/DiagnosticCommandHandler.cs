@@ -10,9 +10,11 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
+using FluentPDF.App.Testing;
 using FluentPDF.Rendering.Interop;
 using FluentPDF.Rendering.Interop.Verification;
 using FluentPDF.Rendering.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace FluentPDF.App.Services;
@@ -28,6 +30,7 @@ public sealed class DiagnosticCommandHandler
     private readonly RenderingObservabilityService _observabilityService;
     private readonly IPdfRenderingService _pdfRenderingService;
     private readonly IThumbnailRenderingService _thumbnailRenderingService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DiagnosticCommandHandler> _logger;
 
     /// <summary>
@@ -38,6 +41,7 @@ public sealed class DiagnosticCommandHandler
     /// <param name="observabilityService">Service for observability and diagnostics logging.</param>
     /// <param name="pdfRenderingService">Service for rendering PDF pages to PNG streams.</param>
     /// <param name="thumbnailRenderingService">Service for rendering thumbnails.</param>
+    /// <param name="serviceProvider">Service provider for dependency injection in test execution.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
     public DiagnosticCommandHandler(
         IPdfDocumentService pdfDocumentService,
@@ -45,6 +49,7 @@ public sealed class DiagnosticCommandHandler
         RenderingObservabilityService observabilityService,
         IPdfRenderingService pdfRenderingService,
         IThumbnailRenderingService thumbnailRenderingService,
+        IServiceProvider serviceProvider,
         ILogger<DiagnosticCommandHandler> logger)
     {
         _pdfDocumentService = pdfDocumentService ?? throw new ArgumentNullException(nameof(pdfDocumentService));
@@ -52,6 +57,7 @@ public sealed class DiagnosticCommandHandler
         _observabilityService = observabilityService ?? throw new ArgumentNullException(nameof(observabilityService));
         _pdfRenderingService = pdfRenderingService ?? throw new ArgumentNullException(nameof(pdfRenderingService));
         _thumbnailRenderingService = thumbnailRenderingService ?? throw new ArgumentNullException(nameof(thumbnailRenderingService));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -793,5 +799,176 @@ public sealed class DiagnosticCommandHandler
         var fileName = Path.GetFileNameWithoutExtension(pdfFilePath);
         var directory = Path.GetDirectoryName(pdfFilePath) ?? Environment.CurrentDirectory;
         return Path.Combine(directory, $"{fileName}_diagnostic_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+    }
+
+    /// <summary>
+    /// Creates a TestRunner instance with all required dependencies.
+    /// </summary>
+    /// <returns>Configured TestRunner instance</returns>
+    private TestRunner CreateTestRunner()
+    {
+        // Get Serilog logger for testing components
+        var serilogLogger = Serilog.Log.ForContext<DiagnosticCommandHandler>();
+
+        var discovery = new TestDiscovery(_serviceProvider, serilogLogger);
+        var executor = new TestExecutor(_serviceProvider, serilogLogger);
+        var verifier = new ResultVerifier(serilogLogger);
+        return new TestRunner(discovery, executor, verifier, serilogLogger);
+    }
+
+    /// <summary>
+    /// Handles the list-tests command: discovers and displays all available CLI tests.
+    /// </summary>
+    /// <returns>Exit code (always 0).</returns>
+    public Task<int> HandleListTestsAsync()
+    {
+        Console.WriteLine("FluentPDF CLI Tests");
+        Console.WriteLine("===================");
+        Console.WriteLine();
+
+        try
+        {
+            var testRunner = CreateTestRunner();
+            var tests = testRunner.DiscoverTests();
+
+            if (tests.Count == 0)
+            {
+                Console.WriteLine("No CLI tests found.");
+                return Task.FromResult(0);
+            }
+
+            Console.WriteLine($"Found {tests.Count} test(s):");
+            Console.WriteLine();
+
+            foreach (var test in tests)
+            {
+                Console.WriteLine($"  {test.Name}");
+                Console.WriteLine($"    {test.Description}");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine($"Run a specific test with: --run-test <name>");
+            Console.WriteLine($"Run all tests with: --run-all-tests");
+
+            return Task.FromResult(0);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Failed to discover tests: {ex.Message}");
+            _logger.LogError(ex, "Test discovery failed");
+            return Task.FromResult(1);
+        }
+    }
+
+    /// <summary>
+    /// Handles the run-test command: executes a specific CLI test by name.
+    /// </summary>
+    /// <param name="testName">Name of the test to run.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed or not found.</returns>
+    public async Task<int> HandleRunTestAsync(string testName)
+    {
+        Console.WriteLine($"FluentPDF CLI Test: {testName}");
+        Console.WriteLine("=".PadRight(20 + testName.Length, '='));
+        Console.WriteLine();
+
+        try
+        {
+            var testRunner = CreateTestRunner();
+            var suiteResult = await testRunner.RunTestAsync(testName);
+
+            // Check if test was found (TotalTests = 0 means not found)
+            if (suiteResult.TotalTests == 0)
+            {
+                Console.WriteLine($"ERROR: Test '{testName}' not found");
+                Console.WriteLine();
+                Console.WriteLine("Available tests:");
+                var tests = testRunner.DiscoverTests();
+                foreach (var test in tests)
+                {
+                    Console.WriteLine($"  - {test.Name}");
+                }
+                return 1;
+            }
+
+            // Get the single test result
+            var result = suiteResult.Results.First();
+
+            // Display result
+            Console.WriteLine($"Test: {result.TestName}");
+            Console.WriteLine($"Status: {(result.Success ? "PASS" : "FAIL")}");
+            Console.WriteLine($"Duration: {result.Duration.TotalMilliseconds:F2}ms");
+
+            if (!result.Success && !string.IsNullOrEmpty(result.ErrorMessage))
+            {
+                Console.WriteLine($"Error: {result.ErrorMessage}");
+            }
+
+            if (result.LogEntries.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Log entries:");
+                foreach (var logEntry in result.LogEntries)
+                {
+                    Console.WriteLine($"  {logEntry}");
+                }
+            }
+
+            Console.WriteLine();
+            Console.WriteLine(result.Success ? "✓ Test PASSED" : "✗ Test FAILED");
+
+            return result.Success ? 0 : 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Test execution failed: {ex.Message}");
+            _logger.LogError(ex, "Test execution failed for {TestName}", testName);
+            return 1;
+        }
+    }
+
+    /// <summary>
+    /// Handles the run-all-tests command: executes all discovered CLI tests.
+    /// </summary>
+    /// <returns>Exit code: 0 = all tests passed, 1 = any test failed.</returns>
+    public async Task<int> HandleRunAllTestsAsync()
+    {
+        Console.WriteLine("FluentPDF CLI Test Suite");
+        Console.WriteLine("========================");
+        Console.WriteLine();
+
+        try
+        {
+            var testRunner = CreateTestRunner();
+            var suiteResult = await testRunner.RunAllTestsAsync();
+
+            Console.WriteLine();
+            Console.WriteLine("Test Suite Summary");
+            Console.WriteLine("==================");
+            Console.WriteLine($"Total tests: {suiteResult.TotalTests}");
+            Console.WriteLine($"Passed: {suiteResult.PassedTests}");
+            Console.WriteLine($"Failed: {suiteResult.FailedTests}");
+            Console.WriteLine($"Duration: {suiteResult.TotalDuration.TotalMilliseconds:F2}ms");
+            Console.WriteLine();
+
+            if (suiteResult.FailedTests > 0)
+            {
+                Console.WriteLine("Failed tests:");
+                foreach (var result in suiteResult.Results.Where(r => !r.Success))
+                {
+                    Console.WriteLine($"  - {result.TestName}: {result.ErrorMessage}");
+                }
+                Console.WriteLine();
+            }
+
+            Console.WriteLine(suiteResult.AllTestsPassed ? "✓ All tests PASSED" : "✗ Some tests FAILED");
+
+            return suiteResult.AllTestsPassed ? 0 : 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Test suite execution failed: {ex.Message}");
+            _logger.LogError(ex, "Test suite execution failed");
+            return 1;
+        }
     }
 }

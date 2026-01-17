@@ -92,7 +92,7 @@
   - _Requirements: All_
   - _Prompt: Role: Integration Test Developer | Task: Implement RenderCliTest as reference implementation of ICliTest for PDF rendering | Restrictions: Must use actual services, verify files created, validate image dimensions, cleanup temp files | Success: Test renders PDFs correctly, verification works, serves as good example for other tests_
 
-- [ ] 11. Add CLI commands --list-tests, --run-test, --run-all-tests
+- [x] 11. Add CLI commands --list-tests, --run-test, --run-all-tests
   - Files: src/FluentPDF.App/CommandLineOptions.cs, src/FluentPDF.App/Services/DiagnosticCommandHandler.cs
   - Add properties for test commands
   - Implement HandleListTestsAsync, HandleRunTestAsync, HandleRunAllTestsAsync

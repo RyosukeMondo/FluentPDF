@@ -97,6 +97,24 @@ public class CommandLineOptions
     public string? OutputPath { get; set; }
 
     /// <summary>
+    /// Gets or sets whether to list all available CLI tests.
+    /// When set, application will discover and display all ICliTest implementations and exit.
+    /// </summary>
+    public bool ListTests { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name of a specific CLI test to run.
+    /// When set, application will execute the named test and exit with appropriate code.
+    /// </summary>
+    public string? RunTest { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to run all available CLI tests.
+    /// When set, application will execute all discovered tests and exit with 0 if all pass, 1 otherwise.
+    /// </summary>
+    public bool RunAllTests { get; set; }
+
+    /// <summary>
     /// Parses command-line arguments into structured options.
     /// </summary>
     /// <param name="args">Command-line arguments from Environment.GetCommandLineArgs().</param>
@@ -201,6 +219,21 @@ public class CommandLineOptions
                     }
                     break;
 
+                case "--list-tests":
+                    options.ListTests = true;
+                    break;
+
+                case "--run-test":
+                    if (i + 1 < args.Length)
+                    {
+                        options.RunTest = args[++i];
+                    }
+                    break;
+
+                case "--run-all-tests":
+                    options.RunAllTests = true;
+                    break;
+
                 default:
                     // If it's a PDF file path without flag, treat as --open-file
                     if (!arg.StartsWith("-") && !arg.StartsWith("/") &&
@@ -249,6 +282,13 @@ Diagnostic Commands:
   --marshalling-report          Generate marshalling coverage report
   --output-path <path>          Save report to file (used with --marshalling-report)
 
+Test Commands:
+  --list-tests                  List all available CLI tests
+  --run-test <name>             Run a specific CLI test by name
+                                Returns exit code: 0=pass, 1=fail
+  --run-all-tests               Run all CLI tests
+                                Returns exit code: 0=all pass, 1=any fail
+
 Examples:
   # Open a PDF file
   FluentPDF.App.exe --open-file ""C:\Documents\test.pdf""
@@ -268,6 +308,15 @@ Examples:
 
   # Display system diagnostics
   FluentPDF.App.exe --diagnostics
+
+  # List available CLI tests
+  FluentPDF.App.exe --list-tests
+
+  # Run a specific test
+  FluentPDF.App.exe --run-test render-pdf --verbose
+
+  # Run all CLI tests
+  FluentPDF.App.exe --run-all-tests --verbose
 ";
     }
 }
