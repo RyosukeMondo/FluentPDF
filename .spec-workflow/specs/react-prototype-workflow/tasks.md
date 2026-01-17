@@ -229,7 +229,7 @@
   - _Requirements: Non-functional requirement (reliability)_
   - _Prompt: **Role:** DevOps Engineer with expertise in Git workflows and repository hygiene | **Task:** Configure .gitignore for React prototype to prevent committing generated files and dependencies. Add prototype-specific ignores to root .gitignore (prototype/dist/, prototype/node_modules/, prototype/*.log). Create prototype/.gitignore for local ignores. Ensure generated token files (tokens.css, Tokens.xaml) are ignored since they're generated from tokens.json. Keep tokens.json committed (source of truth). Add common IDE directories if not present (.vscode/, .idea/). Verify tokens.json is NOT ignored. | **Restrictions:** Do not ignore tokens.json (it's the source of truth), ensure node_modules/ is ignored, do not break existing .gitignore patterns, use appropriate .gitignore syntax, test with `git status` that generated files are ignored | **_Leverage:** Existing .gitignore for patterns and conventions | **Success:** `git status` shows tokens.json as trackable, generated files (dist/, node_modules/, tokens.css, Tokens.xaml) are ignored, no prototype build artifacts appear in git status, IDE directories ignored, .gitignore syntax is valid, existing patterns not broken | **Implementation Instructions:** Before starting, run `spec-workflow-guide`. Mark in-progress in tasks.md. After completion, use `log-implementation` with artifacts (.gitignore rules, ignore patterns), then mark complete._
 
-- [ ] 16. Validate design token synchronization between React and XAML
+- [x] 16. Validate design token synchronization between React and XAML
   - Files:
     - docs/token-validation-report.md
   - Run `npm run generate-tokens` and verify outputs
