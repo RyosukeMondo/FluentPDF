@@ -5,7 +5,7 @@
   - _Requirements: N/A_
   - _Prompt: Role: Spec Workflow Compliance Officer | Task: Verify this tasks.md complies with template | Restrictions: Verify only | Success: All required fields present_
 
-- [ ] 2. Create BookmarksCliTest in FluentPDF.App/Testing/Tests/BookmarksCliTest.cs
+- [x] 2. Create BookmarksCliTest in FluentPDF.App/Testing/Tests/BookmarksCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/BookmarksCliTest.cs
   - Implement ICliTest for bookmark extraction verification
   - Extract bookmarks, verify structure, save to JSON
