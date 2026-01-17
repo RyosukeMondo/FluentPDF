@@ -67,5 +67,59 @@ These commands execute without showing UI and are useful for:
 - Performance profiling
 - Validating PDFium integration
 
+## React Prototype Workflow
+
+FluentPDF includes a React prototype environment for rapid UI iteration without WinUI 3 build overhead. Use this for complex layouts, new features, and visual experimentation.
+
+### When to Use the Prototype
+
+**Use for:**
+- New complex UI components (multi-panel layouts, complex dialogs)
+- Layout experimentation and responsive design testing
+- Visual design iteration (colors, spacing, typography)
+- Component composition and hierarchy validation
+
+**Skip for:**
+- Simple dialogs or minor XAML tweaks
+- Single-value changes (margins, labels)
+- Backend-heavy features without UI changes
+- XAML-specific features (drag-and-drop, complex bindings)
+
+### Key Commands
+
+```bash
+# Start development server (instant hot reload <500ms)
+cd prototype
+npm run dev                # http://localhost:5173
+
+# Regenerate design tokens (React CSS + XAML)
+npm run generate-tokens
+
+# Verify build (TypeScript + production build)
+npm run typecheck
+npm run build
+```
+
+### Development Workflow
+
+1. **Design in React** - Edit components in `prototype/src/components/`, save, see changes instantly
+2. **Screenshot** - Capture finalized UI for reference
+3. **Translate to XAML** - Use `docs/component-mapping.md` for React ↔ XAML patterns
+4. **Wire ViewModels** - Add data bindings and business logic
+5. **Add WinUI 3 features** - Implement drag-and-drop, context menus, keyboard shortcuts
+
+### Design Tokens
+
+Design tokens maintain visual consistency between React and XAML:
+- Source of truth: `design-tokens/tokens.json`
+- Generated outputs: `prototype/src/styles/tokens.css` (React), `design-tokens/Tokens.xaml` (WinUI 3)
+- Workflow: Edit JSON → Run `npm run generate-tokens` → Verify in both UIs
+
+### Documentation
+
+- `prototype/README.md` - Setup and quick reference
+- `docs/component-mapping.md` - React ↔ XAML component translation guide
+- `docs/react-prototype-workflow.md` - Complete workflow documentation
+
 ## Spec Workflow
 Specs in `.spec-workflow/specs/`. Use `spec-status` tool to check progress.
