@@ -609,6 +609,150 @@ public sealed class DiagnosticCommandHandler
     }
 
     /// <summary>
+    /// Handles the marshalling-report command: generates marshalling coverage report.
+    /// </summary>
+    /// <param name="outputPath">Optional file path to save the report.</param>
+    /// <returns>Exit code: 0 = success, 1 = report generation failed.</returns>
+    public async Task<int> HandleMarshallingReportAsync(string? outputPath = null)
+    {
+        Console.WriteLine("FluentPDF Marshalling Coverage Report");
+        Console.WriteLine("=====================================");
+        Console.WriteLine();
+
+        try
+        {
+            // Initialize PDFium before verification
+            Console.WriteLine("Initializing PDFium library...");
+            var initialized = PdfiumInterop.Initialize();
+            if (!initialized)
+            {
+                Console.WriteLine("ERROR: Failed to initialize PDFium library");
+                return 1;
+            }
+            Console.WriteLine("PDFium initialized successfully");
+            Console.WriteLine();
+
+            // Create verifier for PdfiumInterop type
+            Console.WriteLine("Creating marshalling verifier...");
+            using var verifier = new MarshallingVerifier(typeof(PdfiumInterop));
+            Console.WriteLine();
+
+            // Get expected signatures from PDFium API specification
+            Console.WriteLine("Loading PDFium API specifications...");
+            var expectedSignatures = PdfiumApiSpec.GetAllSpecs()
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => new SignatureDetails
+                    {
+                        ReturnType = kvp.Value.ReturnType.Name,
+                        CallingConvention = kvp.Value.CallingConvention.ToString(),
+                        EntryPoint = kvp.Value.FunctionName,
+                        CharSet = kvp.Value.CharSet?.ToString(),
+                        Parameters = kvp.Value.Parameters.Select(p => new ParameterDetails
+                        {
+                            Name = p.Name,
+                            Type = p.Type.Name,
+                            IsOut = false,
+                            IsRef = p.IsByRef,
+                            MarshalAs = p.MarshalAs?.ToString()
+                        }).ToList()
+                    });
+            Console.WriteLine($"Loaded {expectedSignatures.Count} API specifications");
+            Console.WriteLine();
+
+            // Find a test PDF file from fixtures if available
+            string? testPdfPath = null;
+            var fixturesDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "Fixtures");
+            if (Directory.Exists(fixturesDir))
+            {
+                var pdfFiles = Directory.GetFiles(fixturesDir, "*.pdf");
+                if (pdfFiles.Length > 0)
+                {
+                    testPdfPath = pdfFiles[0];
+                    Console.WriteLine($"Using test PDF: {Path.GetFileName(testPdfPath)}");
+                    Console.WriteLine();
+                }
+            }
+
+            // Run complete verification
+            Console.WriteLine("Running verification (signature analysis + marshalling tests)...");
+            var stopwatch = Stopwatch.StartNew();
+            var report = await verifier.VerifyAndReportAsync(expectedSignatures, testPdfPath);
+            stopwatch.Stop();
+            Console.WriteLine($"Verification completed in {stopwatch.ElapsedMilliseconds}ms");
+            Console.WriteLine();
+
+            // Generate markdown report
+            Console.WriteLine("Generating coverage report...");
+            var markdownReport = verifier.GenerateMarkdownReport(report);
+            Console.WriteLine();
+
+            // Output to console or file
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                // Save to file
+                try
+                {
+                    // Add timestamp to filename if not specified
+                    var directory = Path.GetDirectoryName(outputPath);
+                    var fileName = Path.GetFileNameWithoutExtension(outputPath);
+                    var extension = Path.GetExtension(outputPath);
+
+                    if (string.IsNullOrEmpty(extension))
+                    {
+                        extension = ".md";
+                    }
+
+                    var timestampedFileName = $"{fileName}_{DateTime.Now:yyyyMMdd_HHmmss}{extension}";
+                    var fullPath = string.IsNullOrEmpty(directory)
+                        ? timestampedFileName
+                        : Path.Combine(directory, timestampedFileName);
+
+                    // Create directory if needed
+                    if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    await File.WriteAllTextAsync(fullPath, markdownReport);
+                    Console.WriteLine($"Report saved to: {fullPath}");
+                    Console.WriteLine();
+
+                    // Also display summary to console
+                    var summary = verifier.GenerateConsoleSummary(report);
+                    Console.WriteLine("Summary:");
+                    Console.WriteLine(summary);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ERROR: Failed to save report to file: {ex.Message}");
+                    _logger.LogError(ex, "Failed to save marshalling report");
+                    return 1;
+                }
+            }
+            else
+            {
+                // Output to console
+                Console.WriteLine("Marshalling Coverage Report:");
+                Console.WriteLine(markdownReport);
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Report generation completed successfully");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Report generation failed with exception: {ex.Message}");
+            _logger.LogError(ex, "Marshalling report generation failed");
+            Console.WriteLine();
+            Console.WriteLine("Exception details:");
+            Console.WriteLine(ex.ToString());
+            return 1;
+        }
+    }
+
+    /// <summary>
     /// Saves diagnostic data to a file.
     /// </summary>
     /// <param name="pdfFilePath">Original PDF file path.</param>

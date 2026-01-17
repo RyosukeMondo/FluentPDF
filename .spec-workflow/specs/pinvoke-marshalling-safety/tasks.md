@@ -76,7 +76,7 @@
   - _Requirements: 3_
   - _Prompt: Role: CLI Developer with .NET and CI/CD expertise | Task: Add --verify-marshalling CLI command following requirement 3, integrating MarshallingVerifier and returning proper exit codes for automation | Restrictions: Must follow existing CLI command patterns (see --test-thumbnails), output must be machine-parseable (JSON) and human-readable (console), must work without GUI | Success: Command runs successfully in headless mode, exit codes correct for CI/CD, output includes both summary and detailed results, command documented in --help_
 
-- [ ] 9. Add CLI command --marshalling-report in CommandLineOptions.cs and DiagnosticCommandHandler.cs
+- [x] 9. Add CLI command --marshalling-report in CommandLineOptions.cs and DiagnosticCommandHandler.cs
   - Files: src/FluentPDF.App/CommandLineOptions.cs, src/FluentPDF.App/Services/DiagnosticCommandHandler.cs
   - Add MarshallingReport property and OutputPath property
   - Implement HandleMarshallingReportAsync in DiagnosticCommandHandler

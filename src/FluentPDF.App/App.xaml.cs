@@ -490,6 +490,17 @@ namespace FluentPDF.App
                 return true;
             }
 
+            // Handle --marshalling-report command
+            if (options.MarshallingReport)
+            {
+                Log.Information("Executing marshalling-report command");
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleMarshallingReportAsync(options.OutputPath);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
             // No diagnostic command found
             return false;
         }

@@ -85,6 +85,18 @@ public class CommandLineOptions
     public bool VerifyMarshalling { get; set; }
 
     /// <summary>
+    /// Gets or sets whether to generate P/Invoke marshalling coverage report.
+    /// When set, application will generate a detailed coverage report for PDFium P/Invoke signatures.
+    /// </summary>
+    public bool MarshallingReport { get; set; }
+
+    /// <summary>
+    /// Gets or sets the output file path for reports.
+    /// Used with --marshalling-report to save report to a file instead of console.
+    /// </summary>
+    public string? OutputPath { get; set; }
+
+    /// <summary>
     /// Parses command-line arguments into structured options.
     /// </summary>
     /// <param name="args">Command-line arguments from Environment.GetCommandLineArgs().</param>
@@ -178,6 +190,17 @@ public class CommandLineOptions
                     options.VerifyMarshalling = true;
                     break;
 
+                case "--marshalling-report":
+                    options.MarshallingReport = true;
+                    break;
+
+                case "--output-path":
+                    if (i + 1 < args.Length)
+                    {
+                        options.OutputPath = args[++i];
+                    }
+                    break;
+
                 default:
                     // If it's a PDF file path without flag, treat as --open-file
                     if (!arg.StartsWith("-") && !arg.StartsWith("/") &&
@@ -223,6 +246,8 @@ Diagnostic Commands:
   --capture-crash-dump          Capture crash dump on application failure for debugging
   --verify-marshalling          Verify P/Invoke marshalling correctness for PDFium API
                                 Returns exit code: 0=success, 1=verification failed
+  --marshalling-report          Generate marshalling coverage report
+  --output-path <path>          Save report to file (used with --marshalling-report)
 
 Examples:
   # Open a PDF file
