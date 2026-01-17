@@ -1,0 +1,454 @@
+/* MainWindow Styles */
+.mainWindow {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+}
+
+.menuBar {
+  display: flex;
+  background: var(--color-background-secondary);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--spacing-sm);
+}
+
+.menuBarItem {
+  position: relative;
+  cursor: pointer;
+}
+
+.menuBarTitle {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.menuBarItem:hover .menuBarTitle {
+  background: var(--color-background-hover);
+  border-radius: var(--border-radius-small);
+}
+
+.menuDropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--color-background-elevated);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--border-radius-medium);
+  box-shadow: var(--shadow-flyout);
+  min-width: 200px;
+  padding: var(--spacing-xs) 0;
+  z-index: 1000;
+}
+
+.menuBarItem:hover .menuDropdown {
+  display: block;
+}
+
+.menuItem {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: var(--color-background-hover);
+}
+
+.shortcut {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  margin-left: var(--spacing-lg);
+}
+
+.menuSeparator {
+  height: var(--border-width-thin);
+  background: var(--color-border-default);
+  margin: var(--spacing-xs) 0;
+}
+
+/* Tab View Styles */
+.tabView {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tabStrip {
+  display: flex;
+  align-items: center;
+  background: var(--color-background-secondary);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--spacing-xs);
+}
+
+.tabList {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex: 1;
+  overflow-x: auto;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-background-tertiary);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--border-radius-medium) var(--border-radius-medium) 0 0;
+  cursor: pointer;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.tab:hover {
+  background: var(--color-background-hover);
+}
+
+.tabActive {
+  background: var(--color-background-primary);
+  border-bottom-color: var(--color-background-primary);
+}
+
+.tabIcon {
+  font-size: var(--font-size-body);
+}
+
+.tabTitle {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-body);
+}
+
+.tabCloseButton {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-small);
+}
+
+.tabCloseButton:hover {
+  background: var(--color-background-hover);
+  color: var(--color-text-primary);
+}
+
+.addTabButton {
+  background: transparent;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--border-radius-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-size: var(--font-size-subtitle);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addTabButton:hover {
+  background: var(--color-background-hover);
+}
+
+.tabContent {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Empty State Styles */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--spacing-md);
+}
+
+.emptyStateIcon {
+  font-size: 72px;
+  opacity: 0.5;
+}
+
+.emptyStateTitle {
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.emptyStateButton {
+  background: var(--color-accent-default);
+  border: none;
+  border-radius: var(--border-radius-medium);
+  color: var(--color-text-on-accent);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+.emptyStateButton:hover {
+  background: var(--color-accent-hover);
+}
+
+/* MainPage Styles */
+.mainPage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--color-background-primary);
+}
+
+.mainPageContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.mainPageTitle {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.mainPageSubtitle {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* PdfViewerPage Styles */
+.pdfViewerPage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-background-primary);
+}
+
+.pdfViewerLayout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.thumbnailsColumn {
+  width: 200px;
+  border-right: var(--border-width-thin) solid var(--color-border-default);
+  background: var(--color-background-secondary);
+  overflow-y: auto;
+}
+
+.mainContentColumn {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Toolbar Styles */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-background-secondary);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  flex-wrap: wrap;
+}
+
+.annotationToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-background-tertiary);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  flex-wrap: wrap;
+}
+
+.toolbarButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: transparent;
+  border: var(--border-width-thin) solid transparent;
+  border-radius: var(--border-radius-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  white-space: nowrap;
+}
+
+.toolbarButton:hover:not(:disabled) {
+  background: var(--color-background-hover);
+  border-color: var(--color-border-default);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbarButtonActive {
+  background: var(--color-accent-subtle);
+  border-color: var(--color-accent-default);
+}
+
+.toolbarSeparator {
+  width: var(--border-width-thin);
+  height: 24px;
+  background: var(--color-border-default);
+}
+
+.pageIndicator {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  padding: 0 var(--spacing-sm);
+}
+
+.zoomIndicator {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  padding: 0 var(--spacing-sm);
+  min-width: 50px;
+  text-align: center;
+}
+
+.colorPickerLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-body);
+  padding: 0 var(--spacing-sm);
+}
+
+.colorPicker {
+  width: 48px;
+  height: 32px;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+}
+
+/* Search Panel Styles */
+.searchPanel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-background-elevated);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+}
+
+.searchInput {
+  width: 300px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-background-primary);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--border-radius-medium);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-accent-default);
+}
+
+.searchCounter {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+}
+
+.searchButton {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--color-accent-default);
+  border: none;
+  border-radius: var(--border-radius-medium);
+  color: var(--color-text-on-accent);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  min-width: 90px;
+}
+
+.searchButton:hover {
+  background: var(--color-accent-hover);
+}
+
+.searchCheckbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-body);
+  cursor: pointer;
+}
+
+.searchCloseButton {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius-medium);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchCloseButton:hover {
+  background: var(--color-background-hover);
+}
+
+/* Content Area Styles */
+.contentArea {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.bookmarksColumn {
+  width: 250px;
+  border-right: var(--border-width-thin) solid var(--color-border-default);
+  background: var(--color-background-secondary);
+  overflow-y: auto;
+}
+
+.viewerColumn {
+  flex: 1;
+  overflow: auto;
+}
