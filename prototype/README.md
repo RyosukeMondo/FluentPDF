@@ -38,10 +38,11 @@ This prototype enables developers to:
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server on port 5173 |
+| `npm run dev` | Start development server on port 5173 with hot reload |
 | `npm run build` | Build for production (outputs to `dist/`) |
 | `npm run typecheck` | Run TypeScript type checking without building |
 | `npm run preview` | Preview production build locally |
+| `npm run generate-tokens` | Regenerate CSS and XAML design token files from `tokens.json` |
 
 ## Project Structure
 
@@ -65,14 +66,14 @@ prototype/
 
 ## Development Workflow
 
-1. **Design in React**: Create or modify components in `src/`
-2. **Instant feedback**: Hot reload shows changes in <500ms
-3. **Screenshot**: Take screenshots of finalized React UI
-4. **Translate to XAML**: Use screenshots as reference for XAML implementation
-5. **Wire ViewModels**: Connect XAML to ViewModels and data bindings
-6. **Add platform features**: Implement WinUI 3-specific features (drag/drop, etc.)
+**Quick Reference:**
+1. **Design in React** (5-15 min): Create or modify components in `src/` with instant hot reload
+2. **Screenshot** (1-2 min): Capture finalized UI for visual reference
+3. **Translate to XAML** (10-20 min): Use component mapping guide to convert structure
+4. **Wire ViewModels** (10-15 min): Connect XAML to ViewModels and data bindings
+5. **Add WinUI 3 features** (5-20 min): Implement platform-specific features (drag/drop, context menus, etc.)
 
-See `docs/react-prototype-workflow.md` for detailed workflow documentation.
+**Detailed workflow:** See [docs/react-prototype-workflow.md](../docs/react-prototype-workflow.md) for comprehensive workflow guide with troubleshooting, CI integration, and optimization tips.
 
 ## TypeScript Configuration
 
@@ -133,17 +134,28 @@ node --version
 # Install Node 20.x from https://nodejs.org/
 ```
 
-## Next Steps
+## When to Use This Prototype
 
-- [ ] Set up design token infrastructure (Task 2)
-- [ ] Implement token generation scripts (Task 3)
-- [ ] Create TypeScript types and dummy data (Task 4)
-- [ ] Reverse engineer XAML components to React (Tasks 5-9)
+**✅ Use for:**
+- Complex UI components with multiple panels or intricate layouts
+- Visual design iteration (colors, spacing, typography)
+- Testing component composition and visual hierarchy
+- Layout experimentation and responsive design
+
+**❌ Skip for:**
+- Simple dialogs or minor XAML tweaks
+- Backend-heavy features without UI changes
+- Single-value adjustments (margins, labels)
+
+See [workflow documentation](../docs/react-prototype-workflow.md) for detailed guidance.
 
 ## Resources
 
-- [Vite Documentation](https://vitejs.dev/)
-- [React Documentation](https://react.dev/)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Component Mapping Guide](../docs/component-mapping.md) _(coming soon)_
-- [React Prototype Workflow](../docs/react-prototype-workflow.md) _(coming soon)_
+- **FluentPDF Documentation:**
+  - [React Prototype Workflow](../docs/react-prototype-workflow.md) - Complete development workflow guide
+  - [Component Mapping Guide](../docs/component-mapping.md) - React ↔ XAML translation reference
+  - [Design Tokens](../design-tokens/README.md) - Design token system documentation
+- **External Documentation:**
+  - [Vite Documentation](https://vitejs.dev/)
+  - [React Documentation](https://react.dev/)
+  - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
