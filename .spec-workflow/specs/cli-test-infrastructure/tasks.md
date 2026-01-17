@@ -6,7 +6,7 @@
   - _Requirements: N/A (meta-task)_
   - _Prompt: Role: Spec Workflow Compliance Officer | Task: Verify this tasks.md file complies with .spec-workflow/templates/tasks-template.md structure | Restrictions: Do not modify task content, only verify compliance | Success: All tasks follow template structure, all required fields present_
 
-- [ ] 2. Create ICliTest interface in FluentPDF.App/Testing/ICliTest.cs
+- [x] 2. Create ICliTest interface in FluentPDF.App/Testing/ICliTest.cs
   - File: src/FluentPDF.App/Testing/ICliTest.cs
   - Define ICliTest interface with Name, Description, RunAsync, VerifyAsync
   - Add XML documentation for all members
