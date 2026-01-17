@@ -37,7 +37,7 @@
   - _Requirements: 4_
   - _Prompt: Role: Annotation Test Developer | Task: Implement AnnotationsCliTest verifying annotation detection from requirement 4 | Restrictions: Verify count, types, positions, handle no-annotation PDFs gracefully | Success: Annotations detected, metadata verified, reports correctly_
 
-- [ ] 6. Create MetadataCliTest in FluentPDF.App/Testing/Tests/MetadataCliTest.cs
+- [x] 6. Create MetadataCliTest in FluentPDF.App/Testing/Tests/MetadataCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/MetadataCliTest.cs
   - Implement ICliTest for metadata extraction
   - Extract metadata, display all fields
