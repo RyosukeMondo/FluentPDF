@@ -197,3 +197,10 @@ BenchmarkDotNet.Artifacts/
 
 # React prototype - generated design token files
 design-tokens/Tokens.xaml
+
+# React prototype - build outputs and dependencies
+prototype/dist/
+prototype/dist-ssr/
+prototype/node_modules/
+prototype/*.log
+prototype/src/styles/tokens.css
