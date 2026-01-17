@@ -96,7 +96,7 @@
   - _Requirements: All PDFium requirements_
   - _Prompt: Implement the task for spec pdfium-library-verification, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Integration Test Engineer with expertise in system testing and test automation | Task: Create integration tests in tests/FluentPDF.Verification.Pdfium.Tests/PdfiumVerificationTests.cs for complete verification workflow, using real PDFium DLL and test PDFs | Restrictions: Must test with actual pdfium.dll, include both success and failure scenarios, ensure deterministic results | Success: All verification scenarios tested, detects real signature mismatches, validates against known-good configurations | Instructions: (1) Edit tasks.md to mark this task as in-progress [-], (2) implement the code, (3) use log-implementation tool with detailed artifacts after completion, (4) mark as complete [x] in tasks.md_
 
-- [ ] 12. Create CLI end-to-end tests
+- [x] 12. Create CLI end-to-end tests
   - File: tests/FluentPDF.Verification.Cli.Tests/CliTests.cs
   - Test CLI argument parsing and execution
   - Purpose: Validate complete CLI workflow
