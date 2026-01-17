@@ -1,63 +1,104 @@
 import { useState } from 'react';
 import './App.css';
-import ThumbnailsSidebar from './components/ThumbnailsSidebar';
-import { ThumbnailStates } from './data/dummyThumbnails';
-import BookmarksPanel from './components/BookmarksPanel';
-import { BookmarkPresets } from './data/dummyBookmarks';
+import './styles/tokens.css';
+import styles from './App.module.css';
+import { MainWindow } from './components/MainWindow';
+import { PdfViewerPage } from './components/PdfViewerPage';
+import { WatermarkDialog } from './components/dialogs/WatermarkDialog';
+import { DeletePagesDialog } from './components/dialogs/DeletePagesDialog';
+import { ErrorDialog } from './components/dialogs/ErrorDialog';
+import { SettingsPage } from './components/dialogs/SettingsPage';
+
+type DialogType = 'watermark' | 'deletePages' | 'error' | 'settings' | null;
 
 function App() {
-  // Initialize with 20 thumbnails, first 10 loaded (partially loaded state)
-  const [thumbnails] = useState(() => ThumbnailStates.partiallyLoaded(20));
-  const [selectedPage, setSelectedPage] = useState(1);
+  const [openDialog, setOpenDialog] = useState<DialogType>(null);
 
-  const handleThumbnailClick = (pageNumber: number) => {
-    console.log(`App: Page ${pageNumber} selected`);
-    setSelectedPage(pageNumber);
+  const handleOpenWatermarkDialog = () => {
+    setOpenDialog('watermark');
   };
 
-  const handleThumbnailContextMenu = (pageNumber: number, event: React.MouseEvent) => {
-    console.log(`App: Context menu for page ${pageNumber}`, event);
+  const handleOpenDeletePagesDialog = () => {
+    setOpenDialog('deletePages');
   };
 
-  const handleNavigateToPage = (pageNumber: number) => {
-    console.log(`App: Navigate to page ${pageNumber}`);
-    setSelectedPage(pageNumber);
+  const handleOpenErrorDialog = () => {
+    setOpenDialog('error');
+  };
+
+  const handleOpenSettingsDialog = () => {
+    setOpenDialog('settings');
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(null);
+  };
+
+  const handleApplyWatermark = () => {
+    console.log('Watermark applied');
+    setOpenDialog(null);
+  };
+
+  const handleDeletePages = () => {
+    console.log('Pages deleted');
+    setOpenDialog(null);
   };
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>FluentPDF Prototype</h1>
-        <p>React prototype for rapid UI iteration</p>
-      </header>
-      <main className="app-main">
-        <div style={{ display: 'flex', gap: '20px', height: '600px' }}>
-          <div style={{ width: '200px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-            <ThumbnailsSidebar
-              thumbnails={thumbnails}
-              onThumbnailClick={handleThumbnailClick}
-              onThumbnailContextMenu={handleThumbnailContextMenu}
-            />
-          </div>
-          <div style={{ flex: 1, padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-            <h2>Viewer Area</h2>
-            <p>Selected page: {selectedPage}</p>
-            <p>The ThumbnailsSidebar component is displayed on the left.</p>
-            <ul>
-              <li>Click thumbnails to select pages</li>
-              <li>Right-click for context menu (check console)</li>
-              <li>First 10 thumbnails are loaded, others show loading spinner</li>
-              <li>Uses design tokens from tokens.css</li>
-            </ul>
-          </div>
-          <div style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-            <BookmarksPanel
-              bookmarks={BookmarkPresets.standard}
-              onNavigateToPage={handleNavigateToPage}
-            />
-          </div>
-        </div>
-      </main>
+    <div className={styles.app}>
+      {/* Main Application Window */}
+      <MainWindow>
+        <PdfViewerPage />
+      </MainWindow>
+
+      {/* Dialog Test Buttons Overlay */}
+      <div className={styles.dialogTestButtons}>
+        <button
+          onClick={handleOpenWatermarkDialog}
+          className={styles.testButton}
+        >
+          Open Watermark Dialog
+        </button>
+        <button
+          onClick={handleOpenDeletePagesDialog}
+          className={styles.testButton}
+        >
+          Open Delete Pages Dialog
+        </button>
+        <button
+          onClick={handleOpenErrorDialog}
+          className={styles.testButton}
+        >
+          Open Error Dialog
+        </button>
+        <button
+          onClick={handleOpenSettingsDialog}
+          className={styles.testButton}
+        >
+          Open Settings
+        </button>
+      </div>
+
+      {/* Dialogs */}
+      <WatermarkDialog
+        isOpen={openDialog === 'watermark'}
+        onClose={handleCloseDialog}
+        onApply={handleApplyWatermark}
+      />
+      <DeletePagesDialog
+        isOpen={openDialog === 'deletePages'}
+        onClose={handleCloseDialog}
+        onDelete={handleDeletePages}
+      />
+      <ErrorDialog
+        isOpen={openDialog === 'error'}
+        onClose={handleCloseDialog}
+        message="The PDF file could not be loaded. It may be corrupted or in an unsupported format."
+      />
+      <SettingsPage
+        isOpen={openDialog === 'settings'}
+        onClose={handleCloseDialog}
+      />
     </div>
   );
 }

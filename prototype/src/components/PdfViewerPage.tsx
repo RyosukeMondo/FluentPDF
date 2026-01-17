@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ThumbnailsSidebar } from './ThumbnailsSidebar';
 import { PdfViewerControl } from './PdfViewerControl';
 import { BookmarksPanel } from './BookmarksPanel';
-import { generateDummyPdfDocument } from '../data/dummyPdfDocument';
+import { generateDummyDocument } from '../data/dummyPdfDocument';
 import { generateDummyThumbnails } from '../data/dummyThumbnails';
 import { generateDummyBookmarks } from '../data/dummyBookmarks';
 import styles from './layouts.module.css';
@@ -16,8 +16,8 @@ export const PdfViewerPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Generate dummy data
-  const pdfDocument = generateDummyPdfDocument(15);
-  const thumbnails = generateDummyThumbnails(15, currentPage);
+  const pdfDocument = generateDummyDocument({ pageCount: 15 });
+  const thumbnails = generateDummyThumbnails({ pageCount: 15, selectedPageNumber: currentPage });
   const bookmarks = generateDummyBookmarks();
 
   const handleOpenDocument = () => {
@@ -269,14 +269,14 @@ export const PdfViewerPage: React.FC = () => {
           <div className={styles.contentArea}>
             {isBookmarksVisible && (
               <div className={styles.bookmarksColumn}>
-                <BookmarksPanel bookmarks={bookmarks} onBookmarkClick={handleBookmarkClick} />
+                <BookmarksPanel bookmarks={bookmarks} onNavigateToPage={handleBookmarkClick} />
               </div>
             )}
 
             <div className={styles.viewerColumn}>
               <PdfViewerControl
+                document={pdfDocument}
                 currentPage={currentPage}
-                totalPages={pdfDocument.pageCount}
                 zoomLevel={zoomLevel}
               />
             </div>

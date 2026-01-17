@@ -58,7 +58,7 @@ export const MainWindow: React.FC<MainWindowProps> = ({ children }) => {
     setTabs(updatedTabs);
 
     if (activeTabId === tabId) {
-      setActiveTabId(updatedTabs.length > 0 ? updatedTabs[0].id : null);
+      setActiveTabId(updatedTabs.length > 0 && updatedTabs[0] ? updatedTabs[0].id : null);
     }
 
     if (updatedTabs.length === 0) {

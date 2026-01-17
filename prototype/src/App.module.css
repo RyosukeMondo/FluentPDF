@@ -1,0 +1,50 @@
+/**
+ * App-level styles
+ * Uses design tokens from tokens.css
+ */
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background-layer);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+}
+
+.dialogTestButtons {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  z-index: 9999;
+}
+
+.testButton {
+  padding: var(--spacing-button-padding-vertical) var(--spacing-button-padding-horizontal);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  transition: opacity 0.2s ease;
+}
+
+.testButton:hover {
+  opacity: 0.9;
+}
+
+.testButton:active {
+  opacity: 0.8;
+}
