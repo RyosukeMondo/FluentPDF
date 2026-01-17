@@ -37,7 +37,7 @@
   - _Requirements: 4_
   - _Prompt: Role: Interactive PDF Test Developer | Task: Implement FormFieldRenderCliTest verifying form rendering from requirement 4 | Restrictions: Handle PDFs without forms gracefully, verify field count and types, check rendering | Success: Forms detected and verified, renders correctly, handles no-form case_
 
-- [ ] 6. Create BatchRenderCliTest in FluentPDF.App/Testing/Tests/BatchRenderCliTest.cs
+- [x] 6. Create BatchRenderCliTest in FluentPDF.App/Testing/Tests/BatchRenderCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/BatchRenderCliTest.cs
   - Implement ICliTest for batch rendering all pages
   - Render all pages, report progress, aggregate metrics
