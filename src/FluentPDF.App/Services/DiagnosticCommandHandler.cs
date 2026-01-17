@@ -1114,4 +1114,167 @@ public sealed class DiagnosticCommandHandler
             return 1;
         }
     }
+
+    /// <summary>
+    /// Handles the test-bookmarks command: runs bookmarks CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestBookmarksAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("bookmarks", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-search command: runs search CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="searchTerm">Search term to use for the test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestSearchAsync(string filePath, string? searchTerm = null, string? outputDirectory = null)
+    {
+        Console.WriteLine($"FluentPDF Document Operation Test: search");
+        Console.WriteLine("===========================================");
+        Console.WriteLine($"File: {filePath}");
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            Console.WriteLine($"Search Term: {searchTerm}");
+        }
+        if (!string.IsNullOrEmpty(outputDirectory))
+        {
+            Console.WriteLine($"Output Directory: {outputDirectory}");
+        }
+        Console.WriteLine();
+
+        // Validate file exists
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine($"ERROR: File not found: {filePath}");
+            return 1;
+        }
+
+        try
+        {
+            var testRunner = CreateTestRunner();
+
+            // Set up test context data with file path, search term, and output directory
+            var contextData = new Dictionary<string, object>
+            {
+                { "TestPdfPath", filePath }
+            };
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                contextData["SearchTerm"] = searchTerm;
+            }
+
+            if (!string.IsNullOrEmpty(outputDirectory))
+            {
+                contextData["OutputDirectory"] = outputDirectory;
+            }
+
+            // Run the test with context data
+            var suiteResult = await testRunner.RunTestWithContextAsync("search", contextData);
+
+            // Check if test was found
+            if (suiteResult.TotalTests == 0)
+            {
+                Console.WriteLine($"ERROR: Test 'search' not found");
+                return 1;
+            }
+
+            // Get the single test result
+            var result = suiteResult.Results.First();
+
+            // Display result summary
+            Console.WriteLine();
+            Console.WriteLine("Test Result");
+            Console.WriteLine("===========");
+            Console.WriteLine($"Status: {(result.Success ? "PASS ✓" : "FAIL ✗")}");
+            Console.WriteLine($"Duration: {result.Duration.TotalMilliseconds:F2}ms");
+
+            if (!result.Success && !string.IsNullOrEmpty(result.ErrorMessage))
+            {
+                Console.WriteLine($"Error: {result.ErrorMessage}");
+            }
+
+            // Display outputs
+            if (result.Outputs.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Output Metrics:");
+                foreach (var kvp in result.Outputs)
+                {
+                    Console.WriteLine($"  {kvp.Key}: {kvp.Value}");
+                }
+            }
+
+            Console.WriteLine();
+
+            return result.Success ? 0 : 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Test execution failed: {ex.Message}");
+            _logger.LogError(ex, "Search test failed for {FilePath}", filePath);
+            return 1;
+        }
+    }
+
+    /// <summary>
+    /// Handles the test-page-rotate command: runs page-rotate CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestPageRotateAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("page-rotate", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-page-delete command: runs page-delete CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestPageDeleteAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("page-delete", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-page-reorder command: runs page-reorder CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestPageReorderAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("page-reorder", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-annotations command: runs annotations CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestAnnotationsAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("annotations", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-metadata command: runs metadata CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestMetadataAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("metadata", filePath, outputDirectory);
+    }
 }

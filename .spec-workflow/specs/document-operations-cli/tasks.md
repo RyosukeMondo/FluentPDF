@@ -45,7 +45,7 @@
   - _Requirements: 5_
   - _Prompt: Role: Document Metadata Test Developer | Task: Implement MetadataCliTest verifying metadata extraction from requirement 5 | Restrictions: Extract all standard fields, handle missing fields, format output clearly | Success: Metadata extracted, all fields reported, handles missing gracefully_
 
-- [ ] 7. Add document operations CLI commands
+- [x] 7. Add document operations CLI commands
   - Files: src/FluentPDF.App/CommandLineOptions.cs, src/FluentPDF.App/Services/DiagnosticCommandHandler.cs
   - Add --test-bookmarks, --test-search, --test-page-rotate, --test-page-delete, --test-page-reorder, --test-annotations, --test-metadata
   - Integrate with test framework

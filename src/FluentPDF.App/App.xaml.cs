@@ -589,6 +589,84 @@ namespace FluentPDF.App
                 return true;
             }
 
+            // Handle --test-bookmarks command
+            if (!string.IsNullOrEmpty(options.TestBookmarks))
+            {
+                Log.Information("Executing test-bookmarks command for file: {FilePath}", options.TestBookmarks);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestBookmarksAsync(options.TestBookmarks, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-search command
+            if (!string.IsNullOrEmpty(options.TestSearch))
+            {
+                Log.Information("Executing test-search command for file: {FilePath}, search term: {SearchTerm}",
+                    options.TestSearch, options.SearchTerm ?? "(default)");
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestSearchAsync(options.TestSearch, options.SearchTerm, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-page-rotate command
+            if (!string.IsNullOrEmpty(options.TestPageRotate))
+            {
+                Log.Information("Executing test-page-rotate command for file: {FilePath}", options.TestPageRotate);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestPageRotateAsync(options.TestPageRotate, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-page-delete command
+            if (!string.IsNullOrEmpty(options.TestPageDelete))
+            {
+                Log.Information("Executing test-page-delete command for file: {FilePath}", options.TestPageDelete);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestPageDeleteAsync(options.TestPageDelete, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-page-reorder command
+            if (!string.IsNullOrEmpty(options.TestPageReorder))
+            {
+                Log.Information("Executing test-page-reorder command for file: {FilePath}", options.TestPageReorder);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestPageReorderAsync(options.TestPageReorder, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-annotations command
+            if (!string.IsNullOrEmpty(options.TestAnnotations))
+            {
+                Log.Information("Executing test-annotations command for file: {FilePath}", options.TestAnnotations);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestAnnotationsAsync(options.TestAnnotations, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-metadata command
+            if (!string.IsNullOrEmpty(options.TestMetadata))
+            {
+                Log.Information("Executing test-metadata command for file: {FilePath}", options.TestMetadata);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestMetadataAsync(options.TestMetadata, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
             // No diagnostic command found
             return false;
         }

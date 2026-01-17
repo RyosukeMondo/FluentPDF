@@ -145,6 +145,54 @@ public class CommandLineOptions
     public string? RenderAllPages { get; set; }
 
     /// <summary>
+    /// Gets or sets the file path for bookmarks extraction test.
+    /// When set, application will run the bookmarks CLI test on the specified PDF.
+    /// </summary>
+    public string? TestBookmarks { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for search functionality test.
+    /// When set, application will run the search CLI test on the specified PDF.
+    /// </summary>
+    public string? TestSearch { get; set; }
+
+    /// <summary>
+    /// Gets or sets the search term for the search functionality test.
+    /// Used with --test-search option to specify what text to search for.
+    /// </summary>
+    public string? SearchTerm { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for page rotation test.
+    /// When set, application will run the page rotation CLI test on the specified PDF.
+    /// </summary>
+    public string? TestPageRotate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for page deletion test.
+    /// When set, application will run the page deletion CLI test on the specified PDF.
+    /// </summary>
+    public string? TestPageDelete { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for page reorder test.
+    /// When set, application will run the page reorder CLI test on the specified PDF.
+    /// </summary>
+    public string? TestPageReorder { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for annotations detection test.
+    /// When set, application will run the annotations CLI test on the specified PDF.
+    /// </summary>
+    public string? TestAnnotations { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for metadata extraction test.
+    /// When set, application will run the metadata CLI test on the specified PDF.
+    /// </summary>
+    public string? TestMetadata { get; set; }
+
+    /// <summary>
     /// Parses command-line arguments into structured options.
     /// </summary>
     /// <param name="args">Command-line arguments from Environment.GetCommandLineArgs().</param>
@@ -299,6 +347,62 @@ public class CommandLineOptions
                     }
                     break;
 
+                case "--test-bookmarks":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestBookmarks = args[++i];
+                    }
+                    break;
+
+                case "--test-search":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestSearch = args[++i];
+                    }
+                    break;
+
+                case "--search-term":
+                    if (i + 1 < args.Length)
+                    {
+                        options.SearchTerm = args[++i];
+                    }
+                    break;
+
+                case "--test-page-rotate":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestPageRotate = args[++i];
+                    }
+                    break;
+
+                case "--test-page-delete":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestPageDelete = args[++i];
+                    }
+                    break;
+
+                case "--test-page-reorder":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestPageReorder = args[++i];
+                    }
+                    break;
+
+                case "--test-annotations":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestAnnotations = args[++i];
+                    }
+                    break;
+
+                case "--test-metadata":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestMetadata = args[++i];
+                    }
+                    break;
+
                 default:
                     // If it's a PDF file path without flag, treat as --open-file
                     if (!arg.StartsWith("-") && !arg.StartsWith("/") &&
@@ -366,6 +470,23 @@ Rendering Test Commands:
   --render-all-pages <path>     Test batch rendering of all pages
                                 Returns exit code: 0=pass, 1=fail
 
+Document Operations Test Commands:
+  --test-bookmarks <path>       Test bookmark extraction from PDF
+                                Returns exit code: 0=pass, 1=fail
+  --test-search <path>          Test PDF text search functionality
+  --search-term <term>          Search term to use with --test-search
+                                Returns exit code: 0=pass, 1=fail
+  --test-page-rotate <path>     Test page rotation operations
+                                Returns exit code: 0=pass, 1=fail
+  --test-page-delete <path>     Test page deletion operations
+                                Returns exit code: 0=pass, 1=fail
+  --test-page-reorder <path>    Test page reordering operations
+                                Returns exit code: 0=pass, 1=fail
+  --test-annotations <path>     Test annotation detection
+                                Returns exit code: 0=pass, 1=fail
+  --test-metadata <path>        Test metadata extraction
+                                Returns exit code: 0=pass, 1=fail
+
 Examples:
   # Open a PDF file
   FluentPDF.App.exe --open-file ""C:\Documents\test.pdf""
@@ -401,6 +522,15 @@ Examples:
   FluentPDF.App.exe --test-text-extract ""test.pdf"" --verbose
   FluentPDF.App.exe --test-form-fields ""form.pdf"" --verbose
   FluentPDF.App.exe --render-all-pages ""test.pdf"" --output ""C:\output"" --verbose
+
+  # Document operations tests
+  FluentPDF.App.exe --test-bookmarks ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-search ""test.pdf"" --search-term ""example"" --verbose
+  FluentPDF.App.exe --test-page-rotate ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-page-delete ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-page-reorder ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-annotations ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-metadata ""test.pdf"" --verbose
 ";
     }
 }
