@@ -36,7 +36,7 @@
   - _Requirements: 1.0_
   - _Prompt: Implement the task for spec pdfium-library-verification, first run spec-workflow-guide to get the workflow guide then implement the task: Role: .NET Interop Specialist with expertise in P/Invoke and marshalling | Task: Implement PdfiumSignatureVerifier in src/FluentPDF.Verification.Pdfium/PdfiumSignatureVerifier.cs to validate all PDFium P/Invoke signatures following requirement 1.0, using DllAnalyzer and reflection | Restrictions: Must validate calling conventions, parameter types, return types, and marshalling attributes | Success: Detects all signature mismatches with detailed comparison, suggests fixes, includes tests with intentional mismatches | Instructions: (1) Edit tasks.md to mark this task as in-progress [-], (2) implement the code, (3) use log-implementation tool with detailed artifacts after completion, (4) mark as complete [x] in tasks.md_
 
-- [ ] 5. Create PDFium return type verifier
+- [x] 5. Create PDFium return type verifier
   - File: src/FluentPDF.Verification.Pdfium/PdfiumReturnTypeVerifier.cs
   - Validate return values are within expected ranges
   - Purpose: Detect garbage values from marshalling errors
