@@ -53,7 +53,7 @@
   - _Requirements: All_
   - _Prompt: Role: CLI Integration Developer | Task: Add rendering verification CLI commands covering all requirements | Restrictions: Follow existing CLI patterns, return proper exit codes, support --output for file paths | Success: All commands work, integrated with test framework, documented in --help_
 
-- [ ] 8. Create rendering tests unit tests in FluentPDF.App.Tests/Testing/Tests/
+- [x] 8. Create rendering tests unit tests in FluentPDF.App.Tests/Testing/Tests/
   - Files: tests/FluentPDF.App.Tests/Testing/Tests/RenderingCliTestsTests.cs
   - Test each rendering CLI test implementation
   - Verify with test fixtures
