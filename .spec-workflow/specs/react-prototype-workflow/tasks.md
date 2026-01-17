@@ -114,7 +114,7 @@
   - _Requirements: 2.1, 2.2, 2.3, 4.6_
   - _Prompt: **Role:** React Developer with expertise in tree view components and recursive rendering | **Task:** Reverse engineer BookmarksPanel.xaml into React component following requirements 2.1-2.3 and 4.6. Analyze XAML TreeView structure (hierarchical outline, expandable nodes). Create React recursive component rendering bookmark hierarchy with indentation for nesting levels. Use dummy bookmark data from task 4 (3+ levels deep). Implement expand/collapse icons and indentation. Style with design tokens. Stub click handlers (console.log page number). | **Restrictions:** Do not implement actual page navigation, tree state (expanded/collapsed) can use local React state, must handle arbitrary nesting depth, must use design token spacing for indentation, do not hardcode tree levels | **_Leverage:** BookmarksPanel.xaml for structure, dummyBookmarks.ts for hierarchical data, tokens.css for styling | **Success:** Component renders bookmark tree with correct nesting, indentation increases by token spacing value per level, expand/collapse icons toggle visibility, hover states styled with token colors, supports 3+ nesting levels, TypeScript recursion types correct, hot reload preserves tree state | **Implementation Instructions:** Before starting, run `spec-workflow-guide`. Mark in-progress in tasks.md. After completion, use `log-implementation` with artifacts (recursive component, tree rendering logic), then mark complete._
 
-- [ ] 8. Create main layout components (MainWindow, MainPage, PdfViewerPage)
+- [x] 8. Create main layout components (MainWindow, MainPage, PdfViewerPage)
   - Files:
     - prototype/src/components/MainWindow.tsx
     - prototype/src/components/MainPage.tsx
