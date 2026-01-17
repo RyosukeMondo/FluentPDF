@@ -24,7 +24,7 @@
   - _Requirements: All_
   - _Prompt: Role: .NET Data Modeling Specialist | Task: Create comprehensive test execution data models following design specifications | Restrictions: Use record types where immutable, ensure serializable for reporting, include metadata for debugging | Success: All models defined, support all test scenarios, well-documented_
 
-- [ ] 4. Create CliTestContext in FluentPDF.App/Testing/CliTestContext.cs
+- [x] 4. Create CliTestContext in FluentPDF.App/Testing/CliTestContext.cs
   - File: src/FluentPDF.App/Testing/CliTestContext.cs
   - Implement context with WorkingDirectory, Services, Logger, Data properties
   - Add automatic cleanup on dispose
@@ -33,7 +33,7 @@
   - _Requirements: 4_
   - _Prompt: Role: Test Infrastructure Developer | Task: Implement CliTestContext providing isolated environment for test execution from requirement 4 | Restrictions: Must implement IDisposable, ensure cleanup always runs, create unique temp directories per test | Success: Context provides full isolation, cleanup is reliable, services accessible_
 
-- [ ] 5. Create TestDiscovery in FluentPDF.App/Testing/TestDiscovery.cs
+- [x] 5. Create TestDiscovery in FluentPDF.App/Testing/TestDiscovery.cs
   - File: src/FluentPDF.App/Testing/TestDiscovery.cs
   - Implement reflection-based test discovery
   - Find all ICliTest implementations in assembly
