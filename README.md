@@ -716,6 +716,83 @@ dotnet test --filter "Category=VisualRegression&FullyQualifiedName~CoreRendering
 
 See [VISUAL-TESTING.md](docs/VISUAL-TESTING.md) for complete workflow documentation and [TESTING.md](docs/TESTING.md#visual-regression-testing) for implementation details.
 
+### CLI Testing Framework
+
+FluentPDF includes a comprehensive CLI testing framework for automated verification of application features. Tests can be discovered, executed individually, or run as a complete suite from the command line.
+
+**Quick Start**:
+```powershell
+# List all available tests
+FluentPDF.App.exe --list-tests
+
+# Run a specific test
+FluentPDF.App.exe --run-test render-pdf --verbose
+
+# Run all tests (returns 0 if all pass, 1 if any fail)
+FluentPDF.App.exe --run-all-tests --verbose
+```
+
+**Key Features**:
+- **Automatic Discovery**: All tests implementing `ICliTest` are automatically discovered via reflection
+- **Isolated Execution**: Each test runs in its own context with temporary directory and services
+- **Built-in Verification**: Tests include both execution and verification logic
+- **CI/CD Ready**: Exit codes and structured output for automation pipelines
+- **Comprehensive Logging**: Verbose mode shows detailed execution and diagnostics
+
+**Example Test Output**:
+```
+FluentPDF CLI Tests
+===================
+
+Discovered 3 tests:
+  1. render-pdf: Renders all pages of a PDF to PNG images and verifies output files
+  2. extract-bookmarks: Extracts bookmarks from a PDF and verifies output structure
+  3. search-text: Searches for text in PDF and verifies match counts
+
+Running tests...
+
+✓ render-pdf: PASSED (1.2s)
+✓ extract-bookmarks: PASSED (0.8s)
+✓ search-text: PASSED (0.5s)
+
+Results:
+  Total: 3
+  Passed: 3
+  Failed: 0
+  Duration: 2.5s
+
+Exit Code: 0
+```
+
+**Creating Custom Tests**: Implement the `ICliTest` interface and your test will be automatically discovered:
+```csharp
+public sealed class MyCustomTest : ICliTest
+{
+    public string Name => "my-custom-test";
+    public string Description => "Description of what this test verifies";
+
+    public async Task<CliTestResult> RunAsync(CliTestContext context)
+    {
+        // Test implementation
+    }
+
+    public async Task<bool> VerifyAsync(CliTestResult result)
+    {
+        // Verification logic
+    }
+}
+```
+
+**CI/CD Integration**: Use exit codes to fail builds when tests don't pass:
+```yaml
+- name: Run CLI Tests
+  run: |
+    FluentPDF.App.exe --run-all-tests --verbose --console
+    if ($LASTEXITCODE -ne 0) { exit 1 }
+```
+
+See [docs/cli-testing.md](docs/cli-testing.md) for complete documentation including architecture, best practices, advanced usage, troubleshooting, and API reference.
+
 ### Code Quality Standards
 
 - **ArchUnitNET** enforces architectural rules automatically:
