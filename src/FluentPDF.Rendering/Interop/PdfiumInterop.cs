@@ -150,7 +150,7 @@ public static class PdfiumInterop
             return 0;
         }
 
-        return FPDF_GetPageWidthF(page);
+        return FPDF_GetPageWidth_Internal(page);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public static class PdfiumInterop
             return 0;
         }
 
-        return FPDF_GetPageHeightF(page);
+        return FPDF_GetPageHeight_Internal(page);
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -174,11 +174,13 @@ public static class PdfiumInterop
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void FPDF_ClosePage(IntPtr page);
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern double FPDF_GetPageWidthF(SafePdfPageHandle page);
+    // Use the integer-based API (FPDF_GetPageWidth/Height) instead of float API (FPDF_GetPageWidthF/HeightF)
+    // The float API returns garbage values with this version of PDFium
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FPDF_GetPageWidth")]
+    private static extern double FPDF_GetPageWidth_Internal(SafePdfPageHandle page);
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern double FPDF_GetPageHeightF(SafePdfPageHandle page);
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "FPDF_GetPageHeight")]
+    private static extern double FPDF_GetPageHeight_Internal(SafePdfPageHandle page);
 
     #endregion
 
