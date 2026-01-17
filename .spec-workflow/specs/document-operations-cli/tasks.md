@@ -29,7 +29,7 @@
   - _Requirements: 3_
   - _Prompt: Role: Page Manipulation Test Developer | Task: Implement page operations tests (rotate, delete, reorder) from requirement 3 | Restrictions: Verify operations modify PDF correctly, save output for verification, cleanup temps | Success: All page operations work, results verified_
 
-- [ ] 5. Create AnnotationsCliTest in FluentPDF.App/Testing/Tests/AnnotationsCliTest.cs
+- [x] 5. Create AnnotationsCliTest in FluentPDF.App/Testing/Tests/AnnotationsCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/AnnotationsCliTest.cs
   - Implement ICliTest for annotation detection
   - Detect annotations, verify metadata, report
