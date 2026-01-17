@@ -109,14 +109,14 @@ public class DllAnalyzer : IDllAnalyzer
     /// </summary>
     public Result<FunctionSignature> GetFunctionSignature(string functionName)
     {
-        if (_cachedSignatures == null)
-        {
-            return Result.Fail<FunctionSignature>("DLL has not been analyzed. Call AnalyzeAsync first.");
-        }
-
         if (string.IsNullOrWhiteSpace(functionName))
         {
             return Result.Fail<FunctionSignature>("Function name cannot be null or empty");
+        }
+
+        if (_cachedSignatures == null)
+        {
+            return Result.Fail<FunctionSignature>("DLL has not been analyzed. Call AnalyzeAsync first.");
         }
 
         lock (_lock)
