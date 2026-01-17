@@ -53,7 +53,7 @@
   - _Requirements: All_
   - _Prompt: Role: CLI Integration Developer | Task: Add document operations CLI commands covering all requirements | Restrictions: Follow CLI patterns, proper exit codes, support arguments like search term | Success: All commands work, documented in --help_
 
-- [ ] 8. Create document operations tests unit tests
+- [x] 8. Create document operations tests unit tests
   - Files: tests/FluentPDF.App.Tests/Testing/Tests/DocumentOperationsCliTestsTests.cs
   - Test each document operation CLI test
   - Use test fixtures with known content
