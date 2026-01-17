@@ -1,0 +1,213 @@
+/**
+ * ThumbnailsSidebar Styles
+ *
+ * CSS Module for ThumbnailsSidebar component.
+ * Uses design tokens from tokens.css for consistency with XAML.
+ */
+
+/* Main sidebar container */
+.thumbnailsSidebar {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-background-layer);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollable container */
+.scrollContainer {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Custom scrollbar styling for consistency */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Thumbnails list - vertical layout with centered alignment */
+.thumbnailsList {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  gap: var(--spacing-xs); /* 4px spacing between items, matching XAML StackLayout Spacing */
+}
+
+/* Individual thumbnail button - wraps entire thumbnail item */
+.thumbnailButton {
+  width: var(--size-thumbnail-container-width); /* 150px */
+  height: var(--size-thumbnail-container-height); /* 220px */
+  margin: var(--spacing-xs) 0; /* 4px top/bottom margin, matching XAML */
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: block;
+  position: relative;
+  transition: transform 0.1s ease;
+}
+
+.thumbnailButton:hover {
+  transform: scale(1.02);
+}
+
+.thumbnailButton:focus {
+  outline: var(--border-width-thick) solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm);
+}
+
+.thumbnailButton:active {
+  transform: scale(0.98);
+}
+
+/* Thumbnail container - holds all thumbnail visual elements */
+.thumbnailContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Selected border - 3px accent border around selected thumbnail */
+.selectedBorder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: var(--border-width-thick) solid var(--color-primary);
+  border-radius: var(--border-radius-sm);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Thumbnail content - inner stack panel equivalent */
+.thumbnailContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm); /* 8px spacing between image and label */
+  width: 100%;
+  height: 100%;
+}
+
+/* Thumbnail image container - 150x190px card background */
+.thumbnailImageContainer {
+  width: var(--size-thumbnail-width); /* 150px */
+  height: var(--size-thumbnail-height); /* 190px */
+  background-color: var(--color-background-card);
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Thumbnail image */
+.thumbnailImage {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain; /* Uniform stretch equivalent */
+  display: block;
+}
+
+/* Loading state container */
+.loadingContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Loading placeholder background */
+.loadingPlaceholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-background-layer);
+}
+
+/* Loading spinner - animated */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(81, 43, 212, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 1;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty placeholder for thumbnails without images */
+.emptyPlaceholder {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-background-layer);
+}
+
+/* Page number label - caption text style */
+.pageNumberLabel {
+  font-size: var(--font-size-caption); /* 12px */
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-secondary);
+  text-align: center;
+  user-select: none;
+}
+
+/* Accessibility: High contrast mode support */
+@media (prefers-contrast: high) {
+  .selectedBorder {
+    border-width: 4px;
+  }
+
+  .thumbnailButton:focus {
+    outline-width: 4px;
+  }
+}
+
+/* Accessibility: Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .thumbnailButton {
+    transition: none;
+  }
+
+  .spinner {
+    animation: none;
+    /* Show static indicator instead */
+    border-top-color: var(--color-primary);
+    opacity: 0.5;
+  }
+}
