@@ -106,7 +106,7 @@
   - _Requirements: 1_
   - _Prompt: Role: Build Systems Engineer with MSBuild expertise | Task: Create MSBuild target that runs marshalling verification before every build following requirement 1, failing the build if verification fails | Restrictions: Must only run for FluentPDF.App project, must not slow down incremental builds significantly, must provide clear error messages on failure, allow opt-out via MSBuild property for local development | Success: Verification runs automatically on build, build fails on marshalling errors with clear diagnostics, incremental builds remain fast, developers can disable for rapid iteration_
 
-- [ ] 12. Add CI/CD pipeline integration in .github/workflows/build.yml
+- [-] 12. Add CI/CD pipeline integration in .github/workflows/build.yml
   - File: .github/workflows/build.yml (modify if exists)
   - Add marshalling verification step before tests
   - Save coverage report as artifact

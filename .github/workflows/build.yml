@@ -103,6 +103,84 @@ jobs:
         path: verification-reports/
         retention-days: 30
 
+    - name: Build FluentPDF.App for marshalling verification
+      run: dotnet build src/FluentPDF.App/FluentPDF.App.csproj --configuration Release -p:Platform=x64
+
+    - name: Copy PDFium DLL to FluentPDF.App
+      shell: pwsh
+      run: |
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+        $targetDirs = Get-ChildItem -Path "src/FluentPDF.App/bin/x64/Release" -Directory -Recurse -Filter "net8.0-windows*" -ErrorAction SilentlyContinue
+
+        foreach ($dir in $targetDirs) {
+          Copy-Item $pdfiumDll $dir.FullName -Force
+          Write-Host "Copied pdfium.dll to $($dir.FullName)"
+        }
+
+    - name: Run P/Invoke marshalling verification
+      shell: pwsh
+      run: |
+        $appExe = Get-ChildItem -Path "src/FluentPDF.App/bin/x64/Release" -Recurse -Filter "FluentPDF.App.exe" | Select-Object -First 1
+
+        if (-not $appExe) {
+          Write-Error "FluentPDF.App executable not found"
+          exit 1
+        }
+
+        Write-Host "Running P/Invoke marshalling verification before tests..."
+        Write-Host "Executable: $($appExe.FullName)"
+
+        # Create reports directory
+        $reportsDir = "marshalling-reports"
+        New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+
+        # Run marshalling verification
+        Write-Host "`n=== P/Invoke Marshalling Verification ==="
+        & $appExe.FullName --verify-marshalling
+        $verifyExitCode = $LASTEXITCODE
+        Write-Host "=========================================`n"
+
+        if ($verifyExitCode -ne 0) {
+          Write-Error "P/Invoke marshalling verification failed with exit code $verifyExitCode"
+          Write-Error "Build blocked due to marshalling errors."
+          Write-Error "Check the marshalling report artifact for detailed analysis."
+        }
+
+        # Generate marshalling coverage report
+        Write-Host "`n=== Generating Marshalling Coverage Report ==="
+        $reportPath = Join-Path $reportsDir "marshalling-coverage.md"
+        & $appExe.FullName --marshalling-report --output $reportPath
+        $reportExitCode = $LASTEXITCODE
+        Write-Host "================================================`n"
+
+        if ($reportExitCode -ne 0) {
+          Write-Warning "Marshalling report generation returned exit code $reportExitCode"
+        }
+
+        # Display report summary if generated
+        if (Test-Path $reportPath) {
+          Write-Host "`n=== Marshalling Coverage Report Summary ==="
+          Get-Content $reportPath -Head 30
+          Write-Host "... (full report in artifact)"
+          Write-Host "============================================`n"
+        }
+
+        # Fail build if verification failed
+        if ($verifyExitCode -ne 0) {
+          exit $verifyExitCode
+        }
+
+        Write-Host "✓ P/Invoke marshalling verification passed - proceeding with build"
+      continue-on-error: false
+
+    - name: Upload marshalling verification report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: marshalling-coverage-report
+        path: marshalling-reports/
+        retention-days: 30
+
     - name: Setup Java (for JHOVE)
       uses: actions/setup-java@v4
       with:
