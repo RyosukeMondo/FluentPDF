@@ -1,0 +1,192 @@
+name: PDFium Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify-pdfium:
+    runs-on: windows-2022
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache vcpkg and PDFium
+      uses: actions/cache@v4
+      with:
+        path: |
+          tools/vcpkg
+          libs
+        key: ${{ runner.os }}-vcpkg-pdfium-${{ hashFiles('tools/build-libs.ps1') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-pdfium-
+          ${{ runner.os }}-vcpkg-
+
+    - name: Build native libraries (PDFium)
+      shell: pwsh
+      run: |
+        Write-Host "Building PDFium library..."
+        .\tools\build-libs.ps1 -UseCache
+      continue-on-error: false
+
+    - name: Verify PDFium DLL exists
+      shell: pwsh
+      run: |
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+        if (-not (Test-Path $pdfiumDll)) {
+          Write-Error "PDFium DLL not found at $pdfiumDll"
+          exit 1
+        }
+        Write-Host "PDFium DLL found at $pdfiumDll"
+        $fileInfo = Get-Item $pdfiumDll
+        Write-Host "Size: $($fileInfo.Length) bytes"
+        Write-Host "Modified: $($fileInfo.LastWriteTime)"
+
+    - name: Restore verification tool dependencies
+      run: dotnet restore src/FluentPDF.Verification.Cli/FluentPDF.Verification.Cli.csproj
+
+    - name: Build verification tool
+      run: dotnet build src/FluentPDF.Verification.Cli/FluentPDF.Verification.Cli.csproj --configuration Release --no-restore
+
+    - name: Copy PDFium DLL to verification tool output
+      shell: pwsh
+      run: |
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+        $targetDirs = Get-ChildItem -Path "src/FluentPDF.Verification.Cli/bin/Release" -Directory -Recurse -Filter "net8.0"
+
+        foreach ($dir in $targetDirs) {
+          Copy-Item $pdfiumDll $dir.FullName -Force
+          Write-Host "Copied pdfium.dll to $($dir.FullName)"
+        }
+
+    - name: Run PDFium verification
+      id: verification
+      shell: pwsh
+      run: |
+        $verificationExe = Get-ChildItem -Path "src/FluentPDF.Verification.Cli/bin/Release" -Recurse -Filter "FluentPDF.Verification.Cli.exe" | Select-Object -First 1
+
+        if (-not $verificationExe) {
+          Write-Error "Verification executable not found"
+          exit 1
+        }
+
+        Write-Host "Running PDFium verification..."
+        Write-Host "Executable: $($verificationExe.FullName)"
+
+        # Run verification with JSON output for structured results
+        $jsonOutput = Join-Path $env:TEMP "pdfium-verification.json"
+
+        $exitCode = 0
+        try {
+          & $verificationExe.FullName --dll "libs/x64/bin/pdfium.dll" --format json --output $jsonOutput
+          $exitCode = $LASTEXITCODE
+        } catch {
+          Write-Error "Verification failed with exception: $_"
+          exit 1
+        }
+
+        # Display results
+        if (Test-Path $jsonOutput) {
+          Write-Host "`n=== Verification Results (JSON) ==="
+          Get-Content $jsonOutput | Write-Host
+          Write-Host "================================`n"
+        }
+
+        # Also run with console output for human-readable logs
+        Write-Host "`n=== Verification Results (Console) ==="
+        & $verificationExe.FullName --dll "libs/x64/bin/pdfium.dll" --format console
+        $consoleExitCode = $LASTEXITCODE
+        Write-Host "================================`n"
+
+        # Use the more severe exit code
+        if ($consoleExitCode -ne 0) {
+          $exitCode = $consoleExitCode
+        }
+
+        if ($exitCode -ne 0) {
+          Write-Error "PDFium verification failed with exit code $exitCode"
+          Write-Error "This indicates signature mismatches or functional errors in PDFium P/Invoke declarations."
+          Write-Error "Review the verification output above for details."
+          exit $exitCode
+        }
+
+        Write-Host "✓ PDFium verification passed successfully!"
+
+    - name: Upload verification report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: pdfium-verification-report
+        path: |
+          ${{ runner.temp }}/pdfium-verification.json
+        retention-days: 30
+
+    - name: Comment verification results on PR
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const jsonPath = process.env.TEMP + '/pdfium-verification.json';
+
+          if (!fs.existsSync(jsonPath)) {
+            console.log('No verification results found');
+            return;
+          }
+
+          const results = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+
+          let comment = '## PDFium Verification Results\n\n';
+
+          if (results.success) {
+            comment += '✅ **All PDFium P/Invoke signatures verified successfully!**\n\n';
+          } else {
+            comment += '❌ **PDFium verification failed!**\n\n';
+            comment += '### Issues Found:\n\n';
+
+            if (results.signatureErrors && results.signatureErrors.length > 0) {
+              comment += '#### Signature Mismatches:\n';
+              results.signatureErrors.forEach(error => {
+                comment += `- \`${error.function}\`: ${error.message}\n`;
+              });
+              comment += '\n';
+            }
+
+            if (results.behaviorErrors && results.behaviorErrors.length > 0) {
+              comment += '#### Behavior Errors:\n';
+              results.behaviorErrors.forEach(error => {
+                comment += `- \`${error.test}\`: ${error.message}\n`;
+              });
+              comment += '\n';
+            }
+          }
+
+          comment += '\n<details><summary>View Full Report</summary>\n\n```json\n' + JSON.stringify(results, null, 2) + '\n```\n</details>';
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Set verification status
+      if: always()
+      shell: pwsh
+      run: |
+        if ($env:VERIFICATION_FAILED -eq 'true') {
+          Write-Error "PDFium verification failed - blocking build"
+          exit 1
+        }

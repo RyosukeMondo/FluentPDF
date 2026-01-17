@@ -40,6 +40,69 @@ jobs:
         .\tools\build-libs.ps1 -UseCache
       continue-on-error: false
 
+    - name: Build PDFium verification tool
+      run: dotnet build src/FluentPDF.Verification.Cli/FluentPDF.Verification.Cli.csproj --configuration Release
+
+    - name: Copy PDFium DLL to verification tool
+      shell: pwsh
+      run: |
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+        $targetDirs = Get-ChildItem -Path "src/FluentPDF.Verification.Cli/bin/Release" -Directory -Recurse -Filter "net8.0" -ErrorAction SilentlyContinue
+
+        foreach ($dir in $targetDirs) {
+          Copy-Item $pdfiumDll $dir.FullName -Force
+          Write-Host "Copied pdfium.dll to $($dir.FullName)"
+        }
+
+    - name: Run PDFium verification
+      shell: pwsh
+      run: |
+        $verificationExe = Get-ChildItem -Path "src/FluentPDF.Verification.Cli/bin/Release" -Recurse -Filter "FluentPDF.Verification.Cli.exe" | Select-Object -First 1
+
+        if (-not $verificationExe) {
+          Write-Error "Verification executable not found"
+          exit 1
+        }
+
+        Write-Host "Running PDFium verification before main build..."
+        Write-Host "Executable: $($verificationExe.FullName)"
+
+        # Create reports directory
+        $reportsDir = "verification-reports"
+        New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null
+
+        # Run verification with JSON output for artifacts
+        $jsonOutput = Join-Path $reportsDir "pdfium-verification.json"
+        & $verificationExe.FullName --dll "libs/x64/bin/pdfium.dll" --format json --output $jsonOutput
+        $jsonExitCode = $LASTEXITCODE
+
+        # Run verification with console output for logs
+        Write-Host "`n=== PDFium Verification Results ==="
+        & $verificationExe.FullName --dll "libs/x64/bin/pdfium.dll" --format console
+        $consoleExitCode = $LASTEXITCODE
+        Write-Host "====================================`n"
+
+        # Use the more severe exit code
+        $exitCode = if ($consoleExitCode -ne 0) { $consoleExitCode } else { $jsonExitCode }
+
+        if ($exitCode -ne 0) {
+          Write-Error "PDFium verification failed with exit code $exitCode"
+          Write-Error "Build blocked due to PDFium signature or behavior errors."
+          Write-Error "Check the verification report artifact for detailed analysis."
+          exit $exitCode
+        }
+
+        Write-Host "✓ PDFium verification passed - proceeding with build"
+      continue-on-error: false
+
+    - name: Upload PDFium verification report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: pdfium-verification-report
+        path: verification-reports/
+        retention-days: 30
+
     - name: Setup Java (for JHOVE)
       uses: actions/setup-java@v4
       with:
