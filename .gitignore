@@ -194,3 +194,6 @@ final_build_attempt.txt
 
 # Benchmark artifacts
 BenchmarkDotNet.Artifacts/
+
+# React prototype - generated design token files
+design-tokens/Tokens.xaml
