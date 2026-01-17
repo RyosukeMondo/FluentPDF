@@ -1,0 +1,303 @@
+/**
+ * PdfViewerControl Styles
+ *
+ * Reverse-engineered from FluentPDF.App/Views/PdfViewerPage.xaml
+ * Uses design tokens for consistent styling with XAML version.
+ */
+
+/* Container */
+.viewerContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-background-layer);
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background-color: var(--color-background-card);
+  border-bottom: var(--border-width-thin) solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.toolbarButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-button-padding-vertical) var(--spacing-button-padding-horizontal);
+  background-color: transparent;
+  border: var(--border-width-thin) solid transparent;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.toolbarButton:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.toolbarButton:active:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbarButton .icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.separator {
+  width: var(--border-width-thin);
+  height: 24px;
+  background-color: #d0d0d0;
+  margin: 0 var(--spacing-xs);
+}
+
+/* Page Indicator */
+.pageIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  user-select: none;
+}
+
+.pageIndicator strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Zoom Indicator */
+.zoomIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  user-select: none;
+}
+
+/* Search Panel */
+.searchPanel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-background-card);
+  border-bottom: var(--border-width-thin) solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 300px;
+  padding: var(--spacing-button-padding-vertical) var(--spacing-sm);
+  font-size: var(--font-size-base);
+  border: var(--border-width-thin) solid #d0d0d0;
+  border-radius: var(--border-radius-sm);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.searchInput:focus {
+  border-color: var(--color-primary);
+}
+
+.searchCounter {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  min-width: 60px;
+}
+
+.searchButton {
+  padding: var(--spacing-button-padding-vertical) var(--spacing-button-padding-horizontal);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  min-width: 90px;
+  transition: opacity 0.15s ease;
+}
+
+.searchButton:hover {
+  opacity: 0.9;
+}
+
+.searchButton:active {
+  opacity: 0.8;
+}
+
+.searchCheckbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  user-select: none;
+}
+
+.searchCheckbox input {
+  cursor: pointer;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.closeButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Viewer Content Area */
+.viewerContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #e5e5e5;
+  position: relative;
+}
+
+.scrollContainer {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+}
+
+/* PDF Page */
+.pdfPage {
+  width: 612px; /* Letter size width in points */
+  height: 792px; /* Letter size height in points */
+  background-color: var(--color-white);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.08);
+  border-radius: var(--border-radius-sm);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.pageContent {
+  padding: var(--spacing-lg);
+  height: 100%;
+  overflow: hidden;
+}
+
+.dummyText {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.dummyText h1 {
+  font-size: 24px;
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text-primary);
+}
+
+.dummyText p {
+  font-size: var(--font-size-base);
+  margin: var(--spacing-xs) 0;
+  color: var(--color-text-primary);
+}
+
+.metaText {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.dummyParagraphs {
+  margin-top: var(--spacing-lg);
+}
+
+.dummyParagraphs p {
+  line-height: 1.6;
+  margin: var(--spacing-sm) 0;
+}
+
+/* Loading Indicator */
+.loadingIndicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingIndicator p {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.emptyState p {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.emptyState button {
+  padding: var(--spacing-button-padding-vertical) var(--spacing-button-padding-horizontal);
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.emptyState button:hover {
+  opacity: 0.9;
+}
