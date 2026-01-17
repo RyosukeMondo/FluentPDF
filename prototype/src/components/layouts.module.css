@@ -269,12 +269,7 @@
   overflow-y: auto;
 }
 
-.mainContentColumn {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
+/* Removed: mainContentColumn - no longer needed with new layout */
 
 /* Toolbar Styles */
 .toolbar {
@@ -435,11 +430,7 @@
 }
 
 /* Content Area Styles */
-.contentArea {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
+/* Removed: contentArea - merged into pdfViewerLayout */
 
 .bookmarksColumn {
   width: 250px;

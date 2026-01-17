@@ -14,7 +14,8 @@ interface MainWindowProps {
 export const MainWindow: React.FC<MainWindowProps> = ({ children }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [showEmptyState, setShowEmptyState] = useState(true);
+  // Show empty state only if no children provided and no tabs open
+  const showEmptyState = !children && tabs.length === 0;
 
   const handleOpenFile = () => {
     console.log('Open file clicked');
@@ -50,7 +51,6 @@ export const MainWindow: React.FC<MainWindowProps> = ({ children }) => {
     };
     setTabs([...tabs, newTab]);
     setActiveTabId(newTab.id);
-    setShowEmptyState(false);
   };
 
   const handleCloseTab = (tabId: string) => {
@@ -59,10 +59,6 @@ export const MainWindow: React.FC<MainWindowProps> = ({ children }) => {
 
     if (activeTabId === tabId) {
       setActiveTabId(updatedTabs.length > 0 && updatedTabs[0] ? updatedTabs[0].id : null);
-    }
-
-    if (updatedTabs.length === 0) {
-      setShowEmptyState(true);
     }
   };
 
@@ -148,8 +144,10 @@ export const MainWindow: React.FC<MainWindowProps> = ({ children }) => {
                 Open File
               </button>
             </div>
-          ) : (
+          ) : tabs.length > 0 ? (
             activeTab?.content
+          ) : (
+            children
           )}
         </div>
       </div>

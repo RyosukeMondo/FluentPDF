@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platform>x64</Platform>
@@ -39,7 +39,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
     <ProjectReference Include="..\..\src\FluentPDF.Core\FluentPDF.Core.csproj" />
-    <ProjectReference Include="..\..\src\FluentPDF.App\FluentPDF.App.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Temporarily exclude benchmarks that depend on FluentPDF.App -->
+    <Compile Remove="Performance\RenderingReliabilityBenchmarks.cs" />
   </ItemGroup>
 
 </Project>

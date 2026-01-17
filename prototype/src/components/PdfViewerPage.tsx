@@ -4,10 +4,16 @@ import { PdfViewerControl } from './PdfViewerControl';
 import { BookmarksPanel } from './BookmarksPanel';
 import { generateDummyDocument } from '../data/dummyPdfDocument';
 import { generateDummyThumbnails } from '../data/dummyThumbnails';
-import { generateDummyBookmarks } from '../data/dummyBookmarks';
+import { PdfScenario } from '../data/scenarios';
+import { BookmarkNode } from '../types/models';
 import styles from './layouts.module.css';
 
-export const PdfViewerPage: React.FC = () => {
+interface PdfViewerPageProps {
+  scenario?: PdfScenario | null;
+  onOpenDocument?: () => void;
+}
+
+export const PdfViewerPage: React.FC<PdfViewerPageProps> = ({ scenario, onOpenDocument }) => {
   const [isThumbnailsVisible, setIsThumbnailsVisible] = useState(true);
   const [isBookmarksVisible, setIsBookmarksVisible] = useState(true);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -15,13 +21,20 @@ export const PdfViewerPage: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState(1.0);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Generate dummy data
-  const pdfDocument = generateDummyDocument({ pageCount: 15 });
-  const thumbnails = generateDummyThumbnails({ pageCount: 15, selectedPageNumber: currentPage });
-  const bookmarks = generateDummyBookmarks();
+  // Use scenario data if provided, otherwise show placeholder
+  const pdfDocument = scenario
+    ? generateDummyDocument(scenario.documentConfig)
+    : null;
+
+  const thumbnails = scenario
+    ? generateDummyThumbnails({ pageCount: scenario.documentConfig.pageCount || 15, selectedPageNumber: currentPage })
+    : [];
+
+  const bookmarks: BookmarkNode[] = scenario?.bookmarks || [];
 
   const handleOpenDocument = () => {
-    console.log('Open document');
+    console.log('Open document clicked');
+    onOpenDocument?.();
   };
 
   const handlePreviousPage = () => {
@@ -31,7 +44,7 @@ export const PdfViewerPage: React.FC = () => {
   };
 
   const handleNextPage = () => {
-    if (currentPage < pdfDocument.pageCount) {
+    if (pdfDocument && currentPage < pdfDocument.pageCount) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -90,21 +103,8 @@ export const PdfViewerPage: React.FC = () => {
 
   return (
     <div className={styles.pdfViewerPage}>
-      <div className={styles.pdfViewerLayout}>
-        {/* Thumbnails Sidebar */}
-        {isThumbnailsVisible && (
-          <div className={styles.thumbnailsColumn}>
-            <ThumbnailsSidebar
-              thumbnails={thumbnails}
-              onThumbnailClick={handleThumbnailClick}
-            />
-          </div>
-        )}
-
-        {/* Main Content Area with Bookmarks */}
-        <div className={styles.mainContentColumn}>
-          {/* Main Toolbar */}
-          <div className={styles.toolbar}>
+      {/* Main Toolbar - Full Width */}
+      <div className={styles.toolbar}>
             <button className={styles.toolbarButton} onClick={handleOpenDocument} title="Open">
               📂 Open
             </button>
@@ -122,13 +122,13 @@ export const PdfViewerPage: React.FC = () => {
             </button>
 
             <span className={styles.pageIndicator}>
-              Page {currentPage} of {pdfDocument.pageCount}
+              {pdfDocument ? `Page ${currentPage} of ${pdfDocument.pageCount}` : 'No document loaded'}
             </span>
 
             <button
               className={styles.toolbarButton}
               onClick={handleNextPage}
-              disabled={currentPage === pdfDocument.pageCount}
+              disabled={!pdfDocument || currentPage === pdfDocument.pageCount}
               title="Next Page"
             >
               Next ▶
@@ -242,45 +242,55 @@ export const PdfViewerPage: React.FC = () => {
             </label>
           </div>
 
-          {/* Search Panel */}
-          {isSearchVisible && (
-            <div className={styles.searchPanel}>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <span className={styles.searchCounter}>0 of 0</span>
-              <button className={styles.searchButton}>Previous</button>
-              <button className={styles.searchButton}>Next</button>
-              <label className={styles.searchCheckbox}>
-                <input type="checkbox" />
-                Case sensitive
-              </label>
-              <button className={styles.searchCloseButton} onClick={handleToggleSearch}>
-                ✕
-              </button>
-            </div>
-          )}
+      {/* Search Panel */}
+      {isSearchVisible && (
+        <div className={styles.searchPanel}>
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <span className={styles.searchCounter}>0 of 0</span>
+          <button className={styles.searchButton}>Previous</button>
+          <button className={styles.searchButton}>Next</button>
+          <label className={styles.searchCheckbox}>
+            <input type="checkbox" />
+            Case sensitive
+          </label>
+          <button className={styles.searchCloseButton} onClick={handleToggleSearch}>
+            ✕
+          </button>
+        </div>
+      )}
 
-          {/* Content Layout with Bookmarks Split */}
-          <div className={styles.contentArea}>
-            {isBookmarksVisible && (
-              <div className={styles.bookmarksColumn}>
-                <BookmarksPanel bookmarks={bookmarks} onNavigateToPage={handleBookmarkClick} />
-              </div>
-            )}
-
-            <div className={styles.viewerColumn}>
-              <PdfViewerControl
-                document={pdfDocument}
-                currentPage={currentPage}
-                zoomLevel={zoomLevel}
-              />
-            </div>
+      {/* Three Column Layout: Thumbnails | Bookmarks | PDF Viewer */}
+      <div className={styles.pdfViewerLayout}>
+        {/* Thumbnails Sidebar */}
+        {isThumbnailsVisible && (
+          <div className={styles.thumbnailsColumn}>
+            <ThumbnailsSidebar
+              thumbnails={thumbnails}
+              onThumbnailClick={handleThumbnailClick}
+            />
           </div>
+        )}
+
+        {/* Bookmarks Column */}
+        {isBookmarksVisible && (
+          <div className={styles.bookmarksColumn}>
+            <BookmarksPanel bookmarks={bookmarks} onNavigateToPage={handleBookmarkClick} />
+          </div>
+        )}
+
+        {/* PDF Viewer Column */}
+        <div className={styles.viewerColumn}>
+          <PdfViewerControl
+            document={pdfDocument}
+            currentPage={currentPage}
+            zoomLevel={zoomLevel}
+          />
         </div>
       </div>
     </div>

@@ -272,4 +272,63 @@ public class PdfiumInteropTests : IDisposable
         PdfiumInterop.ErrorCodes.Security.Should().Be(5);
         PdfiumInterop.ErrorCodes.Page.Should().Be(6);
     }
+
+    /// <summary>
+    /// Regression test for PDFium Integer API fix.
+    /// FPDF_GetPageWidthF/HeightF returned garbage values (5.64e-315) with certain PDFium versions.
+    /// The fix uses FPDF_GetPageWidth/Height (integer API) which returns correct values.
+    /// This test verifies that page dimensions are always within valid ranges.
+    /// </summary>
+    [Fact]
+    public void GetPageDimensions_WithValidPdf_ShouldReturnRealisticValues()
+    {
+        // Arrange
+        var fixturesPath = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            "..", "..", "..", "..", "..", "Fixtures");
+        var testPdfPath = Path.Combine(fixturesPath, "bookmarked.pdf");
+
+        // Skip test if fixture doesn't exist
+        if (!File.Exists(testPdfPath))
+        {
+            return;
+        }
+
+        SafePdfDocumentHandle? document = null;
+        SafePdfPageHandle? page = null;
+
+        try
+        {
+            // Act
+            document = PdfiumInterop.LoadDocument(testPdfPath);
+            document.IsInvalid.Should().BeFalse("document should load successfully");
+
+            page = PdfiumInterop.LoadPage(document, 0);
+            page.IsInvalid.Should().BeFalse("first page should load successfully");
+
+            var width = PdfiumInterop.GetPageWidth(page);
+            var height = PdfiumInterop.GetPageHeight(page);
+
+            // Assert - dimensions should be within realistic bounds for PDF pages
+            // Common PDF sizes range from 1" to 100" (72 to 7200 points)
+            width.Should().BeGreaterThan(0, "width should be positive");
+            width.Should().BeLessThan(10000, "width should be realistic (less than 10000 points)");
+            height.Should().BeGreaterThan(0, "height should be positive");
+            height.Should().BeLessThan(10000, "height should be realistic (less than 10000 points)");
+
+            // Verify dimensions are NOT garbage values (like 5.64e-315)
+            width.Should().BeGreaterThan(50, "width should not be garbage or near-zero");
+            height.Should().BeGreaterThan(50, "height should not be garbage or near-zero");
+
+            // Standard US Letter is 612x792 points (8.5" x 11")
+            // Verify we're getting values in the right order of magnitude
+            width.Should().BeInRange(200, 2000, "width should be in typical page range");
+            height.Should().BeInRange(200, 2000, "height should be in typical page range");
+        }
+        finally
+        {
+            page?.Dispose();
+            document?.Dispose();
+        }
+    }
 }

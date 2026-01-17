@@ -8,11 +8,13 @@ import { WatermarkDialog } from './components/dialogs/WatermarkDialog';
 import { DeletePagesDialog } from './components/dialogs/DeletePagesDialog';
 import { ErrorDialog } from './components/dialogs/ErrorDialog';
 import { SettingsPage } from './components/dialogs/SettingsPage';
+import { PDF_SCENARIOS, PdfScenario } from './data/scenarios';
 
-type DialogType = 'watermark' | 'deletePages' | 'error' | 'settings' | null;
+type DialogType = 'watermark' | 'deletePages' | 'error' | 'settings' | 'openPdf' | null;
 
 function App() {
   const [openDialog, setOpenDialog] = useState<DialogType>(null);
+  const [currentScenario, setCurrentScenario] = useState<PdfScenario | null>(null);
 
   const handleOpenWatermarkDialog = () => {
     setOpenDialog('watermark');
@@ -28,6 +30,15 @@ function App() {
 
   const handleOpenSettingsDialog = () => {
     setOpenDialog('settings');
+  };
+
+  const handleOpenPdfDialog = () => {
+    setOpenDialog('openPdf');
+  };
+
+  const handleSelectScenario = (scenario: PdfScenario) => {
+    setCurrentScenario(scenario);
+    setOpenDialog(null);
   };
 
   const handleCloseDialog = () => {
@@ -48,34 +59,40 @@ function App() {
     <div className={styles.app}>
       {/* Main Application Window */}
       <MainWindow>
-        <PdfViewerPage />
+        <PdfViewerPage scenario={currentScenario} onOpenDocument={handleOpenPdfDialog} />
       </MainWindow>
 
       {/* Dialog Test Buttons Overlay */}
       <div className={styles.dialogTestButtons}>
         <button
+          onClick={handleOpenPdfDialog}
+          className={`${styles.testButton} ${styles.primaryButton}`}
+        >
+          📂 Open PDF Scenario
+        </button>
+        <button
           onClick={handleOpenWatermarkDialog}
           className={styles.testButton}
         >
-          Open Watermark Dialog
+          💧 Watermark
         </button>
         <button
           onClick={handleOpenDeletePagesDialog}
           className={styles.testButton}
         >
-          Open Delete Pages Dialog
+          🗑️ Delete Pages
         </button>
         <button
           onClick={handleOpenErrorDialog}
           className={styles.testButton}
         >
-          Open Error Dialog
+          ⚠️ Error Dialog
         </button>
         <button
           onClick={handleOpenSettingsDialog}
           className={styles.testButton}
         >
-          Open Settings
+          ⚙️ Settings
         </button>
       </div>
 
@@ -99,6 +116,44 @@ function App() {
         isOpen={openDialog === 'settings'}
         onClose={handleCloseDialog}
       />
+
+      {/* Open PDF Scenario Dialog */}
+      {openDialog === 'openPdf' && (
+        <div className={styles.modalBackdrop} onClick={handleCloseDialog}>
+          <div className={styles.scenarioDialog} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.scenarioDialogHeader}>
+              <h2>Open PDF Scenario</h2>
+              <button className={styles.closeButton} onClick={handleCloseDialog}>
+                ✕
+              </button>
+            </div>
+            <div className={styles.scenarioDialogContent}>
+              <p className={styles.scenarioDialogDescription}>
+                Select a mock PDF scenario to test different UI states:
+              </p>
+              <div className={styles.scenarioGrid}>
+                {PDF_SCENARIOS.map((scenario) => (
+                  <button
+                    key={scenario.id}
+                    className={`${styles.scenarioCard} ${
+                      currentScenario?.id === scenario.id ? styles.scenarioCardActive : ''
+                    }`}
+                    onClick={() => handleSelectScenario(scenario)}
+                  >
+                    <div className={styles.scenarioEmoji}>{scenario.emoji}</div>
+                    <div className={styles.scenarioName}>{scenario.name}</div>
+                    <div className={styles.scenarioDescription}>{scenario.description}</div>
+                    <div className={styles.scenarioMeta}>
+                      {scenario.documentConfig.pageCount} pages •{' '}
+                      {Math.round((scenario.documentConfig.fileSizeKB || 0) / 1024)}MB
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

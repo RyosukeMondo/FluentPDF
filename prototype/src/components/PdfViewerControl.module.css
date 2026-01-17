@@ -280,11 +280,28 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-md);
+  padding: var(--spacing-xxl);
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 80px;
+  opacity: 0.3;
+  margin-bottom: var(--spacing-md);
+}
+
+.emptyState h2 {
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
 .emptyState p {
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
+  max-width: 400px;
+  margin: 0;
 }
 
 .emptyState button {
@@ -296,6 +313,7 @@
   cursor: pointer;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
+  margin-top: var(--spacing-md);
 }
 
 .emptyState button:hover {
