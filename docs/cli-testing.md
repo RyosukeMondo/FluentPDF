@@ -959,6 +959,565 @@ Write-Host "`nAll rendering tests passed!" -ForegroundColor Green
 exit 0
 ```
 
+## Document Operations Tests
+
+FluentPDF includes specialized CLI tests for verifying document operations such as bookmark extraction, text search, page manipulation (rotate, delete, reorder), annotation detection, and metadata extraction. These tests ensure reliable document processing functionality and are designed for automated verification in CI/CD pipelines.
+
+### Available Document Operations Tests
+
+#### 1. BookmarksCliTest (`bookmarks`)
+
+Extracts and verifies bookmark structure from PDF documents.
+
+**What it tests:**
+- Bookmark extraction with hierarchy preservation
+- Page destination verification (valid page numbers)
+- Root and total bookmark counting
+- JSON output generation for bookmark structure
+- Handling of PDFs without bookmarks
+
+**Usage:**
+```powershell
+# Extract bookmarks from PDF
+FluentPDF.App.exe --run-test bookmarks --verbose
+
+# With custom PDF
+FluentPDF.App.exe --run-test bookmarks --test-pdf "path/to/file.pdf"
+```
+
+**Output verification:**
+- `OutputFile`: Path to JSON file containing bookmark tree
+- `RootBookmarkCount`: Number of root-level bookmarks
+- `TotalBookmarkCount`: Total bookmarks including all levels
+- `BookmarksWithDestinations`: Count of bookmarks with page destinations
+- `InvalidPageNumbers`: Count of bookmarks with invalid page references
+- `PageCount`: Total pages in document
+- `ExtractionTimeMs`: Extraction time in milliseconds
+- `ExitCode`: 0 for success, 1 if invalid page numbers detected
+
+**Example output:**
+```
+Bookmark extraction completed successfully. 12 bookmarks, 10 with destinations, 45 ms
+Output: bookmarks.json
+```
+
+**JSON output structure:**
+```json
+[
+  {
+    "title": "Chapter 1",
+    "pageNumber": 1,
+    "hasDestination": true,
+    "isValidPage": true,
+    "x": 72.0,
+    "y": 720.0,
+    "childCount": 2,
+    "children": [
+      {
+        "title": "Section 1.1",
+        "pageNumber": 2,
+        "hasDestination": true,
+        "isValidPage": true,
+        "childCount": 0
+      }
+    ]
+  }
+]
+```
+
+#### 2. SearchCliTest (`search`)
+
+Searches for text in PDF documents with match reporting and position tracking.
+
+**What it tests:**
+- Text search across all pages
+- Match counting and page distribution
+- Bounding box position verification
+- Case-sensitive and whole-word search options
+- Graceful handling of zero results
+
+**Usage:**
+```powershell
+# Search for text in PDF
+FluentPDF.App.exe --run-test search --verbose
+
+# With custom search term and options
+FluentPDF.App.exe --run-test search --search-term "important" --case-sensitive --whole-word
+```
+
+**Output verification:**
+- `OutputFile`: Path to text report of search results
+- `JsonOutputFile`: Path to JSON file with detailed match data
+- `SearchTerm`: The search term used
+- `TotalMatches`: Total number of matches found
+- `PagesWithMatches`: Number of pages containing matches
+- `PageCount`: Total pages in document
+- `SearchTimeMs`: Search time in milliseconds
+- `MatchesByPage`: Dictionary mapping page numbers to match counts
+- `ExitCode`: 0 for success (even with zero results)
+
+**Example output:**
+```
+Search completed successfully. 47 matches for 'example' found, 125 ms
+Pages with matches: 8/25
+Output: search_results.txt, search_results.json
+```
+
+**JSON output structure:**
+```json
+{
+  "searchTerm": "example",
+  "caseSensitive": false,
+  "wholeWord": false,
+  "totalMatches": 47,
+  "pagesWithMatches": 8,
+  "pageCount": 25,
+  "matchesByPage": [
+    { "pageNumber": 1, "matchCount": 5 },
+    { "pageNumber": 3, "matchCount": 12 }
+  ],
+  "matches": [
+    {
+      "pageNumber": 1,
+      "charIndex": 234,
+      "length": 7,
+      "text": "example",
+      "boundingBox": {
+        "left": 72.0,
+        "top": 650.0,
+        "right": 120.0,
+        "bottom": 665.0
+      }
+    }
+  ],
+  "searchTimeMs": 125.3
+}
+```
+
+#### 3. PageRotateCliTest (`page-rotate`)
+
+Rotates specified pages and verifies the operation.
+
+**What it tests:**
+- Single and multiple page rotation
+- Rotation angle validation (90, 180, 270 degrees)
+- Page index validation
+- Output PDF generation
+- Operation time metrics
+
+**Usage:**
+```powershell
+# Rotate page 1 by 90 degrees
+FluentPDF.App.exe --run-test page-rotate --verbose
+
+# Rotate multiple pages
+FluentPDF.App.exe --run-test page-rotate --pages "0,2,4" --angle 90
+```
+
+**Output verification:**
+- `OutputFile`: Path to rotated PDF
+- `ReportFile`: Path to rotation report
+- `PageIndices`: Array of rotated page indices (0-based)
+- `RotationAngle`: Rotation angle in degrees
+- `PageCount`: Total pages in document
+- `OperationTimeMs`: Operation time in milliseconds
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output:**
+```
+Page rotation completed successfully. Rotated 3 pages, 85 ms
+Output: rotated_output.pdf
+```
+
+#### 4. PageDeleteCliTest (`page-delete`)
+
+Deletes specified pages and verifies page count changes.
+
+**What it tests:**
+- Single and multiple page deletion
+- Page count verification (before/after)
+- Prevention of deleting all pages
+- Page index validation
+- Output PDF generation
+
+**Usage:**
+```powershell
+# Delete page 2
+FluentPDF.App.exe --run-test page-delete --verbose
+
+# Delete multiple pages
+FluentPDF.App.exe --run-test page-delete --pages "1,3,5"
+```
+
+**Output verification:**
+- `OutputFile`: Path to modified PDF
+- `ReportFile`: Path to deletion report
+- `PageIndices`: Array of deleted page indices
+- `OriginalPageCount`: Page count before deletion
+- `NewPageCount`: Page count after deletion
+- `PagesDeleted`: Number of pages removed
+- `OperationTimeMs`: Operation time in milliseconds
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output:**
+```
+Page deletion completed successfully. Deleted 2 pages (10 -> 8), 95 ms
+Output: deleted_output.pdf
+```
+
+#### 5. PageReorderCliTest (`page-reorder`)
+
+Reorders pages by moving them to a new position.
+
+**What it tests:**
+- Page movement to specified target position
+- Page count preservation (no pages added/removed)
+- Index validation (source and target)
+- Output PDF generation
+- Operation time metrics
+
+**Usage:**
+```powershell
+# Move page 3 to position 1
+FluentPDF.App.exe --run-test page-reorder --verbose
+
+# Move multiple pages to beginning
+FluentPDF.App.exe --run-test page-reorder --pages "2,3,4" --target 0
+```
+
+**Output verification:**
+- `OutputFile`: Path to reordered PDF
+- `ReportFile`: Path to reorder report
+- `PageIndices`: Array of moved page indices
+- `TargetIndex`: Destination position
+- `PageCount`: Total pages (unchanged)
+- `OperationTimeMs`: Operation time in milliseconds
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output:**
+```
+Page reordering completed successfully. Moved 1 page to position 1, 78 ms
+Output: reordered_output.pdf
+```
+
+#### 6. AnnotationsCliTest (`annotations`)
+
+Detects and reports annotations in PDF documents.
+
+**What it tests:**
+- Annotation detection across all pages
+- Annotation type identification (highlight, text, etc.)
+- Bounding box position verification
+- Metadata extraction (author, dates, opacity)
+- Graceful handling of PDFs without annotations
+
+**Usage:**
+```powershell
+# Detect annotations in PDF
+FluentPDF.App.exe --run-test annotations --verbose
+
+# With custom PDF
+FluentPDF.App.exe --run-test annotations --test-pdf "path/to/annotated.pdf"
+```
+
+**Output verification:**
+- `ReportFile`: Path to text report of annotations
+- `JsonOutputFile`: Path to JSON file with annotation details
+- `TotalAnnotations`: Total number of annotations found
+- `PagesWithAnnotations`: Number of pages containing annotations
+- `PageCount`: Total pages in document
+- `AnnotationsByType`: Dictionary mapping types to counts
+- `DetectionTimeMs`: Detection time in milliseconds
+- `ExitCode`: 0 for success (even with zero annotations)
+
+**Example output:**
+```
+Annotation detection completed successfully. 23 annotations found, 156 ms
+Types: Highlight=15, Text=5, Underline=3
+Output: annotations_report.txt, annotations.json
+```
+
+**JSON output structure:**
+```json
+{
+  "totalAnnotations": 23,
+  "pagesWithAnnotations": 8,
+  "pageCount": 25,
+  "annotationsByType": {
+    "Highlight": 15,
+    "Text": 5,
+    "Underline": 3
+  },
+  "annotationsByPage": [
+    {
+      "pageNumber": 1,
+      "annotationCount": 3,
+      "annotations": [
+        {
+          "id": "annot-1",
+          "type": "Highlight",
+          "bounds": {
+            "left": 72.0,
+            "top": 650.0,
+            "right": 200.0,
+            "bottom": 665.0
+          },
+          "contents": "Important section",
+          "author": "John Doe",
+          "createdDate": "2024-01-15T10:30:00Z",
+          "opacity": 0.5
+        }
+      ]
+    }
+  ],
+  "detectionTimeMs": 156.2
+}
+```
+
+#### 7. MetadataCliTest (`metadata`)
+
+Extracts document metadata and file properties.
+
+**What it tests:**
+- File information (name, size, path, dates)
+- Document properties (page count, loaded time)
+- PDF metadata fields (title, author, subject, etc.)
+- Field availability reporting
+- Graceful handling of missing metadata
+
+**Usage:**
+```powershell
+# Extract metadata from PDF
+FluentPDF.App.exe --run-test metadata --verbose
+
+# With custom PDF
+FluentPDF.App.exe --run-test metadata --test-pdf "path/to/file.pdf"
+```
+
+**Output verification:**
+- `ReportFile`: Path to text report of metadata
+- `JsonOutputFile`: Path to JSON file with metadata
+- `Metadata`: Dictionary of all metadata fields
+- `SetFields`: Count of fields with values
+- `TotalFields`: Total metadata fields checked
+- `NotImplementedFields`: Count of fields not yet available
+- `ExtractionTimeMs`: Extraction time in milliseconds
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output:**
+```
+Metadata extraction completed successfully. 8/16 fields available, 45 ms
+Output: metadata_report.txt, metadata.json
+Note: 8 metadata fields not yet implemented (require FPDF_GetMetaText support)
+```
+
+**JSON output structure:**
+```json
+{
+  "fileInfo": {
+    "fileName": "document.pdf",
+    "filePath": "C:\\path\\to\\document.pdf",
+    "fileSize": "2.5 MB",
+    "fileSizeBytes": 2621440,
+    "fileCreatedDate": "2024-01-10T08:30:00Z",
+    "fileModifiedDate": "2024-01-15T14:22:00Z"
+  },
+  "documentProperties": {
+    "pageCount": 25,
+    "loadedAt": "2024-01-17T12:00:00Z"
+  },
+  "pdfMetadata": {
+    "title": "(not implemented)",
+    "author": "(not implemented)",
+    "subject": "(not implemented)",
+    "keywords": "(not implemented)",
+    "creator": "(not implemented)",
+    "producer": "(not implemented)",
+    "creationDate": "(not implemented)",
+    "modificationDate": "(not implemented)"
+  },
+  "extractionTimeMs": 45.2,
+  "note": "PDF metadata fields (Title, Author, etc.) require FPDF_GetMetaText implementation"
+}
+```
+
+**Note:** Some PDF metadata fields are not yet implemented and require FPDF_GetMetaText API support in the rendering layer. File system metadata and document properties are fully available.
+
+### Running All Document Operations Tests
+
+Execute all document operations tests:
+
+```powershell
+# Run all tests
+FluentPDF.App.exe --run-all-tests --verbose
+```
+
+Or run only document operations tests using a script:
+
+```powershell
+$docOpTests = @(
+    "bookmarks",
+    "search",
+    "page-rotate",
+    "page-delete",
+    "page-reorder",
+    "annotations",
+    "metadata"
+)
+
+foreach ($test in $docOpTests) {
+    Write-Host "Running $test..." -ForegroundColor Cyan
+    FluentPDF.App.exe --run-test $test --verbose
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "✗ $test FAILED" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "✓ $test PASSED" -ForegroundColor Green
+}
+```
+
+### Exit Codes
+
+Document operations tests follow these exit code conventions:
+
+- `0`: Test completed successfully, all verifications passed
+- `1`: Test failed or partial failure (e.g., invalid bookmark page numbers)
+- Non-zero: Operation or verification failed
+
+### Test Fixtures for Document Operations Tests
+
+Document operations tests use the following test PDFs from `tests/Fixtures/`:
+
+- `multi-page.pdf`: Multi-page document for page operations
+- `with-bookmarks.pdf`: PDF containing bookmark hierarchy
+- `searchable-text.pdf`: PDF with searchable text content
+- `annotated.pdf`: PDF with various annotation types
+- `with-metadata.pdf`: PDF with complete metadata fields
+
+### Troubleshooting Document Operations Tests
+
+#### Bookmark Extraction Returns Empty
+
+**Problem**: BookmarksCliTest reports 0 bookmarks for PDF with bookmarks
+
+**Solutions:**
+1. Verify PDF actually contains bookmarks (open in Adobe Reader)
+2. Check PDF is not password protected
+3. Some PDFs have outline-style bookmarks vs. traditional bookmarks
+4. Review extracted JSON file for structure
+
+#### Search Finds Unexpected Results
+
+**Problem**: SearchCliTest returns too many or too few matches
+
+**Solutions:**
+1. Verify case-sensitive and whole-word options match expectations
+2. Check if PDF text is searchable (not scanned images)
+3. Review JSON output to see actual match positions
+4. Some PDFs have hidden or metadata text that matches
+
+#### Page Operations Invalid Index
+
+**Problem**: Page rotate/delete/reorder fails with "Invalid page indices"
+
+**Solutions:**
+1. Remember page indices are 0-based (first page is 0)
+2. Verify page indices are within valid range (0 to PageCount-1)
+3. Check that page numbers haven't changed after previous operations
+4. Review error message for specific invalid indices
+
+#### Annotation Detection Misses Annotations
+
+**Problem**: AnnotationsCliTest reports fewer annotations than expected
+
+**Solutions:**
+1. Not all PDF "markup" is stored as annotations
+2. Some visual markup is part of page content, not annotations
+3. Check PDF with Adobe Acrobat to confirm annotation types
+4. Review annotation types in JSON output
+
+#### Metadata Fields Not Implemented
+
+**Problem**: MetadataCliTest shows "(not implemented)" for many fields
+
+**Solutions:**
+1. This is expected - PDF metadata extraction requires FPDF_GetMetaText
+2. File system metadata (size, dates, path) is fully available
+3. Document properties (page count) are available
+4. Future enhancement will add full PDF metadata support
+5. Use file info and document properties for now
+
+### Example: Complete Document Operations Verification
+
+Comprehensive PowerShell script for CI/CD document operations testing:
+
+```powershell
+# Test all document operations
+$tests = @(
+    @{ Name = "bookmarks"; Pdf = "with-bookmarks.pdf"; ExpectedOutput = "OutputFile" },
+    @{ Name = "search"; Pdf = "searchable-text.pdf"; ExpectedOutput = "JsonOutputFile" },
+    @{ Name = "page-rotate"; Pdf = "multi-page.pdf"; ExpectedOutput = "OutputFile" },
+    @{ Name = "page-delete"; Pdf = "multi-page.pdf"; ExpectedOutput = "OutputFile" },
+    @{ Name = "page-reorder"; Pdf = "multi-page.pdf"; ExpectedOutput = "OutputFile" },
+    @{ Name = "annotations"; Pdf = "annotated.pdf"; ExpectedOutput = "JsonOutputFile" },
+    @{ Name = "metadata"; Pdf = "multi-page.pdf"; ExpectedOutput = "JsonOutputFile" }
+)
+
+$results = @{
+    Passed = @()
+    Failed = @()
+    Skipped = @()
+}
+
+foreach ($test in $tests) {
+    $testName = $test.Name
+    $testPdf = "tests/Fixtures/$($test.Pdf)"
+
+    Write-Host "`nRunning $testName..." -ForegroundColor Cyan
+
+    # Check if test PDF exists
+    if (-not (Test-Path $testPdf)) {
+        Write-Host "⚠ Test PDF not found: $testPdf - SKIPPED" -ForegroundColor Yellow
+        $results.Skipped += $testName
+        continue
+    }
+
+    # Run test
+    FluentPDF.App.exe --run-test $testName --test-pdf $testPdf --verbose
+
+    if ($LASTEXITCODE -eq 0) {
+        $results.Passed += $testName
+        Write-Host "✓ $testName PASSED" -ForegroundColor Green
+    } else {
+        $results.Failed += $testName
+        Write-Host "✗ $testName FAILED (exit code: $LASTEXITCODE)" -ForegroundColor Red
+    }
+}
+
+# Print summary
+Write-Host "`n========================================" -ForegroundColor Yellow
+Write-Host "Document Operations Test Summary" -ForegroundColor Yellow
+Write-Host "========================================" -ForegroundColor Yellow
+Write-Host "Passed:  $($results.Passed.Count)/$($tests.Count)" -ForegroundColor Green
+Write-Host "Failed:  $($results.Failed.Count)/$($tests.Count)" -ForegroundColor $(if ($results.Failed.Count -gt 0) { "Red" } else { "Gray" })
+Write-Host "Skipped: $($results.Skipped.Count)/$($tests.Count)" -ForegroundColor $(if ($results.Skipped.Count -gt 0) { "Yellow" } else { "Gray" })
+
+if ($results.Failed.Count -gt 0) {
+    Write-Host "`nFailed tests:" -ForegroundColor Red
+    $results.Failed | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+    exit 1
+}
+
+if ($results.Skipped.Count -gt 0) {
+    Write-Host "`nSkipped tests:" -ForegroundColor Yellow
+    $results.Skipped | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+}
+
+Write-Host "`n✓ All document operations tests passed!" -ForegroundColor Green
+exit 0
+```
+
 ## See Also
 
 - [CLI Automation Guide](CLI-AUTOMATION.md) - General CLI usage and automation
