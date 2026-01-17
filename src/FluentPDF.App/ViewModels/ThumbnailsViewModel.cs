@@ -136,8 +136,12 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
         // Check cache first
         if (_cache.TryGet(item.PageNumber, out var cachedImage) && cachedImage != null)
         {
-            item.Thumbnail = cachedImage.Image;
-            item.IsLoading = false;
+            // Set thumbnail on UI thread
+            App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+            {
+                item.Thumbnail = cachedImage.Image;
+                item.IsLoading = false;
+            });
             return;
         }
 
@@ -149,47 +153,70 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
             if (result.IsSuccess && result.Value != null)
             {
                 // Workaround for WinUI 3 InMemoryRandomAccessStream crash issues
-                // Decode PNG using ImageSharp and create WriteableBitmap directly
+                // Decode PNG using ImageSharp and prepare pixel data on background thread
                 result.Value.Seek(0, System.IO.SeekOrigin.Begin);
                 var image = await SixLabors.ImageSharp.Image.LoadAsync<SixLabors.ImageSharp.PixelFormats.Bgra32>(result.Value);
 
-                var writeableBitmap = new Microsoft.UI.Xaml.Media.Imaging.WriteableBitmap(image.Width, image.Height);
+                var width = image.Width;
+                var height = image.Height;
+                var pixelData = new byte[width * height * 4];
+                image.CopyPixelDataTo(pixelData);
+                image.Dispose();
 
-                using (var bufferAccessor = writeableBitmap.PixelBuffer.AsStream())
+                // Create WriteableBitmap on UI thread (WinUI 3 requirement)
+                var tcs = new TaskCompletionSource<bool>();
+                App.MainWindow.DispatcherQueue.TryEnqueue(() =>
                 {
-                    var pixelData = new byte[image.Width * image.Height * 4];
-                    image.CopyPixelDataTo(pixelData);
-                    bufferAccessor.Write(pixelData, 0, pixelData.Length);
-                }
-                writeableBitmap.Invalidate();
+                    try
+                    {
+                        var writeableBitmap = new Microsoft.UI.Xaml.Media.Imaging.WriteableBitmap(width, height);
 
-                item.Thumbnail = writeableBitmap;
-                item.IsLoading = false;
+                        using (var bufferAccessor = writeableBitmap.PixelBuffer.AsStream())
+                        {
+                            bufferAccessor.Write(pixelData, 0, pixelData.Length);
+                        }
+                        writeableBitmap.Invalidate();
 
-                // Cache the thumbnail and track memory
-                var disposableImage = new DisposableBitmapImage(writeableBitmap);
-                _cache.Add(item.PageNumber, disposableImage);
+                        item.Thumbnail = writeableBitmap;
+                        item.IsLoading = false;
 
-                // Estimate memory usage (typical thumbnail ~150x200 pixels, 4 bytes per pixel)
-                var estimatedSize = 150 * 200 * 4;
-                _estimatedCacheMemory += estimatedSize;
+                        // Cache the thumbnail and track memory
+                        var disposableImage = new DisposableBitmapImage(writeableBitmap);
+                        _cache.Add(item.PageNumber, disposableImage);
 
-                // Check memory and adjust cache if needed
-                MonitorCacheMemory();
+                        // Estimate memory usage (typical thumbnail ~150x200 pixels, 4 bytes per pixel)
+                        var estimatedSize = 150 * 200 * 4;
+                        _estimatedCacheMemory += estimatedSize;
 
-                _logger.LogDebug("Loaded thumbnail for page {PageNumber}, estimated cache memory: {Memory} MB",
-                    item.PageNumber, _estimatedCacheMemory / (1024.0 * 1024.0));
+                        // Check memory and adjust cache if needed
+                        MonitorCacheMemory();
+
+                        _logger.LogDebug("Loaded thumbnail for page {PageNumber}, estimated cache memory: {Memory} MB",
+                            item.PageNumber, _estimatedCacheMemory / (1024.0 * 1024.0));
+
+                        tcs.SetResult(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error creating WriteableBitmap on UI thread for page {PageNumber}", item.PageNumber);
+                        item.IsLoading = false;
+                        tcs.SetException(ex);
+                    }
+                });
+
+                // Wait for UI thread to complete
+                await tcs.Task;
             }
             else
             {
-                item.IsLoading = false;
+                App.MainWindow.DispatcherQueue.TryEnqueue(() => item.IsLoading = false);
                 _logger.LogWarning("Failed to render thumbnail for page {PageNumber}: {Errors}",
                     item.PageNumber, string.Join(", ", result.Errors.Select(e => e.Message)));
             }
         }
         catch (Exception ex)
         {
-            item.IsLoading = false;
+            App.MainWindow.DispatcherQueue.TryEnqueue(() => item.IsLoading = false);
             _logger.LogError(ex, "Error loading thumbnail for page {PageNumber}", item.PageNumber);
         }
         finally
