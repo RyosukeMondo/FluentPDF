@@ -22,6 +22,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
 {
     private readonly ILogger<PdfRenderingService> _logger;
     private static readonly ActivitySource _activitySource = new("FluentPDF.Rendering");
+    private static readonly SemaphoreSlim _pdfiumSemaphore = new(1, 1); // PDFium is not thread-safe
     private const int SlowRenderThresholdMs = 2000;
     private const double StandardDpi = 96.0;
     private const double HighDpiThreshold = 144.0; // 1.5x scaling
@@ -87,17 +88,21 @@ public sealed class PdfRenderingService : IPdfRenderingService
             SafePdfPageHandle? pageHandle = null;
             IntPtr bitmap = IntPtr.Zero;
 
+            // PDFium is not thread-safe - serialize all operations
+            await _pdfiumSemaphore.WaitAsync();
             try
             {
-                // Load page (0-based index)
-                using (var loadPageActivity = _activitySource.StartActivity("LoadPage"))
+                try
                 {
-                    loadPageActivity?.SetTag("page.number", pageNumber);
+                    // Load page (0-based index)
+                    using (var loadPageActivity = _activitySource.StartActivity("LoadPage"))
+                    {
+                        loadPageActivity?.SetTag("page.number", pageNumber);
 
-                    // Cast handle to SafePdfDocumentHandle
-                    var documentHandle = (SafePdfDocumentHandle)document.Handle;
+                        // Cast handle to SafePdfDocumentHandle
+                        var documentHandle = (SafePdfDocumentHandle)document.Handle;
 
-                    pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
+                        pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
 
                     if (pageHandle.IsInvalid)
                     {
@@ -297,15 +302,20 @@ public sealed class PdfRenderingService : IPdfRenderingService
 
                 return Result.Fail(error);
             }
+                finally
+                {
+                    // Clean up resources
+                    if (bitmap != IntPtr.Zero)
+                    {
+                        PdfiumInterop.DestroyBitmap(bitmap);
+                    }
+
+                    pageHandle?.Dispose();
+                }
+            }
             finally
             {
-                // Clean up resources
-                if (bitmap != IntPtr.Zero)
-                {
-                    PdfiumInterop.DestroyBitmap(bitmap);
-                }
-
-                pageHandle?.Dispose();
+                _pdfiumSemaphore.Release();
             }
         });
     }
