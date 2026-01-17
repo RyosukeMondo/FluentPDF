@@ -61,6 +61,18 @@ public sealed class TestRunner
     /// <returns>Test suite result containing the single test result</returns>
     public async Task<TestSuiteResult> RunTestAsync(string testName, CancellationToken cancellationToken = default)
     {
+        return await RunTestWithContextAsync(testName, contextData: null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Runs a single test by name with custom context data.
+    /// </summary>
+    /// <param name="testName">Name of the test to run</param>
+    /// <param name="contextData">Optional context data to pass to the test</param>
+    /// <param name="cancellationToken">Optional cancellation token</param>
+    /// <returns>Test suite result containing the single test result</returns>
+    public async Task<TestSuiteResult> RunTestWithContextAsync(string testName, Dictionary<string, object>? contextData, CancellationToken cancellationToken = default)
+    {
         if (string.IsNullOrWhiteSpace(testName))
         {
             throw new ArgumentException("Test name cannot be null or whitespace", nameof(testName));
@@ -87,7 +99,7 @@ public sealed class TestRunner
 
             // Execute the test
             cancellationToken.ThrowIfCancellationRequested();
-            var result = await _executor.ExecuteTestAsync(test);
+            var result = await _executor.ExecuteTestAsync(test, contextData);
 
             stopwatch.Stop();
 

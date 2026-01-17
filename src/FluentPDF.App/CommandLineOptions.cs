@@ -115,6 +115,36 @@ public class CommandLineOptions
     public bool RunAllTests { get; set; }
 
     /// <summary>
+    /// Gets or sets the file path for page rendering test.
+    /// When set, application will run the page-render CLI test on the specified PDF.
+    /// </summary>
+    public string? TestPageRender { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for all-thumbnails test.
+    /// When set, application will run the thumbnail-all-pages CLI test on the specified PDF.
+    /// </summary>
+    public string? TestAllThumbnails { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for text extraction test.
+    /// When set, application will run the text-extraction CLI test on the specified PDF.
+    /// </summary>
+    public string? TestTextExtract { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for form fields rendering test.
+    /// When set, application will run the form-field-render CLI test on the specified PDF.
+    /// </summary>
+    public string? TestFormFields { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for batch rendering all pages.
+    /// When set, application will run the batch-render CLI test on the specified PDF.
+    /// </summary>
+    public string? RenderAllPages { get; set; }
+
+    /// <summary>
     /// Parses command-line arguments into structured options.
     /// </summary>
     /// <param name="args">Command-line arguments from Environment.GetCommandLineArgs().</param>
@@ -234,6 +264,41 @@ public class CommandLineOptions
                     options.RunAllTests = true;
                     break;
 
+                case "--test-page-render":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestPageRender = args[++i];
+                    }
+                    break;
+
+                case "--test-all-thumbnails":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestAllThumbnails = args[++i];
+                    }
+                    break;
+
+                case "--test-text-extract":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestTextExtract = args[++i];
+                    }
+                    break;
+
+                case "--test-form-fields":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestFormFields = args[++i];
+                    }
+                    break;
+
+                case "--render-all-pages":
+                    if (i + 1 < args.Length)
+                    {
+                        options.RenderAllPages = args[++i];
+                    }
+                    break;
+
                 default:
                     // If it's a PDF file path without flag, treat as --open-file
                     if (!arg.StartsWith("-") && !arg.StartsWith("/") &&
@@ -289,6 +354,18 @@ Test Commands:
   --run-all-tests               Run all CLI tests
                                 Returns exit code: 0=all pass, 1=any fail
 
+Rendering Test Commands:
+  --test-page-render <path>     Test single page rendering verification
+                                Returns exit code: 0=pass, 1=fail
+  --test-all-thumbnails <path>  Test thumbnail generation for all pages
+                                Returns exit code: 0=pass, 1=fail
+  --test-text-extract <path>    Test text extraction verification
+                                Returns exit code: 0=pass, 1=fail
+  --test-form-fields <path>     Test form field rendering verification
+                                Returns exit code: 0=pass, 1=fail
+  --render-all-pages <path>     Test batch rendering of all pages
+                                Returns exit code: 0=pass, 1=fail
+
 Examples:
   # Open a PDF file
   FluentPDF.App.exe --open-file ""C:\Documents\test.pdf""
@@ -317,6 +394,13 @@ Examples:
 
   # Run all CLI tests
   FluentPDF.App.exe --run-all-tests --verbose
+
+  # Rendering verification tests
+  FluentPDF.App.exe --test-page-render ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-all-thumbnails ""test.pdf"" --output ""C:\output""
+  FluentPDF.App.exe --test-text-extract ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-form-fields ""form.pdf"" --verbose
+  FluentPDF.App.exe --render-all-pages ""test.pdf"" --output ""C:\output"" --verbose
 ";
     }
 }

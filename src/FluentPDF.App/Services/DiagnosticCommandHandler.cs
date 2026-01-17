@@ -971,4 +971,147 @@ public sealed class DiagnosticCommandHandler
             return 1;
         }
     }
+
+    /// <summary>
+    /// Handles the test-page-render command: runs page-render CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for rendered files.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestPageRenderAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("page-render", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-all-thumbnails command: runs thumbnail-all-pages CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for rendered files.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestAllThumbnailsAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("thumbnail-all-pages", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-text-extract command: runs text-extraction CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for extracted text files.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestTextExtractAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("text-extraction", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the test-form-fields command: runs form-field-render CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for rendered form files.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleTestFormFieldsAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("form-field-render", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Handles the render-all-pages command: runs batch-render CLI test on specified PDF.
+    /// </summary>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for rendered page files.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    public async Task<int> HandleRenderAllPagesAsync(string filePath, string? outputDirectory = null)
+    {
+        return await HandleRenderingTestAsync("batch-render", filePath, outputDirectory);
+    }
+
+    /// <summary>
+    /// Common handler for rendering tests with file path and optional output directory.
+    /// </summary>
+    /// <param name="testName">Name of the test to run.</param>
+    /// <param name="filePath">Path to the PDF file to test.</param>
+    /// <param name="outputDirectory">Optional output directory for test outputs.</param>
+    /// <returns>Exit code: 0 = test passed, 1 = test failed.</returns>
+    private async Task<int> HandleRenderingTestAsync(string testName, string filePath, string? outputDirectory)
+    {
+        Console.WriteLine($"FluentPDF Rendering Test: {testName}");
+        Console.WriteLine("=".PadRight(30 + testName.Length, '='));
+        Console.WriteLine($"File: {filePath}");
+        if (!string.IsNullOrEmpty(outputDirectory))
+        {
+            Console.WriteLine($"Output Directory: {outputDirectory}");
+        }
+        Console.WriteLine();
+
+        // Validate file exists
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine($"ERROR: File not found: {filePath}");
+            return 1;
+        }
+
+        try
+        {
+            var testRunner = CreateTestRunner();
+
+            // Set up test context data with file path and output directory
+            var contextData = new Dictionary<string, object>
+            {
+                { "TestPdfPath", filePath }
+            };
+
+            if (!string.IsNullOrEmpty(outputDirectory))
+            {
+                contextData["OutputDirectory"] = outputDirectory;
+            }
+
+            // Run the test with context data
+            var suiteResult = await testRunner.RunTestWithContextAsync(testName, contextData);
+
+            // Check if test was found
+            if (suiteResult.TotalTests == 0)
+            {
+                Console.WriteLine($"ERROR: Test '{testName}' not found");
+                return 1;
+            }
+
+            // Get the single test result
+            var result = suiteResult.Results.First();
+
+            // Display result summary
+            Console.WriteLine();
+            Console.WriteLine("Test Result");
+            Console.WriteLine("===========");
+            Console.WriteLine($"Status: {(result.Success ? "PASS ✓" : "FAIL ✗")}");
+            Console.WriteLine($"Duration: {result.Duration.TotalMilliseconds:F2}ms");
+
+            if (!result.Success && !string.IsNullOrEmpty(result.ErrorMessage))
+            {
+                Console.WriteLine($"Error: {result.ErrorMessage}");
+            }
+
+            // Display outputs
+            if (result.Outputs.Count > 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Output Metrics:");
+                foreach (var kvp in result.Outputs)
+                {
+                    Console.WriteLine($"  {kvp.Key}: {kvp.Value}");
+                }
+            }
+
+            Console.WriteLine();
+
+            return result.Success ? 0 : 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: Test execution failed: {ex.Message}");
+            _logger.LogError(ex, "Rendering test {TestName} failed for {FilePath}", testName, filePath);
+            return 1;
+        }
+    }
 }

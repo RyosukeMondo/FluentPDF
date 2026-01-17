@@ -534,6 +534,61 @@ namespace FluentPDF.App
                 return true;
             }
 
+            // Handle --test-page-render command
+            if (!string.IsNullOrEmpty(options.TestPageRender))
+            {
+                Log.Information("Executing test-page-render command for file: {FilePath}", options.TestPageRender);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestPageRenderAsync(options.TestPageRender, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-all-thumbnails command
+            if (!string.IsNullOrEmpty(options.TestAllThumbnails))
+            {
+                Log.Information("Executing test-all-thumbnails command for file: {FilePath}", options.TestAllThumbnails);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestAllThumbnailsAsync(options.TestAllThumbnails, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-text-extract command
+            if (!string.IsNullOrEmpty(options.TestTextExtract))
+            {
+                Log.Information("Executing test-text-extract command for file: {FilePath}", options.TestTextExtract);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestTextExtractAsync(options.TestTextExtract, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-form-fields command
+            if (!string.IsNullOrEmpty(options.TestFormFields))
+            {
+                Log.Information("Executing test-form-fields command for file: {FilePath}", options.TestFormFields);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleTestFormFieldsAsync(options.TestFormFields, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --render-all-pages command
+            if (!string.IsNullOrEmpty(options.RenderAllPages))
+            {
+                Log.Information("Executing render-all-pages command for file: {FilePath}", options.RenderAllPages);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRenderAllPagesAsync(options.RenderAllPages, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
             // No diagnostic command found
             return false;
         }

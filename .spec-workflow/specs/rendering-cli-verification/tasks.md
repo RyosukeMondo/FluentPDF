@@ -45,7 +45,7 @@
   - _Requirements: 5_
   - _Prompt: Role: Performance Test Developer | Task: Implement BatchRenderCliTest for batch rendering from requirement 5 | Restrictions: Report progress, handle failures gracefully, calculate performance metrics | Success: All pages rendered, performance reported, failures handled_
 
-- [ ] 7. Add rendering test CLI commands in CommandLineOptions.cs and DiagnosticCommandHandler.cs
+- [x] 7. Add rendering test CLI commands in CommandLineOptions.cs and DiagnosticCommandHandler.cs
   - Files: src/FluentPDF.App/CommandLineOptions.cs, src/FluentPDF.App/Services/DiagnosticCommandHandler.cs
   - Add --test-page-render, --test-text-extract, --test-form-fields, --render-all-pages
   - Integrate with test framework or direct execution

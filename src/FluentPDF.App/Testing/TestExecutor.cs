@@ -33,6 +33,19 @@ public sealed class TestExecutor
     /// <returns>Test result with execution status, timing, and outputs</returns>
     public async Task<CliTestResult> ExecuteTestAsync(ICliTest test, TimeSpan? timeout = null)
     {
+        return await ExecuteTestAsync(test, contextData: null, timeout);
+    }
+
+    /// <summary>
+    /// Executes a CLI test with proper isolation, error handling, and custom context data.
+    /// Creates an isolated context with the provided data, runs the test, and captures results.
+    /// </summary>
+    /// <param name="test">The test to execute</param>
+    /// <param name="contextData">Optional context data to pass to the test</param>
+    /// <param name="timeout">Optional timeout for test execution (default: 30 seconds)</param>
+    /// <returns>Test result with execution status, timing, and outputs</returns>
+    public async Task<CliTestResult> ExecuteTestAsync(ICliTest test, Dictionary<string, object>? contextData, TimeSpan? timeout = null)
+    {
         if (test is null)
         {
             throw new ArgumentNullException(nameof(test));
@@ -47,7 +60,7 @@ public sealed class TestExecutor
         try
         {
             // Create isolated test context
-            context = CreateContext(test.Name);
+            context = CreateContext(test.Name, contextData);
             _logger.Debug("Created test context with working directory: {WorkingDirectory}", context.WorkingDirectory);
 
             // Execute test with timeout
@@ -131,8 +144,9 @@ public sealed class TestExecutor
     /// Context is automatically cleaned up when disposed.
     /// </summary>
     /// <param name="testName">Name of the test for directory naming</param>
+    /// <param name="contextData">Optional context data to populate the test context</param>
     /// <returns>Isolated test context</returns>
-    public CliTestContext CreateContext(string testName)
+    public CliTestContext CreateContext(string testName, Dictionary<string, object>? contextData = null)
     {
         if (string.IsNullOrWhiteSpace(testName))
         {
@@ -147,12 +161,23 @@ public sealed class TestExecutor
         Directory.CreateDirectory(workingDirectory);
         _logger.Debug("Created test working directory: {WorkingDirectory}", workingDirectory);
 
-        return new CliTestContext
+        var context = new CliTestContext
         {
             WorkingDirectory = workingDirectory,
             Services = _services,
             Logger = _logger.ForContext("TestName", testName)
         };
+
+        // Populate context data if provided
+        if (contextData != null)
+        {
+            foreach (var kvp in contextData)
+            {
+                context.Data[kvp.Key] = kvp.Value;
+            }
+        }
+
+        return context;
     }
 
     /// <summary>
