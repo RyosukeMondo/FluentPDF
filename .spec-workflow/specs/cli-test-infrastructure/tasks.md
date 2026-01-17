@@ -102,7 +102,7 @@
   - _Requirements: 1, 3_
   - _Prompt: Role: CLI Developer with Testing Integration Experience | Task: Add CLI test commands following requirements 1 and 3, integrating TestRunner | Restrictions: Follow existing CLI patterns, return 0 for pass, non-zero for fail, support --verbose for detailed output | Success: Commands work from CLI, exit codes correct, output is clear, integrates with CI/CD_
 
-- [ ] 12. Create test framework unit tests in FluentPDF.App.Tests/Testing/
+- [x] 12. Create test framework unit tests in FluentPDF.App.Tests/Testing/
   - Files: tests/FluentPDF.App.Tests/Testing/TestDiscoveryTests.cs, TestExecutorTests.cs, TestRunnerTests.cs
   - Test each framework component
   - Verify error handling
