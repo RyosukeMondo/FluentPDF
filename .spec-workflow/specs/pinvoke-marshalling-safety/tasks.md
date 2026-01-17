@@ -126,7 +126,7 @@
   - _Requirements: All_
   - _Prompt: Role: Technical Writer with .NET P/Invoke expertise | Task: Create comprehensive documentation for marshalling verification system covering all requirements, including troubleshooting guide for common issues | Restrictions: Use clear examples, include screenshots of CLI output, provide step-by-step fix procedures, link to PDFium documentation | Success: Documentation is clear and comprehensive, covers all CLI commands, troubleshooting guide addresses common errors (like float API issue), includes examples of fixing marshalling errors_
 
-- [ ] 14. Add verification examples to README.md
+- [-] 14. Add verification examples to README.md
   - File: README.md (modify)
   - Add section on marshalling verification
   - Show CLI command examples

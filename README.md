@@ -419,6 +419,48 @@ FluentPDF includes comprehensive observability features for development and prod
 
 See [OBSERVABILITY.md](docs/OBSERVABILITY.md) for complete observability guide.
 
+### P/Invoke Marshalling Verification
+
+FluentPDF includes a comprehensive marshalling verification system to ensure correctness and reliability of the PDFium P/Invoke layer. The system automatically detects signature mismatches, marshalling errors, and API compatibility issues.
+
+**Verify Marshalling Correctness**:
+```bash
+# Run complete verification (returns exit code for CI/CD)
+FluentPDF.App.exe --verify-marshalling
+
+# Generate detailed coverage report
+FluentPDF.App.exe --marshalling-report --output-path coverage.md
+```
+
+**What Gets Verified**:
+- All `DllImport` signatures validated against PDFium API specifications
+- Return types, parameter types, and calling conventions verified
+- Runtime marshalling tested with known test data
+- SafeHandle usage enforced for memory safety
+- Coverage gaps highlighted with actionable recommendations
+
+**Example Output**:
+```
+FluentPDF Marshalling Verification
+===================================
+
+Results:
+  Total Functions:     45
+  Verified:           45 (100%)
+  Marshalling Tested: 38 (84%)
+  Passed:            37 (97%)
+  Failed:             1 (3%)
+
+Exit Code: 0 (success) or 1 (failed)
+```
+
+**Build Integration**:
+- Automatic verification runs before Release builds
+- CI/CD pipeline fails early on marshalling errors
+- Coverage reports uploaded as artifacts on failure
+
+See [docs/marshalling-verification.md](docs/marshalling-verification.md) for complete documentation including troubleshooting common marshalling issues, build integration details, and best practices.
+
 ### Keyboard Shortcuts
 
 | Shortcut | Action |
