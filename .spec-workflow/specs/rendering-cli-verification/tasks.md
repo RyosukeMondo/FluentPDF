@@ -29,7 +29,7 @@
   - _Requirements: 3_
   - _Prompt: Role: Text Processing Test Developer | Task: Implement TextExtractionCliTest verifying text extraction from requirement 3 | Restrictions: Verify minimum characters extracted, detect encoding errors, save output for manual check | Success: Text extracted, verified, saved correctly_
 
-- [ ] 5. Create FormFieldRenderCliTest in FluentPDF.App/Testing/Tests/FormFieldRenderCliTest.cs
+- [x] 5. Create FormFieldRenderCliTest in FluentPDF.App/Testing/Tests/FormFieldRenderCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/FormFieldRenderCliTest.cs
   - Implement ICliTest for form field rendering
   - Detect forms, render with forms, verify
