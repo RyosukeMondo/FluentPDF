@@ -135,22 +135,60 @@ internal class Program
 
                 try
                 {
-                    // Execute verification (will be implemented in next task)
+                    // Execute verification
                     Log.Information("Starting PDFium verification");
                     Log.Information("DLL Path: {DllPath}", dllPath);
                     Log.Information("Parallel Execution: {Parallel}", parallel);
                     Log.Information("Output Format: {Format}", format);
 
-                    // Placeholder for actual verification execution
-                    // This will be implemented in task 8 (VerificationExecutor)
-                    Console.WriteLine("PDFium Verification Tool");
-                    Console.WriteLine($"DLL: {dllPath}");
-                    Console.WriteLine($"Format: {format}");
-                    Console.WriteLine();
-                    Console.WriteLine("Verification executor not yet implemented (Task 8).");
-                    Console.WriteLine("This CLI successfully parses arguments and is ready for integration.");
+                    // Create DLL analyzer and executor
+                    var dllAnalyzer = new DllAnalyzer();
+                    var executor = new VerificationExecutor(options, dllAnalyzer);
 
-                    context.ExitCode = ExitSuccess;
+                    // Execute verification
+                    var result = await executor.ExecuteAsync(context.GetCancellationToken());
+
+                    if (result.IsFailed)
+                    {
+                        Log.Error("Verification execution failed: {Error}", result.Errors[0].Message);
+                        Console.Error.WriteLine($"Verification failed: {result.Errors[0].Message}");
+                        context.ExitCode = ExitVerificationFailure;
+                        return;
+                    }
+
+                    var summary = result.Value;
+
+                    // Generate and output report (will be implemented in task 9)
+                    // For now, output basic summary
+                    Console.WriteLine();
+                    Console.WriteLine("PDFium Verification Results");
+                    Console.WriteLine("===========================");
+                    Console.WriteLine($"Total Tests: {summary.TotalTests}");
+                    Console.WriteLine($"Passed: {summary.PassedTests}");
+                    Console.WriteLine($"Failed: {summary.FailedTests}");
+                    Console.WriteLine($"Duration: {summary.TotalDuration.TotalSeconds:F2}s");
+                    Console.WriteLine($"Library Version: {summary.LibraryVersion ?? "Unknown"}");
+                    Console.WriteLine();
+
+                    if (summary.FailedTests > 0)
+                    {
+                        Console.WriteLine("Failed Tests:");
+                        foreach (var failedResult in summary.Results.Where(r => !r.Success))
+                        {
+                            Console.WriteLine($"  - {failedResult.TestName}");
+                            Console.WriteLine($"    Error: {failedResult.ErrorMessage}");
+                            if (!string.IsNullOrWhiteSpace(failedResult.SuggestedFix))
+                            {
+                                Console.WriteLine($"    Suggested Fix: {failedResult.SuggestedFix}");
+                            }
+                        }
+                        context.ExitCode = ExitVerificationFailure;
+                    }
+                    else
+                    {
+                        Console.WriteLine("All tests passed!");
+                        context.ExitCode = ExitSuccess;
+                    }
                 }
                 catch (Exception ex)
                 {
