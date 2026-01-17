@@ -68,10 +68,7 @@ namespace FluentPDF.App
             // Initialize Serilog before anything else
             try
             {
-                Log.Logger = SerilogConfiguration.CreateLogger(
-                    CommandLineOptions.VerboseLogging ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information,
-                    CommandLineOptions.LogOutputPath,
-                    CommandLineOptions.EnableConsoleLogging);
+                Log.Logger = SerilogConfiguration.CreateLogger();
             }
             catch
             {
