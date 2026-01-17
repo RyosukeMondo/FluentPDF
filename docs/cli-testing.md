@@ -624,6 +624,341 @@ public sealed class CliTestContext : IDisposable
 }
 ```
 
+## Rendering Verification Tests
+
+FluentPDF includes a suite of specialized CLI tests for verifying PDF rendering functionality. These tests cover single-page rendering, thumbnail generation, text extraction, form field rendering, and batch operations. All rendering tests are designed to work in CI/CD environments and return appropriate exit codes for automation.
+
+### Available Rendering Tests
+
+#### 1. PageRenderCliTest (`page-render`)
+
+Verifies single page rendering with dimension and file size checks.
+
+**What it tests:**
+- Single page rendering to PNG format
+- Image dimension verification (matches PDF page size)
+- File size validation (>1KB requirement)
+- Render time metrics
+
+**Usage:**
+```powershell
+# Run page render test
+FluentPDF.App.exe --run-test page-render --verbose
+
+# With custom PDF and page number
+FluentPDF.App.exe --run-test page-render --test-pdf "path/to/file.pdf" --page 1
+```
+
+**Output verification:**
+- `OutputFile`: Path to rendered PNG file
+- `ImageWidth`: Width of rendered image in pixels
+- `ImageHeight`: Height of rendered image in pixels
+- `FileSizeKB`: File size in kilobytes
+- `RenderTimeMs`: Rendering time in milliseconds
+- `PageNumber`: Page number that was rendered
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output:**
+```
+Page render test completed successfully. Page 1, 800x600, 45.23 KB, 123 ms
+```
+
+#### 2. ThumbnailAllPagesCliTest (`thumbnail-all-pages`)
+
+Generates thumbnails for all pages in a PDF document.
+
+**What it tests:**
+- Thumbnail generation for every page
+- Thumbnail count matches page count
+- All thumbnails have consistent dimensions
+- Performance metrics for batch thumbnail generation
+
+**Usage:**
+```powershell
+# Generate thumbnails for all pages
+FluentPDF.App.exe --run-test thumbnail-all-pages --verbose
+
+# With custom PDF
+FluentPDF.App.exe --run-test thumbnail-all-pages --test-pdf "path/to/file.pdf"
+```
+
+**Output verification:**
+- `PageCount`: Total number of pages
+- `SuccessCount`: Number of successfully generated thumbnails
+- `FailCount`: Number of failed thumbnail generations
+- `ThumbnailPaths`: List of all generated thumbnail file paths
+- `TotalTimeMs`: Total time to generate all thumbnails
+- `AverageTimeMs`: Average time per thumbnail
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output:**
+```
+Thumbnail generation complete: 25/25 successful, 0 failed
+Total time: 2.5s, Average: 100ms per page
+```
+
+#### 3. TextExtractionCliTest (`text-extraction`)
+
+Extracts text content from PDF pages and saves to a text file.
+
+**What it tests:**
+- Text extraction from PDF document
+- Character count validation (minimum 10 characters)
+- Encoding correctness
+- Text saved to output file for manual inspection
+
+**Usage:**
+```powershell
+# Extract text from PDF
+FluentPDF.App.exe --run-test text-extraction --verbose
+
+# With custom PDF
+FluentPDF.App.exe --run-test text-extraction --test-pdf "path/to/file.pdf"
+```
+
+**Output verification:**
+- `OutputFile`: Path to extracted text file
+- `CharacterCount`: Total number of characters extracted
+- `PageCount`: Number of pages processed
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output:**
+```
+Text extraction completed. 1,523 characters extracted from 3 pages
+Output saved to: extracted_text.txt
+```
+
+#### 4. FormFieldRenderCliTest (`form-field-render`)
+
+Detects and renders PDF forms with form field visualization.
+
+**What it tests:**
+- Form field detection (HasForms check)
+- Form field counting and type identification
+- Rendering of PDFs with interactive forms
+- Graceful handling of non-form PDFs
+
+**Usage:**
+```powershell
+# Test form field rendering
+FluentPDF.App.exe --run-test form-field-render --verbose
+
+# With form PDF
+FluentPDF.App.exe --run-test form-field-render --test-pdf "path/to/form.pdf"
+```
+
+**Output verification:**
+- `HasForms`: Boolean indicating if PDF contains forms
+- `FormFieldCount`: Number of form fields detected
+- `FormFieldTypes`: Dictionary of field types and counts
+- `OutputFile`: Path to rendered PDF with forms (if HasForms is true)
+- `ExitCode`: 0 for success, non-zero for failure
+
+**Example output with forms:**
+```
+Form PDF detected: 5 form fields
+Field types: TextBox=3, CheckBox=1, RadioButton=1
+Rendered with forms to: form_rendered.png
+```
+
+**Example output without forms:**
+```
+Non-form PDF: 0 form fields detected
+Skipped form rendering
+```
+
+#### 5. BatchRenderCliTest (`batch-render`)
+
+Renders all pages in a PDF document to separate image files with performance reporting.
+
+**What it tests:**
+- Sequential rendering of all pages
+- Progress reporting during batch operation
+- Performance metrics (total time, average time, min/max)
+- Partial failure handling (continues after failed pages)
+- Success rate calculation
+
+**Usage:**
+```powershell
+# Batch render all pages
+FluentPDF.App.exe --run-test batch-render --verbose
+
+# With custom PDF and DPI
+FluentPDF.App.exe --run-test batch-render --test-pdf "path/to/file.pdf" --dpi 150
+```
+
+**Output verification:**
+- `PageCount`: Total number of pages
+- `SuccessCount`: Number of successfully rendered pages
+- `FailCount`: Number of failed renders
+- `FailedPages`: List of page numbers that failed
+- `SuccessRate`: Percentage of successful renders (0-100)
+- `TotalBytes`: Total size of all rendered files
+- `TotalMB`: Total size in megabytes
+- `TotalTimeMs`: Total rendering time
+- `TotalSeconds`: Total time in seconds
+- `AverageTimeMs`: Average time per page
+- `MinTimeMs`: Fastest page render time
+- `MaxTimeMs`: Slowest page render time
+- `RenderedPaths`: List of all rendered file paths
+- `ExitCode`: 0 for full success, 1 for partial failure
+
+**Example output:**
+```
+Batch rendering complete: 100/100 successful, 0 failed
+Success rate: 100.0%
+Total size: 45.2 MB
+Total time: 12.3s, Average: 123ms per page
+Min: 87ms, Max: 245ms
+```
+
+### Running All Rendering Tests
+
+Execute all rendering tests in sequence:
+
+```powershell
+FluentPDF.App.exe --run-all-tests --verbose
+```
+
+This will run all tests including the rendering verification tests and provide a summary report:
+
+```
+Test Suite Results
+==================
+Total Tests: 5
+Passed: 5
+Failed: 0
+Duration: 15.2 seconds
+
+All tests passed ✓
+```
+
+### Exit Codes
+
+All rendering tests follow these exit code conventions:
+
+- `0`: Test completed successfully, all verifications passed
+- `1`: Test failed (e.g., partial batch render failure, missing PDF)
+- `2`: Render operation failed
+- `3`: Verification failed
+
+Exit codes are stored in the test result `Outputs["ExitCode"]` and can be used in automation scripts:
+
+```powershell
+FluentPDF.App.exe --run-test page-render --verbose
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Page render test failed with exit code $LASTEXITCODE"
+    exit 1
+}
+```
+
+### Test Fixtures for Rendering Tests
+
+The rendering tests use the following test PDFs from `tests/Fixtures/`:
+
+- `multi-page.pdf`: Multi-page document for batch and thumbnail tests
+- `sample-with-text.pdf`: PDF with searchable text content
+- `sample-form.pdf`: Interactive PDF form for form field tests
+- `complex-layout.pdf`: Complex layout for stress testing
+
+### Troubleshooting Rendering Tests
+
+#### Page Render Failures
+
+**Problem**: PageRenderCliTest fails with "Failed to render page"
+
+**Solutions:**
+1. Verify PDF file is not corrupted
+2. Check that page number is valid (1-indexed)
+3. Ensure sufficient memory for rendering
+4. Review PDFium initialization logs with `--verbose`
+
+#### Thumbnail Generation Slow
+
+**Problem**: ThumbnailAllPagesCliTest takes too long
+
+**Solutions:**
+1. Use a smaller test PDF during development
+2. Thumbnail generation is intentionally sequential for reliability
+3. Performance metrics help identify bottlenecks
+4. Consider adjusting thumbnail size if needed
+
+#### Text Extraction Returns Empty
+
+**Problem**: TextExtractionCliTest extracts 0 characters
+
+**Solutions:**
+1. Verify PDF contains actual text (not scanned images)
+2. Check PDF isn't password protected
+3. Some PDFs have text in non-standard encodings
+4. Review extracted text file for invisible characters
+
+#### Form Fields Not Detected
+
+**Problem**: FormFieldRenderCliTest reports HasForms=false for form PDF
+
+**Solutions:**
+1. Verify PDF actually contains interactive form fields
+2. Some "forms" are just visual (not interactive AcroForms)
+3. Check PDF version compatibility
+4. Review with Adobe Acrobat to confirm form fields exist
+
+#### Batch Render Partial Failures
+
+**Problem**: BatchRenderCliTest shows some pages failed
+
+**Solutions:**
+1. Check `FailedPages` output to identify specific pages
+2. Review logs for per-page error messages
+3. Some pages may have rendering issues (corrupted content)
+4. Test continues after failures as designed (requirement 5.4)
+5. ExitCode will be 1 for partial failure, test still returns Success=true if at least one page rendered
+
+### Example: Automated Rendering Verification
+
+Complete PowerShell script for CI/CD rendering verification:
+
+```powershell
+# Test all rendering features
+$tests = @(
+    "page-render",
+    "thumbnail-all-pages",
+    "text-extraction",
+    "form-field-render",
+    "batch-render"
+)
+
+$failed = @()
+$passed = @()
+
+foreach ($test in $tests) {
+    Write-Host "Running $test..." -ForegroundColor Cyan
+
+    FluentPDF.App.exe --run-test $test --verbose
+
+    if ($LASTEXITCODE -eq 0) {
+        $passed += $test
+        Write-Host "✓ $test PASSED" -ForegroundColor Green
+    } else {
+        $failed += $test
+        Write-Host "✗ $test FAILED (exit code: $LASTEXITCODE)" -ForegroundColor Red
+    }
+}
+
+Write-Host "`nSummary:" -ForegroundColor Yellow
+Write-Host "Passed: $($passed.Count)/$($tests.Count)"
+Write-Host "Failed: $($failed.Count)/$($tests.Count)"
+
+if ($failed.Count -gt 0) {
+    Write-Host "`nFailed tests:" -ForegroundColor Red
+    $failed | ForEach-Object { Write-Host "  - $_" }
+    exit 1
+}
+
+Write-Host "`nAll rendering tests passed!" -ForegroundColor Green
+exit 0
+```
+
 ## See Also
 
 - [CLI Automation Guide](CLI-AUTOMATION.md) - General CLI usage and automation

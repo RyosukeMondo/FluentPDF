@@ -61,7 +61,7 @@
   - _Requirements: All_
   - _Prompt: Role: QA Engineer | Task: Create unit tests for all rendering CLI tests covering all requirements | Restrictions: Use actual test PDFs, mock services where needed, verify both success and failure paths | Success: All rendering tests tested, edge cases covered_
 
-- [ ] 9. Document rendering CLI tests in docs/cli-testing.md
+- [x] 9. Document rendering CLI tests in docs/cli-testing.md
   - File: docs/cli-testing.md (update)
   - Add section on rendering verification tests
   - Provide examples for each test type
