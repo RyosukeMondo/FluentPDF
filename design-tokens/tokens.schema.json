@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FluentPDF Design Tokens",
+  "description": "Design token schema for FluentPDF - single source of truth for styling shared between React and XAML",
+  "type": "object",
+  "required": ["colors", "spacing", "typography", "borders"],
+  "additionalProperties": false,
+  "properties": {
+    "colors": {
+      "type": "object",
+      "description": "Color palette tokens",
+      "required": ["primary", "background", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "type": "string",
+          "description": "Primary brand color (accent color)",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "white": {
+          "type": "string",
+          "description": "White color",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "black": {
+          "type": "string",
+          "description": "Black color",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "background": {
+          "type": "object",
+          "description": "Background colors",
+          "required": ["card", "layer"],
+          "additionalProperties": false,
+          "properties": {
+            "card": {
+              "type": "string",
+              "description": "Card background color",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            },
+            "layer": {
+              "type": "string",
+              "description": "Layer fill color for loading placeholders",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            }
+          }
+        },
+        "text": {
+          "type": "object",
+          "description": "Text colors",
+          "required": ["primary", "secondary"],
+          "additionalProperties": false,
+          "properties": {
+            "primary": {
+              "type": "string",
+              "description": "Primary text color",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            },
+            "secondary": {
+              "type": "string",
+              "description": "Secondary text color (muted)",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            }
+          }
+        }
+      }
+    },
+    "spacing": {
+      "type": "object",
+      "description": "Spacing scale tokens (in pixels)",
+      "required": ["xs", "sm", "md", "lg"],
+      "additionalProperties": false,
+      "properties": {
+        "xs": {
+          "type": "integer",
+          "description": "Extra small spacing (4px)",
+          "minimum": 0
+        },
+        "sm": {
+          "type": "integer",
+          "description": "Small spacing (8px)",
+          "minimum": 0
+        },
+        "md": {
+          "type": "integer",
+          "description": "Medium spacing (16px)",
+          "minimum": 0
+        },
+        "lg": {
+          "type": "integer",
+          "description": "Large spacing (24px)",
+          "minimum": 0
+        },
+        "buttonPadding": {
+          "type": "object",
+          "description": "Button padding",
+          "required": ["horizontal", "vertical"],
+          "properties": {
+            "horizontal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "vertical": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "description": "Typography tokens",
+      "required": ["fontSize", "fontWeight"],
+      "additionalProperties": false,
+      "properties": {
+        "fontSize": {
+          "type": "object",
+          "description": "Font size scale",
+          "required": ["base", "caption"],
+          "additionalProperties": false,
+          "properties": {
+            "base": {
+              "type": "number",
+              "description": "Base font size (14px)",
+              "minimum": 0
+            },
+            "caption": {
+              "type": "number",
+              "description": "Caption font size (12px)",
+              "minimum": 0
+            }
+          }
+        },
+        "fontWeight": {
+          "type": "object",
+          "description": "Font weight scale",
+          "required": ["normal", "semibold"],
+          "additionalProperties": false,
+          "properties": {
+            "normal": {
+              "type": "integer",
+              "description": "Normal font weight (400)",
+              "enum": [100, 200, 300, 400, 500, 600, 700, 800, 900]
+            },
+            "semibold": {
+              "type": "integer",
+              "description": "Semibold font weight (600)",
+              "enum": [100, 200, 300, 400, 500, 600, 700, 800, 900]
+            }
+          }
+        }
+      }
+    },
+    "borders": {
+      "type": "object",
+      "description": "Border tokens",
+      "required": ["radius", "width"],
+      "additionalProperties": false,
+      "properties": {
+        "radius": {
+          "type": "object",
+          "description": "Border radius values",
+          "required": ["sm", "md"],
+          "additionalProperties": false,
+          "properties": {
+            "sm": {
+              "type": "integer",
+              "description": "Small border radius (4px)",
+              "minimum": 0
+            },
+            "md": {
+              "type": "integer",
+              "description": "Medium border radius (8px)",
+              "minimum": 0
+            }
+          }
+        },
+        "width": {
+          "type": "object",
+          "description": "Border width values",
+          "required": ["thin", "thick"],
+          "additionalProperties": false,
+          "properties": {
+            "thin": {
+              "type": "integer",
+              "description": "Thin border (1px)",
+              "minimum": 0
+            },
+            "thick": {
+              "type": "integer",
+              "description": "Thick border for selection (3px)",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "sizes": {
+      "type": "object",
+      "description": "Component size tokens",
+      "additionalProperties": false,
+      "properties": {
+        "thumbnail": {
+          "type": "object",
+          "description": "Thumbnail dimensions",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "thumbnailContainer": {
+          "type": "object",
+          "description": "Thumbnail container dimensions (includes image + label)",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}
