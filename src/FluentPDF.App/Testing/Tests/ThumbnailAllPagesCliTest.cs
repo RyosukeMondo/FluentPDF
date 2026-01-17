@@ -1,6 +1,5 @@
 using FluentPDF.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
-using SixLabors.ImageSharp;
 
 namespace FluentPDF.App.Testing.Tests;
 
@@ -124,7 +123,7 @@ public sealed class ThumbnailAllPagesCliTest : ICliTest
 
                 // Load image to get dimensions
                 int imageWidth, imageHeight;
-                using (var image = await Image.LoadAsync(outputPath))
+                using (var image = await SixLabors.ImageSharp.Image.LoadAsync(outputPath))
                 {
                     imageWidth = image.Width;
                     imageHeight = image.Height;

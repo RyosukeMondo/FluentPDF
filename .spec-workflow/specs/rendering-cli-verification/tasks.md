@@ -21,7 +21,7 @@
   - _Requirements: 2_
   - _Prompt: Role: Thumbnail Testing Specialist | Task: Implement ThumbnailAllPagesCliTest verifying all-page thumbnails from requirement 2 | Restrictions: Reuse logic from existing --test-thumbnails, verify dimensions, report performance | Success: All thumbnails generated, count correct, dimensions verified_
 
-- [ ] 4. Create TextExtractionCliTest in FluentPDF.App/Testing/Tests/TextExtractionCliTest.cs
+- [x] 4. Create TextExtractionCliTest in FluentPDF.App/Testing/Tests/TextExtractionCliTest.cs
   - File: src/FluentPDF.App/Testing/Tests/TextExtractionCliTest.cs
   - Implement ICliTest for text extraction verification
   - Extract text, verify character count, save to file
