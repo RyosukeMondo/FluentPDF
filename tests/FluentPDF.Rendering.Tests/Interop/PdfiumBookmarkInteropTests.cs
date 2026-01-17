@@ -11,7 +11,7 @@ namespace FluentPDF.Rendering.Tests.Interop;
 /// </summary>
 public class PdfiumBookmarkInteropTests : IDisposable
 {
-    private bool _isInitialized;
+    private readonly bool _isInitialized;
 
     public PdfiumBookmarkInteropTests()
     {

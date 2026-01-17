@@ -18,8 +18,8 @@ public sealed class TextSearchServiceTests : IDisposable
     private readonly Mock<ILogger<TextSearchService>> _mockLogger;
     private readonly TextSearchService _service;
     private readonly string _testPdfPath;
-    private SafePdfDocumentHandle? _documentHandle;
-    private PdfDocument? _testDocument;
+    private readonly SafePdfDocumentHandle? _documentHandle;
+    private readonly PdfDocument? _testDocument;
 
     public TextSearchServiceTests()
     {

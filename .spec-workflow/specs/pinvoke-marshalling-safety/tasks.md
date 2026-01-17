@@ -86,7 +86,7 @@
   - _Requirements: 4_
   - _Prompt: Role: Reporting and CLI Integration Specialist | Task: Add --marshalling-report CLI command following requirement 4, using CoverageReporter to generate and save coverage reports | Restrictions: Must support both console output and file output (via --output flag), default to markdown format, include timestamp in report | Success: Report generated successfully, saved to file when requested, console output formatted correctly, report includes all coverage metrics_
 
-- [ ] 10. Create marshalling verification unit tests in FluentPDF.Rendering.Tests/Interop/MarshallingVerificationTests.cs
+- [-] 10. Create marshalling verification unit tests in FluentPDF.Rendering.Tests/Interop/MarshallingVerificationTests.cs
   - File: tests/FluentPDF.Rendering.Tests/Interop/MarshallingVerificationTests.cs
   - Test SignatureAnalyzer with correct and incorrect signatures
   - Test DataMarshallerTester with known test data

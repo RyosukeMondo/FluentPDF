@@ -10,7 +10,7 @@ namespace FluentPDF.Rendering.Tests.Interop;
 /// </summary>
 public class PdfiumFormInteropTests : IDisposable
 {
-    private bool _isInitialized;
+    private readonly bool _isInitialized;
     private readonly string _samplePdfPath;
 
     public PdfiumFormInteropTests()
