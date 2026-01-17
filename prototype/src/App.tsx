@@ -2,6 +2,8 @@ import { useState } from 'react';
 import './App.css';
 import ThumbnailsSidebar from './components/ThumbnailsSidebar';
 import { ThumbnailStates } from './data/dummyThumbnails';
+import BookmarksPanel from './components/BookmarksPanel';
+import { BookmarkPresets } from './data/dummyBookmarks';
 
 function App() {
   // Initialize with 20 thumbnails, first 10 loaded (partially loaded state)
@@ -15,6 +17,11 @@ function App() {
 
   const handleThumbnailContextMenu = (pageNumber: number, event: React.MouseEvent) => {
     console.log(`App: Context menu for page ${pageNumber}`, event);
+  };
+
+  const handleNavigateToPage = (pageNumber: number) => {
+    console.log(`App: Navigate to page ${pageNumber}`);
+    setSelectedPage(pageNumber);
   };
 
   return (
@@ -42,6 +49,12 @@ function App() {
               <li>First 10 thumbnails are loaded, others show loading spinner</li>
               <li>Uses design tokens from tokens.css</li>
             </ul>
+          </div>
+          <div style={{ width: '300px', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
+            <BookmarksPanel
+              bookmarks={BookmarkPresets.standard}
+              onNavigateToPage={handleNavigateToPage}
+            />
           </div>
         </div>
       </main>

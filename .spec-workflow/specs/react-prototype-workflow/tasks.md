@@ -100,7 +100,7 @@
   - _Requirements: 2.1, 2.2, 2.3_
   - _Prompt: **Role:** React Developer with expertise in complex layout components and UI controls | **Task:** Reverse engineer PdfViewerControl.xaml into React component following requirements 2.1-2.3. Analyze XAML viewer structure (main canvas area, toolbar, zoom controls, page navigation). Create React component with similar layout using CSS Grid or Flexbox. Display single dummy PDF page as gradient rectangle (no real rendering). Implement zoom slider, page navigation buttons, fit-to-width/fit-to-page controls as visual elements with stub handlers. Apply design tokens for spacing and colors. | **Restrictions:** Do not implement actual PDF rendering or zoom transforms, controls should be visual mockups only, must use design token CSS variables, component layout should adapt to viewport size, do not duplicate toolbar logic (separate component in future task) | **_Leverage:** PdfViewerControl.xaml for layout structure, dummyPdfDocument.ts for metadata, tokens.css for styling | **Success:** Component displays main viewer area with dummy page, zoom controls positioned correctly matching XAML, page navigation buttons styled with design tokens, layout is responsive, hot reload works, TypeScript compilation succeeds | **Implementation Instructions:** Before starting, run `spec-workflow-guide`. Mark in-progress in tasks.md. After completion, use `log-implementation` with artifacts (component, layout CSS, stub interaction handlers), then mark complete._
 
-- [ ] 7. Reverse engineer BookmarksPanel component
+- [x] 7. Reverse engineer BookmarksPanel component
   - Files:
     - prototype/src/components/BookmarksPanel.tsx
     - prototype/src/components/BookmarksPanel.module.css

@@ -1,0 +1,204 @@
+/**
+ * BookmarksPanel Styles
+ * Matches visual design from src/FluentPDF.App/Controls/BookmarksPanel.xaml
+ * Uses design tokens for consistent styling
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-background-layer);
+  overflow: hidden;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--spacing-md);
+  color: var(--color-text-secondary);
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--color-background-card);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.empty p {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+/* Tree View */
+.treeView {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-sm) 0;
+}
+
+/* Tree Item */
+.treeItem {
+  position: relative;
+  user-select: none;
+}
+
+.itemContent {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  min-height: 32px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-radius: var(--border-radius-sm);
+  margin: 0 var(--spacing-xs);
+}
+
+.itemContent:hover {
+  background-color: var(--color-background-card);
+}
+
+.itemContent:active {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.itemContent:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Expand/Collapse Button */
+.expandButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.expandButton:hover {
+  color: var(--color-text-primary);
+}
+
+.expandIcon {
+  transform: rotate(0deg);
+  transition: transform 0.15s ease;
+}
+
+.expandIconExpanded {
+  transform: rotate(90deg);
+  transition: transform 0.15s ease;
+}
+
+.expandPlaceholder {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Bookmark Icon */
+.bookmarkIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Title */
+.title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  max-width: 250px;
+}
+
+/* Page Number Badge */
+.pageNumber {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  padding: 2px 6px;
+  background-color: var(--color-background-card);
+  border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Children Container */
+.children {
+  /* No additional styling needed - indentation handled by itemContent padding */
+}
+
+/* Scrollbar Styling (WebKit browsers) */
+.treeView::-webkit-scrollbar {
+  width: 12px;
+}
+
+.treeView::-webkit-scrollbar-track {
+  background: var(--color-background-layer);
+}
+
+.treeView::-webkit-scrollbar-thumb {
+  background: var(--color-background-card);
+  border-radius: 6px;
+}
+
+.treeView::-webkit-scrollbar-thumb:hover {
+  background: #d0d0d0;
+}
+
+/* Accessibility */
+.itemContent:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: var(--border-radius-sm);
+}
+
+/* Loading animation accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+
+  .expandIcon,
+  .expandIconExpanded,
+  .itemContent {
+    transition: none;
+  }
+}
