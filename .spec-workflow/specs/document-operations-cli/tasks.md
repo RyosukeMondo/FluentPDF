@@ -61,7 +61,7 @@
   - _Requirements: All_
   - _Prompt: Role: QA Engineer | Task: Create unit tests for document operations CLI tests covering all requirements | Restrictions: Use PDFs with known content, verify both success and failure, edge cases | Success: All tests tested, edge cases covered_
 
-- [ ] 9. Document document operations tests in docs/cli-testing.md
+- [x] 9. Document document operations tests in docs/cli-testing.md
   - File: docs/cli-testing.md (update)
   - Add section on document operations testing
   - Provide examples for each test
