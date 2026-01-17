@@ -46,7 +46,7 @@
   - _Requirements: 2_
   - _Prompt: Role: .NET Marshalling and Interop Testing Specialist | Task: Implement DataMarshallerTester that tests all P/Invoke functions with known test data to verify marshalling correctness from requirement 2, including test cases for the FPDF_GetPageWidth vs FPDF_GetPageWidthF issue | Restrictions: Must initialize PDFium library properly, use actual test PDF files from tests/Fixtures, handle SafeHandle types correctly, clean up all resources | Success: All marshalling types tested (int, double, IntPtr, SafeHandle, strings), known issues like float API detected, all tests deterministic and repeatable_
 
-- [ ] 6. Create CoverageReporter in FluentPDF.Rendering/Interop/Verification/CoverageReporter.cs
+- [x] 6. Create CoverageReporter in FluentPDF.Rendering/Interop/Verification/CoverageReporter.cs
   - File: src/FluentPDF.Rendering/Interop/Verification/CoverageReporter.cs
   - Implement report generation logic
   - Format results as markdown table
