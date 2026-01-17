@@ -104,7 +104,7 @@
   - _Requirements: 3.0_
   - _Prompt: Implement the task for spec pdfium-library-verification, first run spec-workflow-guide to get the workflow guide then implement the task: Role: DevOps Engineer with expertise in CLI testing and automation | Task: Create end-to-end CLI tests in tests/FluentPDF.Verification.Cli.Tests/CliTests.cs validating argument parsing and execution following requirement 3.0 | Restrictions: Must test actual executable, validate exit codes, test all argument combinations, ensure CI/CD compatibility | Success: All CLI scenarios tested, exit codes validated, reports generated correctly, tests work in CI/CD pipeline | Instructions: (1) Edit tasks.md to mark this task as in-progress [-], (2) implement the code, (3) use log-implementation tool with detailed artifacts after completion, (4) mark as complete [x] in tasks.md_
 
-- [ ] 13. Add build pipeline integration
+- [x] 13. Add build pipeline integration
   - Files: .github/workflows/pdfium-verification.yml (or equivalent CI config)
   - Integrate verification as pre-build step
   - Purpose: Catch PDFium issues before deployment
