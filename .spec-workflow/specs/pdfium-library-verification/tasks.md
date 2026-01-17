@@ -122,7 +122,7 @@
   - _Requirements: All requirements_
   - _Prompt: Implement the task for spec pdfium-library-verification, first run spec-workflow-guide to get the workflow guide then implement the task: Role: Technical Writer with expertise in developer documentation and API documentation | Task: Create comprehensive documentation in docs/verification/pdfium-verification.md covering CLI usage and troubleshooting, following existing documentation patterns | Restrictions: Must include examples for all CLI options, document all exit codes, provide troubleshooting guide for common errors | Success: Documentation is complete and clear, includes examples, covers all features, follows documentation standards | Instructions: (1) Edit tasks.md to mark this task as in-progress [-], (2) implement the code, (3) use log-implementation tool with detailed artifacts after completion, (4) mark as complete [x] in tasks.md_
 
-- [ ] 15. Create extensibility guide for other libraries
+- [x] 15. Create extensibility guide for other libraries
   - File: docs/verification/extending-verification.md
   - Document how to create verifiers for new native libraries
   - Purpose: Enable verification of other P/Invoke dependencies
