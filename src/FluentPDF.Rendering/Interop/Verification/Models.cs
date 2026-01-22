@@ -37,6 +37,52 @@ public record VerificationResult
     /// Gets the marshalling test result, or null if marshalling tests were not run.
     /// </summary>
     public MarshallingTestResult? TestResult { get; init; }
+
+    /// <summary>
+    /// Gets the severity level of the verification result.
+    /// </summary>
+    public ValidationSeverity Severity { get; init; } = ValidationSeverity.Info;
+
+    /// <summary>
+    /// Gets a suggested fix for the issue, if applicable.
+    /// </summary>
+    public string? SuggestedFix { get; init; }
+
+    /// <summary>
+    /// Gets the URL to documentation for this issue or validation pattern.
+    /// </summary>
+    public string? DocumentationUrl { get; init; }
+
+    /// <summary>
+    /// Gets additional context information as key-value pairs.
+    /// </summary>
+    public Dictionary<string, string>? Context { get; init; }
+}
+
+/// <summary>
+/// Represents the severity level of a validation result.
+/// </summary>
+public enum ValidationSeverity
+{
+    /// <summary>
+    /// Informational message with no action required.
+    /// </summary>
+    Info,
+
+    /// <summary>
+    /// Warning that should be reviewed but doesn't block functionality.
+    /// </summary>
+    Warning,
+
+    /// <summary>
+    /// Error that may cause incorrect behavior.
+    /// </summary>
+    Error,
+
+    /// <summary>
+    /// Critical error that may cause crashes or data corruption.
+    /// </summary>
+    Critical
 }
 
 /// <summary>
