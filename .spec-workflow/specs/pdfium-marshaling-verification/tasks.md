@@ -161,7 +161,7 @@
 
 ## Phase 4: Reporting & CLI Integration
 
-- [ ] 13. Create report exporters (JSON, JUnit XML, HTML)
+- [x] 13. Create report exporters (JSON, JUnit XML, HTML)
   - Files:
     - `src/FluentPDF.Rendering/Interop/Verification/Reports/IReportExporter.cs`
     - `src/FluentPDF.Rendering/Interop/Verification/Reports/JsonReportExporter.cs`
