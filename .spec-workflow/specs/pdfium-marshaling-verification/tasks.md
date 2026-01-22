@@ -106,7 +106,7 @@
 
 ## Phase 3: Performance Profiling & Workaround Tests
 
-- [ ] 9. Create IMarshalingProfiler interface and performance models
+- [x] 9. Create IMarshalingProfiler interface and performance models
   - Files:
     - `src/FluentPDF.Rendering/Interop/Verification/Profilers/IMarshalingProfiler.cs`
     - `src/FluentPDF.Rendering/Interop/Verification/Reports/ProfilingReport.cs`
