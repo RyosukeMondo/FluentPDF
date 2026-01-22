@@ -28,6 +28,13 @@ public class CommandLineOptions
     public int AutoCloseDelay { get; set; } = 2;
 
     /// <summary>
+    /// Gets or sets the baseline file path for performance profiling comparison.
+    /// Used with --compare-baseline to detect marshaling performance regressions.
+    /// Exit code: 0=no regressions, 1=regressions detected.
+    /// </summary>
+    public string? CompareBaseline { get; set; }
+
+    /// <summary>
     /// Gets or sets whether to enable console logging output.
     /// </summary>
     public bool EnableConsoleLogging { get; set; }
@@ -36,6 +43,25 @@ public class CommandLineOptions
     /// Gets or sets whether to enable verbose/debug logging.
     /// </summary>
     public bool VerboseLogging { get; set; }
+
+    /// <summary>
+    /// Gets or sets the HTML report output file path.
+    /// Used with validation commands to generate HTML-formatted validation reports.
+    /// </summary>
+    public string? HtmlOutput { get; set; }
+
+    /// <summary>
+    /// Gets or sets the JSON report output file path.
+    /// Used with validation commands to generate JSON-formatted validation reports.
+    /// </summary>
+    public string? JsonOutput { get; set; }
+
+    /// <summary>
+    /// Gets or sets the JUnit XML report output file path.
+    /// Used with validation commands to generate JUnit XML test reports for CI/CD integration.
+    /// Compatible with GitHub Actions and Azure DevOps test reporting.
+    /// </summary>
+    public string? JunitOutput { get; set; }
 
     /// <summary>
     /// Gets or sets the custom log output path.
@@ -77,6 +103,62 @@ public class CommandLineOptions
     /// When set, application will load the PDF, render all thumbnails, and report results.
     /// </summary>
     public string? TestThumbnails { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to run marshalling performance profiling.
+    /// Measures execution time and memory overhead for all PDFium P/Invoke operations.
+    /// Exit code: 0=success, 1=profiling failed.
+    /// </summary>
+    public bool ProfileMarshalling { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to run workaround regression tests.
+    /// Tests documented workarounds (float dimension, Task.Yield threading, SoftwareBitmap) to detect breakage.
+    /// Exit code: 0=all workarounds still needed, 1=workaround broken or removable.
+    /// </summary>
+    public bool TestWorkarounds { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to validate all high-risk marshalling areas.
+    /// Runs all validators: UTF-16, bitmap, annotation, threading, buffer safety, API signatures, profiling, and workarounds.
+    /// Exit code: 0=all validations passed, 1=validation failed, 2=critical error.
+    /// </summary>
+    public bool ValidateAll { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to validate annotation geometry marshalling.
+    /// Validates FS_QUADPOINTSF and FS_RECTF struct marshalling with edge cases.
+    /// Exit code: 0=validation passed, 1=validation failed.
+    /// </summary>
+    public bool ValidateAnnotationMarshalling { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to validate bitmap buffer marshalling and stride calculations.
+    /// Validates bitmap buffer marshalling with overflow prevention and edge-case buffer sizes.
+    /// Exit code: 0=validation passed, 1=validation failed.
+    /// </summary>
+    public bool ValidateBitmapMarshalling { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to validate buffer overflow and memory safety.
+    /// Analyzes all Marshal.Copy call sites and simulates buffer overflow scenarios.
+    /// Exit code: 0=validation passed, 1=validation failed.
+    /// </summary>
+    public bool ValidateBufferSafety { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to validate threading model (Task.Yield workaround).
+    /// Validates that Task.Yield prevents AccessViolation crashes in PDFium operations.
+    /// Exit code: 0=validation passed, 1=validation failed.
+    /// </summary>
+    public bool ValidateThreadingModel { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to validate UTF-16 string marshalling.
+    /// Validates UTF-16LE string marshalling for bookmarks, text search, and form fields.
+    /// Exit code: 0=validation passed, 1=validation failed.
+    /// </summary>
+    public bool ValidateUtf16Marshalling { get; set; }
 
     /// <summary>
     /// Gets or sets whether to run P/Invoke marshalling verification.
@@ -275,11 +357,71 @@ public class CommandLineOptions
                     options.CaptureCrashDump = true;
                     break;
 
+                case "--compare-baseline":
+                    if (i + 1 < args.Length)
+                    {
+                        options.CompareBaseline = args[++i];
+                    }
+                    break;
+
+                case "--html-output":
+                    if (i + 1 < args.Length)
+                    {
+                        options.HtmlOutput = args[++i];
+                    }
+                    break;
+
+                case "--json-output":
+                    if (i + 1 < args.Length)
+                    {
+                        options.JsonOutput = args[++i];
+                    }
+                    break;
+
+                case "--junit-output":
+                    if (i + 1 < args.Length)
+                    {
+                        options.JunitOutput = args[++i];
+                    }
+                    break;
+
+                case "--profile-marshalling":
+                    options.ProfileMarshalling = true;
+                    break;
+
                 case "--test-thumbnails":
                     if (i + 1 < args.Length)
                     {
                         options.TestThumbnails = args[++i];
                     }
+                    break;
+
+                case "--test-workarounds":
+                    options.TestWorkarounds = true;
+                    break;
+
+                case "--validate-all":
+                    options.ValidateAll = true;
+                    break;
+
+                case "--validate-annotation-marshalling":
+                    options.ValidateAnnotationMarshalling = true;
+                    break;
+
+                case "--validate-bitmap-marshalling":
+                    options.ValidateBitmapMarshalling = true;
+                    break;
+
+                case "--validate-buffer-safety":
+                    options.ValidateBufferSafety = true;
+                    break;
+
+                case "--validate-threading-model":
+                    options.ValidateThreadingModel = true;
+                    break;
+
+                case "--validate-utf16-marshalling":
+                    options.ValidateUtf16Marshalling = true;
                     break;
 
                 case "--verify-marshalling":
@@ -451,6 +593,32 @@ Diagnostic Commands:
   --marshalling-report          Generate marshalling coverage report
   --output-path <path>          Save report to file (used with --marshalling-report)
 
+Marshaling Validation Commands:
+  --validate-all                Run all marshaling validators (UTF-16, bitmap, annotation, threading, buffer safety)
+                                Returns exit code: 0=all passed, 1=failed, 2=critical error
+  --validate-utf16-marshalling  Validate UTF-16LE string marshaling for bookmarks, text search, form fields
+                                Returns exit code: 0=passed, 1=failed
+  --validate-bitmap-marshalling Validate bitmap buffer marshaling with stride calculations and overflow prevention
+                                Returns exit code: 0=passed, 1=failed
+  --validate-annotation-marshalling
+                                Validate annotation geometry marshaling (FS_QUADPOINTSF, FS_RECTF structs)
+                                Returns exit code: 0=passed, 1=failed
+  --validate-threading-model    Validate Task.Yield threading workaround prevents AccessViolation crashes
+                                Returns exit code: 0=passed, 1=failed
+  --validate-buffer-safety      Validate buffer overflow prevention and analyze Marshal.Copy call sites
+                                Returns exit code: 0=passed, 1=failed
+  --profile-marshalling         Profile marshaling performance (execution time, memory allocations)
+                                Returns exit code: 0=success, 1=profiling failed
+  --test-workarounds            Test documented workarounds (float dimension, threading, SoftwareBitmap)
+                                Returns exit code: 0=workarounds still needed, 1=broken or removable
+  --compare-baseline <path>     Compare profiling results against baseline to detect regressions
+                                Returns exit code: 0=no regressions, 1=regressions detected
+
+Report Output Options:
+  --json-output <path>          Export validation report as JSON file
+  --junit-output <path>         Export validation report as JUnit XML (GitHub Actions/Azure DevOps compatible)
+  --html-output <path>          Export validation report as HTML file with color-coded severity levels
+
 Test Commands:
   --list-tests                  List all available CLI tests
   --run-test <name>             Run a specific CLI test by name
@@ -531,6 +699,13 @@ Examples:
   FluentPDF.App.exe --test-page-reorder ""test.pdf"" --verbose
   FluentPDF.App.exe --test-annotations ""test.pdf"" --verbose
   FluentPDF.App.exe --test-metadata ""test.pdf"" --verbose
+
+  # Marshaling validation tests
+  FluentPDF.App.exe --validate-all --junit-output ""results.xml"" --json-output ""report.json""
+  FluentPDF.App.exe --validate-utf16-marshalling --verbose
+  FluentPDF.App.exe --validate-bitmap-marshalling --html-output ""bitmap-report.html""
+  FluentPDF.App.exe --profile-marshalling --compare-baseline ""baseline.json"" --json-output ""profile.json""
+  FluentPDF.App.exe --test-workarounds --verbose
 ";
     }
 }
