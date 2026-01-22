@@ -214,7 +214,7 @@
 
 ## Phase 5: Testing & Documentation
 
-- [ ] 17. Create end-to-end CLI integration tests
+- [x] 17. Create end-to-end CLI integration tests
   - Files:
     - `tests/FluentPDF.Rendering.Tests/Interop/Verification/CliIntegrationTests.cs`
   - Write tests for all CLI commands using Process.Start to invoke FluentPDF.App.exe
