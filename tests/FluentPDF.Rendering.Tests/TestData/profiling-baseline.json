@@ -1,0 +1,440 @@
+{
+  "GeneratedAt": "2026-01-15T10:30:00Z",
+  "TotalFunctions": 15,
+  "IterationsPerFunction": 1000,
+  "TotalExecutionTimeMs": 2547.82,
+  "TotalManagedMemoryBytes": 245760,
+  "TotalGarbageCollections": 12,
+  "ResultsByFunction": {
+    "FPDF_InitLibrary": {
+      "FunctionName": "FPDF_InitLibrary",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.0012,
+        "MaxLatencyMs": 0.0089,
+        "MedianLatencyMs": 0.0023,
+        "P95LatencyMs": 0.0045,
+        "P99LatencyMs": 0.0067,
+        "MeanLatencyMs": 0.0025,
+        "StandardDeviationMs": 0.0008,
+        "TotalExecutionTimeMs": 2.5,
+        "ThroughputOpsPerSecond": 400000.0
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 128,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 0,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 0
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDF_DestroyLibrary": {
+      "FunctionName": "FPDF_DestroyLibrary",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.0011,
+        "MaxLatencyMs": 0.0075,
+        "MedianLatencyMs": 0.0021,
+        "P95LatencyMs": 0.0041,
+        "P99LatencyMs": 0.0059,
+        "MeanLatencyMs": 0.0023,
+        "StandardDeviationMs": 0.0007,
+        "TotalExecutionTimeMs": 2.3,
+        "ThroughputOpsPerSecond": 434782.6
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 96,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 0,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 0
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDF_LoadDocument": {
+      "FunctionName": "FPDF_LoadDocument",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.125,
+        "MaxLatencyMs": 2.456,
+        "MedianLatencyMs": 0.487,
+        "P95LatencyMs": 1.234,
+        "P99LatencyMs": 1.876,
+        "MeanLatencyMs": 0.512,
+        "StandardDeviationMs": 0.287,
+        "TotalExecutionTimeMs": 512.0,
+        "ThroughputOpsPerSecond": 1953.125
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 16384,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 1,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 16
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDF_CloseDocument": {
+      "FunctionName": "FPDF_CloseDocument",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.034,
+        "MaxLatencyMs": 0.567,
+        "MedianLatencyMs": 0.098,
+        "P95LatencyMs": 0.234,
+        "P99LatencyMs": 0.398,
+        "MeanLatencyMs": 0.112,
+        "StandardDeviationMs": 0.056,
+        "TotalExecutionTimeMs": 112.0,
+        "ThroughputOpsPerSecond": 8928.571
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 8192,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 1,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 8
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDF_GetPageCount": {
+      "FunctionName": "FPDF_GetPageCount",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.0015,
+        "MaxLatencyMs": 0.0098,
+        "MedianLatencyMs": 0.0028,
+        "P95LatencyMs": 0.0056,
+        "P99LatencyMs": 0.0078,
+        "MeanLatencyMs": 0.0032,
+        "StandardDeviationMs": 0.0012,
+        "TotalExecutionTimeMs": 3.2,
+        "ThroughputOpsPerSecond": 312500.0
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 64,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 0,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 0
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDF_LoadPage": {
+      "FunctionName": "FPDF_LoadPage",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.087,
+        "MaxLatencyMs": 1.234,
+        "MedianLatencyMs": 0.234,
+        "P95LatencyMs": 0.567,
+        "P99LatencyMs": 0.876,
+        "MeanLatencyMs": 0.267,
+        "StandardDeviationMs": 0.145,
+        "TotalExecutionTimeMs": 267.0,
+        "ThroughputOpsPerSecond": 3745.318
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 12288,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 1,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 12
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDF_ClosePage": {
+      "FunctionName": "FPDF_ClosePage",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.023,
+        "MaxLatencyMs": 0.345,
+        "MedianLatencyMs": 0.067,
+        "P95LatencyMs": 0.156,
+        "P99LatencyMs": 0.245,
+        "MeanLatencyMs": 0.078,
+        "StandardDeviationMs": 0.039,
+        "TotalExecutionTimeMs": 78.0,
+        "ThroughputOpsPerSecond": 12820.513
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 4096,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 0,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 4
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDF_RenderPageBitmap": {
+      "FunctionName": "FPDF_RenderPageBitmap",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 1.234,
+        "MaxLatencyMs": 15.678,
+        "MedianLatencyMs": 4.567,
+        "P95LatencyMs": 8.901,
+        "P99LatencyMs": 12.345,
+        "MeanLatencyMs": 5.123,
+        "StandardDeviationMs": 2.345,
+        "TotalExecutionTimeMs": 5123.0,
+        "ThroughputOpsPerSecond": 195.2
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 49152,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 3,
+        "Gen1Collections": 1,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 49
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDFBitmap_Create": {
+      "FunctionName": "FPDFBitmap_Create",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.045,
+        "MaxLatencyMs": 0.678,
+        "MedianLatencyMs": 0.123,
+        "P95LatencyMs": 0.289,
+        "P99LatencyMs": 0.456,
+        "MeanLatencyMs": 0.145,
+        "StandardDeviationMs": 0.078,
+        "TotalExecutionTimeMs": 145.0,
+        "ThroughputOpsPerSecond": 6896.552
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 32768,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 2,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 32
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDFBitmap_Destroy": {
+      "FunctionName": "FPDFBitmap_Destroy",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.012,
+        "MaxLatencyMs": 0.234,
+        "MedianLatencyMs": 0.045,
+        "P95LatencyMs": 0.098,
+        "P99LatencyMs": 0.156,
+        "MeanLatencyMs": 0.052,
+        "StandardDeviationMs": 0.028,
+        "TotalExecutionTimeMs": 52.0,
+        "ThroughputOpsPerSecond": 19230.769
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 2048,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 0,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 2
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDFBookmark_GetTitle": {
+      "FunctionName": "FPDFBookmark_GetTitle",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.034,
+        "MaxLatencyMs": 0.456,
+        "MedianLatencyMs": 0.089,
+        "P95LatencyMs": 0.198,
+        "P99LatencyMs": 0.312,
+        "MeanLatencyMs": 0.102,
+        "StandardDeviationMs": 0.056,
+        "TotalExecutionTimeMs": 102.0,
+        "ThroughputOpsPerSecond": 9803.922
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 8192,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 1,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 8
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDFText_LoadPage": {
+      "FunctionName": "FPDFText_LoadPage",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.156,
+        "MaxLatencyMs": 2.345,
+        "MedianLatencyMs": 0.567,
+        "P95LatencyMs": 1.234,
+        "P99LatencyMs": 1.876,
+        "MeanLatencyMs": 0.623,
+        "StandardDeviationMs": 0.345,
+        "TotalExecutionTimeMs": 623.0,
+        "ThroughputOpsPerSecond": 1605.136
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 24576,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 2,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 24
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDFText_ClosePage": {
+      "FunctionName": "FPDFText_ClosePage",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.045,
+        "MaxLatencyMs": 0.678,
+        "MedianLatencyMs": 0.134,
+        "P95LatencyMs": 0.298,
+        "P99LatencyMs": 0.456,
+        "MeanLatencyMs": 0.156,
+        "StandardDeviationMs": 0.089,
+        "TotalExecutionTimeMs": 156.0,
+        "ThroughputOpsPerSecond": 6410.256
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 6144,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 1,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 6
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDFText_FindStart": {
+      "FunctionName": "FPDFText_FindStart",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.067,
+        "MaxLatencyMs": 0.876,
+        "MedianLatencyMs": 0.198,
+        "P95LatencyMs": 0.456,
+        "P99LatencyMs": 0.678,
+        "MeanLatencyMs": 0.223,
+        "StandardDeviationMs": 0.123,
+        "TotalExecutionTimeMs": 223.0,
+        "ThroughputOpsPerSecond": 4484.305
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 16384,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 1,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 16
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    },
+    "FPDFAnnot_SetAttachmentPoints": {
+      "FunctionName": "FPDFAnnot_SetAttachmentPoints",
+      "Iterations": 1000,
+      "Success": true,
+      "ErrorMessage": null,
+      "Performance": {
+        "MinLatencyMs": 0.023,
+        "MaxLatencyMs": 0.345,
+        "MedianLatencyMs": 0.078,
+        "P95LatencyMs": 0.178,
+        "P99LatencyMs": 0.267,
+        "MeanLatencyMs": 0.089,
+        "StandardDeviationMs": 0.045,
+        "TotalExecutionTimeMs": 89.0,
+        "ThroughputOpsPerSecond": 11235.955
+      },
+      "Memory": {
+        "ManagedMemoryBytes": 4096,
+        "UnmanagedMemoryBytes": 0,
+        "Gen0Collections": 0,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "AverageManagedMemoryPerIteration": 4
+      },
+      "HasRegression": null,
+      "RegressionPercentage": null,
+      "BaselineMedianMs": null
+    }
+  },
+  "RegressedFunctions": null,
+  "BaselinePath": null,
+  "RegressionThreshold": null,
+  "Summary": {
+    "MedianExecutionTimeMs": 0.123,
+    "P95ExecutionTimeMs": 0.456,
+    "P99ExecutionTimeMs": 0.876,
+    "AverageMemoryBytesPerFunction": 16384,
+    "FunctionsWithGarbageCollections": 8
+  }
+}
