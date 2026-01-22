@@ -1,0 +1,400 @@
+name: Marshaling Validation
+
+# This workflow validates PDFium P/Invoke marshaling using the comprehensive
+# marshaling verification suite. It runs on pull requests to catch marshaling
+# bugs before they are merged.
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      profile_performance:
+        description: 'Run performance profiling'
+        required: false
+        type: boolean
+        default: false
+      compare_baseline:
+        description: 'Compare against performance baseline'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  validate-marshaling:
+    runs-on: windows-2022
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache vcpkg and PDFium
+      uses: actions/cache@v4
+      with:
+        path: |
+          tools/vcpkg
+          libs
+        key: ${{ runner.os }}-vcpkg-pdfium-${{ hashFiles('tools/build-libs.ps1') }}
+        restore-keys: |
+          ${{ runner.os }}-vcpkg-pdfium-
+          ${{ runner.os }}-vcpkg-
+
+    - name: Build native libraries (PDFium)
+      shell: pwsh
+      run: |
+        Write-Host "Building PDFium library..."
+        .\tools\build-libs.ps1 -UseCache
+      continue-on-error: false
+
+    - name: Verify PDFium DLL exists
+      shell: pwsh
+      run: |
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+        if (-not (Test-Path $pdfiumDll)) {
+          Write-Error "PDFium DLL not found at $pdfiumDll"
+          exit 1
+        }
+        Write-Host "✓ PDFium DLL found at $pdfiumDll"
+        $fileInfo = Get-Item $pdfiumDll
+        Write-Host "  Size: $($fileInfo.Length) bytes"
+        Write-Host "  Modified: $($fileInfo.LastWriteTime)"
+
+    - name: Restore FluentPDF.App dependencies
+      run: dotnet restore src/FluentPDF.App/FluentPDF.App.csproj
+
+    - name: Build FluentPDF.App
+      run: dotnet build src/FluentPDF.App/FluentPDF.App.csproj --configuration Release --no-restore -p:Platform=x64
+
+    - name: Copy PDFium DLL to FluentPDF.App output
+      shell: pwsh
+      run: |
+        $pdfiumDll = "libs/x64/bin/pdfium.dll"
+        $targetDirs = Get-ChildItem -Path "src/FluentPDF.App/bin/x64/Release" -Directory -Recurse -Filter "net8.0-windows*"
+
+        foreach ($dir in $targetDirs) {
+          Copy-Item $pdfiumDll $dir.FullName -Force
+          Write-Host "Copied pdfium.dll to $($dir.FullName)"
+        }
+
+    - name: Create validation output directory
+      shell: pwsh
+      run: |
+        $outputDir = "validation-output"
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        Write-Host "Created output directory: $outputDir"
+
+    - name: Run comprehensive marshaling validation
+      id: validation
+      shell: pwsh
+      run: |
+        $appExe = Get-ChildItem -Path "src/FluentPDF.App/bin/x64/Release" -Recurse -Filter "FluentPDF.App.exe" | Select-Object -First 1
+
+        if (-not $appExe) {
+          Write-Error "FluentPDF.App executable not found"
+          exit 1
+        }
+
+        Write-Host "Running comprehensive marshaling validation..."
+        Write-Host "Executable: $($appExe.FullName)"
+        Write-Host ""
+
+        # Prepare output paths
+        $outputDir = "validation-output"
+        $junitOutput = Join-Path $outputDir "marshaling-validation-results.xml"
+        $jsonOutput = Join-Path $outputDir "marshaling-validation-report.json"
+        $htmlOutput = Join-Path $outputDir "marshaling-validation-report.html"
+
+        # Run --validate-all with all output formats
+        Write-Host "=== Marshaling Validation Suite ==="
+        Write-Host "Running: --validate-all --junit-output --json-output --html-output"
+        Write-Host ""
+
+        $exitCode = 0
+        try {
+          & $appExe.FullName --validate-all --junit-output $junitOutput --json-output $jsonOutput --html-output $htmlOutput
+          $exitCode = $LASTEXITCODE
+        } catch {
+          Write-Error "Validation failed with exception: $_"
+          exit 2
+        }
+
+        Write-Host ""
+        Write-Host "===================================="
+        Write-Host ""
+
+        # Check exit code
+        if ($exitCode -eq 0) {
+          Write-Host "✓ All marshaling validations passed!"
+        } elseif ($exitCode -eq 1) {
+          Write-Error "✗ Marshaling validation failed - validation errors detected"
+          Write-Host "Review the validation reports for details."
+        } elseif ($exitCode -eq 2) {
+          Write-Error "✗ Marshaling validation failed - critical error occurred"
+          Write-Host "Review the validation reports for details."
+        } else {
+          Write-Error "✗ Marshaling validation failed with unexpected exit code: $exitCode"
+        }
+
+        # Verify output files were generated
+        $missingFiles = @()
+        if (-not (Test-Path $junitOutput)) { $missingFiles += "JUnit XML" }
+        if (-not (Test-Path $jsonOutput)) { $missingFiles += "JSON" }
+        if (-not (Test-Path $htmlOutput)) { $missingFiles += "HTML" }
+
+        if ($missingFiles.Count -gt 0) {
+          Write-Warning "Missing output files: $($missingFiles -join ', ')"
+        } else {
+          Write-Host "✓ All report formats generated successfully"
+        }
+
+        # Set output for later steps
+        echo "EXIT_CODE=$exitCode" >> $env:GITHUB_ENV
+
+        # Exit with the validation exit code
+        exit $exitCode
+
+    - name: Run performance profiling (optional)
+      if: github.event.inputs.profile_performance == 'true' || github.event.inputs.compare_baseline == 'true'
+      shell: pwsh
+      run: |
+        $appExe = Get-ChildItem -Path "src/FluentPDF.App/bin/x64/Release" -Recurse -Filter "FluentPDF.App.exe" | Select-Object -First 1
+
+        Write-Host "=== Performance Profiling ==="
+        Write-Host ""
+
+        $outputDir = "validation-output"
+        $profilingOutput = Join-Path $outputDir "performance-profiling.json"
+
+        # Check if we should compare against baseline
+        $baselinePath = "tests/FluentPDF.Rendering.Tests/TestData/profiling-baseline.json"
+        $compareBaseline = "${{ github.event.inputs.compare_baseline }}" -eq "true"
+
+        if ($compareBaseline -and (Test-Path $baselinePath)) {
+          Write-Host "Running: --profile-marshalling --compare-baseline"
+          & $appExe.FullName --profile-marshalling --json-output $profilingOutput --compare-baseline $baselinePath
+        } else {
+          Write-Host "Running: --profile-marshalling"
+          & $appExe.FullName --profile-marshalling --json-output $profilingOutput
+        }
+
+        $profilingExitCode = $LASTEXITCODE
+
+        Write-Host ""
+        Write-Host "=============================="
+        Write-Host ""
+
+        if ($profilingExitCode -eq 0) {
+          Write-Host "✓ Performance profiling completed"
+        } else {
+          Write-Warning "Performance profiling returned exit code: $profilingExitCode"
+        }
+
+    - name: Run workaround regression tests (optional)
+      if: github.event_name == 'workflow_dispatch'
+      shell: pwsh
+      run: |
+        $appExe = Get-ChildItem -Path "src/FluentPDF.App/bin/x64/Release" -Recurse -Filter "FluentPDF.App.exe" | Select-Object -First 1
+
+        Write-Host "=== Workaround Regression Tests ==="
+        Write-Host ""
+
+        $outputDir = "validation-output"
+        $workaroundOutput = Join-Path $outputDir "workaround-tests.json"
+
+        Write-Host "Running: --test-workarounds"
+        & $appExe.FullName --test-workarounds --json-output $workaroundOutput
+
+        $workaroundExitCode = $LASTEXITCODE
+
+        Write-Host ""
+        Write-Host "===================================="
+        Write-Host ""
+
+        if ($workaroundExitCode -eq 0) {
+          Write-Host "✓ Workaround tests completed"
+        } else {
+          Write-Warning "Workaround tests returned exit code: $workaroundExitCode"
+        }
+
+    - name: Publish test results to PR
+      uses: EnricoMi/publish-unit-test-result-action/windows@v2
+      if: always()
+      with:
+        check_name: Marshaling Validation Results
+        files: |
+          validation-output/marshaling-validation-results.xml
+        comment_mode: always
+        fail_on: errors
+        compare_to_earlier_commit: false
+
+    - name: Upload validation reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: marshaling-validation-reports
+        path: |
+          validation-output/**/*.xml
+          validation-output/**/*.json
+          validation-output/**/*.html
+        retention-days: 30
+
+    - name: Display validation summary
+      if: always()
+      shell: pwsh
+      run: |
+        Write-Host ""
+        Write-Host "========================================"
+        Write-Host "   Marshaling Validation Summary"
+        Write-Host "========================================"
+        Write-Host ""
+
+        $jsonOutput = "validation-output/marshaling-validation-report.json"
+
+        if (Test-Path $jsonOutput) {
+          $report = Get-Content $jsonOutput | ConvertFrom-Json
+
+          Write-Host "Validators Run:"
+          if ($report.validators) {
+            foreach ($validator in $report.validators.PSObject.Properties) {
+              $name = $validator.Name
+              $result = $validator.Value
+              $status = if ($result.passed) { "✓ PASS" } else { "✗ FAIL" }
+              Write-Host "  $status - $name"
+
+              if ($result.issues -and $result.issues.Count -gt 0) {
+                Write-Host "    Issues: $($result.issues.Count)"
+                foreach ($issue in $result.issues | Select-Object -First 3) {
+                  Write-Host "    - $($issue.message)"
+                }
+                if ($result.issues.Count -gt 3) {
+                  Write-Host "    ... and $($result.issues.Count - 3) more issues"
+                }
+              }
+            }
+          }
+
+          Write-Host ""
+          Write-Host "Overall Status: $($report.overallStatus)"
+          Write-Host "Total Issues: $($report.totalIssues)"
+
+          if ($report.criticalIssues -gt 0) {
+            Write-Host "Critical Issues: $($report.criticalIssues)" -ForegroundColor Red
+          }
+        } else {
+          Write-Warning "Validation report not found - validation may have failed to run"
+        }
+
+        Write-Host ""
+        Write-Host "========================================"
+        Write-Host ""
+        Write-Host "View full reports in the artifacts section"
+        Write-Host "- JUnit XML: marshaling-validation-results.xml"
+        Write-Host "- JSON Report: marshaling-validation-report.json"
+        Write-Host "- HTML Report: marshaling-validation-report.html"
+        Write-Host ""
+
+    - name: Comment validation results on PR
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const jsonPath = path.join('validation-output', 'marshaling-validation-report.json');
+
+          if (!fs.existsSync(jsonPath)) {
+            console.log('No validation report found');
+            return;
+          }
+
+          const report = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+
+          let comment = '## 🔍 Marshaling Validation Results\n\n';
+
+          const exitCode = process.env.EXIT_CODE || '0';
+
+          if (exitCode === '0') {
+            comment += '✅ **All marshaling validations passed successfully!**\n\n';
+          } else if (exitCode === '1') {
+            comment += '⚠️ **Marshaling validation detected issues!**\n\n';
+          } else {
+            comment += '❌ **Marshaling validation failed with critical error!**\n\n';
+          }
+
+          // Add validator results
+          if (report.validators) {
+            comment += '### Validation Results\n\n';
+            comment += '| Validator | Status | Issues |\n';
+            comment += '|-----------|--------|--------|\n';
+
+            for (const [name, result] of Object.entries(report.validators)) {
+              const status = result.passed ? '✅ Pass' : '❌ Fail';
+              const issueCount = result.issues ? result.issues.length : 0;
+              comment += `| ${name} | ${status} | ${issueCount} |\n`;
+            }
+
+            comment += '\n';
+          }
+
+          // Add critical issues
+          if (report.criticalIssues && report.criticalIssues > 0) {
+            comment += '### ⚠️ Critical Issues\n\n';
+            comment += `Found ${report.criticalIssues} critical issue(s) that must be addressed.\n\n`;
+          }
+
+          // Add summary statistics
+          if (report.summary) {
+            comment += '### Summary\n\n';
+            comment += `- **Total Validations**: ${report.summary.totalValidations || 'N/A'}\n`;
+            comment += `- **Passed**: ${report.summary.passed || 0}\n`;
+            comment += `- **Failed**: ${report.summary.failed || 0}\n`;
+            comment += `- **Total Issues**: ${report.summary.totalIssues || 0}\n\n`;
+          }
+
+          // Add download link
+          comment += '### 📄 Detailed Reports\n\n';
+          comment += 'Download the full validation reports from the workflow artifacts:\n';
+          comment += '- **HTML Report**: Human-readable report with color-coded results\n';
+          comment += '- **JSON Report**: Machine-readable structured data\n';
+          comment += '- **JUnit XML**: Test results for CI/CD integration\n\n';
+
+          // Add expandable full report
+          comment += '<details><summary>View Full JSON Report</summary>\n\n```json\n';
+          comment += JSON.stringify(report, null, 2);
+          comment += '\n```\n</details>\n';
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Fail build if validation failed
+      if: always()
+      shell: pwsh
+      run: |
+        $exitCode = $env:EXIT_CODE
+
+        if ($exitCode -eq '1') {
+          Write-Error "Build failed: Marshaling validation detected errors"
+          Write-Error "Review the validation reports for details"
+          exit 1
+        } elseif ($exitCode -eq '2') {
+          Write-Error "Build failed: Critical error in marshaling validation"
+          Write-Error "Review the validation reports for details"
+          exit 2
+        } elseif ($exitCode -ne '0' -and $exitCode -ne '') {
+          Write-Error "Build failed: Unexpected exit code $exitCode"
+          exit $exitCode
+        }
+
+        Write-Host "✓ Marshaling validation passed - build can proceed"
