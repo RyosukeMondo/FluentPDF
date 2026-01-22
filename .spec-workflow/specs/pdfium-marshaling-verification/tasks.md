@@ -15,7 +15,7 @@
   - _Requirements: Req 1 (High-Risk Area Marshaling Validators)_
   - _Prompt: Implement the task for spec pdfium-marshaling-verification, first run mcp__spec-workflow__spec-workflow-guide to get the workflow guide then implement the task: Role: C# interface designer specializing in validation frameworks and SOLID principles | Task: Create IValidator interface and validation report models following Requirement 1, extending existing VerificationResult class from src/FluentPDF.Rendering/Interop/Verification/ with new diagnostic fields (Severity, SuggestedFix, DocumentationUrl, Context dictionary) | Restrictions: Do not modify existing MarshallingVerifier or SignatureAnalyzer classes, maintain backward compatibility with existing VerificationResult consumers, follow FluentPDF naming conventions (PascalCase) | _Leverage: Existing VerificationResult, MarshallingTestResult, SignatureDetails models from src/FluentPDF.Rendering/Interop/Verification/ | Success: IValidator interface compiles with clear method signatures, ValidationReport model includes summary statistics and results-by-area dictionary, ValidationResult extends existing class without breaking changes, all enums follow project patterns | After completion: Mark this task [-] as in-progress in tasks.md, then use log-implementation tool to record implementation with detailed artifacts (interfaces created, model properties, file locations), then mark [x] as complete
 
-- [ ] 2. Implement Utf16MarshalingValidator
+- [x] 2. Implement Utf16MarshalingValidator
   - Files:
     - `src/FluentPDF.Rendering/Interop/Verification/Validators/Utf16MarshalingValidator.cs`
     - `tests/FluentPDF.Rendering.Tests/Interop/Verification/Utf16MarshalingValidatorTests.cs`

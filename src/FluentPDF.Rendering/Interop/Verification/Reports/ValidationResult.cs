@@ -1,3 +1,5 @@
+using FluentPDF.Rendering.Interop.Verification;
+
 namespace FluentPDF.Rendering.Interop.Verification.Reports;
 
 /// <summary>
@@ -54,30 +56,4 @@ public record ValidationResult
     /// Gets the actual value from the test, if applicable.
     /// </summary>
     public object? ActualValue { get; init; }
-}
-
-/// <summary>
-/// Represents the severity level of a validation result.
-/// </summary>
-public enum ValidationSeverity
-{
-    /// <summary>
-    /// Informational message with no action required.
-    /// </summary>
-    Info,
-
-    /// <summary>
-    /// Warning that should be reviewed but doesn't block functionality.
-    /// </summary>
-    Warning,
-
-    /// <summary>
-    /// Error that may cause incorrect behavior.
-    /// </summary>
-    Error,
-
-    /// <summary>
-    /// Critical error that may cause crashes or data corruption.
-    /// </summary>
-    Critical
 }
