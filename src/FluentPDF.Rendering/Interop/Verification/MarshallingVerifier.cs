@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentPDF.Rendering.Interop.Verification.Validators;
+using FluentPDF.Rendering.Interop.Verification.Profilers;
+using FluentPDF.Rendering.Interop.Verification.Regression;
+using FluentPDF.Rendering.Interop.Verification.Reports;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FluentPDF.Rendering.Interop.Verification;
 
@@ -15,6 +21,7 @@ public class MarshallingVerifier : IDisposable
 {
     private readonly SignatureAnalyzer _signatureAnalyzer;
     private readonly CoverageReporter _reporter;
+    private readonly Type _interopType;
     private bool _disposed;
 
     /// <summary>
@@ -29,6 +36,7 @@ public class MarshallingVerifier : IDisposable
             throw new ArgumentNullException(nameof(interopType));
         }
 
+        _interopType = interopType;
         _signatureAnalyzer = new SignatureAnalyzer(interopType);
         _reporter = new CoverageReporter();
     }
@@ -169,8 +177,21 @@ public class MarshallingVerifier : IDisposable
             // Step 3: Merge results - combine signature and marshalling data
             var mergedResults = MergeResults(allResults, marshallingResults);
 
-            // Step 4: Generate coverage report
+            // Step 4: Validate high-risk areas
+            var validationReports = await ValidateHighRiskAreasAsync(testPdfPath, cancellationToken);
+
+            // Step 5: Profile performance
+            var profilingReport = await ProfilePerformanceAsync(testPdfPath, 1000, cancellationToken);
+
+            // Step 6: Test workarounds
+            var workaroundResults = await TestWorkaroundsAsync(testPdfPath, cancellationToken);
+
+            // Step 7: Generate coverage report with all data
             var report = GenerateCoverageReport(mergedResults);
+
+            // Note: The new validation reports, profiling, and workaround results are available
+            // via the new methods (ValidateHighRiskAreasAsync, ProfilePerformanceAsync, TestWorkaroundsAsync)
+            // The CoverageReport structure is maintained for backward compatibility.
 
             return report;
         }
@@ -246,6 +267,154 @@ public class MarshallingVerifier : IDisposable
     public void SaveReport(CoverageReport report, string outputPath, bool includeDetails = true)
     {
         _reporter.SaveReport(report, outputPath, includeDetails);
+    }
+
+    /// <summary>
+    /// Validates all high-risk marshaling areas in parallel.
+    /// Runs UTF-16, bitmap, annotation, threading, and buffer safety validators concurrently.
+    /// </summary>
+    /// <param name="testPdfPath">Optional path to a test PDF file for validators that need it.</param>
+    /// <param name="cancellationToken">Cancellation token for async operations.</param>
+    /// <returns>A list of validation reports from all validators.</returns>
+    public async Task<List<ValidationReport>> ValidateHighRiskAreasAsync(
+        string? testPdfPath = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Create null loggers for validators (they can be injected later if needed)
+        var utf16Logger = NullLogger<Utf16MarshalingValidator>.Instance;
+        var bitmapLogger = NullLogger<BitmapMarshalingValidator>.Instance;
+        var annotationLogger = NullLogger<AnnotationMarshalingValidator>.Instance;
+        var threadingLogger = NullLogger<ThreadingModelValidator>.Instance;
+
+        // Create all validators
+        var validators = new List<IValidator>
+        {
+            new Utf16MarshalingValidator(utf16Logger),
+            new BitmapMarshalingValidator(bitmapLogger),
+            new AnnotationMarshalingValidator(annotationLogger),
+            new ThreadingModelValidator(threadingLogger),
+            new BufferSafetyValidator()
+        };
+
+        // Run all validators in parallel
+        var validationTasks = validators.Select(v => v.ValidateAsync(cancellationToken));
+        var results = await Task.WhenAll(validationTasks);
+
+        return results.ToList();
+    }
+
+    /// <summary>
+    /// Profiles the performance of all marshaling operations.
+    /// </summary>
+    /// <param name="testPdfPath">Optional path to a test PDF file for profiling.</param>
+    /// <param name="iterations">Number of iterations per function (default: 1000).</param>
+    /// <param name="cancellationToken">Cancellation token for async operations.</param>
+    /// <returns>A comprehensive profiling report with performance metrics.</returns>
+    public async Task<ProfilingReport> ProfilePerformanceAsync(
+        string? testPdfPath = null,
+        int iterations = 1000,
+        CancellationToken cancellationToken = default)
+    {
+        var profiler = new MarshalingPerformanceProfiler(_interopType);
+        return await profiler.ProfileAllFunctionsAsync(iterations, cancellationToken);
+    }
+
+    /// <summary>
+    /// Tests all documented workarounds to determine if they are still needed, can be removed, or are broken.
+    /// </summary>
+    /// <param name="testPdfPath">Optional path to a test PDF file for workaround tests.</param>
+    /// <param name="cancellationToken">Cancellation token for async operations.</param>
+    /// <returns>A list of workaround test results.</returns>
+    public async Task<List<WorkaroundTestResult>> TestWorkaroundsAsync(
+        string? testPdfPath = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Create all workaround tests
+        var workaroundTests = new List<IWorkaroundTest>
+        {
+            new FloatDimensionWorkaroundTest(),
+            new ThreadingWorkaroundTest(),
+            new SoftwareBitmapWorkaroundTest()
+        };
+
+        // Run all workaround tests in parallel
+        var testTasks = workaroundTests.Select(t => t.TestWorkaroundAsync(cancellationToken));
+        var results = await Task.WhenAll(testTasks);
+
+        return results.ToList();
+    }
+
+    /// <summary>
+    /// Runs comprehensive validation including signature verification, marshaling tests,
+    /// high-risk area validators, performance profiling, and workaround regression tests.
+    /// </summary>
+    /// <param name="expectedSignatures">Dictionary mapping function names to their expected signatures.</param>
+    /// <param name="testPdfPath">Path to a test PDF file for validation tests.</param>
+    /// <param name="includePerformanceProfiling">Whether to include performance profiling (can be time-consuming).</param>
+    /// <param name="profilingIterations">Number of iterations for performance profiling (default: 1000).</param>
+    /// <param name="cancellationToken">Cancellation token for async operations.</param>
+    /// <returns>A comprehensive validation report with all verification results.</returns>
+    public async Task<ComprehensiveValidationReport> VerifyComprehensiveAsync(
+        Dictionary<string, SignatureDetails> expectedSignatures,
+        string? testPdfPath = null,
+        bool includePerformanceProfiling = true,
+        int profilingIterations = 1000,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Run all validations in parallel for maximum performance
+            var coverageTask = VerifyAndReportAsync(expectedSignatures, testPdfPath, cancellationToken);
+            var validationTask = ValidateHighRiskAreasAsync(testPdfPath, cancellationToken);
+            var workaroundTask = TestWorkaroundsAsync(testPdfPath, cancellationToken);
+
+            // Wait for basic validations to complete
+            await Task.WhenAll(coverageTask, validationTask, workaroundTask);
+
+            var coverageReport = await coverageTask;
+            var validationReports = await validationTask;
+            var workaroundResults = await workaroundTask;
+
+            // Run performance profiling separately if requested (can be time-consuming)
+            ProfilingReport? profilingReport = null;
+            if (includePerformanceProfiling)
+            {
+                profilingReport = await ProfilePerformanceAsync(testPdfPath, profilingIterations, cancellationToken);
+            }
+
+            return new ComprehensiveValidationReport
+            {
+                GeneratedAt = DateTime.UtcNow,
+                CoverageReport = coverageReport,
+                ValidationReports = validationReports,
+                ProfilingReport = profilingReport,
+                WorkaroundTestResults = workaroundResults
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            // Return a minimal report indicating cancellation
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Runs comprehensive validation synchronously.
+    /// </summary>
+    /// <param name="expectedSignatures">Dictionary mapping function names to their expected signatures.</param>
+    /// <param name="testPdfPath">Path to a test PDF file for validation tests.</param>
+    /// <param name="includePerformanceProfiling">Whether to include performance profiling.</param>
+    /// <param name="profilingIterations">Number of iterations for performance profiling.</param>
+    /// <returns>A comprehensive validation report with all verification results.</returns>
+    public ComprehensiveValidationReport VerifyComprehensive(
+        Dictionary<string, SignatureDetails> expectedSignatures,
+        string? testPdfPath = null,
+        bool includePerformanceProfiling = true,
+        int profilingIterations = 1000)
+    {
+        return VerifyComprehensiveAsync(expectedSignatures, testPdfPath, includePerformanceProfiling, profilingIterations, CancellationToken.None)
+            .GetAwaiter()
+            .GetResult();
     }
 
     /// <summary>
