@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/pdfium-marshaling-verification/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-01-21T15:36:09.429Z",
+      "trigger": "initial",
+      "approvalId": "approval_1769009769418_94nli9uic",
+      "approvalTitle": "PDFium Marshaling Verification - Requirements Document"
+    }
+  ]
+}
