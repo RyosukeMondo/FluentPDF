@@ -46,4 +46,9 @@
     <Compile Remove="Performance\RenderingReliabilityBenchmarks.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Copy TestData files to output directory -->
+    <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

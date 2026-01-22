@@ -1,0 +1,645 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PDFium API Specification",
+  "description": "External specification for PDFium P/Invoke function signatures used for validation. This file defines expected return types, parameters, calling conventions, and marshaling notes for critical PDFium functions.",
+  "version": "1.0.0",
+  "functions": [
+    {
+      "name": "FPDF_InitLibrary",
+      "returnType": "void",
+      "parameters": [],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "No parameters. Must be called before using PDFium library."
+    },
+    {
+      "name": "FPDF_DestroyLibrary",
+      "returnType": "void",
+      "parameters": [],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "No parameters. Must be called after all PDFium resources are released."
+    },
+    {
+      "name": "FPDF_LoadDocument",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "file_path",
+          "type": "string",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "UTF-8 encoded string, null-terminated. Use MarshalAs(UnmanagedType.LPStr) for ANSI or convert to byte[] for UTF-8."
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "UTF-8 encoded password, null-terminated. Can be null if document is not encrypted."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns FPDF_DOCUMENT handle (IntPtr). Returns IntPtr.Zero on failure."
+    },
+    {
+      "name": "FPDF_LoadMemDocument",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "data_buf",
+          "type": "byte[]",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Raw PDF data buffer. Use byte[] with automatic marshaling."
+        },
+        {
+          "name": "size",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Size of data_buf in bytes. Must match actual buffer length."
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "UTF-8 encoded password, null-terminated. Can be null if document is not encrypted."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Loads PDF from memory buffer. Returns FPDF_DOCUMENT handle or IntPtr.Zero on failure."
+    },
+    {
+      "name": "FPDF_CloseDocument",
+      "returnType": "void",
+      "parameters": [
+        {
+          "name": "document",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_DOCUMENT handle from FPDF_LoadDocument or FPDF_LoadMemDocument."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Closes and releases document resources. Handle becomes invalid after this call."
+    },
+    {
+      "name": "FPDF_GetPageCount",
+      "returnType": "int",
+      "parameters": [
+        {
+          "name": "document",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_DOCUMENT handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns number of pages in document. Returns 0 for invalid document."
+    },
+    {
+      "name": "FPDF_LoadPage",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "document",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_DOCUMENT handle."
+        },
+        {
+          "name": "page_index",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Zero-based page index. Must be < FPDF_GetPageCount."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns FPDF_PAGE handle or IntPtr.Zero on failure."
+    },
+    {
+      "name": "FPDF_ClosePage",
+      "returnType": "void",
+      "parameters": [
+        {
+          "name": "page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_PAGE handle from FPDF_LoadPage."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Closes and releases page resources. Handle becomes invalid after this call."
+    },
+    {
+      "name": "FPDF_GetPageWidth",
+      "returnType": "double",
+      "parameters": [
+        {
+          "name": "page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_PAGE handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns page width in points. May return 0 for invalid page. Legacy integer-based API."
+    },
+    {
+      "name": "FPDF_GetPageHeight",
+      "returnType": "double",
+      "parameters": [
+        {
+          "name": "page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_PAGE handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns page height in points. May return 0 for invalid page. Legacy integer-based API."
+    },
+    {
+      "name": "FPDF_GetPageWidthF",
+      "returnType": "float",
+      "parameters": [
+        {
+          "name": "page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_PAGE handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns page width in points as float. Preferred over FPDF_GetPageWidth. May return 0 or invalid value on some PDFium versions (workaround needed)."
+    },
+    {
+      "name": "FPDF_GetPageHeightF",
+      "returnType": "float",
+      "parameters": [
+        {
+          "name": "page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_PAGE handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns page height in points as float. Preferred over FPDF_GetPageHeight. May return 0 or invalid value on some PDFium versions (workaround needed)."
+    },
+    {
+      "name": "FPDFBitmap_Create",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "width",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Bitmap width in pixels. Must be > 0."
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Bitmap height in pixels. Must be > 0."
+        },
+        {
+          "name": "alpha",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "0 for no alpha, 1 for alpha. Affects pixel format (BGR vs BGRA)."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Creates bitmap buffer. Returns FPDF_BITMAP handle or IntPtr.Zero on failure. Caller must destroy with FPDFBitmap_Destroy."
+    },
+    {
+      "name": "FPDFBitmap_Destroy",
+      "returnType": "void",
+      "parameters": [
+        {
+          "name": "bitmap",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_BITMAP handle from FPDFBitmap_Create."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Destroys bitmap and releases resources. Handle becomes invalid after this call."
+    },
+    {
+      "name": "FPDFBitmap_GetBuffer",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "bitmap",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_BITMAP handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns pointer to bitmap buffer. Use with Marshal.Copy to read pixel data. Buffer size = stride * height."
+    },
+    {
+      "name": "FPDFBitmap_GetStride",
+      "returnType": "int",
+      "parameters": [
+        {
+          "name": "bitmap",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_BITMAP handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns stride (bytes per row) for bitmap. May include padding. Use checked arithmetic for stride * height to prevent overflow."
+    },
+    {
+      "name": "FPDF_RenderPageBitmap",
+      "returnType": "void",
+      "parameters": [
+        {
+          "name": "bitmap",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_BITMAP handle from FPDFBitmap_Create."
+        },
+        {
+          "name": "page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_PAGE handle."
+        },
+        {
+          "name": "start_x",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "X offset in pixels for rendering."
+        },
+        {
+          "name": "start_y",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Y offset in pixels for rendering."
+        },
+        {
+          "name": "size_x",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Width in pixels for rendering."
+        },
+        {
+          "name": "size_y",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Height in pixels for rendering."
+        },
+        {
+          "name": "rotate",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Rotation: 0 (0°), 1 (90°), 2 (180°), 3 (270°)."
+        },
+        {
+          "name": "flags",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Rendering flags (e.g., FPDF_ANNOT, FPDF_LCD_TEXT)."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Renders page into bitmap buffer. No return value. Check bitmap buffer after call."
+    },
+    {
+      "name": "FPDFBookmark_GetTitle",
+      "returnType": "ulong",
+      "parameters": [
+        {
+          "name": "bookmark",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_BOOKMARK handle."
+        },
+        {
+          "name": "buffer",
+          "type": "byte[]",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "UTF-16LE buffer for bookmark title. Use two-phase allocation: pass null to get required size, then allocate and call again."
+        },
+        {
+          "name": "buflen",
+          "type": "ulong",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Buffer size in bytes. Must be multiple of 2 for UTF-16LE."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns required buffer size in bytes (including null terminator) if buffer is null. Returns actual bytes written if buffer is provided. UTF-16LE encoding with null terminator."
+    },
+    {
+      "name": "FPDFBookmark_GetFirstChild",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "document",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_DOCUMENT handle."
+        },
+        {
+          "name": "bookmark",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Parent FPDF_BOOKMARK handle or IntPtr.Zero for root bookmarks."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns first child bookmark or IntPtr.Zero if none exist."
+    },
+    {
+      "name": "FPDFBookmark_GetNextSibling",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "document",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_DOCUMENT handle."
+        },
+        {
+          "name": "bookmark",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Current FPDF_BOOKMARK handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns next sibling bookmark or IntPtr.Zero if no more siblings."
+    },
+    {
+      "name": "FPDFText_LoadPage",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_PAGE handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Loads text page for text extraction. Returns FPDF_TEXTPAGE handle or IntPtr.Zero on failure. Caller must close with FPDFText_ClosePage."
+    },
+    {
+      "name": "FPDFText_ClosePage",
+      "returnType": "void",
+      "parameters": [
+        {
+          "name": "text_page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_TEXTPAGE handle from FPDFText_LoadPage."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Closes text page and releases resources."
+    },
+    {
+      "name": "FPDFText_CountChars",
+      "returnType": "int",
+      "parameters": [
+        {
+          "name": "text_page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_TEXTPAGE handle."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns number of characters on text page."
+    },
+    {
+      "name": "FPDFText_GetText",
+      "returnType": "int",
+      "parameters": [
+        {
+          "name": "text_page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_TEXTPAGE handle."
+        },
+        {
+          "name": "start_index",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Start character index (zero-based)."
+        },
+        {
+          "name": "count",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Number of characters to extract."
+        },
+        {
+          "name": "result",
+          "type": "byte[]",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "UTF-16LE buffer for extracted text. Size must be (count + 1) * 2 bytes for null terminator."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Extracts text as UTF-16LE with null terminator. Returns number of characters extracted (not bytes)."
+    },
+    {
+      "name": "FPDFText_FindStart",
+      "returnType": "IntPtr",
+      "parameters": [
+        {
+          "name": "text_page",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_TEXTPAGE handle."
+        },
+        {
+          "name": "findwhat",
+          "type": "byte[]",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "UTF-16LE encoded search string with null terminator. Must encode as byte array."
+        },
+        {
+          "name": "flags",
+          "type": "ulong",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Search flags (e.g., FPDF_MATCHCASE, FPDF_MATCHWHOLEWORD)."
+        },
+        {
+          "name": "start_index",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Character index to start search from."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Starts text search. Returns FPDF_SCHHANDLE or IntPtr.Zero on failure. Caller must close with FPDFText_FindClose."
+    },
+    {
+      "name": "FPDFText_FindNext",
+      "returnType": "bool",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_SCHHANDLE from FPDFText_FindStart."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Searches for next occurrence. Returns true if found, false otherwise."
+    },
+    {
+      "name": "FPDFText_FindClose",
+      "returnType": "void",
+      "parameters": [
+        {
+          "name": "handle",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_SCHHANDLE from FPDFText_FindStart."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Closes search handle and releases resources."
+    },
+    {
+      "name": "FPDFAnnot_GetAttachmentPoints",
+      "returnType": "bool",
+      "parameters": [
+        {
+          "name": "annot",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_ANNOTATION handle."
+        },
+        {
+          "name": "quad_index",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Index of quad point set (zero-based)."
+        },
+        {
+          "name": "quad_points",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Pointer to FS_QUADPOINTSF struct (8 floats). Marshal as ref FS_QUADPOINTSF or pass pre-allocated struct pointer."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Gets annotation quad points. Returns true on success, false on failure. FS_QUADPOINTSF is 8 floats (x1,y1,x2,y2,x3,y3,x4,y4)."
+    },
+    {
+      "name": "FPDFAnnot_SetAttachmentPoints",
+      "returnType": "bool",
+      "parameters": [
+        {
+          "name": "annot",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_ANNOTATION handle."
+        },
+        {
+          "name": "quad_index",
+          "type": "int",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Index of quad point set to modify (zero-based)."
+        },
+        {
+          "name": "quad_points",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Pointer to FS_QUADPOINTSF struct (8 floats). Marshal as ref FS_QUADPOINTSF."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Sets annotation quad points. Returns true on success, false on failure."
+    },
+    {
+      "name": "FPDFAnnot_GetRect",
+      "returnType": "bool",
+      "parameters": [
+        {
+          "name": "annot",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "FPDF_ANNOTATION handle."
+        },
+        {
+          "name": "rect",
+          "type": "IntPtr",
+          "isOut": false,
+          "isRef": false,
+          "marshalingNotes": "Pointer to FS_RECTF struct (4 floats: left, top, right, bottom). Marshal as ref FS_RECTF or out FS_RECTF."
+        }
+      ],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Gets annotation bounding rectangle. Returns true on success, false on failure."
+    },
+    {
+      "name": "FPDF_GetLastError",
+      "returnType": "ulong",
+      "parameters": [],
+      "callingConvention": "Cdecl",
+      "marshalingNotes": "Returns last error code from PDFium operations. Common codes: FPDF_ERR_SUCCESS (0), FPDF_ERR_FILE (1), FPDF_ERR_FORMAT (2), FPDF_ERR_PASSWORD (3), FPDF_ERR_SECURITY (4), FPDF_ERR_PAGE (5)."
+    }
+  ]
+}

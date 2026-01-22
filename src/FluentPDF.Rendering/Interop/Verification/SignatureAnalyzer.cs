@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace FluentPDF.Rendering.Interop.Verification;
 
@@ -77,6 +78,46 @@ public class SignatureAnalyzer
                 .Select(m => m.Name)
                 .OrderBy(n => n)
                 .ToList();
+        }
+    }
+
+    /// <summary>
+    /// Validates all P/Invoke signatures against an external PDFium specification JSON file.
+    /// </summary>
+    /// <param name="specificationJsonPath">Absolute path to the PDFium API specification JSON file.</param>
+    /// <returns>A list of verification results for all functions in the specification.</returns>
+    /// <exception cref="ArgumentException">Thrown when the specification path is null, empty, or the file doesn't exist.</exception>
+    /// <exception cref="JsonException">Thrown when the specification JSON is invalid.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the specification file is not found.</exception>
+    public List<VerificationResult> ValidateAgainstPDFiumSpec(string specificationJsonPath)
+    {
+        if (string.IsNullOrWhiteSpace(specificationJsonPath))
+        {
+            throw new ArgumentException("Specification path cannot be null or empty.", nameof(specificationJsonPath));
+        }
+
+        if (!File.Exists(specificationJsonPath))
+        {
+            throw new FileNotFoundException($"Specification file not found: {specificationJsonPath}", specificationJsonPath);
+        }
+
+        lock (_lock)
+        {
+            var specJson = File.ReadAllText(specificationJsonPath);
+            var spec = JsonSerializer.Deserialize<PdfiumSpecification>(specJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? throw new JsonException("Failed to deserialize specification JSON.");
+
+            var results = new List<VerificationResult>();
+
+            foreach (var funcSpec in spec.Functions)
+            {
+                var expectedSignature = ConvertSpecToSignatureDetails(funcSpec);
+                var result = ValidateSignature(funcSpec.Name, expectedSignature);
+                results.Add(result);
+            }
+
+            return results;
         }
     }
 
@@ -277,4 +318,65 @@ public class SignatureAnalyzer
 
         return typeName;
     }
+
+    /// <summary>
+    /// Converts a function specification from JSON to SignatureDetails.
+    /// </summary>
+    private SignatureDetails ConvertSpecToSignatureDetails(FunctionSpecification funcSpec)
+    {
+        var parameters = funcSpec.Parameters
+            .Select(p => new ParameterDetails
+            {
+                Name = p.Name,
+                Type = NormalizeTypeName(p.Type),
+                IsOut = p.IsOut,
+                IsRef = p.IsRef,
+                MarshalAs = null
+            })
+            .ToList();
+
+        return new SignatureDetails
+        {
+            ReturnType = NormalizeTypeName(funcSpec.ReturnType),
+            Parameters = parameters,
+            CallingConvention = funcSpec.CallingConvention,
+            EntryPoint = funcSpec.Name,
+            CharSet = null
+        };
+    }
+}
+
+/// <summary>
+/// Represents the PDFium API specification loaded from JSON.
+/// </summary>
+internal class PdfiumSpecification
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+    public List<FunctionSpecification> Functions { get; set; } = new();
+}
+
+/// <summary>
+/// Represents a single function specification in the PDFium API.
+/// </summary>
+internal class FunctionSpecification
+{
+    public string Name { get; set; } = string.Empty;
+    public string ReturnType { get; set; } = string.Empty;
+    public List<ParameterSpecification> Parameters { get; set; } = new();
+    public string CallingConvention { get; set; } = string.Empty;
+    public string MarshalingNotes { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Represents a parameter specification in a function signature.
+/// </summary>
+internal class ParameterSpecification
+{
+    public string Name { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public bool IsOut { get; set; }
+    public bool IsRef { get; set; }
+    public string MarshalingNotes { get; set; } = string.Empty;
 }
