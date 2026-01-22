@@ -67,7 +67,7 @@
 
 ## Phase 2: Threading, Annotations & Signature Validation
 
-- [ ] 6. Implement ThreadingModelValidator
+- [x] 6. Implement ThreadingModelValidator
   - Files:
     - `src/FluentPDF.Rendering/Interop/Verification/Validators/ThreadingModelValidator.cs`
     - `tests/FluentPDF.Rendering.Tests/Interop/Verification/ThreadingModelValidatorTests.cs`
