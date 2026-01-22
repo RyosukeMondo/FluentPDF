@@ -138,8 +138,9 @@ namespace FluentPDF.App
                     services.AddSingleton<RenderingObservabilityService>();
                     services.AddSingleton<UIBindingVerifier>();
 
-                    // Register diagnostic command handler
+                    // Register diagnostic command handlers
                     services.AddSingleton<DiagnosticCommandHandler>();
+                    services.AddSingleton<Diagnostics.MarshalingValidationService>();
 
                     // Register rendering strategies
                     services.AddTransient<IRenderingStrategy, WriteableBitmapRenderingStrategy>();
@@ -662,6 +663,94 @@ namespace FluentPDF.App
                 Log.Information("Executing test-metadata command for file: {FilePath}", options.TestMetadata);
                 var handler = GetService<DiagnosticCommandHandler>();
                 var exitCode = await handler.HandleTestMetadataAsync(options.TestMetadata, options.OutputDirectory);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --validate-utf16-marshalling command
+            if (options.ValidateUtf16Marshalling)
+            {
+                Log.Information("Executing validate-utf16-marshalling command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.ValidateUtf16MarshalingAsync(options);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --validate-bitmap-marshalling command
+            if (options.ValidateBitmapMarshalling)
+            {
+                Log.Information("Executing validate-bitmap-marshalling command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.ValidateBitmapMarshalingAsync(options);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --validate-annotation-marshalling command
+            if (options.ValidateAnnotationMarshalling)
+            {
+                Log.Information("Executing validate-annotation-marshalling command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.ValidateAnnotationMarshalingAsync(options);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --validate-threading-model command
+            if (options.ValidateThreadingModel)
+            {
+                Log.Information("Executing validate-threading-model command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.ValidateThreadingModelAsync(options);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --validate-buffer-safety command
+            if (options.ValidateBufferSafety)
+            {
+                Log.Information("Executing validate-buffer-safety command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.ValidateBufferSafetyAsync(options);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --validate-all command
+            if (options.ValidateAll)
+            {
+                Log.Information("Executing validate-all command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.ValidateAllAsync(options);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --profile-marshalling command
+            if (options.ProfileMarshalling)
+            {
+                Log.Information("Executing profile-marshalling command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.ProfileMarshalingAsync(options);
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-workarounds command
+            if (options.TestWorkarounds)
+            {
+                Log.Information("Executing test-workarounds command");
+                var validationService = GetService<Diagnostics.MarshalingValidationService>();
+                var exitCode = await validationService.TestWorkaroundsAsync(options);
                 await ShutdownAsync();
                 Environment.Exit(exitCode);
                 return true;
