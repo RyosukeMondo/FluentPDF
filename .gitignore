@@ -204,3 +204,7 @@ prototype/dist-ssr/
 prototype/node_modules/
 prototype/*.log
 prototype/src/styles/tokens.css
+
+# Node.js (root level - for claude-flow)
+node_modules/
+package-lock.json

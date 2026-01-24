@@ -305,4 +305,86 @@ public sealed class PdfDocumentService : IPdfDocumentService
 
         return Result.Fail(error);
     }
+
+    /// <inheritdoc />
+    public async Task<Result> SaveDocumentAsync(PdfDocument document, string outputPath)
+    {
+        var correlationId = Guid.NewGuid();
+        _logger.LogInformation(
+            "Saving PDF document. CorrelationId={CorrelationId}, OutputPath={OutputPath}",
+            correlationId, outputPath);
+
+        if (document == null)
+        {
+            var error = new PdfError(
+                "PDF_DOCUMENT_NULL",
+                "Cannot save null document",
+                ErrorCategory.Validation,
+                ErrorSeverity.Error)
+                .WithContext("CorrelationId", correlationId);
+
+            return Result.Fail(error);
+        }
+
+        try
+        {
+            await Task.Yield(); // Maintain async pattern
+
+            // Use PDFium's save functionality
+            var docHandle = document.Handle as SafePdfDocumentHandle;
+            if (docHandle == null || docHandle.IsInvalid)
+            {
+                var error = new PdfError(
+                    "PDF_INVALID_HANDLE",
+                    "PDF document handle is invalid or closed",
+                    ErrorCategory.Validation,
+                    ErrorSeverity.Error)
+                    .WithContext("CorrelationId", correlationId);
+
+                return Result.Fail(error);
+            }
+
+            var result = PdfiumInterop.SaveDocument(docHandle, outputPath);
+
+            if (!result)
+            {
+                var error = new PdfError(
+                    "PDF_SAVE_FAILED",
+                    $"Failed to save PDF document to {outputPath}",
+                    ErrorCategory.IO,
+                    ErrorSeverity.Error)
+                    .WithContext("OutputPath", outputPath)
+                    .WithContext("CorrelationId", correlationId);
+
+                _logger.LogError(
+                    "PDF save failed. CorrelationId={CorrelationId}, OutputPath={OutputPath}",
+                    correlationId, outputPath);
+
+                return Result.Fail(error);
+            }
+
+            _logger.LogInformation(
+                "PDF document saved successfully. CorrelationId={CorrelationId}, OutputPath={OutputPath}",
+                correlationId, outputPath);
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            var error = new PdfError(
+                "PDF_SAVE_EXCEPTION",
+                $"Exception saving PDF document: {ex.Message}",
+                ErrorCategory.System,
+                ErrorSeverity.Error)
+                .WithContext("OutputPath", outputPath)
+                .WithContext("CorrelationId", correlationId)
+                .CausedBy(ex);
+
+            _logger.LogError(ex,
+                "Exception saving PDF document. CorrelationId={CorrelationId}, OutputPath={OutputPath}",
+                correlationId, outputPath);
+
+            return Result.Fail(error);
+        }
+    }
 }

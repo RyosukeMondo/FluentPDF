@@ -40,4 +40,15 @@ public interface IPdfDocumentService
     /// A Result indicating success or failure of the close operation.
     /// </returns>
     Result CloseDocument(PdfDocument document);
+
+    /// <summary>
+    /// Saves the PDF document to the specified file path.
+    /// </summary>
+    /// <param name="document">The PDF document to save.</param>
+    /// <param name="outputPath">The file path where the document should be saved.</param>
+    /// <returns>
+    /// A Result indicating success or failure of the save operation.
+    /// Error codes: PDF_SAVE_FAILED, PDF_FILE_ACCESS_DENIED.
+    /// </returns>
+    Task<Result> SaveDocumentAsync(PdfDocument document, string outputPath);
 }
