@@ -121,5 +121,65 @@ Design tokens maintain visual consistency between React and XAML:
 - `docs/component-mapping.md` - React ↔ XAML component translation guide
 - `docs/react-prototype-workflow.md` - Complete workflow documentation
 
+## Verification API Server
+
+FluentPDF includes an embedded REST API server for autonomous E2E verification without UAT.
+
+### CLI Commands
+
+```bash
+# Start API server on default port (5000)
+FluentPDF.App.exe --api-server
+
+# Start on custom port in headless mode (no UI)
+FluentPDF.App.exe --api-server --port 8080 --headless
+
+# Start with verbose logging
+FluentPDF.App.exe --api-server --verbose
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/health | Health check (returns status, version, PDFium state) |
+| POST | /api/document/load | Load PDF document (returns session ID) |
+| GET | /api/document/{id} | Get document info |
+| DELETE | /api/document/{id} | Close document |
+| POST | /api/render | Render page to PNG |
+| GET | /api/render/{id}/{page} | Render page to PNG (convenience) |
+| POST | /api/verify/render | Verify page render against baseline hash |
+| POST | /api/verify/batch | Batch verify multiple pages |
+
+### Example Usage
+
+```bash
+# Health check
+curl http://localhost:5000/api/health
+
+# Load document
+curl -X POST http://localhost:5000/api/document/load \
+  -H "Content-Type: application/json" \
+  -d '{"path":"C:/test.pdf"}'
+
+# Render page 0 to PNG
+curl http://localhost:5000/api/render/SESSION_ID/0 -o page0.png
+
+# Verify page rendering
+curl -X POST http://localhost:5000/api/verify/render \
+  -H "Content-Type: application/json" \
+  -d '{"documentId":"SESSION_ID","pageIndex":0}'
+```
+
+### Automated Verification Script
+
+```bash
+# Run autonomous verification
+pwsh tools/verify-rendering.ps1
+
+# With custom PDF and port
+pwsh tools/verify-rendering.ps1 -PdfPath "path/to/test.pdf" -Port 8080
+```
+
 ## Spec Workflow
 Specs in `.spec-workflow/specs/`. Use `spec-status` tool to check progress.

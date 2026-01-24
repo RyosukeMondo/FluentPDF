@@ -1,3 +1,5 @@
+using FluentPDF.App.Api;
+using FluentPDF.App.Api.Services;
 using FluentPDF.App.Interfaces;
 using FluentPDF.App.Services;
 using FluentPDF.App.Services.RenderingStrategies;
@@ -147,6 +149,11 @@ namespace FluentPDF.App
                     services.AddTransient<IRenderingStrategy, FileBasedRenderingStrategy>();
                     services.AddSingleton<RenderingStrategyFactory>();
                     services.AddSingleton<RenderingCoordinator>();
+
+                    // Register API server services (for autonomous verification)
+                    services.AddSingleton<IVerificationApiServer, VerificationApiServer>();
+                    services.AddSingleton<IDocumentSessionManager, DocumentSessionManager>();
+                    services.AddSingleton<IHashingService, HashingService>();
 
                     // Register ViewModels
                     services.AddSingleton<MainViewModel>(); // Singleton for main window state
@@ -434,6 +441,46 @@ namespace FluentPDF.App
             if (options.VerboseLogging)
             {
                 Log.Information("Verbose logging enabled for diagnostic commands");
+            }
+
+            // Handle --api-server command
+            if (options.ApiServer)
+            {
+                Log.Information("Starting verification API server on port {Port}", options.ApiPort);
+                var apiServer = GetService<IVerificationApiServer>();
+
+                try
+                {
+                    await apiServer.StartAsync(options.ApiPort, options.ApiBindAddress);
+
+                    if (options.Headless)
+                    {
+                        // Run in headless mode - wait for Ctrl+C
+                        Console.WriteLine("Press Ctrl+C to stop the server...");
+                        var tcs = new TaskCompletionSource();
+                        Console.CancelKeyPress += (s, e) =>
+                        {
+                            e.Cancel = true;
+                            tcs.SetResult();
+                        };
+                        await tcs.Task;
+                        await apiServer.StopAsync();
+                        await ShutdownAsync();
+                        Environment.Exit(0);
+                        return true;
+                    }
+
+                    // Not headless - continue to show UI but API server runs in background
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to start API server");
+                    Console.WriteLine($"Error: Failed to start API server: {ex.Message}");
+                    await ShutdownAsync();
+                    Environment.Exit(1);
+                    return true;
+                }
             }
 
             // Handle --diagnostics command

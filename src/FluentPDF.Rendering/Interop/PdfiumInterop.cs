@@ -13,6 +13,11 @@ public static class PdfiumInterop
     private static bool _isInitialized;
     private static readonly object _lockObject = new();
 
+    /// <summary>
+    /// Gets whether the PDFium library is initialized.
+    /// </summary>
+    public static bool IsInitialized => _isInitialized;
+
     #region Library Initialization
 
     /// <summary>

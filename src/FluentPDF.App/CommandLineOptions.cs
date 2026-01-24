@@ -275,6 +275,30 @@ public class CommandLineOptions
     public string? TestMetadata { get; set; }
 
     /// <summary>
+    /// Gets or sets whether to start the verification API server.
+    /// When set, application will start a REST API server for autonomous verification.
+    /// </summary>
+    public bool ApiServer { get; set; }
+
+    /// <summary>
+    /// Gets or sets the port for the API server (default: 5000).
+    /// Used with --api-server option.
+    /// </summary>
+    public int ApiPort { get; set; } = 5000;
+
+    /// <summary>
+    /// Gets or sets whether to run in headless mode (no UI).
+    /// Used with --api-server option for CI/CD environments.
+    /// </summary>
+    public bool Headless { get; set; }
+
+    /// <summary>
+    /// Gets or sets the bind address for the API server (default: localhost).
+    /// Used with --api-server option.
+    /// </summary>
+    public string ApiBindAddress { get; set; } = "localhost";
+
+    /// <summary>
     /// Parses command-line arguments into structured options.
     /// </summary>
     /// <param name="args">Command-line arguments from Environment.GetCommandLineArgs().</param>
@@ -545,6 +569,28 @@ public class CommandLineOptions
                     }
                     break;
 
+                case "--api-server":
+                    options.ApiServer = true;
+                    break;
+
+                case "--port":
+                    if (i + 1 < args.Length && int.TryParse(args[++i], out var port))
+                    {
+                        options.ApiPort = port;
+                    }
+                    break;
+
+                case "--headless":
+                    options.Headless = true;
+                    break;
+
+                case "--bind-address":
+                    if (i + 1 < args.Length)
+                    {
+                        options.ApiBindAddress = args[++i];
+                    }
+                    break;
+
                 default:
                     // If it's a PDF file path without flag, treat as --open-file
                     if (!arg.StartsWith("-") && !arg.StartsWith("/") &&
@@ -655,6 +701,12 @@ Document Operations Test Commands:
   --test-metadata <path>        Test metadata extraction
                                 Returns exit code: 0=pass, 1=fail
 
+Verification API Server:
+  --api-server                  Start the verification REST API server
+  --port <port>                 Port for API server (default: 5000)
+  --headless                    Run in headless mode (no UI window)
+  --bind-address <addr>         Bind address for API server (default: localhost)
+
 Examples:
   # Open a PDF file
   FluentPDF.App.exe --open-file ""C:\Documents\test.pdf""
@@ -706,6 +758,16 @@ Examples:
   FluentPDF.App.exe --validate-bitmap-marshalling --html-output ""bitmap-report.html""
   FluentPDF.App.exe --profile-marshalling --compare-baseline ""baseline.json"" --json-output ""profile.json""
   FluentPDF.App.exe --test-workarounds --verbose
+
+  # Start verification API server
+  FluentPDF.App.exe --api-server
+  FluentPDF.App.exe --api-server --port 8080 --headless
+  FluentPDF.App.exe --api-server --bind-address 0.0.0.0 --port 5000
+
+  # Example API usage with curl
+  curl http://localhost:5000/api/health
+  curl -X POST http://localhost:5000/api/document/load -H ""Content-Type: application/json"" -d '{""path"":""C:/test.pdf""}'
+  curl http://localhost:5000/api/render/SESSION_ID/0 -o page0.png
 ";
     }
 }
