@@ -7,7 +7,8 @@
     xmlns:local="using:FluentPDF.App.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    x:Name="RootPage">
+    x:Name="RootPage"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     <ScrollViewer>
         <StackPanel Padding="24" Spacing="24">
             <!-- Page Header -->

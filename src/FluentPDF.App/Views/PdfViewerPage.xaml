@@ -28,7 +28,7 @@
         <KeyboardAccelerator Key="L" Modifiers="Control,Shift" Invoked="OnOpenLogViewerKeyboardAccelerator" />
     </Page.KeyboardAccelerators>
 
-    <Grid>
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <!-- Toolbar row -->
             <RowDefinition Height="Auto" />
