@@ -26,6 +26,15 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     /// </summary>
     public PdfViewerViewModel ViewModel { get; }
 
+    // Panning state for middle-mouse button drag
+    private bool _isPanning;
+    private Windows.Foundation.Point _panStartPoint;
+    private double _panStartHorizontalOffset;
+    private double _panStartVerticalOffset;
+
+    // Text selection state
+    private Windows.Foundation.Point _selectionStartPoint;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerPage"/> class.
     /// </summary>
@@ -60,6 +69,35 @@ public sealed partial class PdfViewerPage : Page, IDisposable
 
         // Register for accessibility notification messages
         WeakReferenceMessenger.Default.Register<AccessibilityNotificationMessage>(this, OnAccessibilityNotification);
+
+        // Hook up mouse wheel and middle-button panning events (will be attached in OnPageLoaded)
+    }
+
+    /// <summary>
+    /// Handles view mode changes to wire up the appropriate viewer control.
+    /// </summary>
+    private async Task UpdateViewModeAsync()
+    {
+        if (ViewModel.CurrentDocument == null)
+        {
+            return;
+        }
+
+        switch (ViewModel.ViewMode)
+        {
+            case PageViewMode.ContinuousScroll:
+                await ContinuousScrollViewerControl.LoadDocumentAsync(ViewModel.CurrentDocument, ViewModel.ZoomLevel);
+                break;
+
+            case PageViewMode.TwoPage:
+                await TwoPageViewerControl.LoadDocumentAsync(ViewModel.CurrentDocument, ViewModel.CurrentPageNumber, ViewModel.ZoomLevel);
+                break;
+
+            case PageViewMode.SinglePage:
+            default:
+                // Single page mode is handled directly by ViewModel
+                break;
+        }
     }
 
     /// <summary>
@@ -88,6 +126,20 @@ public sealed partial class PdfViewerPage : Page, IDisposable
             {
                 UpdateSearchHighlights();
             });
+
+            // Clear selection rectangle when page changes
+            if (e.PropertyName == nameof(ViewModel.CurrentPageNumber))
+            {
+                ClearSelectionRectangle();
+            }
+        }
+        else if (e.PropertyName == nameof(ViewModel.ViewMode))
+        {
+            // Update viewer controls when view mode changes
+            _ = DispatcherQueue.TryEnqueue(async () =>
+            {
+                await UpdateViewModeAsync();
+            });
         }
     }
 
@@ -98,6 +150,15 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     {
         // Start monitoring DPI changes for this page's XamlRoot
         ViewModel.StartDpiMonitoring(this.XamlRoot);
+
+        // Wire up mouse wheel zoom on the ScrollViewer
+        if (PdfScrollViewer != null)
+        {
+            PdfScrollViewer.PointerWheelChanged += OnScrollViewerPointerWheelChanged;
+            PdfScrollViewer.PointerPressed += OnScrollViewerPointerPressed;
+            PdfScrollViewer.PointerMoved += OnScrollViewerPointerMoved;
+            PdfScrollViewer.PointerReleased += OnScrollViewerPointerReleased;
+        }
     }
 
     /// <summary>
@@ -300,14 +361,45 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles F5 or Ctrl+L keyboard accelerator to enter presentation mode.
+    /// </summary>
+    private void OnPresentationModeKeyboardAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        ViewModel.EnterPresentationModeCommand.Execute(null);
+        args.Handled = true;
+    }
+
+    /// <summary>
     /// Handles pointer pressed event to begin text selection.
     /// </summary>
     private void OnImagePointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        var point = e.GetCurrentPoint(PdfPageImage).Position;
-        ViewModel.BeginTextSelectionCommand.Execute(point);
-        PdfPageImage.CapturePointer(e.Pointer);
-        e.Handled = true;
+        // Don't handle if an annotation tool is active - let AnnotationLayer handle it
+        var activeTool = ViewModel.AnnotationViewModel?.ActiveTool ?? ViewModels.AnnotationTool.None;
+        if (activeTool != ViewModels.AnnotationTool.None)
+        {
+            return;
+        }
+
+        var properties = e.GetCurrentPoint(PdfPageImage).Properties;
+
+        // Only start selection on left-click
+        if (properties.IsLeftButtonPressed)
+        {
+            var point = e.GetCurrentPoint(PdfPageImage).Position;
+            _selectionStartPoint = point;
+            ViewModel.BeginTextSelectionCommand.Execute(point);
+            PdfPageImage.CapturePointer(e.Pointer);
+
+            // Show and position selection rectangle using Canvas positioning
+            SelectionRectangle.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            SelectionRectangle.Width = 0;
+            SelectionRectangle.Height = 0;
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(SelectionRectangle, point.X);
+            Microsoft.UI.Xaml.Controls.Canvas.SetTop(SelectionRectangle, point.Y);
+
+            e.Handled = true;
+        }
     }
 
     /// <summary>
@@ -319,6 +411,18 @@ public sealed partial class PdfViewerPage : Page, IDisposable
         {
             var point = e.GetCurrentPoint(PdfPageImage).Position;
             ViewModel.UpdateTextSelectionCommand.Execute(point);
+
+            // Update selection rectangle using Canvas positioning
+            var x = Math.Min(_selectionStartPoint.X, point.X);
+            var y = Math.Min(_selectionStartPoint.Y, point.Y);
+            var width = Math.Abs(point.X - _selectionStartPoint.X);
+            var height = Math.Abs(point.Y - _selectionStartPoint.Y);
+
+            Microsoft.UI.Xaml.Controls.Canvas.SetLeft(SelectionRectangle, x);
+            Microsoft.UI.Xaml.Controls.Canvas.SetTop(SelectionRectangle, y);
+            SelectionRectangle.Width = width;
+            SelectionRectangle.Height = height;
+
             e.Handled = true;
         }
     }
@@ -332,6 +436,105 @@ public sealed partial class PdfViewerPage : Page, IDisposable
         {
             PdfPageImage.ReleasePointerCapture(e.Pointer);
             _ = ViewModel.EndTextSelectionCommand.ExecuteAsync(null);
+
+            // Keep selection rectangle visible if there's a selection, hide on next click
+            // The rectangle stays visible to show what was selected
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Clears the visual selection rectangle.
+    /// </summary>
+    private void ClearSelectionRectangle()
+    {
+        SelectionRectangle.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        SelectionRectangle.Width = 0;
+        SelectionRectangle.Height = 0;
+    }
+
+    /// <summary>
+    /// Handles mouse wheel events for Ctrl+scroll zoom.
+    /// </summary>
+    private void OnScrollViewerPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        var properties = e.GetCurrentPoint(PdfScrollViewer).Properties;
+        var ctrlPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+        if (ctrlPressed)
+        {
+            var delta = properties.MouseWheelDelta;
+            if (delta > 0)
+            {
+                // Zoom in
+                _ = ViewModel.ZoomInCommand.ExecuteAsync(null);
+            }
+            else if (delta < 0)
+            {
+                // Zoom out
+                _ = ViewModel.ZoomOutCommand.ExecuteAsync(null);
+            }
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer pressed on ScrollViewer for middle-button panning.
+    /// </summary>
+    private void OnScrollViewerPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        var properties = e.GetCurrentPoint(PdfScrollViewer).Properties;
+
+        // Check for middle mouse button
+        if (properties.IsMiddleButtonPressed)
+        {
+            _isPanning = true;
+            _panStartPoint = e.GetCurrentPoint(PdfScrollViewer).Position;
+            _panStartHorizontalOffset = PdfScrollViewer.HorizontalOffset;
+            _panStartVerticalOffset = PdfScrollViewer.VerticalOffset;
+            PdfScrollViewer.CapturePointer(e.Pointer);
+
+            // Change cursor to indicate panning
+            this.ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeAll);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer moved on ScrollViewer for panning.
+    /// </summary>
+    private void OnScrollViewerPointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (_isPanning)
+        {
+            var currentPoint = e.GetCurrentPoint(PdfScrollViewer).Position;
+            var deltaX = _panStartPoint.X - currentPoint.X;
+            var deltaY = _panStartPoint.Y - currentPoint.Y;
+
+            // Calculate new offsets (clamped to valid range)
+            var newHorizontalOffset = Math.Max(0, Math.Min(
+                PdfScrollViewer.ScrollableWidth,
+                _panStartHorizontalOffset + deltaX));
+            var newVerticalOffset = Math.Max(0, Math.Min(
+                PdfScrollViewer.ScrollableHeight,
+                _panStartVerticalOffset + deltaY));
+
+            PdfScrollViewer.ChangeView(newHorizontalOffset, newVerticalOffset, null, true);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer released on ScrollViewer to end panning.
+    /// </summary>
+    private void OnScrollViewerPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (_isPanning)
+        {
+            _isPanning = false;
+            PdfScrollViewer.ReleasePointerCapture(e.Pointer);
+            this.ProtectedCursor = null; // Reset cursor
             e.Handled = true;
         }
     }
@@ -450,6 +653,15 @@ public sealed partial class PdfViewerPage : Page, IDisposable
         this.KeyDown -= OnPageKeyDown;
         this.Loaded -= OnPageLoaded;
         this.Unloaded -= OnPageUnloaded;
+
+        // Unregister scroll viewer events
+        if (PdfScrollViewer != null)
+        {
+            PdfScrollViewer.PointerWheelChanged -= OnScrollViewerPointerWheelChanged;
+            PdfScrollViewer.PointerPressed -= OnScrollViewerPointerPressed;
+            PdfScrollViewer.PointerMoved -= OnScrollViewerPointerMoved;
+            PdfScrollViewer.PointerReleased -= OnScrollViewerPointerReleased;
+        }
 
         // Unregister accessibility notification message handler
         WeakReferenceMessenger.Default.Unregister<AccessibilityNotificationMessage>(this);

@@ -15,6 +15,27 @@ using Windows.Storage.Streams;
 namespace FluentPDF.App.ViewModels;
 
 /// <summary>
+/// Defines the page view modes for the PDF viewer.
+/// </summary>
+public enum PageViewMode
+{
+    /// <summary>
+    /// Single page view - one page at a time with navigation.
+    /// </summary>
+    SinglePage,
+
+    /// <summary>
+    /// Continuous scroll - all pages in a vertical scrolling list.
+    /// </summary>
+    ContinuousScroll,
+
+    /// <summary>
+    /// Two-page view - displays two pages side-by-side like a book.
+    /// </summary>
+    TwoPage
+}
+
+/// <summary>
 /// ViewModel for the PDF viewer page.
 /// Provides commands for document operations (open, navigate, zoom) and observable properties for UI binding.
 /// Implements MVVM pattern with CommunityToolkit source generators.
@@ -26,6 +47,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly IDocumentEditingService _editingService;
     private readonly ITextSearchService _searchService;
     private readonly ITextExtractionService _textExtractionService;
+    private readonly IImageExportService _imageExportService;
+    private readonly ISecurityService _securityService;
     private readonly ILogger<PdfViewerViewModel> _logger;
     private readonly Core.Services.IMetricsCollectionService? _metricsService;
     private readonly IDpiDetectionService? _dpiDetectionService;
@@ -85,6 +108,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="editingService">Service for editing PDF documents.</param>
     /// <param name="searchService">Service for searching text in PDF documents.</param>
     /// <param name="textExtractionService">Service for extracting text from PDF pages.</param>
+    /// <param name="imageExportService">Service for exporting PDF pages as images.</param>
     /// <param name="bookmarksViewModel">View model for the bookmarks panel.</param>
     /// <param name="formFieldViewModel">View model for form field interactions.</param>
     /// <param name="diagnosticsPanelViewModel">View model for the diagnostics panel.</param>
@@ -105,6 +129,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         IDocumentEditingService editingService,
         ITextSearchService searchService,
         ITextExtractionService textExtractionService,
+        IImageExportService imageExportService,
+        ISecurityService securityService,
         BookmarksViewModel bookmarksViewModel,
         FormFieldViewModel formFieldViewModel,
         DiagnosticsPanelViewModel diagnosticsPanelViewModel,
@@ -125,6 +151,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _editingService = editingService ?? throw new ArgumentNullException(nameof(editingService));
         _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
         _textExtractionService = textExtractionService ?? throw new ArgumentNullException(nameof(textExtractionService));
+        _imageExportService = imageExportService ?? throw new ArgumentNullException(nameof(imageExportService));
+        _securityService = securityService ?? throw new ArgumentNullException(nameof(securityService));
         BookmarksViewModel = bookmarksViewModel ?? throw new ArgumentNullException(nameof(bookmarksViewModel));
         FormFieldViewModel = formFieldViewModel ?? throw new ArgumentNullException(nameof(formFieldViewModel));
         DiagnosticsPanelViewModel = diagnosticsPanelViewModel ?? throw new ArgumentNullException(nameof(diagnosticsPanelViewModel));
@@ -256,6 +284,49 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private bool _isOperationInProgress;
+
+    /// <summary>
+    /// Gets or sets the current page view mode (single page or continuous scroll).
+    /// </summary>
+    [ObservableProperty]
+    private PageViewMode _viewMode = PageViewMode.SinglePage;
+
+    /// <summary>
+    /// Gets a value indicating whether the viewer is in single page mode.
+    /// </summary>
+    public bool IsSinglePageMode => ViewMode == PageViewMode.SinglePage;
+
+    /// <summary>
+    /// Gets a value indicating whether the viewer is in continuous scroll mode.
+    /// </summary>
+    public bool IsContinuousScrollMode => ViewMode == PageViewMode.ContinuousScroll;
+
+    /// <summary>
+    /// Gets a value indicating whether the viewer is in two-page mode.
+    /// </summary>
+    public bool IsTwoPageMode => ViewMode == PageViewMode.TwoPage;
+
+    /// <summary>
+    /// Gets the label for the view mode toggle button.
+    /// </summary>
+    public string ViewModeLabel => ViewMode switch
+    {
+        PageViewMode.SinglePage => "Continuous",
+        PageViewMode.ContinuousScroll => "Two Page",
+        PageViewMode.TwoPage => "Single Page",
+        _ => "Single Page"
+    };
+
+    /// <summary>
+    /// Gets the icon glyph for the view mode toggle button.
+    /// </summary>
+    public string ViewModeGlyph => ViewMode switch
+    {
+        PageViewMode.SinglePage => "\uF0E2",
+        PageViewMode.ContinuousScroll => "\uE8A9",
+        PageViewMode.TwoPage => "\uE160",
+        _ => "\uE160"
+    };
 
     /// <summary>
     /// Gets or sets a value indicating whether the search panel is visible.
@@ -622,8 +693,31 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Determines whether the ResetZoom command can execute.
     /// </summary>
-    /// <returns>true if the command can execute; otherwise, false.</returns>
-    private bool CanResetZoom() => !IsLoading && _currentDocument != null;
+    /// <summary>
+    /// Toggles between view modes: Single Page -> Continuous Scroll -> Two Page -> Single Page.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleViewMode()
+    {
+        ViewMode = ViewMode switch
+        {
+            PageViewMode.SinglePage => PageViewMode.ContinuousScroll,
+            PageViewMode.ContinuousScroll => PageViewMode.TwoPage,
+            PageViewMode.TwoPage => PageViewMode.SinglePage,
+            _ => PageViewMode.SinglePage
+        };
+
+        OnPropertyChanged(nameof(IsSinglePageMode));
+        OnPropertyChanged(nameof(IsContinuousScrollMode));
+        OnPropertyChanged(nameof(IsTwoPageMode));
+        OnPropertyChanged(nameof(ViewModeLabel));
+        OnPropertyChanged(nameof(ViewModeGlyph));
+
+        _logger.LogInformation("View mode changed to {ViewMode}", ViewMode);
+    }
+
+        _logger.LogInformation("View mode changed to {ViewMode}", ViewMode);
+    }
 
     /// <summary>
     /// Navigates to a specific page number.
@@ -1140,6 +1234,111 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private bool CanExecuteOptimize() => !IsLoading && !IsOperationInProgress && _currentDocument != null;
 
     /// <summary>
+    /// Exports PDF pages as PNG or JPG images with configurable quality settings.
+    /// Opens a dialog to configure format, DPI, quality, page range, and output directory.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExecuteExportImages))]
+    private async Task ExportImagesAsync()
+    {
+        _logger.LogInformation("ExportImages command invoked");
+
+        try
+        {
+            if (_currentDocument == null)
+            {
+                await ShowErrorDialogAsync("Export Error", "No document is currently loaded.");
+                return;
+            }
+
+            // Create and show export dialog
+            var dialog = new Views.ExportImagesDialog
+            {
+                XamlRoot = App.MainWindow.Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result != Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+            {
+                _logger.LogInformation("Export cancelled by user");
+                return;
+            }
+
+            // Get export options from dialog
+            var options = dialog.GetExportOptions();
+            var outputFolder = dialog.OutputFolder;
+
+            if (string.IsNullOrWhiteSpace(outputFolder))
+            {
+                await ShowErrorDialogAsync("Export Error", "No output folder selected.");
+                return;
+            }
+
+            IsOperationInProgress = true;
+            OperationProgress = 0;
+            StatusMessage = "Exporting pages as images...";
+            _operationCts = new CancellationTokenSource();
+
+            var progress = new Progress<double>(value =>
+            {
+                OperationProgress = value;
+                StatusMessage = $"Exporting pages as images... {value:F1}%";
+            });
+
+            // Export images
+            var exportResult = await _imageExportService.ExportAsync(
+                _currentDocument,
+                outputFolder,
+                options,
+                progress,
+                _operationCts.Token);
+
+            if (exportResult.IsSuccess)
+            {
+                var exportData = exportResult.Value;
+                _logger.LogInformation(
+                    "Export completed successfully. PageCount={PageCount}, TotalSize={TotalSize} bytes, ProcessingTime={ProcessingTimeMs}ms",
+                    exportData.PageCount, exportData.TotalSize, exportData.ProcessingTime.TotalMilliseconds);
+
+                StatusMessage = $"Successfully exported {exportData.PageCount} pages";
+
+                var message = $"Exported {exportData.PageCount} pages to:\n{outputFolder}\n\n" +
+                              $"Format: {options.Format}\n" +
+                              $"DPI: {options.Dpi}\n" +
+                              $"Total size: {exportData.TotalSize / 1024.0:F1} KB\n" +
+                              $"Processing time: {exportData.ProcessingTime.TotalSeconds:F2}s";
+
+                await ShowErrorDialogAsync("Success", message);
+            }
+            else
+            {
+                _logger.LogError("Export failed: {Errors}", exportResult.Errors);
+                StatusMessage = "Export operation failed";
+                await ShowErrorDialogAsync("Export Error", exportResult.Errors[0].Message);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Export operation cancelled by user");
+            StatusMessage = "Export operation cancelled";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during export operation");
+            StatusMessage = "Unexpected error during export";
+            await ShowErrorDialogAsync("Error", $"An unexpected error occurred: {ex.Message}");
+        }
+        finally
+        {
+            IsOperationInProgress = false;
+            OperationProgress = 0;
+            _operationCts?.Dispose();
+            _operationCts = null;
+        }
+    }
+
+    private bool CanExecuteExportImages() => !IsLoading && !IsOperationInProgress && _currentDocument != null;
+
+    /// <summary>
     /// Saves the current document with all annotations and form field changes to the current file path.
     /// Creates a backup before saving.
     /// </summary>
@@ -1283,6 +1482,114 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// Determines whether the SaveAs command can execute.
     /// </summary>
     private bool CanSaveAs() => !IsLoading && _currentDocument != null;
+
+    /// <summary>
+    /// Encrypts the current PDF document with password protection and permissions.
+    /// Shows a dialog to configure encryption settings, then creates an encrypted copy.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanEncryptDocument))]
+    private async Task EncryptDocumentAsync()
+    {
+        _logger.LogInformation("EncryptDocument command invoked");
+
+        if (_currentDocument == null)
+        {
+            _logger.LogWarning("Cannot encrypt: no document loaded");
+            await ShowErrorDialogAsync("Encrypt Error", "No document is currently loaded.");
+            return;
+        }
+
+        try
+        {
+            // Create and show encryption dialog
+            var dialogViewModel = new EncryptDialogViewModel();
+            var dialog = new Views.EncryptDialog(dialogViewModel)
+            {
+                XamlRoot = App.MainWindow.Content.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result != Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+            {
+                _logger.LogInformation("Encryption cancelled by user");
+                return;
+            }
+
+            // Get encryption settings from dialog
+            var settings = dialogViewModel.GetEncryptionSettings();
+
+            // Prompt for output file
+            var savePicker = new FileSavePicker
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                SuggestedFileName = Path.GetFileNameWithoutExtension(_currentDocument.FilePath) + "_encrypted.pdf"
+            };
+            savePicker.FileTypeChoices.Add("PDF Document", new List<string> { ".pdf" });
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+            var outputFile = await savePicker.PickSaveFileAsync();
+            if (outputFile == null)
+            {
+                _logger.LogInformation("Output file selection cancelled");
+                return;
+            }
+
+            IsLoading = true;
+            StatusMessage = "Encrypting document...";
+
+            // Encrypt the document
+            var encryptResult = await _securityService.EncryptDocumentAsync(
+                _currentDocument.FilePath,
+                outputFile.Path,
+                settings);
+
+            if (encryptResult.IsFailed)
+            {
+                _logger.LogError("Encryption failed: {Errors}", string.Join(", ", encryptResult.Errors.Select(e => e.Message)));
+                await ShowErrorDialogAsync("Encryption Failed",
+                    $"Failed to encrypt document:\n\n{string.Join("\n", encryptResult.Errors.Select(e => e.Message))}");
+                return;
+            }
+
+            StatusMessage = $"Document encrypted successfully: {Path.GetFileName(outputFile.Path)}";
+            _logger.LogInformation("Document encrypted successfully to {OutputPath}", outputFile.Path);
+
+            // Ask if user wants to open the encrypted document
+            var openDialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+            {
+                Title = "Encryption Complete",
+                Content = $"Document encrypted successfully.\n\nDo you want to open the encrypted document?",
+                PrimaryButtonText = "Open",
+                CloseButtonText = "Close",
+                DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Primary,
+                XamlRoot = App.MainWindow.Content.XamlRoot
+            };
+
+            var openResult = await openDialog.ShowAsync();
+            if (openResult == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+            {
+                await LoadDocumentFromPathAsync(outputFile.Path);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while encrypting document");
+            StatusMessage = "Error encrypting document";
+            await ShowErrorDialogAsync("Encrypt Error", $"Failed to encrypt document: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the EncryptDocument command can execute.
+    /// </summary>
+    private bool CanEncryptDocument() => !IsLoading && _currentDocument != null;
 
     /// <summary>
     /// Cancels the current document editing operation (merge, split, or optimize).
@@ -1548,6 +1855,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             MergeDocumentsCommand.NotifyCanExecuteChanged();
             SplitDocumentCommand.NotifyCanExecuteChanged();
             OptimizeDocumentCommand.NotifyCanExecuteChanged();
+            ExportImagesCommand.NotifyCanExecuteChanged();
             CancelOperationCommand.NotifyCanExecuteChanged();
         }
 
@@ -1575,6 +1883,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         if (e.PropertyName == nameof(HasPageModifications))
         {
             OnPropertyChanged(nameof(HasUnsavedChanges));
+        }
+
+        // Update presentation mode command state
+        if (e.PropertyName == nameof(IsLoading))
+        {
+            EnterPresentationModeCommand.NotifyCanExecuteChanged();
         }
 
         // Trigger search when query or case sensitivity changes
@@ -1785,6 +2099,43 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             await ShowErrorDialogAsync("Error", $"Failed to open log viewer: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Enters presentation mode with full-screen display and minimal UI.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanEnterPresentationMode))]
+    private void EnterPresentationMode()
+    {
+        _logger.LogInformation("EnterPresentationMode command invoked");
+
+        try
+        {
+            // Create presentation view model
+            var presentationViewModel = new PresentationViewModel(
+                this,
+                Microsoft.Extensions.Logging.LoggerFactory.Create(builder => builder.AddDebug())
+                    .CreateLogger<PresentationViewModel>());
+
+            // Create and show presentation window
+            var presentationWindow = new Views.PresentationWindow(
+                presentationViewModel,
+                Microsoft.Extensions.Logging.LoggerFactory.Create(builder => builder.AddDebug())
+                    .CreateLogger<Views.PresentationWindow>());
+
+            presentationWindow.Activate();
+
+            _logger.LogInformation("Presentation mode window created and activated");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to enter presentation mode");
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the EnterPresentationMode command can execute.
+    /// </summary>
+    private bool CanEnterPresentationMode() => !IsLoading && _currentDocument != null;
 
     /// <summary>
     /// Starts monitoring DPI changes for the current display.

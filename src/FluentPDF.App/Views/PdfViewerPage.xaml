@@ -26,6 +26,8 @@
         <KeyboardAccelerator Key="C" Modifiers="Control" Invoked="OnCopyKeyboardAccelerator" />
         <KeyboardAccelerator Key="D" Modifiers="Control,Shift" Invoked="OnToggleDiagnosticsKeyboardAccelerator" />
         <KeyboardAccelerator Key="L" Modifiers="Control,Shift" Invoked="OnOpenLogViewerKeyboardAccelerator" />
+        <KeyboardAccelerator Key="F5" Invoked="OnPresentationModeKeyboardAccelerator" />
+        <KeyboardAccelerator Key="L" Modifiers="Control" Invoked="OnPresentationModeKeyboardAccelerator" />
     </Page.KeyboardAccelerators>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -107,13 +109,13 @@
                 </AppBarButton.KeyboardAccelerators>
             </AppBarButton>
 
-            <!-- Toggle Bookmarks -->
+            <!-- Toggle Bookmarks (hidden when no bookmarks) -->
             <AppBarButton
                 Icon="AlignLeft"
                 Label="Bookmarks"
                 AutomationProperties.AutomationId="BookmarksToggle"
                 Command="{x:Bind ViewModel.BookmarksViewModel.TogglePanelCommand, Mode=OneWay}"
-                IsEnabled="{x:Bind ViewModel.BookmarksViewModel.HasBookmarks, Mode=OneWay}">
+                Visibility="{x:Bind ViewModel.BookmarksViewModel.HasBookmarks, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="B" Modifiers="Control" />
                 </AppBarButton.KeyboardAccelerators>
@@ -178,6 +180,17 @@
                 <AppBarButton.KeyboardAccelerators>
                     <KeyboardAccelerator Key="Number0" Modifiers="Control" />
                 </AppBarButton.KeyboardAccelerators>
+            </AppBarButton>
+
+            <!-- View Mode Toggle -->
+            <AppBarButton
+                Label="{x:Bind ViewModel.ViewModeLabel, Mode=OneWay}"
+                AutomationProperties.AutomationId="ViewModeToggle"
+                Command="{x:Bind ViewModel.ToggleViewModeCommand, Mode=OneWay}"
+                ToolTipService.ToolTip="Toggle between single page and continuous scroll view">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="{x:Bind ViewModel.ViewModeGlyph, Mode=OneWay}" />
+                </AppBarButton.Icon>
             </AppBarButton>
 
             <AppBarSeparator />
@@ -254,92 +267,99 @@
         <!-- Annotation Toolbar - Full Width -->
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right" AutomationProperties.AutomationId="AnnotationToolbar">
             <!-- Highlight -->
-            <AppBarButton
+            <AppBarToggleButton
                 Label="Highlight"
                 AutomationProperties.AutomationId="HighlightButton"
                 ToolTipService.ToolTip="Highlight text"
+                IsChecked="{x:Bind ViewModel.AnnotationViewModel.IsHighlightActive, Mode=OneWay}"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Highlight">
-                <AppBarButton.Icon>
+                <AppBarToggleButton.Icon>
                     <FontIcon Glyph="&#xE7E6;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
 
             <!-- Underline -->
-            <AppBarButton
+            <AppBarToggleButton
                 Label="Underline"
                 AutomationProperties.AutomationId="UnderlineButton"
                 ToolTipService.ToolTip="Underline text"
+                IsChecked="{x:Bind ViewModel.AnnotationViewModel.IsUnderlineActive, Mode=OneWay}"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Underline">
-                <AppBarButton.Icon>
+                <AppBarToggleButton.Icon>
                     <FontIcon Glyph="&#xE8DC;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
 
             <!-- Strikethrough -->
-            <AppBarButton
+            <AppBarToggleButton
                 Label="Strikethrough"
                 AutomationProperties.AutomationId="StrikethroughButton"
                 ToolTipService.ToolTip="Strikethrough text"
+                IsChecked="{x:Bind ViewModel.AnnotationViewModel.IsStrikethroughActive, Mode=OneWay}"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Strikethrough">
-                <AppBarButton.Icon>
+                <AppBarToggleButton.Icon>
                     <FontIcon Glyph="&#xEDE0;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
 
             <AppBarSeparator />
 
             <!-- Comment -->
-            <AppBarButton
+            <AppBarToggleButton
                 Label="Comment"
                 AutomationProperties.AutomationId="CommentButton"
                 ToolTipService.ToolTip="Add text comment"
+                IsChecked="{x:Bind ViewModel.AnnotationViewModel.IsCommentActive, Mode=OneWay}"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Comment">
-                <AppBarButton.Icon>
+                <AppBarToggleButton.Icon>
                     <FontIcon Glyph="&#xE90A;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
 
             <AppBarSeparator />
 
             <!-- Rectangle -->
-            <AppBarButton
+            <AppBarToggleButton
                 Label="Rectangle"
                 AutomationProperties.AutomationId="RectangleButton"
                 ToolTipService.ToolTip="Draw rectangle"
+                IsChecked="{x:Bind ViewModel.AnnotationViewModel.IsRectangleActive, Mode=OneWay}"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Rectangle">
-                <AppBarButton.Icon>
+                <AppBarToggleButton.Icon>
                     <FontIcon Glyph="&#xE761;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
 
             <!-- Circle -->
-            <AppBarButton
+            <AppBarToggleButton
                 Label="Circle"
                 AutomationProperties.AutomationId="CircleButton"
                 ToolTipService.ToolTip="Draw circle"
+                IsChecked="{x:Bind ViewModel.AnnotationViewModel.IsCircleActive, Mode=OneWay}"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Circle">
-                <AppBarButton.Icon>
+                <AppBarToggleButton.Icon>
                     <FontIcon Glyph="&#xEA3A;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
 
             <!-- Freehand -->
-            <AppBarButton
+            <AppBarToggleButton
                 Label="Freehand"
                 AutomationProperties.AutomationId="FreehandButton"
                 ToolTipService.ToolTip="Draw freehand"
+                IsChecked="{x:Bind ViewModel.AnnotationViewModel.IsFreehandActive, Mode=OneWay}"
                 Command="{x:Bind ViewModel.AnnotationViewModel.SelectToolCommand, Mode=OneWay}"
                 CommandParameter="Freehand">
-                <AppBarButton.Icon>
+                <AppBarToggleButton.Icon>
                     <FontIcon Glyph="&#xE76D;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
 
             <AppBarSeparator />
 
@@ -518,6 +538,7 @@
                 Grid.Column="0"
                 x:Name="ThumbnailsSidebarControl"
                 AutomationProperties.AutomationId="ThumbnailsSidebar"
+                ViewModel="{x:Bind ViewModel.ThumbnailsViewModel, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.IsSidebarVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                 Width="200" />
 
@@ -561,33 +582,65 @@
                 ViewChanged="OnScrollViewerViewChanged"
                 SizeChanged="OnScrollViewerSizeChanged">
                 <Grid x:Name="PdfViewerGrid">
-                    <!-- PDF page image -->
-                    <Image
-                        x:Name="PdfPageImage"
-                        Source="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
-                        Stretch="None"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        PointerPressed="OnImagePointerPressed"
-                        PointerMoved="OnImagePointerMoved"
-                        PointerReleased="OnImagePointerReleased"
-                        SizeChanged="OnPdfImageSizeChanged">
-                        <Image.ContextFlyout>
-                            <MenuFlyout>
-                                <MenuFlyout.Items>
-                                    <MenuFlyoutItem
-                                        Text="Copy"
-                                        Command="{x:Bind ViewModel.CopyToClipboardCommand, Mode=OneWay}">
-                                        <MenuFlyoutItem.KeyboardAccelerators>
-                                            <KeyboardAccelerator Key="C" Modifiers="Control" />
-                                        </MenuFlyoutItem.KeyboardAccelerators>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout.Items>
-                            </MenuFlyout>
-                        </Image.ContextFlyout>
-                    </Image>
+                    <!-- Single Page Mode View -->
+                    <Grid Visibility="{x:Bind ViewModel.IsSinglePageMode, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <!-- PDF page image -->
+                        <Image
+                            x:Name="PdfPageImage"
+                            Source="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.CurrentPageImage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"
+                            Stretch="None"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            PointerPressed="OnImagePointerPressed"
+                            PointerMoved="OnImagePointerMoved"
+                            PointerReleased="OnImagePointerReleased"
+                            SizeChanged="OnPdfImageSizeChanged">
+                            <Image.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyout.Items>
+                                        <MenuFlyoutItem
+                                            Text="Copy"
+                                            Command="{x:Bind ViewModel.CopyToClipboardCommand, Mode=OneWay}">
+                                            <MenuFlyoutItem.KeyboardAccelerators>
+                                                <KeyboardAccelerator Key="C" Modifiers="Control" />
+                                            </MenuFlyoutItem.KeyboardAccelerators>
+                                        </MenuFlyoutItem>
+                                    </MenuFlyout.Items>
+                                </MenuFlyout>
+                            </Image.ContextFlyout>
+                        </Image>
 
+                        <!-- Text selection rectangle overlay (inside single-page grid, overlays image) -->
+                        <Canvas
+                            x:Name="SelectionCanvas"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Width="{Binding ActualWidth, ElementName=PdfPageImage}"
+                            Height="{Binding ActualHeight, ElementName=PdfPageImage}"
+                            IsHitTestVisible="False">
+                            <Rectangle
+                                x:Name="SelectionRectangle"
+                                Fill="{ThemeResource SystemAccentColorLight2}"
+                                Opacity="0.3"
+                                Stroke="{ThemeResource SystemAccentColor}"
+                                StrokeThickness="1"
+                                Visibility="Collapsed" />
+                        </Canvas>
+                    </Grid>
+
+
+                    <!-- Continuous Scroll Mode View -->
+                    <controls:ContinuousScrollViewer
+                        x:Name="ContinuousScrollViewerControl"
+                        AutomationProperties.AutomationId="ContinuousScrollViewer"
+                        Visibility="{x:Bind ViewModel.IsContinuousScrollMode, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <!-- Two-Page Mode View -->
+                    <controls:TwoPageViewer
+                        x:Name="TwoPageViewerControl"
+                        AutomationProperties.AutomationId="TwoPageViewer"
+                        Visibility="{x:Bind ViewModel.IsTwoPageMode, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <!-- Search highlight overlays canvas -->
                     <Canvas
                         x:Name="SearchHighlightCanvas"
@@ -617,11 +670,13 @@
                         </ItemsControl>
                     </Canvas>
 
-                    <!-- Annotation layer overlay -->
+                    <!-- Annotation layer overlay (must have size to receive hit tests) -->
                     <controls:AnnotationLayer
                         x:Name="AnnotationLayerControl"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
+                        Width="{Binding ActualWidth, ElementName=PdfPageImage}"
+                        Height="{Binding ActualHeight, ElementName=PdfPageImage}"
                         ViewModel="{x:Bind ViewModel.AnnotationViewModel, Mode=OneWay}"
                         ZoomLevel="{x:Bind ViewModel.ZoomLevel, Mode=OneWay}" />
 

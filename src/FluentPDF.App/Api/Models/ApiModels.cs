@@ -149,3 +149,330 @@ public record ErrorResponse(
     string? CorrelationId = null,
     Dictionary<string, object>? Details = null
 );
+
+// UI Verification Models
+
+/// <summary>
+/// Application status response.
+/// </summary>
+public record StatusResponse(
+    bool WindowOpen,
+    bool DocumentLoaded,
+    string? DocumentPath,
+    int CurrentPage,
+    int TotalPages,
+    int ZoomLevel,
+    string ViewMode,
+    string Theme,
+    Dictionary<string, bool> Sidebars,
+    bool FullScreen = false
+);
+
+/// <summary>
+/// Element verification request.
+/// </summary>
+public record ElementVerificationRequest(
+    string AutomationId,
+    Dictionary<string, object>? ExpectedProperties = null
+);
+
+/// <summary>
+/// Element property check result.
+/// </summary>
+public record PropertyCheck(
+    string Property,
+    object? Expected,
+    object? Actual,
+    bool Passed
+);
+
+/// <summary>
+/// Element information.
+/// </summary>
+public record ElementInfo(
+    string AutomationId,
+    string Name,
+    bool IsEnabled,
+    bool IsVisible,
+    double Width,
+    double Height,
+    double X,
+    double Y
+);
+
+/// <summary>
+/// Element verification response.
+/// </summary>
+public record ElementVerificationResponse(
+    bool Found,
+    bool Passed,
+    ElementInfo? Element,
+    List<PropertyCheck> Checks,
+    List<string> Errors
+);
+
+/// <summary>
+/// Layout element specification.
+/// </summary>
+public record LayoutElement(
+    string AutomationId,
+    string? ExpectedPosition = null,
+    Dictionary<string, object>? ExpectedWidth = null,
+    Dictionary<string, object>? ExpectedHeight = null
+);
+
+/// <summary>
+/// Layout verification request.
+/// </summary>
+public record LayoutVerificationRequest(
+    List<LayoutElement> Elements
+);
+
+/// <summary>
+/// Element layout check result.
+/// </summary>
+public record ElementLayoutCheck(
+    string AutomationId,
+    bool Found,
+    Dictionary<string, double>? Position,
+    Dictionary<string, object>? Checks
+);
+
+/// <summary>
+/// Layout verification response.
+/// </summary>
+public record LayoutVerificationResponse(
+    bool Passed,
+    List<ElementLayoutCheck> Elements,
+    List<string> Errors
+);
+
+/// <summary>
+/// Click action request.
+/// </summary>
+public record ClickActionRequest(
+    string AutomationId,
+    bool WaitForDialog = false,
+    string? DialogAutomationId = null
+);
+
+/// <summary>
+/// Click action response.
+/// </summary>
+public record ClickActionResponse(
+    bool Success,
+    bool Clicked,
+    bool DialogAppeared,
+    int DurationMs,
+    List<string> Errors
+);
+
+/// <summary>
+/// Input action request.
+/// </summary>
+public record InputActionRequest(
+    string AutomationId,
+    string Text,
+    bool ClearFirst = true,
+    bool PressEnter = false
+);
+
+/// <summary>
+/// Input action response.
+/// </summary>
+public record InputActionResponse(
+    bool Success,
+    bool ValueSet,
+    string ActualValue,
+    List<string> Errors
+);
+
+/// <summary>
+/// Navigate action request.
+/// </summary>
+public record NavigateActionRequest(
+    string Action,
+    int ExpectedPage
+);
+
+/// <summary>
+/// Navigate action response.
+/// </summary>
+public record NavigateActionResponse(
+    bool Success,
+    int PreviousPage,
+    int CurrentPage,
+    int ExpectedPage,
+    bool Passed,
+    List<string> Errors
+);
+
+/// <summary>
+/// Theme element specification.
+/// </summary>
+public record ThemeElement(
+    string AutomationId,
+    string ExpectedBackground
+);
+
+/// <summary>
+/// Theme verification request.
+/// </summary>
+public record ThemeVerificationRequest(
+    string SetTheme,
+    List<ThemeElement> VerifyElements
+);
+
+/// <summary>
+/// Theme element result.
+/// </summary>
+public record ThemeElementResult(
+    string AutomationId,
+    string Background,
+    string ExpectedBackground,
+    bool Passed
+);
+
+/// <summary>
+/// Theme verification response.
+/// </summary>
+public record ThemeVerificationResponse(
+    string ThemeSet,
+    bool Passed,
+    List<ThemeElementResult> Elements,
+    List<string> Errors
+);
+
+/// <summary>
+/// Annotation verification request.
+/// </summary>
+public record AnnotationVerificationRequest(
+    string Tool,
+    string Action,
+    int Page,
+    List<double> Rect,
+    string Color,
+    bool VerifyPresence = true
+);
+
+/// <summary>
+/// Annotation properties.
+/// </summary>
+public record AnnotationProperties(
+    string Type,
+    string Color,
+    List<double> Rect
+);
+
+/// <summary>
+/// Annotation presence verification.
+/// </summary>
+public record AnnotationPresenceCheck(
+    bool Verified,
+    bool Found,
+    AnnotationProperties? Properties
+);
+
+/// <summary>
+/// Annotation verification response.
+/// </summary>
+public record AnnotationVerificationResponse(
+    bool Success,
+    bool AnnotationCreated,
+    string? AnnotationId,
+    AnnotationPresenceCheck? Presence,
+    List<string> Errors
+);
+
+/// <summary>
+/// Form validation result.
+/// </summary>
+public record FormValidationResult(
+    bool Valid,
+    List<string> Errors
+);
+
+/// <summary>
+/// Form field verification request.
+/// </summary>
+public record FormVerificationRequest(
+    string Field,
+    string Action,
+    string Value,
+    bool VerifyValidation = true,
+    bool ExpectedValid = true
+);
+
+/// <summary>
+/// Form field verification response.
+/// </summary>
+public record FormVerificationResponse(
+    bool Success,
+    bool Filled,
+    string Value,
+    FormValidationResult Validation,
+    bool Passed
+);
+
+/// <summary>
+/// Document merge verification request.
+/// </summary>
+public record MergeVerificationRequest(
+    List<string> Files,
+    string Output,
+    bool VerifyPageCount = true
+);
+
+/// <summary>
+/// Merge verification details.
+/// </summary>
+public record MergeVerificationDetails(
+    int ExpectedPages,
+    int ActualPages,
+    bool Passed
+);
+
+/// <summary>
+/// Document merge verification response.
+/// </summary>
+public record MergeVerificationResponse(
+    bool Success,
+    bool Merged,
+    string Output,
+    MergeVerificationDetails Verification,
+    List<string> Errors
+);
+
+/// <summary>
+/// Text replacement verification request.
+/// </summary>
+/// <param name="DocumentId">Session ID of the loaded document.</param>
+/// <param name="FindText">Text to find.</param>
+/// <param name="ReplaceText">Text to replace with.</param>
+/// <param name="CaseSensitive">Whether to match case.</param>
+/// <param name="WholeWord">Whether to match whole words only.</param>
+/// <param name="Preview">Whether to preview changes without applying them.</param>
+public record ReplaceRequest(
+    string DocumentId,
+    string FindText,
+    string ReplaceText,
+    bool CaseSensitive = false,
+    bool WholeWord = false,
+    bool Preview = false
+);
+
+/// <summary>
+/// Text replacement verification response.
+/// </summary>
+/// <param name="Success">Whether the operation succeeded.</param>
+/// <param name="TotalMatches">Total number of matches found.</param>
+/// <param name="ReplacementCount">Number of replacements made.</param>
+/// <param name="Preview">Whether this was a preview operation.</param>
+/// <param name="Message">Human-readable result message.</param>
+public record ReplaceResponse(
+    bool Success,
+    int TotalMatches,
+    int ReplacementCount,
+    bool Preview,
+    string Message
+);

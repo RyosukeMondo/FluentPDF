@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<UserControl
+    x:Class="FluentPDF.App.Controls.ContinuousScrollViewer"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid AutomationProperties.AutomationId="ContinuousScrollViewerRoot">
+        <ScrollViewer
+            x:Name="MainScrollViewer"
+            AutomationProperties.AutomationId="ContinuousScrollViewer"
+            HorizontalScrollBarVisibility="Auto"
+            VerticalScrollBarVisibility="Auto"
+            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            ViewChanged="OnScrollViewChanged">
+
+            <!-- ItemsRepeater for virtualized scrolling -->
+            <ItemsRepeater
+                x:Name="PageRepeater"
+                AutomationProperties.AutomationId="PageRepeater"
+                Margin="20">
+                <ItemsRepeater.Layout>
+                    <StackLayout Spacing="16" Orientation="Vertical" />
+                </ItemsRepeater.Layout>
+
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate>
+                        <Grid HorizontalAlignment="Center">
+                            <!-- Page container with shadow -->
+                            <Border
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Shadow="{StaticResource SharedShadow}">
+                                <Grid>
+                                    <!-- Page image -->
+                                    <Image
+                                        Source="{Binding PageImage}"
+                                        Stretch="None"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" />
+
+                                    <!-- Page number badge -->
+                                    <Border
+                                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                        CornerRadius="12"
+                                        Padding="12,4"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="8">
+                                        <TextBlock
+                                            Text="{Binding PageNumber}"
+                                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                            FontSize="12"
+                                            FontWeight="SemiBold" />
+                                    </Border>
+
+                                    <!-- Loading indicator for unrendered pages -->
+                                    <ProgressRing
+                                        IsActive="{Binding IsLoading}"
+                                        Width="40"
+                                        Height="40"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+        </ScrollViewer>
+
+        <!-- Current page indicator -->
+        <Border
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="16,8"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            Margin="0,0,0,24"
+            Shadow="{StaticResource SharedShadow}">
+            <TextBlock
+                x:Name="CurrentPageIndicator"
+                AutomationProperties.AutomationId="CurrentPageIndicator"
+                FontSize="14"
+                FontWeight="SemiBold" />
+        </Border>
+    </Grid>
+</UserControl>
