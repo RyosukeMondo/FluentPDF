@@ -260,7 +260,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Called when the theme changes.
-    /// Saves the updated setting to persistent storage.
+    /// Saves the updated setting to persistent storage and immediately applies the theme.
     /// </summary>
     partial void OnThemeChanged(AppTheme value)
     {
@@ -274,6 +274,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
         _logger.LogInformation("Theme changed to: {Theme}", value);
         _settingsService.Settings.Theme = value;
+
+        // Immediately notify the app to apply the theme (don't wait for debounced save)
+        _settingsService.NotifyThemeChanged(value);
+
+        // Also save to persistent storage
         _ = _settingsService.SaveAsync();
     }
 

@@ -1,5 +1,6 @@
 using FluentPDF.App.Interfaces;
 using FluentPDF.Core.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using SixLabors.ImageSharp;
@@ -18,6 +19,24 @@ namespace FluentPDF.App.Services.RenderingStrategies;
 /// </remarks>
 public sealed class WriteableBitmapRenderingStrategy : IRenderingStrategy
 {
+    private readonly ILogger<WriteableBitmapRenderingStrategy>? _logger;
+
+    /// <summary>
+    /// Initializes a new instance without logging (for backward compatibility).
+    /// </summary>
+    public WriteableBitmapRenderingStrategy()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance with logging support.
+    /// </summary>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    public WriteableBitmapRenderingStrategy(ILogger<WriteableBitmapRenderingStrategy> logger)
+    {
+        _logger = logger;
+    }
+
     /// <inheritdoc/>
     public string StrategyName => "WriteableBitmap + ImageSharp";
 
@@ -29,37 +48,97 @@ public sealed class WriteableBitmapRenderingStrategy : IRenderingStrategy
     {
         try
         {
+            _logger?.LogDebug(
+                "WriteableBitmapRenderingStrategy: Starting render. StreamLength={StreamLength}, StreamPosition={StreamPosition}, CanRead={CanRead}, CanSeek={CanSeek}",
+                pngStream.Length, pngStream.Position, pngStream.CanRead, pngStream.CanSeek);
+
             // Reset stream position to beginning
             pngStream.Seek(0, SeekOrigin.Begin);
 
             // Decode PNG using ImageSharp instead of WinUI's BitmapDecoder
             // This avoids all WinUI image decoding APIs that have reliability issues
-            var image = await SixLabors.ImageSharp.Image.LoadAsync<Bgra32>(pngStream);
+            using var image = await SixLabors.ImageSharp.Image.LoadAsync<Bgra32>(pngStream);
 
-            // Create WriteableBitmap with the same dimensions
-            var writeableBitmap = new WriteableBitmap(image.Width, image.Height);
+            _logger?.LogDebug(
+                "WriteableBitmapRenderingStrategy: Image decoded. Width={Width}, Height={Height}",
+                image.Width, image.Height);
 
-            // Copy pixel data directly from ImageSharp image to WriteableBitmap
-            // This uses unsafe code to get maximum performance and avoid extra allocations
-            using (var bufferAccessor = writeableBitmap.PixelBuffer.AsStream())
+            // Extract pixel data from ImageSharp image (can be done off UI thread)
+            var pixelData = new byte[image.Width * image.Height * 4]; // BGRA32 = 4 bytes per pixel
+            image.CopyPixelDataTo(pixelData);
+
+            var width = image.Width;
+            var height = image.Height;
+
+            // All WriteableBitmap operations MUST happen on UI thread
+            if (App.MainWindow?.DispatcherQueue == null)
             {
-                var pixelData = new byte[image.Width * image.Height * 4]; // BGRA32 = 4 bytes per pixel
-                image.CopyPixelDataTo(pixelData);
-                bufferAccessor.Write(pixelData, 0, pixelData.Length);
+                _logger?.LogError("WriteableBitmapRenderingStrategy: No DispatcherQueue available");
+                return null;
             }
 
-            // Invalidate the bitmap to trigger UI update
-            writeableBitmap.Invalidate();
+            var tcs = new TaskCompletionSource<WriteableBitmap?>();
 
-            // Clean up ImageSharp image
-            image.Dispose();
+            _logger?.LogDebug(
+                "WriteableBitmapRenderingStrategy: Queueing WriteableBitmap creation on UI thread. Width={Width}, Height={Height}, PixelDataLength={PixelDataLength}",
+                width, height, pixelData.Length);
 
-            return writeableBitmap;
+            var queued = App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+            {
+                try
+                {
+                    _logger?.LogDebug("WriteableBitmapRenderingStrategy: Creating WriteableBitmap on UI thread");
+
+                    // Create WriteableBitmap on UI thread
+                    var writeableBitmap = new WriteableBitmap(width, height);
+
+                    _logger?.LogDebug("WriteableBitmapRenderingStrategy: WriteableBitmap created, copying pixel data");
+
+                    // Copy pixel data to WriteableBitmap on UI thread
+                    using (var bufferAccessor = writeableBitmap.PixelBuffer.AsStream())
+                    {
+                        bufferAccessor.Write(pixelData, 0, pixelData.Length);
+                    }
+
+                    _logger?.LogDebug("WriteableBitmapRenderingStrategy: Pixel data copied, invalidating bitmap");
+
+                    // Invalidate to trigger UI update
+                    writeableBitmap.Invalidate();
+
+                    _logger?.LogDebug("WriteableBitmapRenderingStrategy: WriteableBitmap ready");
+
+                    tcs.SetResult(writeableBitmap);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "WriteableBitmapRenderingStrategy: Failed on UI thread. Error={ErrorMessage}", ex.Message);
+                    tcs.SetException(ex); // Propagate the exception instead of silently failing
+                }
+            });
+
+            if (!queued)
+            {
+                _logger?.LogError("WriteableBitmapRenderingStrategy: Failed to queue on UI thread");
+                return null;
+            }
+
+            var result = await tcs.Task;
+
+            if (result != null)
+            {
+                _logger?.LogDebug(
+                    "WriteableBitmapRenderingStrategy: Render completed successfully. BitmapWidth={Width}, BitmapHeight={Height}",
+                    result.PixelWidth, result.PixelHeight);
+            }
+
+            return result;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Swallow all exceptions and return null to indicate failure
-            // Caller (RenderingCoordinator) will log the failure and try next strategy
+            _logger?.LogError(ex,
+                "WriteableBitmapRenderingStrategy: Failed to render. StreamLength={StreamLength}, Page={PageNumber}, Error={ErrorMessage}",
+                pngStream?.Length ?? 0, context?.PageNumber ?? 0, ex.Message);
+            // Return null to indicate failure - caller will try next strategy
             return null;
         }
     }

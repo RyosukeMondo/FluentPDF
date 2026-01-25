@@ -322,12 +322,11 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Determines whether navigation to a page can execute.
-    /// Navigation is disabled when any thumbnail is currently loading.
+    /// Navigation is always enabled when a document is loaded.
     /// </summary>
     private bool CanNavigateToPage(int pageNumber)
     {
-        // Check if any thumbnail is currently being loaded
-        return !Thumbnails.Any(t => t.IsLoading);
+        return _document != null && pageNumber >= 1 && pageNumber <= _document.PageCount;
     }
 
     /// <summary>
@@ -357,10 +356,13 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     /// </summary>
     private void OnThumbnailItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ThumbnailItem.IsLoading))
+        if (e.PropertyName == nameof(ThumbnailItem.IsSelected))
         {
-            // Update CanExecute state when loading state changes
-            NavigateToPageCommand.NotifyCanExecuteChanged();
+            // Update CanExecute state for selection-dependent commands
+            RotateRightCommand.NotifyCanExecuteChanged();
+            RotateLeftCommand.NotifyCanExecuteChanged();
+            Rotate180Command.NotifyCanExecuteChanged();
+            DeletePagesCommand.NotifyCanExecuteChanged();
         }
     }
 

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentResults;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Media;
 
 namespace FluentPDF.App.Services;
@@ -15,6 +16,7 @@ public sealed class RenderingCoordinator
     private readonly RenderingStrategyFactory _strategyFactory;
     private readonly RenderingObservabilityService _observabilityService;
     private readonly IPdfRenderingService _pdfRenderingService;
+    private readonly ILogger<RenderingCoordinator> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderingCoordinator"/> class.
@@ -22,14 +24,17 @@ public sealed class RenderingCoordinator
     /// <param name="strategyFactory">Factory for retrieving ordered rendering strategies.</param>
     /// <param name="observabilityService">Service for logging and diagnostics.</param>
     /// <param name="pdfRenderingService">Service for rendering PDF pages to PNG streams.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
     public RenderingCoordinator(
         RenderingStrategyFactory strategyFactory,
         RenderingObservabilityService observabilityService,
-        IPdfRenderingService pdfRenderingService)
+        IPdfRenderingService pdfRenderingService,
+        ILogger<RenderingCoordinator> logger)
     {
         _strategyFactory = strategyFactory ?? throw new ArgumentNullException(nameof(strategyFactory));
         _observabilityService = observabilityService ?? throw new ArgumentNullException(nameof(observabilityService));
         _pdfRenderingService = pdfRenderingService ?? throw new ArgumentNullException(nameof(pdfRenderingService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -68,6 +73,10 @@ public sealed class RenderingCoordinator
 
         try
         {
+            _logger.LogDebug(
+                "RenderingCoordinator: Starting render. Page={PageNumber}, Zoom={ZoomLevel}, Dpi={Dpi}",
+                pageNumber, zoomLevel, dpi);
+
             // Step 1: Render PDF page to PNG stream using PdfRenderingService
             var renderResult = await _pdfRenderingService.RenderPageAsync(document, pageNumber, zoomLevel, dpi);
 
@@ -75,6 +84,9 @@ public sealed class RenderingCoordinator
             {
                 // PNG generation failed - log and return null
                 var error = renderResult.Errors.FirstOrDefault();
+                _logger.LogError(
+                    "RenderingCoordinator: PDF rendering failed. Error={Error}",
+                    error?.Message ?? "Unknown error");
                 _observabilityService.LogRenderFailure(
                     "RenderPage",
                     new Exception($"PDF rendering failed: {error?.Message ?? "Unknown error"}"),
@@ -83,12 +95,17 @@ public sealed class RenderingCoordinator
             }
 
             pngStream = renderResult.Value;
+            _logger.LogDebug(
+                "RenderingCoordinator: PNG stream created. Length={Length}, CanRead={CanRead}, CanSeek={CanSeek}",
+                pngStream.Length, pngStream.CanRead, pngStream.CanSeek);
 
             // Step 2: Try each rendering strategy in priority order
             var strategies = _strategyFactory.GetStrategies().ToList();
+            _logger.LogDebug("RenderingCoordinator: Found {Count} strategies", strategies.Count);
 
             if (strategies.Count == 0)
             {
+                _logger.LogError("RenderingCoordinator: No rendering strategies registered");
                 _observabilityService.LogRenderFailure(
                     "RenderWithFallback",
                     new InvalidOperationException("No rendering strategies registered"),

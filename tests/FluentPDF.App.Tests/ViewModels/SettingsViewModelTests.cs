@@ -146,15 +146,26 @@ public class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Theme_WhenChanged_ShouldUpdateSettingsAndSave()
+    public void Theme_WhenChanged_ShouldUpdateSettingsAndSaveAndNotify()
     {
         // Arrange
         using var viewModel = CreateViewModel();
         var saveCalled = false;
+        var notifyThemeCalled = false;
+        AppTheme? notifiedTheme = null;
+
         _settingsServiceMock
             .Setup(s => s.SaveAsync())
             .Callback(() => saveCalled = true)
             .Returns(Task.CompletedTask);
+
+        _settingsServiceMock
+            .Setup(s => s.NotifyThemeChanged(It.IsAny<AppTheme>()))
+            .Callback<AppTheme>(theme =>
+            {
+                notifyThemeCalled = true;
+                notifiedTheme = theme;
+            });
 
         // Act
         viewModel.Theme = AppTheme.Dark;
@@ -162,6 +173,8 @@ public class SettingsViewModelTests : IDisposable
         // Assert
         _testSettings.Theme.Should().Be(AppTheme.Dark);
         saveCalled.Should().BeTrue();
+        notifyThemeCalled.Should().BeTrue("NotifyThemeChanged should be called for immediate theme application");
+        notifiedTheme.Should().Be(AppTheme.Dark);
     }
 
     [Fact]

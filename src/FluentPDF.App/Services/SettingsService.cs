@@ -54,6 +54,9 @@ public sealed class SettingsService : ISettingsService
     public event EventHandler<AppSettings>? SettingsChanged;
 
     /// <inheritdoc/>
+    public event EventHandler<AppTheme>? ThemeChanged;
+
+    /// <inheritdoc/>
     public async Task LoadAsync()
     {
         try
@@ -187,6 +190,13 @@ public sealed class SettingsService : ISettingsService
         {
             _saveSemaphore.Release();
         }
+    }
+
+    /// <inheritdoc/>
+    public void NotifyThemeChanged(AppTheme theme)
+    {
+        _logger.LogDebug("Theme change notification: {Theme}", theme);
+        ThemeChanged?.Invoke(this, theme);
     }
 
     /// <summary>

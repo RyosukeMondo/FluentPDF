@@ -144,9 +144,13 @@ namespace FluentPDF.App
                     services.AddSingleton<DiagnosticCommandHandler>();
                     services.AddSingleton<Diagnostics.MarshalingValidationService>();
 
-                    // Register rendering strategies
-                    services.AddTransient<IRenderingStrategy, WriteableBitmapRenderingStrategy>();
-                    services.AddTransient<IRenderingStrategy, FileBasedRenderingStrategy>();
+                    // Register rendering strategies (with logger injection)
+                    services.AddTransient<IRenderingStrategy>(sp =>
+                        new WriteableBitmapRenderingStrategy(
+                            sp.GetRequiredService<ILogger<WriteableBitmapRenderingStrategy>>()));
+                    services.AddTransient<IRenderingStrategy>(sp =>
+                        new FileBasedRenderingStrategy(
+                            sp.GetRequiredService<ILogger<FileBasedRenderingStrategy>>()));
                     services.AddSingleton<RenderingStrategyFactory>();
                     services.AddSingleton<RenderingCoordinator>();
 
@@ -253,6 +257,7 @@ namespace FluentPDF.App
 
                 // Subscribe to settings changes and apply current theme
                 settingsService.SettingsChanged += OnSettingsChanged;
+                settingsService.ThemeChanged += OnThemeChanged;
                 ApplyTheme(settingsService.Settings.Theme);
 
                 Log.Information("Settings service initialized and theme applied");
@@ -842,6 +847,14 @@ namespace FluentPDF.App
         private void OnSettingsChanged(object? sender, AppSettings settings)
         {
             ApplyTheme(settings.Theme);
+        }
+
+        /// <summary>
+        /// Handles immediate theme changes from the settings view model.
+        /// </summary>
+        private void OnThemeChanged(object? sender, AppTheme theme)
+        {
+            ApplyTheme(theme);
         }
 
         /// <summary>

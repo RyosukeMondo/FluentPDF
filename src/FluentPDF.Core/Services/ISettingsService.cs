@@ -13,9 +13,15 @@ public interface ISettingsService
     AppSettings Settings { get; }
 
     /// <summary>
-    /// Event raised when settings are changed.
+    /// Event raised when settings are changed and persisted.
     /// </summary>
     event EventHandler<AppSettings>? SettingsChanged;
+
+    /// <summary>
+    /// Event raised immediately when the theme changes, before persistence.
+    /// This allows immediate UI updates without waiting for debounced save.
+    /// </summary>
+    event EventHandler<AppTheme>? ThemeChanged;
 
     /// <summary>
     /// Loads settings from persistent storage.
@@ -35,4 +41,11 @@ public interface ISettingsService
     /// </summary>
     /// <returns>A task that represents the asynchronous reset operation.</returns>
     Task ResetToDefaultsAsync();
+
+    /// <summary>
+    /// Notifies that the theme has changed and should be applied immediately.
+    /// Call this when the user changes the theme setting.
+    /// </summary>
+    /// <param name="theme">The new theme to apply.</param>
+    void NotifyThemeChanged(AppTheme theme);
 }

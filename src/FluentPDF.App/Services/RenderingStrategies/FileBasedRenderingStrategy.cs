@@ -1,5 +1,6 @@
 using FluentPDF.App.Interfaces;
 using FluentPDF.Core.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System.Collections.Concurrent;
@@ -16,6 +17,8 @@ namespace FluentPDF.App.Services.RenderingStrategies;
 /// </remarks>
 public sealed class FileBasedRenderingStrategy : IRenderingStrategy, IDisposable
 {
+    private readonly ILogger<FileBasedRenderingStrategy>? _logger;
+
     /// <summary>
     /// Tracks all temporary files created by this strategy for cleanup.
     /// Thread-safe collection for concurrent rendering operations.
@@ -26,6 +29,22 @@ public sealed class FileBasedRenderingStrategy : IRenderingStrategy, IDisposable
     /// Maximum number of temp files to keep before triggering cleanup.
     /// </summary>
     private const int MaxTempFilesBeforeCleanup = 100;
+
+    /// <summary>
+    /// Initializes a new instance without logging (for backward compatibility).
+    /// </summary>
+    public FileBasedRenderingStrategy()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance with logging support.
+    /// </summary>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    public FileBasedRenderingStrategy(ILogger<FileBasedRenderingStrategy> logger)
+    {
+        _logger = logger;
+    }
 
     /// <inheritdoc/>
     public string StrategyName => "FileBased";
@@ -40,6 +59,10 @@ public sealed class FileBasedRenderingStrategy : IRenderingStrategy, IDisposable
 
         try
         {
+            _logger?.LogDebug(
+                "FileBasedRenderingStrategy: Starting render. StreamLength={StreamLength}, StreamPosition={StreamPosition}",
+                pngStream.Length, pngStream.Position);
+
             // Reset stream position to beginning
             pngStream.Seek(0, SeekOrigin.Begin);
 
@@ -55,6 +78,10 @@ public sealed class FileBasedRenderingStrategy : IRenderingStrategy, IDisposable
                 await fileStream.FlushAsync();
             }
 
+            _logger?.LogDebug(
+                "FileBasedRenderingStrategy: Temp file created. Path={TempPath}, FileSize={FileSize}",
+                tempFilePath, new FileInfo(tempFilePath).Length);
+
             // Track temp file for later cleanup
             _tempFiles.Add(tempFilePath);
 
@@ -64,15 +91,52 @@ public sealed class FileBasedRenderingStrategy : IRenderingStrategy, IDisposable
                 _ = Task.Run(CleanupOldTempFiles);
             }
 
-            // Load image from file URI
-            // BitmapImage with file URIs is much more reliable than stream-based loading
-            var bitmapImage = new BitmapImage();
-            bitmapImage.UriSource = new Uri(tempFilePath, UriKind.Absolute);
+            // Load image from file URI - MUST be on UI thread
+            BitmapImage bitmapImage;
+            if (App.MainWindow?.DispatcherQueue != null)
+            {
+                var tcs = new TaskCompletionSource<BitmapImage>();
+                var queued = App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+                {
+                    try
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.UriSource = new Uri(tempFilePath, UriKind.Absolute);
+                        tcs.SetResult(bitmap);
+                    }
+                    catch (Exception ex)
+                    {
+                        tcs.SetException(ex);
+                    }
+                });
+
+                if (!queued)
+                {
+                    _logger?.LogError("FileBasedRenderingStrategy: Failed to queue BitmapImage creation on UI thread");
+                    return null;
+                }
+
+                bitmapImage = await tcs.Task;
+            }
+            else
+            {
+                // Fallback: try creating directly (may fail if not on UI thread)
+                bitmapImage = new BitmapImage();
+                bitmapImage.UriSource = new Uri(tempFilePath, UriKind.Absolute);
+            }
+
+            _logger?.LogDebug(
+                "FileBasedRenderingStrategy: BitmapImage created successfully. Page={PageNumber}",
+                context?.PageNumber ?? 0);
 
             return bitmapImage;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger?.LogError(ex,
+                "FileBasedRenderingStrategy: Failed to render. TempPath={TempPath}, Page={PageNumber}, Error={ErrorMessage}",
+                tempFilePath ?? "(null)", context?.PageNumber ?? 0, ex.Message);
+
             // Clean up temp file if we created it but failed to load
             if (tempFilePath != null)
             {
@@ -86,8 +150,7 @@ public sealed class FileBasedRenderingStrategy : IRenderingStrategy, IDisposable
                 }
             }
 
-            // Swallow all exceptions and return null to indicate failure
-            // Caller (RenderingCoordinator) will log the failure
+            // Return null to indicate failure - caller will try next strategy
             return null;
         }
     }
