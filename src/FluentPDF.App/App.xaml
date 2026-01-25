@@ -11,8 +11,6 @@
 
             <Color x:Key="Primary">#512BD4</Color>
             <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
-            <SolidColorBrush x:Key="WhiteBrush" Color="White" />
-            <SolidColorBrush x:Key="BlackBrush" Color="Black" />
             <x:Double x:Key="AppFontSize">14</x:Double>
 
             <Style x:Key="MyLabel" TargetType="TextBlock">
@@ -27,7 +25,7 @@
             <Style x:Key="PrimaryAction" TargetType="Button" BasedOn="{StaticResource Action}">
                 <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
                 <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="Foreground" Value="{StaticResource WhiteBrush}" />
+                <Setter Property="Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

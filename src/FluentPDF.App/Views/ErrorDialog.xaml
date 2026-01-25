@@ -11,7 +11,7 @@
         <FontIcon
             Glyph="&#xE783;"
             FontSize="48"
-            Foreground="{ThemeResource SystemErrorTextColor}"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
             HorizontalAlignment="Center"/>
 
         <!-- User-friendly message -->

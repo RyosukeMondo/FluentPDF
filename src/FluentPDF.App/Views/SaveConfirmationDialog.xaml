@@ -14,7 +14,7 @@
         <FontIcon
             Glyph="&#xE7BA;"
             FontSize="48"
-            Foreground="{ThemeResource SystemAccentColor}"
+            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
             HorizontalAlignment="Center"
             AutomationProperties.AutomationId="WarningIcon"/>
 

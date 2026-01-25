@@ -158,6 +158,9 @@ public sealed class SettingsService : ISettingsService
         _settings = AppSettings.CreateDefault();
         await SaveImmediatelyAsync();
 
+        // Notify theme change immediately so the UI updates
+        ThemeChanged?.Invoke(this, _settings.Theme);
+
         _logger.LogInformation("Settings reset to defaults");
     }
 

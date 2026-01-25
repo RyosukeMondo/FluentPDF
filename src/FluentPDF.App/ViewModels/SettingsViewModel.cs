@@ -322,6 +322,15 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         {
             await _settingsService.ResetToDefaultsAsync();
             LoadSettings();
+
+            // Also reset rendering quality to Auto (default)
+            var defaultQuality = QualityOptions.FirstOrDefault(q => q.Quality == RenderingQuality.Auto);
+            if (defaultQuality != null)
+            {
+                SelectedQualityOption = defaultQuality;
+                _renderingSettingsService.SetRenderingQuality(RenderingQuality.Auto);
+            }
+
             _logger.LogInformation("Settings reset to defaults successfully");
         }
         catch (Exception ex)

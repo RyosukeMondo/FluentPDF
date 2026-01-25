@@ -13,7 +13,7 @@
         <FontIcon
             Glyph="&#xE7BA;"
             FontSize="48"
-            Foreground="{ThemeResource SystemErrorTextColor}"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
             HorizontalAlignment="Center"
             AutomationProperties.AutomationId="WarningIcon"/>
 
