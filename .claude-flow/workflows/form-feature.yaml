@@ -1,0 +1,83 @@
+# Form Feature Workflow
+# Use for: Form detection, filling, validation
+
+name: form-feature
+version: "1.0.0"
+description: Implement PDF form functionality
+
+triggers:
+  - "form"
+  - "acroform"
+  - "field"
+  - "fill"
+  - "validation"
+
+topology: hierarchical
+max_agents: 5
+
+phases:
+  - name: interop
+    description: PDFium form P/Invoke declarations
+    agents:
+      - interop-validator
+      - form-specialist
+    tasks:
+      - Add form P/Invoke to PdfiumFormInterop.cs
+      - Create SafePdfFormHandle
+      - Test marshalling validation
+    outputs:
+      - PdfiumFormInterop.cs
+      - SafePdfFormHandle.cs
+
+  - name: service
+    description: Form service implementation
+    agents:
+      - form-specialist
+      - coder
+    depends_on: [interop]
+    tasks:
+      - Implement IPdfFormService
+      - Implement IFormValidationService
+      - Add field detection
+      - Add tab order sorting
+    outputs:
+      - PdfFormService.cs
+      - FormValidationService.cs
+
+  - name: ui
+    description: Form UI controls
+    agents:
+      - ui-coordinator
+      - form-specialist
+    depends_on: [service]
+    tasks:
+      - Create FormFieldControl.xaml
+      - Implement FormFieldViewModel
+      - Add keyboard navigation
+      - Integrate with PdfViewerPage
+    outputs:
+      - FormFieldControl.xaml
+      - FormFieldViewModel.cs
+
+  - name: testing
+    description: Form testing
+    agents:
+      - verification-engineer
+      - tester
+    depends_on: [ui]
+    tasks:
+      - Unit tests for services
+      - Integration tests with sample forms
+      - E2E tests with FlaUI
+    quality_gates:
+      - field-detection-works
+      - validation-enforced
+      - data-persisted
+
+validation:
+  test_commands:
+    - dotnet test tests/FluentPDF.Rendering.Tests --filter "Form"
+    - dotnet test tests/FluentPDF.App.Tests --filter "Form"
+
+specs:
+  - form-filling

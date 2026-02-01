@@ -1,0 +1,200 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FluentPDF.Avalonia.ViewModels"
+             xmlns:controls="using:FluentPDF.Avalonia.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="FluentPDF.Avalonia.Views.PdfViewerPage"
+             x:DataType="vm:PdfViewerViewModel">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Toolbar -->
+            <RowDefinition Height="Auto"/>
+            <!-- Search Panel -->
+            <RowDefinition Height="Auto"/>
+            <!-- Content with sidebars -->
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Simple Toolbar -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <!-- File operations -->
+                <Button Content="Open"
+                        Command="{Binding OpenDocumentCommand}"
+                        ToolTip.Tip="Open PDF (Ctrl+O)"/>
+
+                <Separator Width="1" Height="24" Margin="8,0"/>
+
+                <!-- Navigation -->
+                <Button Content="◀"
+                        Command="{Binding GoToPreviousPageCommand}"
+                        IsEnabled="{Binding CanGoToPreviousPage}"
+                        ToolTip.Tip="Previous Page"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBox Text="{Binding CurrentPageNumber, Mode=TwoWay}"
+                             Width="50"
+                             HorizontalContentAlignment="Center"/>
+                    <TextBlock Text="/" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding PageCount}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <Button Content="▶"
+                        Command="{Binding GoToNextPageCommand}"
+                        IsEnabled="{Binding CanGoToNextPage}"
+                        ToolTip.Tip="Next Page"/>
+
+                <Separator Width="1" Height="24" Margin="8,0"/>
+
+                <!-- Zoom controls -->
+                <Button Content="−"
+                        Command="{Binding ZoomOutCommand}"
+                        ToolTip.Tip="Zoom Out (Ctrl+−)"/>
+
+                <TextBlock Text="{Binding ZoomLevel, StringFormat='{}{0:P0}'}"
+                           VerticalAlignment="Center"
+                           MinWidth="60"
+                           TextAlignment="Center"
+                           ToolTip.Tip="Zoom Level"/>
+
+                <Button Content="+"
+                        Command="{Binding ZoomInCommand}"
+                        ToolTip.Tip="Zoom In (Ctrl++/Ctrl+=)"/>
+
+                <Separator Width="1" Height="24" Margin="8,0"/>
+
+                <!-- Rotation -->
+                <Button Content="⟲"
+                        Command="{Binding RotateCounterClockwiseCommand}"
+                        ToolTip.Tip="Rotate Left (Ctrl+Shift+−)"/>
+
+                <Button Content="⟳"
+                        Command="{Binding RotateClockwiseCommand}"
+                        ToolTip.Tip="Rotate Right (Ctrl+Shift++/Ctrl+Shift+=)"/>
+
+                <Separator Width="1" Height="24" Margin="8,0"/>
+
+                <!-- View Options -->
+                <Button Content="🔍"
+                        Command="{Binding ToggleSearchCommand}"
+                        ToolTip.Tip="Search (Ctrl+F)"
+                        Width="32"
+                        Height="32"/>
+
+                <Button Content="📄"
+                        Command="{Binding ToggleThumbnailsCommand}"
+                        ToolTip.Tip="Show/Hide Thumbnails"
+                        Width="32"
+                        Height="32"/>
+
+                <Button Content="🔖"
+                        Command="{Binding ToggleBookmarksCommand}"
+                        ToolTip.Tip="Show/Hide Bookmarks"
+                        Width="32"
+                        Height="32"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Search Panel -->
+        <controls:SearchPanel Grid.Row="1"
+                              DataContext="{Binding SearchPanelViewModel}"
+                              IsVisible="{Binding IsSearchVisible}"/>
+
+        <!-- Main Content Area with Sidebars -->
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
+
+            <!-- Thumbnails Sidebar -->
+            <controls:ThumbnailsSidebar Grid.Column="0"
+                                        DataContext="{Binding ThumbnailsViewModel}"
+                                        IsVisible="{Binding IsVisible}"
+                                        Width="180"/>
+
+            <!-- PDF Content Area -->
+            <Grid Grid.Column="1">
+                <ScrollViewer x:Name="PdfScrollViewer"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              Background="{DynamicResource ApplicationPageBackgroundBrush}">
+
+                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            BorderThickness="1"
+                            Margin="16"
+                            Background="White"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top">
+
+                        <!-- PDF Page with Selection Overlay -->
+                        <Grid>
+                            <!-- PDF Page Image -->
+                            <Image Source="{Binding CurrentPageImage}"
+                                   Stretch="Uniform"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   x:Name="PdfImage"/>
+
+                            <!-- Selection Rectangle Overlay -->
+                            <Canvas x:Name="SelectionCanvas"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    IsHitTestVisible="False">
+                                <Rectangle x:Name="SelectionRectangle"
+                                           Fill="#4000BFFF"
+                                           Stroke="#FF00BFFF"
+                                           StrokeThickness="1"
+                                           IsVisible="False"/>
+                            </Canvas>
+                        </Grid>
+                    </Border>
+                </ScrollViewer>
+
+                <!-- Loading Overlay -->
+                <Border Background="#80000000"
+                        IsVisible="{Binding IsLoading}">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="16">
+                        <ProgressBar IsIndeterminate="True"
+                                     Width="200"/>
+                        <TextBlock Text="{Binding LoadingMessage}"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Error Display -->
+                <Border Background="{DynamicResource ApplicationPageBackgroundBrush}"
+                        IsVisible="{Binding HasError}">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="16"
+                                MaxWidth="400">
+                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                  Width="48"
+                                  Height="48"
+                                  Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   TextWrapping="Wrap"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"/>
+                        <Button Content="Try Again"
+                                Command="{Binding OpenDocumentCommand}"
+                                HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Bookmarks Sidebar -->
+            <controls:BookmarksPanel Grid.Column="2"
+                                     DataContext="{Binding BookmarksViewModel}"
+                                     IsVisible="{Binding IsVisible}"
+                                     Width="250"/>
+        </Grid>
+    </Grid>
+</UserControl>

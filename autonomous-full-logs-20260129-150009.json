@@ -1,0 +1,155 @@
+{
+  "count": 25,
+  "logs": [
+    {
+      "timestamp": "2026-01-29T14:59:36.663495+09:00",
+      "level": "Info",
+      "message": "OperationWatchdog initialized - autonomous error detection enabled",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:36.6641658+09:00",
+      "level": "Info",
+      "message": "MainViewModel initialized",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:37.4193502+09:00",
+      "level": "Info",
+      "message": "Debug console initialized - real-time logging enabled",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:37.4193524+09:00",
+      "level": "Info",
+      "message": "Click 'Copy Last 50' to copy recent logs to clipboard",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:37.4193525+09:00",
+      "level": "Info",
+      "message": "Click 'Download Log' to save full log file",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:37.4193527+09:00",
+      "level": "Info",
+      "message": "---",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9695031+09:00",
+      "level": "Info",
+      "message": "[REST API] Received open-file request: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9696149+09:00",
+      "level": "Info",
+      "message": "[REST API] Triggering file open via direct command execution...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9696458+09:00",
+      "level": "Info",
+      "message": "[REST API] Command execution started. Polling for completion (30s timeout)...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9701083+09:00",
+      "level": "Info",
+      "message": "[REST API] Executing OpenRecentFileCommand...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9747578+09:00",
+      "level": "Info",
+      "message": "🔍 WATCHDOG: Monitoring 'Open File: sample-with-text.pdf' (timeout: 30000ms)",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9748328+09:00",
+      "level": "Info",
+      "message": "[1/8] Starting OpenFileInTabAsync for: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9748965+09:00",
+      "level": "Info",
+      "message": "[2/8] File not already open. Current tab count: 0",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:39.9749061+09:00",
+      "level": "Info",
+      "message": "[3/8] Requesting PdfViewerViewModel from DI container...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1438468+09:00",
+      "level": "Info",
+      "message": "[3/8] PdfViewerViewModel created: True",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1438591+09:00",
+      "level": "Info",
+      "message": "[4/8] Requesting ILogger<TabViewModel> from DI container...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1439803+09:00",
+      "level": "Info",
+      "message": "[4/8] TabLogger created: True",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1439893+09:00",
+      "level": "Info",
+      "message": "[5/8] Creating TabViewModel with filePath: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1457093+09:00",
+      "level": "Info",
+      "message": "[5/8] TabViewModel created successfully",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1457243+09:00",
+      "level": "Info",
+      "message": "[6/8] Adding tab to collection (current count: 0)",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1459833+09:00",
+      "level": "Info",
+      "message": "[6/8] Tab added (new count: 1)",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1459876+09:00",
+      "level": "Info",
+      "message": "[6/8] Activating tab...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1463128+09:00",
+      "level": "Info",
+      "message": "[6/8] Tab activated. ActiveTab is now: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.1463162+09:00",
+      "level": "Info",
+      "message": "[7/8] Calling LoadDocumentFromPathAsync for: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:59:40.4766432+09:00",
+      "level": "Info",
+      "message": "[REST API] Document detected via state polling",
+      "source": "GuiStateEndpoints"
+    }
+  ]
+}

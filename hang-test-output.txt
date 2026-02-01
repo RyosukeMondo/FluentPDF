@@ -1,0 +1,50 @@
+============================================
+  AUTONOMOUS HANG DETECTION TEST
+============================================
+
+[1/8] Killing existing FluentPDF instances...
+      Done.
+
+[2/8] Checking if test PDF exists...
+      Found: C:\Users\ryosu\repos\FluentPDF\tests\Fixtures\sample-with-text.pdf
+
+[3/8] Starting FluentPDF with API server (port 5000)...
+      Process ID: 59516
+
+[4/8] Waiting for app to start (timeout: 30s)...
+      App started successfully!
+      Version: 1.0.0+fdd9a82b6bda40ecf70b8ecd819676a68518de80
+      PDFium loaded: True
+
+[5/8] Attempting to load PDF via GUI...
+      File: C:\Users\ryosu\repos\FluentPDF\tests\Fixtures\sample-with-text.pdf
+      Sending open-file request...
+      ERROR during load request: The request was canceled due to the configured HttpClient.Timeout of 5 seconds elapsing.
+
+[6/8] Monitoring for hangs (timeout: 60s)...
+      [Check 1/30] Active: 0, Hung: 0
+      [Check 2/30] Active: 0, Hung: 0
+      [Check 3/30] Active: 0, Hung: 0
+      All operations completed.
+
+[7/8] Retrieving error logs...
+      No errors logged.
+
+[7.5/8] Retrieving last 50 logs for context...
+      Saved to: autonomous-test-logs-20260129-082606.json
+
+[8/8] TEST SUMMARY
+============================================
+
+RESULT: ?? INCONCLUSIVE
+
+Load request did not report success, but no hang detected.
+Check logs file: autonomous-test-logs-20260129-082606.json
+
+Process still running: True
+
+To view GUI debug console, check the app window.
+To stop app: Get-Process FluentPDF.Avalonia | Stop-Process
+
+App left running for manual inspection.
+Press any key to stop the app and exit...

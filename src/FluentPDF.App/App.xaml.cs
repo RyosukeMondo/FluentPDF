@@ -27,8 +27,9 @@ namespace FluentPDF.App
     /// </summary>
     public partial class App : Application
     {
-        private readonly IHost _host;
+        private static IHost _host = null!;
         private Window? _window;
+        private readonly Windows.UI.ViewManagement.UISettings _uiSettings;
 
         /// <summary>
         /// Gets the main application window.
@@ -46,7 +47,7 @@ namespace FluentPDF.App
         /// </summary>
         public App()
         {
-            System.Diagnostics.Debug.WriteLine("FluentPDF: App constructor starting...");
+            // Debug logging removed in production
 
             // Parse command-line options early
             var args = Environment.GetCommandLineArgs();
@@ -57,6 +58,9 @@ namespace FluentPDF.App
             {
                 AttachConsole();
             }
+
+            // Initialize UISettings for system theme change detection
+            _uiSettings = new Windows.UI.ViewManagement.UISettings();
 
             try
             {
@@ -112,13 +116,14 @@ namespace FluentPDF.App
                     services.AddSingleton<ITextExtractionService, TextExtractionService>();
                     services.AddSingleton<ITextSearchService, TextSearchService>();
                     services.AddSingleton<IAnnotationService, AnnotationService>();
+                    services.AddSingleton<ICoordinateMapper, CoordinateMapper>();
                     services.AddSingleton<IThumbnailRenderingService, ThumbnailRenderingService>();
                     services.AddSingleton<IImageInsertionService, ImageInsertionService>();
                     services.AddSingleton<IWatermarkService, WatermarkService>();
 
                     // Register HiDPI and rendering services
                     services.AddSingleton<IDpiDetectionService, DpiDetectionService>();
-                    services.AddSingleton<IRenderingSettingsService, RenderingSettingsService>();
+                    services.AddSingleton<IRenderingSettingsService, FluentPDF.Rendering.Services.RenderingSettingsService>();
 
                     // Register conversion services
                     services.AddSingleton<IDocxParserService, DocxParserService>();
@@ -179,7 +184,7 @@ namespace FluentPDF.App
         /// <summary>
         /// Gets the service provider for dependency injection.
         /// </summary>
-        public IServiceProvider Services => _host.Services;
+        public static IServiceProvider Services => _host.Services;
 
         /// <summary>
         /// Gets a service from the dependency injection container.
@@ -187,7 +192,7 @@ namespace FluentPDF.App
         /// <typeparam name="T">The type of service to retrieve.</typeparam>
         /// <returns>The service instance.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the service is not registered.</exception>
-        public T GetService<T>() where T : notnull
+        public static T GetService<T>() where T : notnull
         {
             return _host.Services.GetRequiredService<T>();
         }
@@ -259,6 +264,9 @@ namespace FluentPDF.App
                 settingsService.SettingsChanged += OnSettingsChanged;
                 settingsService.ThemeChanged += OnThemeChanged;
                 ApplyTheme(settingsService.Settings.Theme);
+
+                // Subscribe to system theme changes (for UseSystem theme mode)
+                _uiSettings.ColorValuesChanged += OnSystemThemeChanged;
 
                 Log.Information("Settings service initialized and theme applied");
             }
@@ -720,6 +728,74 @@ namespace FluentPDF.App
                 return true;
             }
 
+            // Handle --test-merge command
+            if (!string.IsNullOrEmpty(options.TestMerge))
+            {
+                Log.Information("Executing test-merge command");
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRunTestAsync("merge");
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-split command
+            if (!string.IsNullOrEmpty(options.TestSplit))
+            {
+                Log.Information("Executing test-split command for file: {FilePath}", options.TestSplit);
+                var handler = GetService<DiagnosticCommandHandler>();
+                // Store test parameters in context
+                var testContext = new Dictionary<string, object>
+                {
+                    ["InputPath"] = options.TestSplit
+                };
+                if (!string.IsNullOrEmpty(options.SplitRanges))
+                {
+                    testContext["PageRanges"] = options.SplitRanges;
+                }
+                if (!string.IsNullOrEmpty(options.OutputDirectory))
+                {
+                    testContext["OutputDirectory"] = options.OutputDirectory;
+                }
+                var exitCode = await handler.HandleRunTestAsync("split");
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-forms command
+            if (!string.IsNullOrEmpty(options.TestFormsCmd))
+            {
+                Log.Information("Executing test-forms command for file: {FilePath}", options.TestFormsCmd);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRunTestAsync("forms");
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-annotations-cmd command
+            if (!string.IsNullOrEmpty(options.TestAnnotationsCmd))
+            {
+                Log.Information("Executing test-annotations command for file: {FilePath}", options.TestAnnotationsCmd);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRunTestAsync("annotations");
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
+            // Handle --test-watermark command
+            if (!string.IsNullOrEmpty(options.TestWatermark))
+            {
+                Log.Information("Executing test-watermark command for file: {FilePath}", options.TestWatermark);
+                var handler = GetService<DiagnosticCommandHandler>();
+                var exitCode = await handler.HandleRunTestAsync("watermark");
+                await ShutdownAsync();
+                Environment.Exit(exitCode);
+                return true;
+            }
+
             // Handle --validate-utf16-marshalling command
             if (options.ValidateUtf16Marshalling)
             {
@@ -882,6 +958,42 @@ namespace FluentPDF.App
             catch (Exception ex)
             {
                 Log.Warning(ex, "Failed to apply theme {Theme}", theme);
+            }
+        }
+
+        /// <summary>
+        /// Handles system theme changes when user changes Windows theme.
+        /// Only applies if app theme is set to UseSystem.
+        /// </summary>
+        private void OnSystemThemeChanged(Windows.UI.ViewManagement.UISettings sender, object args)
+        {
+            try
+            {
+                // Run on UI thread
+                _window?.DispatcherQueue.TryEnqueue(() =>
+                {
+                    try
+                    {
+                        var settingsService = GetService<ISettingsService>();
+
+                        // Only respond if user has selected UseSystem theme
+                        if (settingsService.Settings.Theme == AppTheme.UseSystem)
+                        {
+                            Log.Information("System theme changed, updating application theme");
+
+                            // Re-apply system theme (ElementTheme.Default will pick up new system theme)
+                            ApplyTheme(AppTheme.UseSystem);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Failed to handle system theme change");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to dispatch system theme change to UI thread");
             }
         }
 

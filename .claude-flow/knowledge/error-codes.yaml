@@ -1,0 +1,334 @@
+# Error Code Registry
+# Centralized error codes for FluentPDF
+
+version: "1.0.0"
+updated: "2026-01-25"
+
+# Error code format: DOMAIN_OPERATION_CONDITION
+# Example: PDF_LOAD_FILE_NOT_FOUND
+
+# ============================================================================
+# ERROR CATEGORIES
+# ============================================================================
+
+categories:
+  File:
+    description: "File system operations"
+    prefix: "FILE"
+    codes:
+      - FILE_NOT_FOUND
+      - FILE_ACCESS_DENIED
+      - FILE_LOCKED
+      - FILE_CORRUPTED
+      - FILE_TOO_LARGE
+
+  Document:
+    description: "PDF document operations"
+    prefix: "PDF"
+    codes:
+      - PDF_LOAD_FAILED
+      - PDF_SAVE_FAILED
+      - PDF_INVALID_FORMAT
+      - PDF_ENCRYPTED
+      - PDF_PASSWORD_REQUIRED
+      - PDF_PASSWORD_INCORRECT
+      - PDF_CORRUPTED
+
+  Page:
+    description: "Page operations"
+    prefix: "PAGE"
+    codes:
+      - PAGE_NOT_FOUND
+      - PAGE_RENDER_FAILED
+      - PAGE_INDEX_OUT_OF_RANGE
+      - PAGE_ROTATION_FAILED
+      - PAGE_DELETE_FAILED
+
+  Form:
+    description: "Form field operations"
+    prefix: "FORM"
+    codes:
+      - FORM_NO_FIELDS
+      - FORM_FIELD_NOT_FOUND
+      - FORM_INVALID_VALUE
+      - FORM_SAVE_FAILED
+      - FORM_READONLY_FIELD
+      - FORM_VALIDATION_FAILED
+      - FORM_REQUIRED_EMPTY
+      - FORM_MAX_LENGTH_EXCEEDED
+      - FORM_INVALID_FORMAT
+
+  Annotation:
+    description: "Annotation operations"
+    prefix: "ANNOT"
+    codes:
+      - ANNOT_CREATE_FAILED
+      - ANNOT_UPDATE_FAILED
+      - ANNOT_DELETE_FAILED
+      - ANNOT_INVALID_TYPE
+      - ANNOT_SAVE_FAILED
+
+  Bookmark:
+    description: "Bookmark operations"
+    prefix: "BOOKMARK"
+    codes:
+      - BOOKMARK_EXTRACTION_FAILED
+      - BOOKMARK_INVALID
+      - BOOKMARK_NO_DESTINATION
+
+  Rendering:
+    description: "Rendering operations"
+    prefix: "RENDER"
+    codes:
+      - RENDER_FAILED
+      - RENDER_OUT_OF_MEMORY
+      - RENDER_CANCELLED
+      - RENDER_DPI_INVALID
+
+  Interop:
+    description: "Native interop operations"
+    prefix: "INTEROP"
+    codes:
+      - INTEROP_INIT_FAILED
+      - INTEROP_HANDLE_INVALID
+      - INTEROP_MARSHALLING_ERROR
+      - INTEROP_NATIVE_ERROR
+      - INTEROP_LIBRARY_NOT_FOUND
+
+  Merge:
+    description: "Document merge operations"
+    prefix: "MERGE"
+    codes:
+      - MERGE_FAILED
+      - MERGE_SOURCE_INVALID
+      - MERGE_OUTPUT_EXISTS
+      - MERGE_ENCRYPTED_SOURCE
+
+  Split:
+    description: "Document split operations"
+    prefix: "SPLIT"
+    codes:
+      - SPLIT_FAILED
+      - SPLIT_INVALID_RANGE
+      - SPLIT_OUTPUT_EXISTS
+
+  Optimize:
+    description: "Document optimization"
+    prefix: "OPTIMIZE"
+    codes:
+      - OPTIMIZE_FAILED
+      - OPTIMIZE_NO_REDUCTION
+      - OPTIMIZE_ENCRYPTED
+
+  Conversion:
+    description: "Document conversion"
+    prefix: "CONVERT"
+    codes:
+      - CONVERT_FAILED
+      - CONVERT_UNSUPPORTED_FORMAT
+      - CONVERT_QUALITY_FAILED
+
+  Validation:
+    description: "Validation operations"
+    prefix: "VALIDATE"
+    codes:
+      - VALIDATE_FAILED
+      - VALIDATE_NOT_PDF_A
+      - VALIDATE_CORRUPTED
+
+  IO:
+    description: "I/O operations"
+    prefix: "IO"
+    codes:
+      - IO_READ_FAILED
+      - IO_WRITE_FAILED
+      - IO_DISK_FULL
+      - IO_PATH_TOO_LONG
+
+  System:
+    description: "System-level errors"
+    prefix: "SYS"
+    codes:
+      - SYS_OUT_OF_MEMORY
+      - SYS_THREAD_ERROR
+      - SYS_TIMEOUT
+
+# ============================================================================
+# ERROR SEVERITY LEVELS
+# ============================================================================
+
+severities:
+  Critical:
+    description: "Application cannot continue, data loss possible"
+    examples:
+      - INTEROP_INIT_FAILED
+      - SYS_OUT_OF_MEMORY
+      - PDF_CORRUPTED
+
+  Error:
+    description: "Operation failed, user action required"
+    examples:
+      - PDF_LOAD_FAILED
+      - FORM_SAVE_FAILED
+      - RENDER_FAILED
+
+  Warning:
+    description: "Operation completed with issues"
+    examples:
+      - OPTIMIZE_NO_REDUCTION
+      - BOOKMARK_NO_DESTINATION
+
+  Information:
+    description: "Non-critical notification"
+    examples:
+      - FORM_NO_FIELDS
+
+# ============================================================================
+# FULL ERROR CODE DEFINITIONS
+# ============================================================================
+
+errors:
+  # File errors
+  FILE_NOT_FOUND:
+    category: File
+    severity: Error
+    message: "File not found: {path}"
+    user_message: "The file could not be found. Please check the file path."
+    recovery: "Verify file exists and path is correct"
+
+  FILE_ACCESS_DENIED:
+    category: File
+    severity: Error
+    message: "Access denied: {path}"
+    user_message: "Cannot access the file. It may be in use by another program."
+    recovery: "Close other programs using the file"
+
+  FILE_LOCKED:
+    category: File
+    severity: Error
+    message: "File is locked: {path}"
+    user_message: "The file is locked by another process."
+    recovery: "Wait and retry, or close the other application"
+
+  # Document errors
+  PDF_LOAD_FAILED:
+    category: Document
+    severity: Error
+    message: "Failed to load PDF: {reason}"
+    user_message: "Could not open the PDF file."
+    recovery: "Try a different PDF or check if file is valid"
+
+  PDF_ENCRYPTED:
+    category: Document
+    severity: Warning
+    message: "PDF is encrypted"
+    user_message: "This PDF is password-protected."
+    recovery: "Enter the correct password"
+
+  PDF_PASSWORD_INCORRECT:
+    category: Document
+    severity: Error
+    message: "Incorrect password"
+    user_message: "The password you entered is incorrect."
+    recovery: "Try a different password"
+
+  # Page errors
+  PAGE_RENDER_FAILED:
+    category: Page
+    severity: Error
+    message: "Failed to render page {pageNumber}: {reason}"
+    user_message: "Could not display page {pageNumber}."
+    recovery: "Try different zoom level or quality setting"
+
+  PAGE_INDEX_OUT_OF_RANGE:
+    category: Page
+    severity: Error
+    message: "Page index {index} out of range (0-{max})"
+    user_message: "The requested page does not exist."
+    recovery: "Use a valid page number"
+
+  # Form errors
+  FORM_VALIDATION_FAILED:
+    category: Form
+    severity: Warning
+    message: "Form validation failed: {fields}"
+    user_message: "Please correct the highlighted fields."
+    recovery: "Fill in all required fields correctly"
+
+  FORM_SAVE_FAILED:
+    category: Form
+    severity: Error
+    message: "Failed to save form data: {reason}"
+    user_message: "Could not save form data. Original file preserved."
+    recovery: "Check disk space and file permissions"
+
+  # Rendering errors
+  RENDER_OUT_OF_MEMORY:
+    category: Rendering
+    severity: Critical
+    message: "Out of memory during render at {dpi} DPI"
+    user_message: "Not enough memory to display at this quality."
+    recovery: "Reduce quality setting or close other applications"
+
+  # Interop errors
+  INTEROP_INIT_FAILED:
+    category: Interop
+    severity: Critical
+    message: "Failed to initialize {library}: {reason}"
+    user_message: "PDF rendering engine failed to start."
+    recovery: "Reinstall application or check system requirements"
+
+  INTEROP_HANDLE_INVALID:
+    category: Interop
+    severity: Critical
+    message: "Invalid handle: {handle}"
+    user_message: "Internal error. Please restart the application."
+    recovery: "Restart application, report bug if persists"
+
+  # Merge/Split errors
+  MERGE_ENCRYPTED_SOURCE:
+    category: Merge
+    severity: Error
+    message: "Cannot merge encrypted PDF: {path}"
+    user_message: "One or more PDFs are password-protected."
+    recovery: "Provide passwords for protected PDFs"
+
+  SPLIT_INVALID_RANGE:
+    category: Split
+    severity: Error
+    message: "Invalid page range: {range}"
+    user_message: "Invalid page range. Use format like '1-5, 10, 15-20'."
+    recovery: "Correct the page range format"
+
+# ============================================================================
+# ERROR CODE USAGE
+# ============================================================================
+
+usage:
+  creating_error: |
+    var error = new PdfError(
+        "PDF_LOAD_FAILED",
+        ErrorCategory.Document,
+        ErrorSeverity.Error,
+        "Failed to load PDF")
+        .WithContext("path", filePath)
+        .WithContext("reason", ex.Message);
+
+    return Result.Fail(error);
+
+  checking_error: |
+    if (result.IsFailed)
+    {
+        var error = result.Errors.OfType<PdfError>().FirstOrDefault();
+        if (error?.ErrorCode == "PDF_ENCRYPTED")
+        {
+            // Prompt for password
+        }
+    }
+
+  logging_error: |
+    _logger.LogError(
+        "Error {ErrorCode}: {Message} Context: {@Context}",
+        error.ErrorCode,
+        error.Message,
+        error.Context);

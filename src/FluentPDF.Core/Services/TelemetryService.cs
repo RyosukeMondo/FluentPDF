@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -28,6 +29,7 @@ public sealed class TelemetryService : ITelemetryService
     }
 
     /// <inheritdoc/>
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "JSON serialization is safe for telemetry dictionaries")]
     public void TrackEvent(string eventName, Dictionary<string, object>? properties = null)
     {
         if (eventName is null)
@@ -53,6 +55,7 @@ public sealed class TelemetryService : ITelemetryService
     }
 
     /// <inheritdoc/>
+    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "JSON serialization is safe for telemetry dictionaries")]
     public void TrackException(Exception exception, Dictionary<string, object>? properties = null)
     {
         if (exception is null)

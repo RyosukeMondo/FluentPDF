@@ -289,6 +289,182 @@ public sealed class TextExtractionService : ITextExtractionService
         return Result.Ok(results);
     }
 
+    /// <inheritdoc />
+    public async Task<Result<TextSelection>> ExtractTextInBoundsAsync(
+        PdfDocument document,
+        int pageNumber,
+        System.Drawing.RectangleF bounds)
+    {
+        if (document == null)
+        {
+            throw new ArgumentNullException(nameof(document));
+        }
+
+        var correlationId = Guid.NewGuid();
+        _logger.LogDebug(
+            "Extracting text within bounds. CorrelationId={CorrelationId}, FilePath={FilePath}, " +
+            "PageNumber={PageNumber}, Bounds=({Left},{Top},{Width},{Height})",
+            correlationId, document.FilePath, pageNumber,
+            bounds.Left, bounds.Top, bounds.Width, bounds.Height);
+
+        // Validate page number
+        if (pageNumber < 1 || pageNumber > document.PageCount)
+        {
+            var error = new PdfError(
+                "PDF_PAGE_INVALID",
+                $"Page number {pageNumber} is out of range. Valid range: 1-{document.PageCount}",
+                ErrorCategory.Validation,
+                ErrorSeverity.Error)
+                .WithContext("PageNumber", pageNumber)
+                .WithContext("TotalPages", document.PageCount)
+                .WithContext("FilePath", document.FilePath)
+                .WithContext("CorrelationId", correlationId);
+
+            _logger.LogWarning(
+                "Invalid page number. CorrelationId={CorrelationId}, PageNumber={PageNumber}",
+                correlationId, pageNumber);
+
+            return Result.Fail(error);
+        }
+
+        // Extract text on background thread
+        return await Task.Run(() =>
+        {
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                // Load page (0-based index)
+                using var pageHandle = PdfiumInterop.LoadPage(
+                    (SafePdfDocumentHandle)document.Handle,
+                    pageNumber - 1);
+
+                if (pageHandle.IsInvalid)
+                {
+                    var error = new PdfError(
+                        "PDF_TEXT_PAGE_LOAD_FAILED",
+                        $"Failed to load page {pageNumber} for text extraction.",
+                        ErrorCategory.Rendering,
+                        ErrorSeverity.Error)
+                        .WithContext("PageNumber", pageNumber)
+                        .WithContext("FilePath", document.FilePath)
+                        .WithContext("CorrelationId", correlationId);
+
+                    _logger.LogError(
+                        "Failed to load page. CorrelationId={CorrelationId}, PageNumber={PageNumber}",
+                        correlationId, pageNumber);
+
+                    return Result.Fail(error);
+                }
+
+                // Load text page
+                using var textPageHandle = PdfiumInterop.LoadTextPage(pageHandle);
+
+                if (textPageHandle.IsInvalid)
+                {
+                    var error = new PdfError(
+                        "PDF_TEXT_PAGE_LOAD_FAILED",
+                        $"Failed to load text information for page {pageNumber}.",
+                        ErrorCategory.Rendering,
+                        ErrorSeverity.Error)
+                        .WithContext("PageNumber", pageNumber)
+                        .WithContext("FilePath", document.FilePath)
+                        .WithContext("CorrelationId", correlationId);
+
+                    _logger.LogError(
+                        "Failed to load text page. CorrelationId={CorrelationId}",
+                        correlationId);
+
+                    return Result.Fail(error);
+                }
+
+                // Get character count
+                var charCount = PdfiumInterop.GetTextCharCount(textPageHandle);
+                if (charCount == 0)
+                {
+                    stopwatch.Stop();
+                    _logger.LogDebug(
+                        "Text extracted (empty page). CorrelationId={CorrelationId}",
+                        correlationId);
+
+                    return Result.Ok(new TextSelection
+                    {
+                        Text = string.Empty,
+                        PageNumber = pageNumber - 1,
+                        SelectionBounds = bounds
+                    });
+                }
+
+                // Extract characters within bounds
+                var textBuilder = new System.Text.StringBuilder();
+                var charBounds = new List<System.Drawing.RectangleF>();
+
+                for (int i = 0; i < charCount; i++)
+                {
+                    // Get character bounding box
+                    if (PdfiumInterop.GetCharBox(
+                        textPageHandle, i,
+                        out double left, out double top,
+                        out double right, out double bottom))
+                    {
+                        // Convert to RectangleF (note: PDF Y increases upward)
+                        var charRect = new System.Drawing.RectangleF(
+                            (float)left,
+                            (float)bottom,
+                            (float)(right - left),
+                            (float)(top - bottom));
+
+                        // Check if character intersects with selection bounds
+                        if (bounds.IntersectsWith(charRect))
+                        {
+                            // Get character unicode
+                            var text = PdfiumInterop.GetText(textPageHandle, i, 1);
+                            if (!string.IsNullOrEmpty(text))
+                            {
+                                textBuilder.Append(text);
+                                charBounds.Add(charRect);
+                            }
+                        }
+                    }
+                }
+
+                stopwatch.Stop();
+
+                var selectedText = textBuilder.ToString();
+                _logger.LogDebug(
+                    "Text extracted within bounds. CorrelationId={CorrelationId}, " +
+                    "CharCount={CharCount}, ElapsedMs={ElapsedMs}",
+                    correlationId, charBounds.Count, stopwatch.ElapsedMilliseconds);
+
+                return Result.Ok(new TextSelection
+                {
+                    Text = selectedText,
+                    CharacterBounds = charBounds,
+                    SelectionBounds = bounds,
+                    PageNumber = pageNumber - 1
+                });
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                var error = new PdfError(
+                    "PDF_TEXT_EXTRACTION_FAILED",
+                    $"Failed to extract text from page {pageNumber}: {ex.Message}",
+                    ErrorCategory.System,
+                    ErrorSeverity.Error)
+                    .WithContext("PageNumber", pageNumber)
+                    .WithContext("FilePath", document.FilePath)
+                    .WithContext("CorrelationId", correlationId)
+                    .WithContext("ExceptionType", ex.GetType().Name);
+
+                _logger.LogError(ex,
+                    "Failed to extract text within bounds. CorrelationId={CorrelationId}",
+                    correlationId);
+
+                return Result.Fail(error);
+            }
+        });
+    }
+
     private static string GetCacheKey(string filePath, int pageNumber)
     {
         return $"{filePath}|{pageNumber}";

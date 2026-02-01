@@ -1,0 +1,43 @@
+FluentPDF Avalonia E2E Test Suite
+Test started: 2026-01-28 19:07:14
+================================================
+
+=== FluentPDF Avalonia E2E Test Suite ===
+
+=== Test 1: Build Verification ===
+❌ FAIL: Build verification - Build failed with exit code 1
+Build output:   蠕ｩ蜈・ｯｾ雎｡縺ｮ繝励Ο繧ｸ繧ｧ繧ｯ繝医ｒ豎ｺ螳壹＠縺ｦ縺・∪縺・..   蠕ｩ蜈・ｯｾ雎｡縺ｮ縺吶∋縺ｦ縺ｮ繝励Ο繧ｸ繧ｧ繧ｯ繝医・譛譁ｰ縺ｧ縺吶・   FluentPDF.Core -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Core\bin\Debug\net8.0\FluentPDF.Core.dll   FluentPDF.Rendering -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Rendering\bin\Debug\net8.0\FluentPDF.Rendering.dll C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\Controls/ThumbnailsSidebar.axaml(74,38,74,38): Avalonia error AVLN3000: Unable to find a setter that allows multiple assignments to the property Child of type Avalonia.Controls:Avalonia.Controls.Decorator Line 74, position 38. [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]  繝薙Ν繝峨↓螟ｱ謨励＠縺ｾ縺励◆縲・  C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\Controls/ThumbnailsSidebar.axaml(74,38,74,38): Avalonia error AVLN3000: Unable to find a setter that allows multiple assignments to the property Child of type Avalonia.Controls:Avalonia.Controls.Decorator Line 74, position 38. [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]     0 蛟九・隴ｦ蜻・     1 繧ｨ繝ｩ繝ｼ  邨碁℃譎る俣 00:00:05.20
+
+=== Test 2: Binary and Dependencies Check ===
+✅ PASS: Executable exists
+✅ PASS: Main DLL exists
+✅ PASS: PDFium library exists
+✅ PASS: QPDF library exists
+
+=== Test 3: Required Dependencies ===
+✅ PASS: Dependency: Avalonia.Base.dll
+✅ PASS: Dependency: Avalonia.Controls.dll
+❌ FAIL: Dependency: Avalonia.DesktopRuntime.dll - File not found
+✅ PASS: Dependency: FluentPDF.Core.dll
+✅ PASS: Dependency: FluentPDF.Rendering.dll
+
+=== Test 4: Diagnostic Logging ===
+⚠️  WARN: Diagnostic logging system - No diagnostic logs found (expected after first run)
+
+=== Test 5: Application Launch Test ===
+⏭️  SKIP: Application launch test - Interactive tests skipped
+
+=== Test 6: Test Fixture Availability ===
+✅ PASS: Test PDF file exists
+✅ PASS: Test fixture collection (13 PDFs)
+
+=== Test 7: Memory and Performance Metrics ===
+⏭️  SKIP: Memory footprint test - Interactive tests skipped
+
+=== Test 8: Platform Compatibility ===
+✅ PASS: Platform detection (win-x64)
+✅ PASS: Windows platform support verified
+
+=== Generating Test Report ===
+
+=== Test Summary ===

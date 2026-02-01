@@ -1,0 +1,41 @@
+{
+  "count": 6,
+  "logs": [
+    {
+      "timestamp": "2026-01-29T13:35:55.9521593+09:00",
+      "level": "Info",
+      "message": "OperationWatchdog initialized - autonomous error detection enabled",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T13:35:55.9525822+09:00",
+      "level": "Info",
+      "message": "MainViewModel initialized",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T13:35:58.3453911+09:00",
+      "level": "Info",
+      "message": "[REST API] Received open-file request: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T13:35:58.3454971+09:00",
+      "level": "Info",
+      "message": "[REST API] Marshalling to UI thread...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T13:35:58.3455043+09:00",
+      "level": "Info",
+      "message": "[REST API] CheckAccess (are we already on UI thread?): False",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T13:35:58.3461222+09:00",
+      "level": "Info",
+      "message": "[REST API] Waiting for UI thread task to complete (30s timeout)...",
+      "source": "GuiStateEndpoints"
+    }
+  ]
+}

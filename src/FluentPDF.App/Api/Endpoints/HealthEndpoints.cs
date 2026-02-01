@@ -39,7 +39,9 @@ public static class HealthEndpoints
         })
         .WithName("HealthCheck")
         .WithTags("Health")
-        .Produces<HealthResponse>()
-        .Produces<HealthResponse>(StatusCodes.Status503ServiceUnavailable);
+        .WithSummary("Check API server health")
+        .WithDescription("Returns the health status of the API server, including version and PDFium initialization state.")
+        .Produces<HealthResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<HealthResponse>(StatusCodes.Status503ServiceUnavailable, "application/json");
     }
 }

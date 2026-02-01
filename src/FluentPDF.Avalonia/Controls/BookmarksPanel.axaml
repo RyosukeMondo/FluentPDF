@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FluentPDF.Avalonia.ViewModels"
+             xmlns:models="using:FluentPDF.Core.Models"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="600"
+             x:Class="FluentPDF.Avalonia.Controls.BookmarksPanel"
+             x:DataType="vm:BookmarksViewModel">
+
+    <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+            BorderThickness="0,0,1,0">
+
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="12,8">
+                <TextBlock Text="Bookmarks"
+                           FontWeight="SemiBold"
+                           FontSize="14"/>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Row="1">
+
+                <!-- Loading Indicator -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12"
+                            IsVisible="{Binding IsLoading}">
+                    <ProgressBar IsIndeterminate="True" Width="150"/>
+                    <TextBlock Text="Loading bookmarks..."
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+
+                <!-- Empty State -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12"
+                            IsVisible="{Binding !HasBookmarks}"
+                            Margin="16">
+                    <PathIcon Data="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"
+                              Width="48"
+                              Height="48"
+                              Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock Text="{Binding EmptyMessage}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               MaxWidth="200"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+
+                <!-- Bookmarks Tree -->
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto"
+                              IsVisible="{Binding HasBookmarks}">
+                    <TreeView ItemsSource="{Binding Bookmarks}"
+                              SelectedItem="{Binding SelectedBookmark, Mode=TwoWay}"
+                              AutomationProperties.Name="Document bookmarks">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate ItemsSource="{Binding Children}" DataType="models:BookmarkNode">
+                                <Button Command="{Binding $parent[TreeView].((vm:BookmarksViewModel)DataContext).NavigateToBookmarkCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{Binding Title}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="4,2"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Left"
+                                        ToolTip.Tip="{Binding PageNumber, StringFormat='Page {0}'}">
+                                    <Button.Styles>
+                                        <Style Selector="Button:pointerover">
+                                            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
+                                        </Style>
+                                    </Button.Styles>
+                                </Button>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

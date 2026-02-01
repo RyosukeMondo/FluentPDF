@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentPDF.App.Testing;
 using FluentPDF.App.Testing.Tests;
+using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using FluentResults;
 using Microsoft.Extensions.DependencyInjection;
@@ -113,10 +114,10 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var imageStream = CreateTestImageStream(width: 800, height: 600);
-        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument.Object, 1, 1.0, 96))
+        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument, 1, 1.0, 96))
             .ReturnsAsync(Result.Ok(imageStream));
 
         // Act
@@ -146,7 +147,7 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         // Act
         var result = await test.RunAsync(context);
@@ -258,13 +259,13 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         // Setup thumbnail generation for each page
         for (int i = 1; i <= 3; i++)
         {
             var thumbnailStream = CreateTestImageStream(width: 200, height: 150);
-            _mockThumbnailService.Setup(s => s.GenerateThumbnailAsync(mockDocument.Object, i))
+            _mockThumbnailService.Setup(s => s.GenerateThumbnailAsync(mockDocument, i))
                 .ReturnsAsync(Result.Ok(thumbnailStream));
         }
 
@@ -333,10 +334,10 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 1);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var extractedText = "This is sample text extracted from the PDF document.";
-        _mockTextExtractionService.Setup(s => s.ExtractTextAsync(mockDocument.Object, 1))
+        _mockTextExtractionService.Setup(s => s.ExtractTextAsync(mockDocument, 1))
             .ReturnsAsync(Result.Ok(extractedText));
 
         // Act
@@ -429,16 +430,16 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 1);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
-        _mockFormService.Setup(s => s.HasForms(mockDocument.Object))
+        _mockFormService.Setup(s => s.HasForms(mockDocument))
             .Returns(true);
 
-        _mockFormService.Setup(s => s.GetFormFieldCount(mockDocument.Object))
+        _mockFormService.Setup(s => s.GetFormFieldCount(mockDocument))
             .Returns(5);
 
         var imageStream = CreateTestImageStream(width: 800, height: 600);
-        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument.Object, 1, 1.0, 96))
+        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument, 1, 1.0, 96))
             .ReturnsAsync(Result.Ok(imageStream));
 
         // Act
@@ -466,9 +467,9 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 1);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
-        _mockFormService.Setup(s => s.HasForms(mockDocument.Object))
+        _mockFormService.Setup(s => s.HasForms(mockDocument))
             .Returns(false);
 
         // Act
@@ -532,13 +533,13 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         // Setup rendering for each page
         for (int i = 1; i <= 3; i++)
         {
             var imageStream = CreateTestImageStream(width: 800, height: 600);
-            _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument.Object, i, 1.0, 96))
+            _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument, i, 1.0, 96))
                 .ReturnsAsync(Result.Ok(imageStream));
         }
 
@@ -572,20 +573,20 @@ public sealed class RenderingCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         // Page 1 succeeds
         var imageStream1 = CreateTestImageStream(width: 800, height: 600);
-        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument.Object, 1, 1.0, 96))
+        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument, 1, 1.0, 96))
             .ReturnsAsync(Result.Ok(imageStream1));
 
         // Page 2 fails
-        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument.Object, 2, 1.0, 96))
+        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument, 2, 1.0, 96))
             .ReturnsAsync(Result.Fail("Rendering failed"));
 
         // Page 3 succeeds
         var imageStream3 = CreateTestImageStream(width: 800, height: 600);
-        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument.Object, 3, 1.0, 96))
+        _mockRenderingService.Setup(s => s.RenderPageAsync(mockDocument, 3, 1.0, 96))
             .ReturnsAsync(Result.Ok(imageStream3));
 
         // Act
@@ -691,11 +692,16 @@ public sealed class RenderingCliTestsTests : IDisposable
         );
     }
 
-    private Mock<IPdfDocument> CreateMockDocument(int pageCount)
+    private PdfDocument CreateMockDocument(int pageCount)
     {
-        var mockDocument = new Mock<IPdfDocument>();
-        mockDocument.Setup(d => d.PageCount).Returns(pageCount);
-        return mockDocument;
+        return new PdfDocument
+        {
+            PageCount = pageCount,
+            FilePath = "test.pdf",
+            FileSizeBytes = 1024L,
+            LoadedAt = DateTime.UtcNow,
+            Handle = Mock.Of<IDisposable>()
+        };
     }
 
     private string GetTestPdfPath(string filename)

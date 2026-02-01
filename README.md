@@ -20,12 +20,18 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
   - Optimized performance for modern displays
 - **Text Extraction and Search**: Extract text from PDF pages and search within documents with visual highlighting
 - **Bookmark Navigation**: Hierarchical bookmark panel with TreeView for quick document navigation
-- **PDF Annotation Tools**: Mark up documents with highlights, comments, shapes, and freehand drawing
-  - Text markup: Highlight, underline, strikethrough
-  - Shapes: Rectangle, circle, freehand ink
-  - Comments: Sticky note annotations
-  - Lossless persistence directly to PDF files
-  - Win2D GPU-accelerated rendering
+- **PDF Annotation Tools**: Mark up documents with text selection-based annotations
+  - **Text Selection**: Click and drag to select text with accurate coordinate mapping
+  - **Annotation Creation**: Convert text selections to annotations with keyboard shortcuts
+    - Highlight (`H` key): Yellow highlights from text selection
+    - Underline (`U` key): Underline annotations from text selection
+    - Strikethrough (`S` key): Strikethrough annotations from text selection
+  - **Tool Persistence**: Active annotation tools stay enabled for multiple annotations
+  - **Multi-Line Support**: Text selection and annotations work across line breaks
+  - **All View Modes**: Annotations work in single page, continuous scroll, and two-page views
+  - **Visual Feedback**: Crosshair cursor and status bar messages for active tools
+  - **Lossless Persistence**: Annotations saved directly to PDF files with PDFium
+  - **Win2D GPU-Accelerated Rendering**: Smooth, high-performance annotation rendering
 - **Thumbnails Sidebar**: Visual page navigation with thumbnail previews
   - Click thumbnails to jump to any page
   - Lazy loading with LRU cache (< 50MB memory for 100 pages)
@@ -276,10 +282,12 @@ FluentPDF provides powerful text extraction and search capabilities using PDFium
 - Current match is highlighted in yellow
 - Highlights update automatically when zooming or changing pages
 
-**Text Selection and Copy** (coming soon):
+**Text Selection and Copy**:
 - Click and drag to select text on PDF pages
 - Press **Ctrl+C** to copy selected text to clipboard
-- Right-click for context menu with Copy option
+- Works in all view modes (single page, continuous scroll, two-page)
+- Character-level bounds tracking for accurate selection
+- Coordinate mapping for zoom-independent selection
 
 **Performance**:
 - Text extraction: < 500ms per page
@@ -302,12 +310,13 @@ FluentPDF provides comprehensive annotation capabilities for marking up and comm
 - **Freehand Drawing**: Draw custom shapes with pen tool
 
 **Using Annotation Tools**:
-1. Click annotation tool button in toolbar (Highlight, Rectangle, etc.)
-2. Draw on PDF page with mouse/pointer
-3. Annotations appear instantly with Win2D GPU rendering
-4. Select color from color picker for fill/stroke
-5. Click existing annotation to select and edit
-6. Delete selected annotation with Delete key
+1. Activate tool using toolbar button or keyboard shortcut (`H` for Highlight, `U` for Underline, `S` for Strikethrough)
+2. For text markup tools: Click and drag to select text on PDF page
+3. For shape tools: Draw on PDF page with mouse/pointer
+4. Annotations appear instantly and tool stays active for multiple annotations
+5. Press `Escape` to deactivate tool
+6. Click existing annotation to select and edit
+7. Delete selected annotation with Delete key
 
 **Annotation Persistence**:
 - **Lossless Save**: Annotations saved directly to PDF using PDFium API
@@ -316,9 +325,11 @@ FluentPDF provides comprehensive annotation capabilities for marking up and comm
 - **Cross-Platform**: Annotations readable in Adobe Reader, Foxit, etc.
 
 **Keyboard Shortcuts**:
-- **Ctrl+Shift+A**: Toggle annotation toolbar
+- **H**: Activate Highlight tool
+- **U**: Activate Underline tool
+- **S**: Activate Strikethrough tool
+- **Escape**: Deactivate annotation tool
 - **Delete**: Delete selected annotation
-- **Escape**: Deselect annotation
 
 **Performance**:
 - Win2D GPU-accelerated rendering (60 FPS target)

@@ -34,4 +34,20 @@ public interface ITextExtractionService
     Task<Result<Dictionary<int, string>>> ExtractAllTextAsync(
         PdfDocument document,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Extracts text within specific bounds on a page.
+    /// </summary>
+    /// <param name="document">The loaded PDF document.</param>
+    /// <param name="pageNumber">1-based page number to extract text from.</param>
+    /// <param name="bounds">Rectangle bounds in PDF coordinates to extract text from.</param>
+    /// <returns>
+    /// A Result containing the TextSelection with extracted text and character bounds if successful,
+    /// or a PdfError if the operation failed.
+    /// Error codes: PDF_PAGE_INVALID, PDF_TEXT_EXTRACTION_FAILED, PDF_TEXT_PAGE_LOAD_FAILED.
+    /// </returns>
+    Task<Result<TextSelection>> ExtractTextInBoundsAsync(
+        PdfDocument document,
+        int pageNumber,
+        System.Drawing.RectangleF bounds);
 }

@@ -25,8 +25,7 @@ public sealed partial class ConversionPage : Page
         this.InitializeComponent();
 
         // Resolve ViewModel from DI container
-        var app = (App)Application.Current;
-        ViewModel = app.GetService<ConversionViewModel>();
+        ViewModel = App.GetService<ConversionViewModel>();
 
         // Set DataContext for runtime binding
         this.DataContext = ViewModel;

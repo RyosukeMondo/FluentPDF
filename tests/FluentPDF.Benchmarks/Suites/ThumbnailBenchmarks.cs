@@ -104,7 +104,7 @@ public class ThumbnailBenchmarks
 
     /// <summary>
     /// Benchmark for rendering thumbnails of text-heavy documents.
-    /// Requirement: P99 latency < 200ms.
+    /// Requirement: P99 latency &lt; 200ms.
     /// </summary>
     [Benchmark]
     public async Task RenderThumbnail_TextHeavy()
@@ -119,7 +119,7 @@ public class ThumbnailBenchmarks
 
     /// <summary>
     /// Benchmark for rendering thumbnails of image-heavy documents.
-    /// Requirement: P99 latency < 200ms.
+    /// Requirement: P99 latency &lt; 200ms.
     /// </summary>
     [Benchmark]
     public async Task RenderThumbnail_ImageHeavy()
@@ -134,7 +134,7 @@ public class ThumbnailBenchmarks
 
     /// <summary>
     /// Benchmark for rendering thumbnails of vector graphics documents.
-    /// Requirement: P99 latency < 200ms.
+    /// Requirement: P99 latency &lt; 200ms.
     /// </summary>
     [Benchmark]
     public async Task RenderThumbnail_VectorGraphics()
@@ -149,7 +149,7 @@ public class ThumbnailBenchmarks
 
     /// <summary>
     /// Benchmark for rendering thumbnails of complex layout documents.
-    /// Requirement: P99 latency < 200ms.
+    /// Requirement: P99 latency &lt; 200ms.
     /// </summary>
     [Benchmark]
     public async Task RenderThumbnail_ComplexLayout()
@@ -164,7 +164,7 @@ public class ThumbnailBenchmarks
 
     /// <summary>
     /// Baseline benchmark - text-heavy thumbnail rendering.
-    /// This is the baseline for comparison. P99 must be < 200ms.
+    /// This is the baseline for comparison. P99 must be &lt; 200ms.
     /// </summary>
     [Benchmark(Baseline = true)]
     public async Task RenderThumbnail_Baseline()

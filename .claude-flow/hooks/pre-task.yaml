@@ -1,0 +1,311 @@
+# Pre-Task Hook
+# Routes tasks to appropriate FluentPDF domain specialists
+
+name: pre-task
+version: "2.0.0"
+description: Analyze task and suggest optimal agent routing based on domains
+
+enabled: true
+priority: high
+
+# ============================================================================
+# DOMAIN ROUTING RULES
+# ============================================================================
+
+routing_rules:
+  # --------------------------------------------------------------------------
+  # DOCUMENT DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "merge"
+      - "split"
+      - "combine"
+      - "optimize"
+      - "compress"
+      - "linearize"
+      - "qpdf"
+      - "page operation"
+      - "reorder"
+      - "delete page"
+      - "rotate page"
+    domain: document
+    agent: document-operations-specialist
+    context_files:
+      - src/FluentPDF.Core/Services/IDocumentEditingService.cs
+      - src/FluentPDF.Rendering/Interop/QpdfNative.cs
+
+  # --------------------------------------------------------------------------
+  # RENDERING DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "render"
+      - "pdfium"
+      - "thumbnail"
+      - "bitmap"
+      - "dpi"
+      - "hidpi"
+      - "scale"
+      - "zoom"
+      - "display"
+    domain: rendering
+    agent: pdf-rendering-specialist
+    context_files:
+      - src/FluentPDF.Rendering/Services/PdfRenderingService.cs
+      - src/FluentPDF.Rendering/Interop/PdfiumInterop.cs
+
+  # --------------------------------------------------------------------------
+  # INTEROP DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "marshal"
+      - "interop"
+      - "p/invoke"
+      - "pinvoke"
+      - "native"
+      - "crash"
+      - "access violation"
+      - "safe handle"
+      - "memory leak"
+      - "disposal"
+    domain: interop
+    agent: interop-validator
+    context_files:
+      - src/FluentPDF.Rendering/Interop/
+      - src/FluentPDF.Verification.Pdfium/
+
+  # --------------------------------------------------------------------------
+  # ANNOTATION DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "annotation"
+      - "highlight"
+      - "underline"
+      - "strikethrough"
+      - "sticky note"
+      - "markup"
+      - "draw"
+      - "ink"
+      - "shape"
+    domain: annotation
+    agent: annotation-specialist
+    context_files:
+      - src/FluentPDF.Rendering/Interop/PdfiumAnnotationInterop.cs
+      - src/FluentPDF.Rendering/Services/AnnotationService.cs
+
+  # --------------------------------------------------------------------------
+  # FORM DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "form"
+      - "field"
+      - "checkbox"
+      - "radio"
+      - "dropdown"
+      - "acroform"
+      - "fill"
+      - "tab order"
+      - "form validation"
+    domain: form
+    agent: form-specialist
+    context_files:
+      - src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs
+      - src/FluentPDF.Rendering/Services/PdfFormService.cs
+
+  # --------------------------------------------------------------------------
+  # BOOKMARK DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "bookmark"
+      - "outline"
+      - "toc"
+      - "table of contents"
+      - "navigation"
+    domain: bookmark
+    agent: ui-coordinator
+    context_files:
+      - src/FluentPDF.Rendering/Interop/PdfiumBookmarkInterop.cs
+      - src/FluentPDF.Rendering/Services/BookmarkService.cs
+
+  # --------------------------------------------------------------------------
+  # CONTENT DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "extract text"
+      - "search"
+      - "find"
+      - "text content"
+      - "copy text"
+      - "insert image"
+      - "image"
+    domain: content
+    agent: content-specialist
+    context_files:
+      - src/FluentPDF.Rendering/Services/TextExtractionService.cs
+      - src/FluentPDF.Rendering/Services/TextSearchService.cs
+      - src/FluentPDF.Rendering/Services/ImageInsertionService.cs
+
+  # --------------------------------------------------------------------------
+  # CONVERSION DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "convert"
+      - "docx"
+      - "word"
+      - "html"
+      - "import"
+      - "office"
+    domain: conversion
+    agent: conversion-specialist
+    context_files:
+      - src/FluentPDF.Core/Services/IDocxConverterService.cs
+      - src/FluentPDF.Core/Services/IHtmlToPdfService.cs
+
+  # --------------------------------------------------------------------------
+  # OBSERVABILITY DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "log"
+      - "metric"
+      - "telemetry"
+      - "trace"
+      - "performance"
+      - "memory"
+      - "error"
+      - "exception"
+      - "monitoring"
+      - "diagnostics"
+    domain: observability
+    agent: observability-analyst
+    context_files:
+      - src/FluentPDF.Core/Observability/
+      - src/FluentPDF.Core/ErrorHandling/
+
+  # --------------------------------------------------------------------------
+  # PRESENTATION DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "ui"
+      - "xaml"
+      - "viewmodel"
+      - "view"
+      - "binding"
+      - "theme"
+      - "dark mode"
+      - "control"
+      - "layout"
+      - "button"
+      - "panel"
+      - "dialog"
+      - "settings"
+    domain: presentation
+    agent: ui-coordinator
+    context_files:
+      - src/FluentPDF.App/ViewModels/
+      - src/FluentPDF.App/Views/
+
+  # --------------------------------------------------------------------------
+  # TESTING DOMAIN
+  # --------------------------------------------------------------------------
+  - patterns:
+      - "test"
+      - "e2e"
+      - "verify"
+      - "api"
+      - "diagnostic"
+      - "benchmark"
+      - "regression"
+      - "flaui"
+    domain: testing
+    agent: verification-engineer
+    context_files:
+      - tests/
+      - src/FluentPDF.App/Api/
+
+# ============================================================================
+# WORKFLOW SUGGESTIONS
+# ============================================================================
+
+workflow_suggestions:
+  - patterns:
+      - "add feature"
+      - "implement"
+      - "new functionality"
+    workflow: pdf-feature
+
+  - patterns:
+      - "bug"
+      - "fix"
+      - "crash"
+      - "broken"
+    workflow: rendering-fix
+
+  - patterns:
+      - "slow"
+      - "optimize"
+      - "performance"
+    workflow: performance-audit
+
+  - patterns:
+      - "verify"
+      - "validate"
+      - "e2e"
+      - "ci"
+    workflow: verification-run
+
+  - patterns:
+      - "merge"
+      - "split"
+      - "combine"
+      - "compress"
+    workflow: document-operations
+
+  - patterns:
+      - "form"
+      - "field"
+      - "acroform"
+    workflow: form-feature
+
+  - patterns:
+      - "annotation"
+      - "highlight"
+      - "markup"
+    workflow: annotation-feature
+
+  - patterns:
+      - "interop audit"
+      - "marshalling"
+      - "native review"
+    workflow: interop-audit
+
+  - patterns:
+      - "observability"
+      - "diagnostics"
+      - "metrics"
+    workflow: observability-setup
+
+  - patterns:
+      - "ui"
+      - "design"
+      - "theme"
+    workflow: ui-change
+
+# ============================================================================
+# OUTPUT FORMAT
+# ============================================================================
+
+output:
+  format: json
+  fields:
+    - suggested_domain
+    - suggested_agent
+    - suggested_workflow
+    - context_files
+    - confidence
+    - reasoning
+
+learning:
+  enabled: true
+  track:
+    - routing_accuracy
+    - task_outcomes
+    - agent_performance

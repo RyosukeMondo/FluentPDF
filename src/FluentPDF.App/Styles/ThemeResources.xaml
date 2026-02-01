@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    FluentPDF Theme Resources
+
+    Semantic color tokens for app-specific needs.
+    All colors use ThemeResource for automatic light/dark theme support.
+    -->
+
+    <!-- Document Background Colors -->
+    <StaticResource x:Key="PdfViewerBackgroundBrush" ResourceKey="ApplicationPageBackgroundThemeBrush" />
+    <StaticResource x:Key="PdfPageBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+
+    <!-- Sidebar and Panel Colors -->
+    <StaticResource x:Key="SidebarBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+    <StaticResource x:Key="SidebarHeaderBackgroundBrush" ResourceKey="CardBackgroundFillColorDefaultBrush" />
+    <StaticResource x:Key="SidebarBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+
+    <!-- Toolbar Colors -->
+    <StaticResource x:Key="ToolbarBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+    <StaticResource x:Key="ToolbarBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+    <StaticResource x:Key="ToolbarSeparatorBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+
+    <!-- Status Bar Colors -->
+    <StaticResource x:Key="StatusBarBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+    <StaticResource x:Key="StatusBarForegroundBrush" ResourceKey="TextFillColorSecondaryBrush" />
+    <StaticResource x:Key="StatusBarBorderBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+
+    <!-- Document State Indicators -->
+    <StaticResource x:Key="ModifiedIndicatorBrush" ResourceKey="SystemFillColorAttentionBrush" />
+    <StaticResource x:Key="SecureIndicatorBrush" ResourceKey="SystemFillColorSuccessBrush" />
+    <StaticResource x:Key="ErrorIndicatorBrush" ResourceKey="SystemFillColorCriticalBrush" />
+    <StaticResource x:Key="WarningIndicatorBrush" ResourceKey="SystemFillColorCautionBrush" />
+
+    <!-- Annotation Colors (Semantic names) -->
+    <SolidColorBrush x:Key="AnnotationHighlightBrush" Color="#FFFFFF00" Opacity="0.4" />
+    <SolidColorBrush x:Key="AnnotationUnderlineBrush" Color="#FF0000FF" />
+    <SolidColorBrush x:Key="AnnotationStrikethroughBrush" Color="#FFFF0000" />
+    <SolidColorBrush x:Key="AnnotationCommentBrush" Color="#FFFFA500" />
+
+    <!-- Selection and Focus Colors -->
+    <StaticResource x:Key="TextSelectionBrush" ResourceKey="AccentFillColorDefaultBrush" />
+    <StaticResource x:Key="TextSelectionHighlightBrush" ResourceKey="AccentFillColorSecondaryBrush" />
+    <StaticResource x:Key="FocusStrokeBrush" ResourceKey="FocusStrokeColorOuterBrush" />
+
+    <!-- Page Navigation Colors -->
+    <StaticResource x:Key="PageNumberBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+    <StaticResource x:Key="PageNumberForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
+    <StaticResource x:Key="PageNumberBorderBrush" ResourceKey="ControlStrokeColorDefaultBrush" />
+
+    <!-- Thumbnail Colors -->
+    <StaticResource x:Key="ThumbnailBackgroundBrush" ResourceKey="CardBackgroundFillColorDefaultBrush" />
+    <StaticResource x:Key="ThumbnailBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+    <StaticResource x:Key="ThumbnailSelectedBorderBrush" ResourceKey="AccentFillColorDefaultBrush" />
+    <StaticResource x:Key="ThumbnailHoverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+
+    <!-- Loading State Colors -->
+    <StaticResource x:Key="LoadingSkeletonBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+    <StaticResource x:Key="LoadingShimmerBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+    <StaticResource x:Key="LoadingProgressBrush" ResourceKey="AccentFillColorDefaultBrush" />
+
+    <!-- Dialog and Overlay Colors -->
+    <StaticResource x:Key="DialogBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+    <StaticResource x:Key="DialogBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+    <StaticResource x:Key="DialogOverlayBrush" ResourceKey="LayerOnMicaBaseAltFillColorDefaultBrush" />
+
+    <!-- Form Field Colors -->
+    <StaticResource x:Key="FormFieldBackgroundBrush" ResourceKey="ControlFillColorDefaultBrush" />
+    <StaticResource x:Key="FormFieldBorderBrush" ResourceKey="ControlStrokeColorDefaultBrush" />
+    <StaticResource x:Key="FormFieldFocusBorderBrush" ResourceKey="ControlStrokeColorOnAccentSecondaryBrush" />
+    <StaticResource x:Key="FormFieldErrorBorderBrush" ResourceKey="SystemFillColorCriticalBrush" />
+
+    <!-- Search Panel Colors -->
+    <StaticResource x:Key="SearchMatchBackgroundBrush" ResourceKey="SystemFillColorAttentionBackgroundBrush" />
+    <StaticResource x:Key="SearchMatchBorderBrush" ResourceKey="SystemFillColorAttentionBrush" />
+    <StaticResource x:Key="SearchCurrentMatchBackgroundBrush" ResourceKey="AccentFillColorDefaultBrush" />
+
+    <!-- Grid Splitter Colors -->
+    <StaticResource x:Key="SplitterBackgroundBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+    <StaticResource x:Key="SplitterHoverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+
+    <!-- Common Spacing Values (8px grid) -->
+    <x:Double x:Key="SpacingXSmall">4</x:Double>
+    <x:Double x:Key="SpacingSmall">8</x:Double>
+    <x:Double x:Key="SpacingMedium">16</x:Double>
+    <x:Double x:Key="SpacingLarge">24</x:Double>
+    <x:Double x:Key="SpacingXLarge">32</x:Double>
+
+    <!-- Common Corner Radius Values -->
+    <CornerRadius x:Key="ControlCornerRadiusSmall">4</CornerRadius>
+    <CornerRadius x:Key="ControlCornerRadiusMedium">8</CornerRadius>
+    <CornerRadius x:Key="ControlCornerRadiusLarge">12</CornerRadius>
+
+    <!-- Common Border Thickness Values -->
+    <Thickness x:Key="BorderThicknessThin">1</Thickness>
+    <Thickness x:Key="BorderThicknessMedium">2</Thickness>
+    <Thickness x:Key="BorderThicknessThick">3</Thickness>
+
+    <!-- Common Shadow Depths -->
+    <x:Double x:Key="ShadowDepthSmall">8</x:Double>
+    <x:Double x:Key="ShadowDepthMedium">16</x:Double>
+    <x:Double x:Key="ShadowDepthLarge">32</x:Double>
+
+    <!-- Typography Scale (WinUI 3 compatible) -->
+    <x:Double x:Key="FontSizeCaption">12</x:Double>
+    <x:Double x:Key="FontSizeBody">14</x:Double>
+    <x:Double x:Key="FontSizeBodyLarge">16</x:Double>
+    <x:Double x:Key="FontSizeSubtitle">18</x:Double>
+    <x:Double x:Key="FontSizeTitle">24</x:Double>
+    <x:Double x:Key="FontSizeTitleLarge">32</x:Double>
+    <x:Double x:Key="FontSizeDisplay">40</x:Double>
+
+    <!-- Animation Durations -->
+    <Duration x:Key="AnimationDurationFast">0:0:0.150</Duration>
+    <Duration x:Key="AnimationDurationNormal">0:0:0.300</Duration>
+    <Duration x:Key="AnimationDurationSlow">0:0:0.500</Duration>
+
+    <!-- Minimum Touch Target Sizes (WCAG 2.1 AA) -->
+    <x:Double x:Key="MinimumTouchTargetSize">44</x:Double>
+    <x:Double x:Key="MinimumButtonHeight">32</x:Double>
+    <x:Double x:Key="MinimumButtonWidth">120</x:Double>
+
+</ResourceDictionary>

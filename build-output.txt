@@ -1,0 +1,27 @@
+  復元対象のプロジェクトを決定しています...
+  復元対象のすべてのプロジェクトは最新です。
+  FluentPDF.Core -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Core\bin\Debug\net8.0\FluentPDF.Core.dll
+  FluentPDF.Rendering -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Rendering\bin\Debug\net8.0\FluentPDF.Rendering.dll
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(168,39): error CS0246: 型または名前空間の名前 'ConversionViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(170,39): error CS0246: 型または名前空間の名前 'FormFieldViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(172,39): error CS0246: 型または名前空間の名前 'SettingsViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(174,39): error CS0246: 型または名前空間の名前 'ImageInsertionViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(175,39): error CS0246: 型または名前空間の名前 'WatermarkViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(176,39): error CS0246: 型または名前空間の名前 'DiagnosticsPanelViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(177,39): error CS0246: 型または名前空間の名前 'LogViewerViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\Controls\ShimmerPlaceholder.axaml.cs(66,36): error CS8604: 'Task Animation.RunAsync(Animatable control, CancellationToken cancellationToken = default(CancellationToken))' 内のパラメーター 'control' に Null 参照引数がある可能性があります。 [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+
+ビルドに失敗しました。
+
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(168,39): error CS0246: 型または名前空間の名前 'ConversionViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(170,39): error CS0246: 型または名前空間の名前 'FormFieldViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(172,39): error CS0246: 型または名前空間の名前 'SettingsViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(174,39): error CS0246: 型または名前空間の名前 'ImageInsertionViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(175,39): error CS0246: 型または名前空間の名前 'WatermarkViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(176,39): error CS0246: 型または名前空間の名前 'DiagnosticsPanelViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(177,39): error CS0246: 型または名前空間の名前 'LogViewerViewModel' が見つかりませんでした (using ディレクティブまたはアセンブリ参照が指定されていることを確認してください) [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\Controls\ShimmerPlaceholder.axaml.cs(66,36): error CS8604: 'Task Animation.RunAsync(Animatable control, CancellationToken cancellationToken = default(CancellationToken))' 内のパラメーター 'control' に Null 参照引数がある可能性があります。 [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+    0 個の警告
+    8 エラー
+
+経過時間 00:00:02.73

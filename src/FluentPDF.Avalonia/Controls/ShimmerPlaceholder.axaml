@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="200"
+             x:Class="FluentPDF.Avalonia.Controls.ShimmerPlaceholder">
+
+    <!-- Shimmer container -->
+    <Grid ClipToBounds="True">
+        <!-- Base placeholder background -->
+        <Rectangle Fill="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+
+        <!-- Shimmer gradient overlay with animation -->
+        <Rectangle x:Name="ShimmerRectangle"
+                   Width="200"
+                   HorizontalAlignment="Left">
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                    <GradientStop Color="Transparent" Offset="0"/>
+                    <GradientStop Color="#30FFFFFF" Offset="0.5"/>
+                    <GradientStop Color="Transparent" Offset="1"/>
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+            <Rectangle.RenderTransform>
+                <TranslateTransform x:Name="ShimmerTransform" X="-200"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+    </Grid>
+</UserControl>

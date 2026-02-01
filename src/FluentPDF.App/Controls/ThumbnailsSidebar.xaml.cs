@@ -34,8 +34,7 @@ public sealed partial class ThumbnailsSidebar : UserControl
         InitializeComponent();
 
         // Resolve ViewModel from DI container
-        var app = (App)Application.Current;
-        ViewModel = app.Services.GetRequiredService<ThumbnailsViewModel>();
+        ViewModel = App.GetService<ThumbnailsViewModel>();
 
         // Add keyboard shortcuts
         this.KeyDown += ThumbnailsSidebar_KeyDown;

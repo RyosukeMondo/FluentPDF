@@ -1,0 +1,59 @@
+{
+  "count": 9,
+  "logs": [
+    {
+      "timestamp": "2026-01-29T14:00:37.1019322+09:00",
+      "level": "Info",
+      "message": "OperationWatchdog initialized - autonomous error detection enabled",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:37.1028096+09:00",
+      "level": "Info",
+      "message": "MainViewModel initialized",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:37.8796916+09:00",
+      "level": "Info",
+      "message": "Debug console initialized - real-time logging enabled",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:37.8796935+09:00",
+      "level": "Info",
+      "message": "Click 'Copy Last 50' to copy recent logs to clipboard",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:37.8796938+09:00",
+      "level": "Info",
+      "message": "Click 'Download Log' to save full log file",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:37.879694+09:00",
+      "level": "Info",
+      "message": "---",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:39.5498432+09:00",
+      "level": "Info",
+      "message": "[REST API] Received open-file request: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:39.5499596+09:00",
+      "level": "Info",
+      "message": "[REST API] DIAGNOSTIC: Testing if UI thread dispatcher is alive...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:00:40.5577756+09:00",
+      "level": "Error",
+      "message": "[REST API] CRITICAL: UI thread dispatcher is NOT processing messages! Dispatcher may be dead or blocked.",
+      "source": "GuiStateEndpoints"
+    }
+  ]
+}

@@ -49,6 +49,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly ITextExtractionService _textExtractionService;
     private readonly IImageExportService _imageExportService;
     private readonly ISecurityService _securityService;
+    private readonly ICoordinateMapper _coordinateMapper;
     private readonly ILogger<PdfViewerViewModel> _logger;
     private readonly Core.Services.IMetricsCollectionService? _metricsService;
     private readonly IDpiDetectionService? _dpiDetectionService;
@@ -56,10 +57,12 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private readonly Core.Services.ISettingsService? _settingsService;
     private readonly RenderingCoordinator _renderingCoordinator;
     private readonly UIBindingVerifier _uiBindingVerifier;
+    private readonly IAnimationService? _animationService;
     private PdfDocument? _currentDocument;
     private bool _disposed;
     private CancellationTokenSource? _operationCts;
     private CancellationTokenSource? _searchCts;
+    private CancellationTokenSource? _navigationAnimationCts;
     private System.Threading.Timer? _searchDebounceTimer;
     private IDisposable? _dpiSubscription;
     private IDisposable? _qualitySubscription;
@@ -109,6 +112,8 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="searchService">Service for searching text in PDF documents.</param>
     /// <param name="textExtractionService">Service for extracting text from PDF pages.</param>
     /// <param name="imageExportService">Service for exporting PDF pages as images.</param>
+    /// <param name="securityService">Service for PDF encryption and security operations.</param>
+    /// <param name="coordinateMapper">Service for converting between screen and PDF coordinates.</param>
     /// <param name="bookmarksViewModel">View model for the bookmarks panel.</param>
     /// <param name="formFieldViewModel">View model for form field interactions.</param>
     /// <param name="diagnosticsPanelViewModel">View model for the diagnostics panel.</param>
@@ -122,6 +127,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// <param name="settingsService">Optional settings service for user preferences.</param>
     /// <param name="renderingCoordinator">Coordinator for rendering with fallback strategies.</param>
     /// <param name="uiBindingVerifier">Service for verifying UI binding updates.</param>
+    /// <param name="animationService">Optional service for page transition animations.</param>
     /// <param name="logger">Logger for tracking operations.</param>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
@@ -131,6 +137,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         ITextExtractionService textExtractionService,
         IImageExportService imageExportService,
         ISecurityService securityService,
+        ICoordinateMapper coordinateMapper,
         BookmarksViewModel bookmarksViewModel,
         FormFieldViewModel formFieldViewModel,
         DiagnosticsPanelViewModel diagnosticsPanelViewModel,
@@ -144,6 +151,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         Core.Services.ISettingsService? settingsService,
         RenderingCoordinator renderingCoordinator,
         UIBindingVerifier uiBindingVerifier,
+        IAnimationService? animationService,
         ILogger<PdfViewerViewModel> logger)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
@@ -153,6 +161,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _textExtractionService = textExtractionService ?? throw new ArgumentNullException(nameof(textExtractionService));
         _imageExportService = imageExportService ?? throw new ArgumentNullException(nameof(imageExportService));
         _securityService = securityService ?? throw new ArgumentNullException(nameof(securityService));
+        _coordinateMapper = coordinateMapper ?? throw new ArgumentNullException(nameof(coordinateMapper));
         BookmarksViewModel = bookmarksViewModel ?? throw new ArgumentNullException(nameof(bookmarksViewModel));
         FormFieldViewModel = formFieldViewModel ?? throw new ArgumentNullException(nameof(formFieldViewModel));
         DiagnosticsPanelViewModel = diagnosticsPanelViewModel ?? throw new ArgumentNullException(nameof(diagnosticsPanelViewModel));
@@ -166,6 +175,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _settingsService = settingsService; // Optional service
         _renderingCoordinator = renderingCoordinator ?? throw new ArgumentNullException(nameof(renderingCoordinator));
         _uiBindingVerifier = uiBindingVerifier ?? throw new ArgumentNullException(nameof(uiBindingVerifier));
+        _animationService = animationService; // Optional service
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Set up navigation callback for bookmarks
@@ -201,12 +211,20 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
                 });
         }
 
-        // Subscribe to property changes from child ViewModels to update HasUnsavedChanges
+        // Subscribe to property changes from child ViewModels to update HasUnsavedChanges and StatusMessage
         AnnotationViewModel.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(AnnotationViewModel.HasUnsavedChanges))
             {
                 OnPropertyChanged(nameof(HasUnsavedChanges));
+            }
+            else if (e.PropertyName == nameof(AnnotationViewModel.StatusMessage))
+            {
+                // Propagate annotation status message to main status bar
+                if (!string.IsNullOrWhiteSpace(AnnotationViewModel.StatusMessage))
+                {
+                    StatusMessage = AnnotationViewModel.StatusMessage;
+                }
             }
         };
 
@@ -594,7 +612,17 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private async Task GoToPreviousPageAsync()
     {
         _logger.LogInformation("GoToPreviousPage command invoked. CurrentPage={CurrentPage}", CurrentPageNumber);
+
+        // Cancel any previous navigation animation
+        _navigationAnimationCts?.Cancel();
+        _navigationAnimationCts?.Dispose();
+        _navigationAnimationCts = new CancellationTokenSource();
+
         CurrentPageNumber--;
+
+        // Trigger page transition animation (non-blocking)
+        _ = AnimatePageTransitionAsync(PageTransitionDirection.Backward, _navigationAnimationCts.Token);
+
         await RenderCurrentPageAsync();
     }
 
@@ -611,7 +639,17 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     private async Task GoToNextPageAsync()
     {
         _logger.LogInformation("GoToNextPage command invoked. CurrentPage={CurrentPage}", CurrentPageNumber);
+
+        // Cancel any previous navigation animation
+        _navigationAnimationCts?.Cancel();
+        _navigationAnimationCts?.Dispose();
+        _navigationAnimationCts = new CancellationTokenSource();
+
         CurrentPageNumber++;
+
+        // Trigger page transition animation (non-blocking)
+        _ = AnimatePageTransitionAsync(PageTransitionDirection.Forward, _navigationAnimationCts.Token);
+
         await RenderCurrentPageAsync();
     }
 
@@ -620,6 +658,50 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     /// </summary>
     /// <returns>true if the command can execute; otherwise, false.</returns>
     private bool CanGoToNextPage() => CurrentPageNumber < TotalPages && !IsLoading && _currentDocument != null;
+
+    /// <summary>
+    /// Navigates to the next page (alias for GoToNextPageAsync).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
+    private async Task NextPageAsync() => await GoToNextPageAsync();
+
+    /// <summary>
+    /// Navigates to the previous page (alias for GoToPreviousPageAsync).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
+    private async Task PreviousPageAsync() => await GoToPreviousPageAsync();
+
+    /// <summary>
+    /// Navigates to the first page in the document.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanGoToFirstPage))]
+    private async Task FirstPageAsync()
+    {
+        _logger.LogInformation("FirstPage command invoked");
+        CurrentPageNumber = 1;
+        await RenderCurrentPageAsync();
+    }
+
+    /// <summary>
+    /// Determines whether the GoToFirstPage command can execute.
+    /// </summary>
+    private bool CanGoToFirstPage() => CurrentPageNumber > 1 && !IsLoading && _currentDocument != null;
+
+    /// <summary>
+    /// Navigates to the last page in the document.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanGoToLastPage))]
+    private async Task LastPageAsync()
+    {
+        _logger.LogInformation("LastPage command invoked");
+        CurrentPageNumber = TotalPages;
+        await RenderCurrentPageAsync();
+    }
+
+    /// <summary>
+    /// Determines whether the GoToLastPage command can execute.
+    /// </summary>
+    private bool CanGoToLastPage() => CurrentPageNumber < TotalPages && !IsLoading && _currentDocument != null;
 
     /// <summary>
     /// Increases the zoom level by one step.
@@ -692,7 +774,10 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Determines whether the ResetZoom command can execute.
+    /// Returns true if zoom is not at 100% and a document is loaded.
     /// </summary>
+    private bool CanResetZoom() => Math.Abs(ZoomLevel - 1.0) > 0.01 && !IsLoading && _currentDocument != null;
+
     /// <summary>
     /// Toggles between view modes: Single Page -> Continuous Scroll -> Two Page -> Single Page.
     /// </summary>
@@ -716,9 +801,6 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _logger.LogInformation("View mode changed to {ViewMode}", ViewMode);
     }
 
-        _logger.LogInformation("View mode changed to {ViewMode}", ViewMode);
-    }
-
     /// <summary>
     /// Navigates to a specific page number.
     /// </summary>
@@ -730,7 +812,16 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
         if (pageNumber >= 1 && pageNumber <= TotalPages && !IsLoading && _currentDocument != null)
         {
+            // Cancel any previous navigation animation
+            _navigationAnimationCts?.Cancel();
+            _navigationAnimationCts?.Dispose();
+            _navigationAnimationCts = new CancellationTokenSource();
+
             CurrentPageNumber = pageNumber;
+
+            // Trigger page transition animation (non-blocking)
+            _ = AnimatePageTransitionAsync(PageTransitionDirection.Jump, _navigationAnimationCts.Token);
+
             await RenderCurrentPageAsync();
         }
     }
@@ -900,7 +991,7 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
             if (xamlRoot == null)
             {
                 // XamlRoot not available, log and return
-                System.Diagnostics.Debug.WriteLine($"Error: Unable to show dialog - XamlRoot not available after retries. Title: {title}, Message: {message}");
+                // Debug logging removed in production
                 return;
             }
 
@@ -914,10 +1005,9 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
             await dialog.ShowAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // If dialog fails, at least log it
-            System.Diagnostics.Debug.WriteLine($"Failed to show error dialog: {ex.Message}. Original error - Title: {title}, Message: {message}");
+            // If dialog fails, silently continue (debug logging removed in production)
         }
     }
 
@@ -1976,18 +2066,76 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
 
         try
         {
-            // For now, extract all text from the current page
-            // In a more sophisticated implementation, we would extract only the text within the selection bounds
-            var result = await _textExtractionService.ExtractTextAsync(_currentDocument, CurrentPageNumber);
+            // Get page dimensions for coordinate conversion
+            using var pageHandle = PdfiumInterop.LoadPage(
+                (SafePdfDocumentHandle)_currentDocument.Handle,
+                CurrentPageNumber - 1);
+
+            if (pageHandle.IsInvalid)
+            {
+                _logger.LogError("Failed to load page for text selection");
+                SelectedText = string.Empty;
+                HasSelectedText = false;
+                IsSelecting = false;
+                return;
+            }
+
+            var pageWidth = PdfiumInterop.GetPageWidth(pageHandle);
+            var pageHeight = PdfiumInterop.GetPageHeight(pageHandle);
+
+            // Convert screen coordinates to PDF coordinates
+            var startPoint = _coordinateMapper.ScreenToPdf(
+                new System.Drawing.Point((int)SelectionStartPoint.X, (int)SelectionStartPoint.Y),
+                CurrentPageNumber - 1,
+                ZoomLevel,
+                pageWidth,
+                pageHeight);
+
+            var endPoint = _coordinateMapper.ScreenToPdf(
+                new System.Drawing.Point((int)SelectionEndPoint.X, (int)SelectionEndPoint.Y),
+                CurrentPageNumber - 1,
+                ZoomLevel,
+                pageWidth,
+                pageHeight);
+
+            // Create selection rectangle (ensure proper min/max for width/height)
+            var left = Math.Min(startPoint.X, endPoint.X);
+            var right = Math.Max(startPoint.X, endPoint.X);
+            var bottom = Math.Min(startPoint.Y, endPoint.Y);
+            var top = Math.Max(startPoint.Y, endPoint.Y);
+
+            var selectionBounds = new System.Drawing.RectangleF(
+                left, bottom,
+                right - left, top - bottom);
+
+            _logger.LogDebug(
+                "Selection bounds. Screen=({StartX},{StartY})-({EndX},{EndY}), " +
+                "PDF=({Left},{Bottom},{Width},{Height})",
+                SelectionStartPoint.X, SelectionStartPoint.Y,
+                SelectionEndPoint.X, SelectionEndPoint.Y,
+                selectionBounds.Left, selectionBounds.Bottom,
+                selectionBounds.Width, selectionBounds.Height);
+
+            // Extract text within bounds
+            var result = await _textExtractionService.ExtractTextInBoundsAsync(
+                _currentDocument,
+                CurrentPageNumber,
+                selectionBounds);
 
             if (result.IsSuccess)
             {
-                SelectedText = result.Value;
+                SelectedText = result.Value.Text;
                 HasSelectedText = !string.IsNullOrWhiteSpace(SelectedText);
 
                 _logger.LogInformation(
-                    "Text extraction completed. Length={Length}, HasText={HasText}",
-                    SelectedText.Length, HasSelectedText);
+                    "Text extraction completed. Length={Length}, HasText={HasText}, CharBounds={CharBounds}",
+                    SelectedText.Length, HasSelectedText, result.Value.CharacterBounds.Count);
+
+                // If annotation tool is active, create annotation
+                if (AnnotationViewModel.ActiveTool != AnnotationTool.None && result.Value.HasText)
+                {
+                    await CreateAnnotationFromSelectionAsync(result.Value);
+                }
             }
             else
             {
@@ -2005,6 +2153,36 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         finally
         {
             IsSelecting = false;
+        }
+    }
+
+    /// <summary>
+    /// Creates an annotation from the text selection based on the active tool.
+    /// </summary>
+    private async Task CreateAnnotationFromSelectionAsync(TextSelection selection)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Creating annotation from selection. Tool={Tool}, Text={Text}",
+                AnnotationViewModel.ActiveTool, selection.Text);
+
+            switch (AnnotationViewModel.ActiveTool)
+            {
+                case AnnotationTool.Highlight:
+                    await AnnotationViewModel.CreateHighlightFromSelectionAsync(selection);
+                    break;
+                case AnnotationTool.Underline:
+                    await AnnotationViewModel.CreateUnderlineFromSelectionAsync(selection);
+                    break;
+                case AnnotationTool.Strikethrough:
+                    await AnnotationViewModel.CreateStrikethroughFromSelectionAsync(selection);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create annotation from selection");
         }
     }
 
@@ -2300,6 +2478,57 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Gets or sets the page container UI element for animations.
+    /// This should be set by the view to enable page transition animations.
+    /// </summary>
+    [ObservableProperty]
+    private Microsoft.UI.Xaml.UIElement? _pageContainerElement;
+
+    /// <summary>
+    /// Triggers a page transition animation if animation service is available.
+    /// Handles graceful degradation if service is not injected or element not set.
+    /// </summary>
+    /// <param name="direction">Direction of the transition.</param>
+    /// <param name="cancellationToken">Token to cancel animation on rapid navigation.</param>
+    private async Task AnimatePageTransitionAsync(
+        PageTransitionDirection direction,
+        CancellationToken cancellationToken)
+    {
+        if (_animationService == null)
+        {
+            _logger.LogDebug(
+                "Page transition animation skipped: IAnimationService not injected");
+            return;
+        }
+
+        if (PageContainerElement == null)
+        {
+            _logger.LogDebug(
+                "Page transition animation skipped: PageContainerElement not set");
+            return;
+        }
+
+        try
+        {
+            await _animationService.AnimatePageTransitionAsync(
+                PageContainerElement,
+                direction,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug(
+                "Page transition animation cancelled due to rapid navigation");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Page transition animation failed, continuing without animation");
+        }
+    }
+
+    /// <summary>
     /// Disposes resources used by the ViewModel.
     /// </summary>
     public void Dispose()
@@ -2328,6 +2557,10 @@ public partial class PdfViewerViewModel : ObservableObject, IDisposable
         _searchCts?.Cancel();
         _searchCts?.Dispose();
         _searchCts = null;
+
+        _navigationAnimationCts?.Cancel();
+        _navigationAnimationCts?.Dispose();
+        _navigationAnimationCts = null;
 
         _searchDebounceTimer?.Dispose();
         _searchDebounceTimer = null;

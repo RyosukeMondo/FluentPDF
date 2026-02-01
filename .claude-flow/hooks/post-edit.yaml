@@ -1,0 +1,79 @@
+# Post-Edit Hook
+# Validates edits and triggers appropriate tests
+
+name: post-edit
+version: "1.0.0"
+description: Auto-validate after file edits
+
+enabled: true
+priority: normal
+
+rules:
+  # Interop changes require marshalling validation
+  - match:
+      paths:
+        - "src/FluentPDF.Rendering/Interop/**"
+    actions:
+      - type: suggest
+        message: "Interop change detected. Run marshalling validation."
+        command: "FluentPDF.App.exe --validate-marshalling"
+      - type: require_test
+        test_project: FluentPDF.Verification.Pdfium.Tests
+
+  # Service changes require unit tests
+  - match:
+      paths:
+        - "src/FluentPDF.Core/Services/**"
+        - "src/FluentPDF.Rendering/Services/**"
+    actions:
+      - type: require_test
+        test_project: FluentPDF.Core.Tests
+      - type: run_on_save
+        command: "dotnet test tests/FluentPDF.Core.Tests --filter 'Category!=Integration'"
+
+  # ViewModel changes require app tests
+  - match:
+      paths:
+        - "src/FluentPDF.App/ViewModels/**"
+    actions:
+      - type: suggest
+        message: "ViewModel changed. Verify bindings work."
+      - type: require_test
+        test_project: FluentPDF.App.Tests
+
+  # API changes require E2E tests
+  - match:
+      paths:
+        - "src/FluentPDF.App/Api/**"
+    actions:
+      - type: require_test
+        test_project: FluentPDF.E2E.Tests
+      - type: suggest
+        message: "API changed. Update endpoint documentation."
+
+  # Architecture-sensitive changes
+  - match:
+      paths:
+        - "src/FluentPDF.App/App.xaml.cs"
+    actions:
+      - type: run_on_save
+        command: "dotnet test tests/FluentPDF.Architecture.Tests"
+      - type: alert
+        message: "DI container modified. Verify service registrations."
+
+  # Design token changes
+  - match:
+      paths:
+        - "design-tokens/tokens.json"
+    actions:
+      - type: run_on_save
+        command: "cd prototype && npm run generate-tokens"
+      - type: suggest
+        message: "Regenerate tokens for both React and XAML."
+
+learning:
+  enabled: true
+  track:
+    - edit_patterns
+    - test_outcomes
+    - time_to_fix

@@ -1,0 +1,104 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="FluentPDF.Avalonia.Controls.ContinuousScrollViewer">
+
+    <Grid AutomationProperties.Name="ContinuousScrollViewerRoot">
+        <ScrollViewer x:Name="MainScrollViewer"
+                      AutomationProperties.Name="ContinuousScrollViewer"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+
+            <!-- ItemsControl for virtualized scrolling -->
+            <ItemsControl x:Name="PageRepeater"
+                          AutomationProperties.Name="PageRepeater"
+                          Margin="20">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="16"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid HorizontalAlignment="Center">
+                            <!-- Page container with shadow -->
+                            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                    BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    BoxShadow="0 2 8 0 #40000000">
+                                <Grid>
+                                    <!-- Page image with pointer events for text selection -->
+                                    <Image x:Name="PageImage"
+                                           Source="{Binding PageImage}"
+                                           Stretch="None"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Tag="{Binding PageIndex}"/>
+
+                                    <!-- Canvas for selection rectangle overlay -->
+                                    <Canvas x:Name="SelectionCanvas"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Width="{Binding #PageImage.Bounds.Width}"
+                                            Height="{Binding #PageImage.Bounds.Height}"
+                                            IsHitTestVisible="False">
+                                        <Rectangle x:Name="SelectionRectangle"
+                                                   IsVisible="False"
+                                                   Stroke="{DynamicResource SystemAccentColor}"
+                                                   StrokeThickness="2"
+                                                   Fill="{DynamicResource SystemAccentColor}"
+                                                   Opacity="0.2"/>
+                                    </Canvas>
+
+                                    <!-- Page number badge -->
+                                    <Border Background="{DynamicResource SystemAccentColor}"
+                                            CornerRadius="12"
+                                            Padding="12,4"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            Margin="8"
+                                            IsHitTestVisible="False">
+                                        <TextBlock Text="{Binding PageNumber}"
+                                                   Foreground="White"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
+
+                                    <!-- Loading indicator -->
+                                    <Panel HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding IsLoading}">
+                                        <ProgressBar IsIndeterminate="True"
+                                                     Width="100"
+                                                     IsHitTestVisible="False"/>
+                                    </Panel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Current page indicator -->
+        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="16,8"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,24"
+                BoxShadow="0 2 8 0 #40000000">
+            <TextBlock x:Name="CurrentPageIndicator"
+                       AutomationProperties.Name="CurrentPageIndicator"
+                       FontSize="14"
+                       FontWeight="SemiBold"/>
+        </Border>
+    </Grid>
+</UserControl>

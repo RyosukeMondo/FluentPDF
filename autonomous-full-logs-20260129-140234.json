@@ -1,0 +1,161 @@
+{
+  "count": 26,
+  "logs": [
+    {
+      "timestamp": "2026-01-29T14:02:01.9763775+09:00",
+      "level": "Info",
+      "message": "OperationWatchdog initialized - autonomous error detection enabled",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:01.9771481+09:00",
+      "level": "Info",
+      "message": "MainViewModel initialized",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:02.8423622+09:00",
+      "level": "Info",
+      "message": "Debug console initialized - real-time logging enabled",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:02.8423646+09:00",
+      "level": "Info",
+      "message": "Click 'Copy Last 50' to copy recent logs to clipboard",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:02.8423648+09:00",
+      "level": "Info",
+      "message": "Click 'Download Log' to save full log file",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:02.842365+09:00",
+      "level": "Info",
+      "message": "---",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.2353936+09:00",
+      "level": "Info",
+      "message": "[REST API] Received open-file request: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.2355204+09:00",
+      "level": "Info",
+      "message": "[REST API] Triggering file open via direct command execution...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.2355594+09:00",
+      "level": "Info",
+      "message": "[REST API] Command execution started. Polling for completion (15s timeout)...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.2367464+09:00",
+      "level": "Info",
+      "message": "[REST API] Executing OpenRecentFileCommand...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.2434631+09:00",
+      "level": "Info",
+      "message": "🔍 WATCHDOG: Monitoring 'Open File: sample-with-text.pdf' (timeout: 15000ms)",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.2435814+09:00",
+      "level": "Info",
+      "message": "[1/8] Starting OpenFileInTabAsync for: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.2436748+09:00",
+      "level": "Info",
+      "message": "[2/8] File not already open. Current tab count: 0",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.243695+09:00",
+      "level": "Info",
+      "message": "[3/8] Requesting PdfViewerViewModel from DI container...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3303464+09:00",
+      "level": "Error",
+      "message": "❌ WATCHDOG: 'Open File: sample-with-text.pdf' FAILED after 86ms - The type initializer for 'FluentPDF.Avalonia.ViewModels.DiagnosticsPanelViewModel' threw an exception.",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3305104+09:00",
+      "level": "Error",
+      "message": "[ERROR] CRITICAL: Failed to open file in tab: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf: The type initializer for 'FluentPDF.Avalonia.ViewModels.DiagnosticsPanelViewModel' threw an exception.",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3305481+09:00",
+      "level": "Error",
+      "message": "[ERROR] Exception Type: TypeInitializationException",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3305962+09:00",
+      "level": "Error",
+      "message": "[ERROR] Exception Message: The type initializer for 'FluentPDF.Avalonia.ViewModels.DiagnosticsPanelViewModel' threw an exception.",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3608451+09:00",
+      "level": "Error",
+      "message": "[ERROR] Stack Trace:    at FluentPDF.Avalonia.ViewModels.DiagnosticsPanelViewModel..ctor(IMetricsCollectionService metricsService, ILogger`1 logger)\r\n   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)\r\n   at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)\r\n   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\r\n   at System.Reflection.RuntimeConstructorInfo.Invoke(BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitConstructor(ConstructorCallSite constructorCallSite, RuntimeResolverContext context)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitDisposeCache(ServiceCallSite transientCallSite, RuntimeResolverContext context)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitConstructor(ConstructorCallSite constructorCallSite, RuntimeResolverContext context)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitDisposeCache(ServiceCallSite transientCallSite, RuntimeResolverContext context)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.Resolve(ServiceCallSite callSite, ServiceProviderEngineScope scope)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine.<>c__DisplayClass2_0.<RealizeService>b__0(ServiceProviderEngineScope scope)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)\r\n   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)\r\n   at FluentPDF.Avalonia.ViewModels.MainViewModel.OpenFileInTabAsync(String filePath)",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3608743+09:00",
+      "level": "Error",
+      "message": "[ERROR] Inner Exception: Call from invalid thread",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3609424+09:00",
+      "level": "Error",
+      "message": "[ERROR] Inner Stack Trace:    at Avalonia.Threading.Dispatcher.<VerifyAccess>g__ThrowVerifyAccess|16_0()\r\n   at Avalonia.Threading.Dispatcher.VerifyAccess()\r\n   at Avalonia.AvaloniaObject.VerifyAccess()\r\n   at Avalonia.AvaloniaObject..ctor()\r\n   at Avalonia.Animation.Animatable..ctor()\r\n   at Avalonia.Media.Brush..ctor()\r\n   at Avalonia.Media.SolidColorBrush..ctor(Color color, Double opacity)\r\n   at FluentPDF.Avalonia.ViewModels.DiagnosticsPanelViewModel..cctor()",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3609482+09:00",
+      "level": "Info",
+      "message": "[UI] Attempting to show error dialog to user...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.361625+09:00",
+      "level": "Info",
+      "message": "[UI] Error dialog shown successfully",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.3616312+09:00",
+      "level": "Error",
+      "message": "[FINAL] File opening failed. Check logs above for details.",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.361903+09:00",
+      "level": "Info",
+      "message": "[REST API] OpenRecentFileCommand completed successfully",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:02:04.7413146+09:00",
+      "level": "Info",
+      "message": "[REST API] Command execution confirmed",
+      "source": "GuiStateEndpoints"
+    }
+  ]
+}

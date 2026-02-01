@@ -1,0 +1,38 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FluentPDF.Avalonia.App"
+             xmlns:local="using:FluentPDF.Avalonia"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Liquid Glass UI Theme Foundation (Phase 1) -->
+                <!-- Task 1.1: Color palette with Light/Dark/HighContrast variants -->
+                <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/Theme/Colors.axaml"/>
+                <!-- Task 1.2: Acrylic brushes and materials (GPU-accelerated) -->
+                <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/Theme/Brushes.axaml"/>
+                <!-- Task 1.3: Typography scale with Segoe UI Variable -->
+                <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/Theme/Typography.axaml"/>
+                <!-- Task 1.4: Spacing and layout grid system (4px-based) -->
+                <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/Theme/Spacing.axaml"/>
+
+                <!-- Legacy Theme Resources (to be migrated) -->
+                <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/ThemeResources.axaml"/>
+                <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/ButtonStyles.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Define missing theme resources -->
+            <SolidColorBrush x:Key="ApplicationPageBackgroundBrush" Color="{DynamicResource SystemChromeLowColor}" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

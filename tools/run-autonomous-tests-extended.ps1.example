@@ -1,0 +1,237 @@
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+    Extended Test Suite Example - Adding Custom Tests
+
+.DESCRIPTION
+    This example shows how to extend the autonomous test orchestration
+    with custom test suites for specific features.
+
+    Copy this file and customize for your needs.
+
+.EXAMPLE
+    pwsh tools/run-autonomous-tests-extended.ps1
+#>
+
+# Import base test functions
+. "$(Split-Path $MyInvocation.MyCommand.Path)/run-autonomous-tests.ps1"
+
+# ============================================================================
+# CUSTOM TEST FUNCTIONS
+# ============================================================================
+
+function Run-PerformanceBenchmarks {
+    Write-Log "============================================" "INFO"
+    Write-Log "PERFORMANCE BENCHMARKS" "INFO"
+    Write-Log "============================================" "INFO"
+
+    $testFixtures = Get-TestFixtures
+    if ($testFixtures.Count -eq 0) {
+        Write-Log "No test fixtures, skipping performance tests" "WARN"
+        return
+    }
+
+    # Test rendering performance on different PDF sizes
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+    foreach ($pdfFile in $testFixtures | Select-Object -First 5) {
+        $fileName = Split-Path -Leaf $pdfFile
+        $fileSize = (Get-Item $pdfFile).Length / 1MB
+
+        Write-Log "Benchmarking: $fileName ($([Math]::Round($fileSize, 2)) MB)" "INFO"
+
+        # Load document
+        $loadStart = Get-Date
+        $loadBody = @{ path = $pdfFile } | ConvertTo-Json
+        try {
+            $loadResponse = Invoke-RestMethod -Uri "$BaseUrl/api/document/load" `
+                -Method Post -Body $loadBody -ContentType "application/json" `
+                -TimeoutSec 30
+            $loadTime = (Get-Date) - $loadStart
+
+            $documentId = $loadResponse.documentId
+            $pageCount = $loadResponse.pageCount
+
+            # Render first page
+            $renderStart = Get-Date
+            try {
+                Invoke-WebRequest -Uri "$BaseUrl/api/render/$documentId/0" `
+                    -Method Get -TimeoutSec 30 | Out-Null
+                $renderTime = (Get-Date) - $renderStart
+
+                Write-Log "  Load: $([Math]::Round($loadTime.TotalMilliseconds))ms, Render: $([Math]::Round($renderTime.TotalMilliseconds))ms" "SUCCESS"
+            } catch {
+                Write-Log "  Render failed: $_" "ERROR"
+            }
+
+            # Close document
+            try {
+                Invoke-RestMethod -Uri "$BaseUrl/api/document/$documentId" -Method Delete | Out-Null
+            } catch {
+                Write-Log "  Close failed: $_" "WARN"
+            }
+        } catch {
+            Write-Log "  Load failed: $_" "ERROR"
+        }
+    }
+
+    $stopwatch.Stop()
+    Write-Log "Performance benchmarks completed in $($stopwatch.ElapsedMilliseconds)ms" "SUCCESS"
+}
+
+function Run-StressTests {
+    Write-Log "============================================" "INFO"
+    Write-Log "STRESS TESTS" "INFO"
+    Write-Log "============================================" "INFO"
+
+    $testFixtures = Get-TestFixtures
+    if ($testFixtures.Count -eq 0) {
+        Write-Log "No test fixtures, skipping stress tests" "WARN"
+        return
+    }
+
+    $testPdf = $testFixtures[0]
+    $maxConcurrentSessions = 5
+
+    Write-Log "Testing concurrent document sessions ($maxConcurrentSessions sessions)..." "INFO"
+
+    $documentIds = @()
+
+    # Load multiple documents concurrently
+    for ($i = 0; $i -lt $maxConcurrentSessions; $i++) {
+        try {
+            $loadBody = @{ path = $testPdf } | ConvertTo-Json
+            $response = Invoke-RestMethod -Uri "$BaseUrl/api/document/load" `
+                -Method Post -Body $loadBody -ContentType "application/json"
+            $documentIds += $response.documentId
+            Write-Log "  Loaded document $($i + 1)/$maxConcurrentSessions" "DEBUG"
+        } catch {
+            Write-Log "  Failed to load document $($i + 1): $_" "ERROR"
+        }
+    }
+
+    Write-Log "Successfully loaded $($documentIds.Count) concurrent sessions" "SUCCESS"
+
+    # Clean up
+    foreach ($docId in $documentIds) {
+        try {
+            Invoke-RestMethod -Uri "$BaseUrl/api/document/$docId" -Method Delete | Out-Null
+        } catch {
+            Write-Log "  Failed to close session: $_" "WARN"
+        }
+    }
+
+    Write-Log "Cleaned up all sessions" "SUCCESS"
+}
+
+function Run-RegressionTests {
+    Write-Log "============================================" "INFO"
+    Write-Log "REGRESSION TESTS" "INFO"
+    Write-Log "============================================" "INFO"
+
+    # Compare against known good hashes
+    $testFixtures = Get-TestFixtures
+    if ($testFixtures.Count -eq 0) {
+        Write-Log "No test fixtures, skipping regression tests" "WARN"
+        return
+    }
+
+    $testPdf = $testFixtures[0]
+
+    # These would be your known-good hashes from previous runs
+    $expectedHashes = @{
+        "page-0" = "abc123def456"  # Example hash
+        "page-1" = "xyz789uvw012"  # Example hash
+    }
+
+    Write-Log "Comparing renders against baseline hashes..." "INFO"
+
+    try {
+        $loadBody = @{ path = $testPdf } | ConvertTo-Json
+        $loadResponse = Invoke-RestMethod -Uri "$BaseUrl/api/document/load" `
+            -Method Post -Body $loadBody -ContentType "application/json"
+        $documentId = $loadResponse.documentId
+
+        # Test first 2 pages
+        for ($i = 0; $i -lt [Math]::Min($loadResponse.pageCount, 2); $i++) {
+            $verifyBody = @{ documentId = $documentId; pageIndex = $i } | ConvertTo-Json
+            $verifyResponse = Invoke-RestMethod -Uri "$BaseUrl/api/verify/render" `
+                -Method Post -Body $verifyBody -ContentType "application/json"
+
+            $hash = $verifyResponse.hash
+            $expected = $expectedHashes["page-$i"]
+
+            if ($expected -and $hash -eq $expected) {
+                Write-Log "  Page $i: MATCH (hash: $($hash.Substring(0, 8))...)" "SUCCESS"
+            } else {
+                Write-Log "  Page $i: NEW HASH (was: $expected, now: $($hash.Substring(0, 8))...)" "WARN"
+            }
+        }
+
+        Invoke-RestMethod -Uri "$BaseUrl/api/document/$documentId" -Method Delete | Out-Null
+    } catch {
+        Write-Log "Regression test failed: $_" "ERROR"
+    }
+}
+
+function Run-AccessibilityTests {
+    Write-Log "============================================" "INFO"
+    Write-Log "ACCESSIBILITY TESTS" "INFO"
+    Write-Log "============================================" "INFO"
+
+    # Test endpoints with various configurations
+    Write-Log "Testing various endpoint parameters..." "INFO"
+
+    try {
+        # Test health with different accept headers
+        $response = Invoke-RestMethod -Uri "$BaseUrl/api/health" -Method Get -Headers @{
+            "Accept" = "application/json"
+        }
+
+        if ($response.status -eq "healthy") {
+            Write-Log "  Accessibility: Health endpoint works with standard headers" "SUCCESS"
+        }
+
+        # Test error handling
+        $errorResponse = try {
+            Invoke-RestMethod -Uri "$BaseUrl/api/document/invalid-id" -Method Get -ErrorAction Stop
+        } catch {
+            $_.Exception.Response
+        }
+
+        if ($errorResponse.StatusCode -eq 404) {
+            Write-Log "  Accessibility: Proper 404 errors for invalid resources" "SUCCESS"
+        }
+
+    } catch {
+        Write-Log "Accessibility test failed: $_" "ERROR"
+    }
+}
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
+
+Write-Log "FluentPDF Extended Test Suite" "INFO"
+Write-Log "=============================" "INFO"
+
+# Run standard tests
+Run-CliTests
+Run-ApiTests
+
+# Run custom tests
+Run-PerformanceBenchmarks
+Run-StressTests
+Run-RegressionTests
+Run-AccessibilityTests
+
+# Generate reports (using base functions)
+$jsonReportPath = Join-Path $OutputDir "test-report.json"
+$htmlReportPath = Join-Path $OutputDir "test-report.html"
+
+$report = Generate-JsonReport -OutputPath $jsonReportPath
+Generate-HtmlReport -OutputPath $htmlReportPath -Report $report
+
+Print-ConsoleSummary -Report $report
+
+exit $(if ($report.summary.totalFailed -gt 0) { 1 } else { 0 })

@@ -1,0 +1,95 @@
+# PDF Feature Implementation Workflow
+# Use for: New PDF functionality (annotations, forms, bookmarks, etc.)
+
+name: pdf-feature
+version: "1.0.0"
+description: Implement a new PDF feature end-to-end
+
+triggers:
+  - "add feature"
+  - "implement"
+  - "new functionality"
+
+topology: hierarchical
+max_agents: 5
+
+phases:
+  - name: specification
+    description: Define feature requirements and API surface
+    agents:
+      - researcher
+      - architecture
+    tasks:
+      - Research existing PDF libraries for patterns
+      - Define interface in FluentPDF.Core/Services/
+      - Document expected behavior and edge cases
+    outputs:
+      - Interface definition (I{Feature}Service.cs)
+      - Test specification
+
+  - name: implementation
+    description: Build the feature with tests
+    agents:
+      - pdf-rendering-specialist
+      - coder
+    depends_on: [specification]
+    tasks:
+      - Implement service in FluentPDF.Rendering/Services/
+      - Add to DI container in App.xaml.cs
+      - Write unit tests
+    outputs:
+      - Service implementation
+      - Unit tests (80%+ coverage)
+
+  - name: ui-integration
+    description: Add UI controls and ViewModel support
+    agents:
+      - ui-coordinator
+    depends_on: [implementation]
+    tasks:
+      - Create or update ViewModel
+      - Add XAML controls/views
+      - Wire data bindings
+    outputs:
+      - ViewModel with commands
+      - XAML views
+
+  - name: verification
+    description: E2E testing and API integration
+    agents:
+      - verification-engineer
+      - tester
+    depends_on: [ui-integration]
+    tasks:
+      - Add E2E test cases
+      - Add API endpoint if needed
+      - Run full test suite
+    quality_gates:
+      - all-tests-pass
+      - architecture-tests-pass
+
+  - name: review
+    description: Code review and documentation
+    agents:
+      - reviewer
+      - observability-analyst
+    depends_on: [verification]
+    tasks:
+      - Review for SOLID compliance
+      - Verify error handling patterns
+      - Check logging/metrics
+      - Update CLAUDE.md if needed
+
+validation:
+  pre_merge:
+    - dotnet build src/FluentPDF.Core
+    - dotnet build src/FluentPDF.Rendering
+    - dotnet build src/FluentPDF.App -p:Platform=x64
+    - dotnet test tests/FluentPDF.Core.Tests
+    - dotnet test tests/FluentPDF.Architecture.Tests
+
+artifacts:
+  - "src/FluentPDF.Core/Services/I*.cs"
+  - "src/FluentPDF.Rendering/Services/*.cs"
+  - "src/FluentPDF.App/ViewModels/*.cs"
+  - "tests/**/*Tests.cs"

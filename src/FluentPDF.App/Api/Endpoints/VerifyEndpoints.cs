@@ -79,10 +79,12 @@ public static class VerifyEndpoints
         })
         .WithName("VerifyRender")
         .WithTags("Verify")
-        .Produces<VerifyResponse>()
-        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
-        .Produces<ErrorResponse>(StatusCodes.Status500InternalServerError);
+        .WithSummary("Verify page rendering with hash comparison")
+        .WithDescription("Renders a page and compares its SHA256 hash against a baseline for visual regression testing.")
+        .Produces<VerifyResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status500InternalServerError, "application/json");
 
         // Batch verify multiple pages
         app.MapPost("/api/verify/batch", async (
@@ -155,7 +157,9 @@ public static class VerifyEndpoints
         })
         .WithName("BatchVerify")
         .WithTags("Verify")
-        .Produces<BatchVerifyResponse>()
-        .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
+        .WithSummary("Batch verify multiple pages in parallel")
+        .WithDescription("Verifies multiple pages concurrently using hash comparison for efficient regression testing.")
+        .Produces<BatchVerifyResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json");
     }
 }

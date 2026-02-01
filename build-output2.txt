@@ -1,0 +1,19 @@
+  復元対象のプロジェクトを決定しています...
+  復元対象のすべてのプロジェクトは最新です。
+  FluentPDF.Core -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Core\bin\Debug\net8.0\FluentPDF.Core.dll
+  FluentPDF.Rendering -> C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Rendering\bin\Debug\net8.0\FluentPDF.Rendering.dll
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(167,39): error CS0104: 'MainViewModel' は、'FluentPDF.Avalonia.ViewModels.MainViewModel' と 'FluentPDF.Core.ViewModels.MainViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(170,39): error CS0104: 'BookmarksViewModel' は、'FluentPDF.Avalonia.ViewModels.BookmarksViewModel' と 'FluentPDF.Core.ViewModels.BookmarksViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(174,39): error CS0104: 'ThumbnailsViewModel' は、'FluentPDF.Avalonia.ViewModels.ThumbnailsViewModel' と 'FluentPDF.Core.ViewModels.ThumbnailsViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(255,48): error CS0104: 'MainViewModel' は、'FluentPDF.Avalonia.ViewModels.MainViewModel' と 'FluentPDF.Core.ViewModels.MainViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+
+ビルドに失敗しました。
+
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(167,39): error CS0104: 'MainViewModel' は、'FluentPDF.Avalonia.ViewModels.MainViewModel' と 'FluentPDF.Core.ViewModels.MainViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(170,39): error CS0104: 'BookmarksViewModel' は、'FluentPDF.Avalonia.ViewModels.BookmarksViewModel' と 'FluentPDF.Core.ViewModels.BookmarksViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(174,39): error CS0104: 'ThumbnailsViewModel' は、'FluentPDF.Avalonia.ViewModels.ThumbnailsViewModel' と 'FluentPDF.Core.ViewModels.ThumbnailsViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\App.axaml.cs(255,48): error CS0104: 'MainViewModel' は、'FluentPDF.Avalonia.ViewModels.MainViewModel' と 'FluentPDF.Core.ViewModels.MainViewModel' 間のあいまいな参照です [C:\Users\ryosu\repos\FluentPDF\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj]
+    0 個の警告
+    4 エラー
+
+経過時間 00:00:02.66

@@ -1,0 +1,70 @@
+# Annotation Feature Workflow
+# Use for: Highlight, markup, drawing tools
+
+name: annotation-feature
+version: "1.0.0"
+description: Implement PDF annotation tools
+
+triggers:
+  - "annotation"
+  - "highlight"
+  - "markup"
+  - "draw"
+  - "ink"
+
+topology: hierarchical
+max_agents: 4
+
+phases:
+  - name: interop
+    description: PDFium annotation P/Invoke
+    agents:
+      - interop-validator
+      - annotation-specialist
+    tasks:
+      - Add FPDFPage_CreateAnnot and related P/Invoke
+      - Implement SafeAnnotationHandle if needed
+      - Test marshalling
+    outputs:
+      - PdfiumAnnotationInterop.cs
+
+  - name: service
+    description: Annotation service implementation
+    agents:
+      - annotation-specialist
+      - coder
+    depends_on: [interop]
+    tasks:
+      - Implement IAnnotationService
+      - Support all annotation types
+      - Handle annotation persistence
+    outputs:
+      - AnnotationService.cs
+
+  - name: ui
+    description: Annotation UI layer
+    agents:
+      - ui-coordinator
+      - annotation-specialist
+    depends_on: [service]
+    tasks:
+      - Create AnnotationLayer canvas
+      - Implement AnnotationViewModel
+      - Add tool selection UI
+      - Handle pointer events for drawing
+    outputs:
+      - AnnotationLayer.xaml
+      - AnnotationViewModel.cs
+
+  - name: testing
+    description: Annotation testing
+    agents:
+      - verification-engineer
+    depends_on: [ui]
+    tasks:
+      - Test create/edit/delete
+      - Test persistence (save, reload)
+      - Test all annotation types
+
+specs:
+  - annotation-tools

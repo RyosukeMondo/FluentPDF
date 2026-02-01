@@ -1,0 +1,389 @@
+# Spec-to-Code Traceability
+# Links .spec-workflow specs to actual implementations
+
+version: "1.0.0"
+updated: "2026-01-25"
+
+# ============================================================================
+# TRACEABILITY MATRIX
+# ============================================================================
+
+specs:
+  # --------------------------------------------------------------------------
+  # FULLY IMPLEMENTED SPECS
+  # --------------------------------------------------------------------------
+
+  document-structure-operations:
+    status: implemented
+    domain: document
+    spec_path: .spec-workflow/specs/document-structure-operations/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/IDocumentEditingService.cs
+        implementation: src/FluentPDF.Rendering/Services/DocumentEditingService.cs
+        status: complete
+      - interface: src/FluentPDF.Core/Services/IPageOperationsService.cs
+        implementation: src/FluentPDF.Rendering/Services/PageOperationsService.cs
+        status: complete
+    interop:
+      - src/FluentPDF.Rendering/Interop/QpdfNative.cs
+      - src/FluentPDF.Rendering/Interop/SafeQpdfJobHandle.cs
+    models:
+      - src/FluentPDF.Core/Models/OptimizationOptions.cs
+      - src/FluentPDF.Core/Models/OptimizationResult.cs
+      - src/FluentPDF.Core/Models/PageRange.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/DocumentEditingServiceTests.cs
+      - tests/FluentPDF.Rendering.Tests/Services/PageOperationsServiceTests.cs
+    gaps: []
+
+  form-filling:
+    status: implemented
+    domain: form
+    spec_path: .spec-workflow/specs/form-filling/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/IPdfFormService.cs
+        implementation: src/FluentPDF.Rendering/Services/PdfFormService.cs
+        status: complete
+      - interface: src/FluentPDF.Core/Services/IFormValidationService.cs
+        implementation: src/FluentPDF.Rendering/Services/FormValidationService.cs
+        status: complete
+    interop:
+      - src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs
+      - src/FluentPDF.Rendering/Interop/SafePdfFormHandle.cs
+    models:
+      - src/FluentPDF.Core/Models/PdfFormField.cs
+      - src/FluentPDF.Core/Models/FormValidationResult.cs
+      - src/FluentPDF.Core/Models/FieldValidationError.cs
+    ui:
+      - src/FluentPDF.App/Controls/FormFieldControl.xaml
+      - src/FluentPDF.App/ViewModels/FormFieldViewModel.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/PdfFormServiceTests.cs
+      - tests/FluentPDF.App.Tests/ViewModels/FormFieldViewModelTests.cs
+    gaps: []
+
+  annotation-tools:
+    status: implemented
+    domain: annotation
+    spec_path: .spec-workflow/specs/annotation-tools/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/IAnnotationService.cs
+        implementation: src/FluentPDF.Rendering/Services/AnnotationService.cs
+        status: complete
+    interop:
+      - src/FluentPDF.Rendering/Interop/PdfiumAnnotationInterop.cs
+    models:
+      - src/FluentPDF.Core/Models/Annotation.cs
+    ui:
+      - src/FluentPDF.App/Controls/AnnotationLayer.xaml
+      - src/FluentPDF.App/ViewModels/AnnotationViewModel.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/AnnotationServiceTests.cs
+    gaps: []
+
+  bookmarks-panel:
+    status: implemented
+    domain: bookmark
+    spec_path: .spec-workflow/specs/bookmarks-panel/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/IBookmarkService.cs
+        implementation: src/FluentPDF.Rendering/Services/BookmarkService.cs
+        status: complete
+    interop:
+      - src/FluentPDF.Rendering/Interop/PdfiumBookmarkInterop.cs
+    models:
+      - src/FluentPDF.Core/Models/BookmarkNode.cs
+    ui:
+      - src/FluentPDF.App/Controls/BookmarksPanel.xaml
+      - src/FluentPDF.App/ViewModels/BookmarksViewModel.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/BookmarkServiceTests.cs
+    gaps: []
+
+  observability-dashboard:
+    status: implemented
+    domain: observability
+    spec_path: .spec-workflow/specs/observability-dashboard/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Observability/IMetricsCollectionService.cs
+        implementation: src/FluentPDF.Rendering/Services/MetricsCollectionService.cs
+        status: complete
+      - interface: src/FluentPDF.Core/Observability/ILogExportService.cs
+        implementation: src/FluentPDF.Rendering/Services/LogExportService.cs
+        status: complete
+    models:
+      - src/FluentPDF.Core/Observability/PerformanceMetrics.cs
+      - src/FluentPDF.Core/Observability/LogEntry.cs
+    ui:
+      - src/FluentPDF.App/Controls/DiagnosticsPanelControl.xaml
+      - src/FluentPDF.App/Controls/LogViewerControl.xaml
+      - src/FluentPDF.App/ViewModels/DiagnosticsPanelViewModel.cs
+      - src/FluentPDF.App/ViewModels/LogViewerViewModel.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/MetricsCollectionServiceTests.cs
+    gaps: []
+
+  hidpi-display-scaling:
+    status: implemented
+    domain: rendering
+    spec_path: .spec-workflow/specs/hidpi-display-scaling/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/IDpiDetectionService.cs
+        implementation: src/FluentPDF.Rendering/Services/DpiDetectionService.cs
+        status: complete
+      - interface: src/FluentPDF.Core/Services/IRenderingSettingsService.cs
+        implementation: src/FluentPDF.App/Services/RenderingSettingsService.cs
+        status: complete
+    models:
+      - src/FluentPDF.Core/Models/DisplayInfo.cs
+      - src/FluentPDF.Core/Models/RenderingQuality.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/DpiDetectionServiceTests.cs
+    gaps: []
+
+  text-extraction-search:
+    status: implemented
+    domain: content
+    spec_path: .spec-workflow/specs/text-extraction-search/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/ITextExtractionService.cs
+        implementation: src/FluentPDF.Rendering/Services/TextExtractionService.cs
+        status: complete
+      - interface: src/FluentPDF.Core/Services/ITextSearchService.cs
+        implementation: src/FluentPDF.Rendering/Services/TextSearchService.cs
+        status: complete
+    models:
+      - src/FluentPDF.Core/Models/SearchMatch.cs
+      - src/FluentPDF.Core/Models/SearchOptions.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/TextSearchServiceTests.cs
+    gaps: []
+
+  pdf-viewer-core:
+    status: implemented
+    domain: rendering
+    spec_path: .spec-workflow/specs/pdf-viewer-core/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/IPdfDocumentService.cs
+        implementation: src/FluentPDF.Rendering/Services/PdfDocumentService.cs
+        status: complete
+      - interface: src/FluentPDF.Core/Services/IPdfRenderingService.cs
+        implementation: src/FluentPDF.Rendering/Services/PdfRenderingService.cs
+        status: complete
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/PdfRenderingServiceTests.cs
+    gaps: []
+
+  thumbnails-sidebar:
+    status: implemented
+    domain: rendering
+    spec_path: .spec-workflow/specs/thumbnails-sidebar/
+    completeness: 100%
+    services:
+      - interface: src/FluentPDF.Core/Services/IThumbnailRenderingService.cs
+        implementation: src/FluentPDF.Rendering/Services/ThumbnailRenderingService.cs
+        status: complete
+    ui:
+      - src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs
+    tests:
+      - tests/FluentPDF.Rendering.Tests/Services/ThumbnailRenderingServiceTests.cs
+    gaps: []
+
+  # --------------------------------------------------------------------------
+  # PARTIALLY IMPLEMENTED SPECS
+  # --------------------------------------------------------------------------
+
+  image-insertion:
+    status: partial
+    domain: content
+    spec_path: .spec-workflow/specs/image-insertion/
+    completeness: 60%
+    services:
+      - interface: src/FluentPDF.Core/Services/IImageInsertionService.cs
+        implementation: src/FluentPDF.Rendering/Services/ImageInsertionService.cs
+        status: partial
+    models:
+      - src/FluentPDF.Core/Models/ImageObject.cs
+    ui:
+      - src/FluentPDF.App/Controls/ImageManipulationOverlay.xaml
+        status: not_started
+      - src/FluentPDF.App/ViewModels/ImageInsertionViewModel.cs
+        status: partial
+    gaps:
+      - "ImageManipulationOverlay not implemented"
+      - "Scale/rotate operations not complete"
+      - "E2E tests missing"
+
+  watermarks:
+    status: partial
+    domain: watermark
+    spec_path: .spec-workflow/specs/watermarks/
+    completeness: 70%
+    services:
+      - interface: src/FluentPDF.Core/Services/IWatermarkService.cs
+        implementation: src/FluentPDF.Rendering/Services/WatermarkService.cs
+        status: partial
+    models:
+      - src/FluentPDF.Core/Models/WatermarkConfig.cs
+    ui:
+      - src/FluentPDF.App/ViewModels/WatermarkViewModel.cs
+        status: partial
+    gaps:
+      - "Image watermarks not implemented"
+      - "Multi-page batch not implemented"
+      - "Preview not working"
+
+  office-document-conversion:
+    status: partial
+    domain: conversion
+    spec_path: .spec-workflow/specs/office-document-conversion/
+    completeness: 50%
+    services:
+      - interface: src/FluentPDF.Core/Services/IDocxConverterService.cs
+        implementation: src/FluentPDF.Rendering/Services/DocxConverterService.cs
+        status: partial
+      - interface: src/FluentPDF.Core/Services/IHtmlToPdfService.cs
+        implementation: src/FluentPDF.Rendering/Services/HtmlToPdfService.cs
+        status: not_started
+    gaps:
+      - "HTML to PDF not implemented"
+      - "Quality validation incomplete"
+      - "LibreOffice integration not tested"
+
+  # --------------------------------------------------------------------------
+  # NOT STARTED SPECS
+  # --------------------------------------------------------------------------
+
+  ai-quality-agent:
+    status: not_started
+    domain: observability
+    spec_path: .spec-workflow/specs/ai-quality-agent/
+    completeness: 0%
+    gaps:
+      - "Entire spec not implemented"
+
+  autonomous-verification-api:
+    status: implemented
+    domain: testing
+    spec_path: .spec-workflow/specs/autonomous-verification-api/
+    completeness: 100%
+    services:
+      - implementation: src/FluentPDF.App/Api/VerificationApiServer.cs
+        status: complete
+      - implementation: src/FluentPDF.App/Api/DocumentSessionManager.cs
+        status: complete
+    gaps: []
+
+# ============================================================================
+# GAP ANALYSIS SUMMARY
+# ============================================================================
+
+gap_analysis:
+  total_specs: 35
+  fully_implemented: 12
+  partially_implemented: 3
+  not_started: 20
+
+  priority_gaps:
+    high:
+      - spec: image-insertion
+        gap: "ImageManipulationOverlay"
+        effort: medium
+        domain: content
+
+      - spec: office-document-conversion
+        gap: "HTML to PDF conversion"
+        effort: high
+        domain: conversion
+
+    medium:
+      - spec: watermarks
+        gap: "Image watermarks"
+        effort: low
+        domain: watermark
+
+      - spec: watermarks
+        gap: "Preview functionality"
+        effort: medium
+        domain: watermark
+
+    low:
+      - spec: ai-quality-agent
+        gap: "Full implementation"
+        effort: high
+        domain: observability
+
+# ============================================================================
+# COVERAGE BY DOMAIN
+# ============================================================================
+
+domain_coverage:
+  document:
+    specs: [document-structure-operations, page-operations, save-document]
+    implemented: 3
+    total: 3
+    coverage: 100%
+
+  rendering:
+    specs: [pdf-viewer-core, hidpi-display-scaling, thumbnails-sidebar, pdf-rendering-reliability]
+    implemented: 4
+    total: 4
+    coverage: 100%
+
+  annotation:
+    specs: [annotation-tools]
+    implemented: 1
+    total: 1
+    coverage: 100%
+
+  form:
+    specs: [form-filling]
+    implemented: 1
+    total: 1
+    coverage: 100%
+
+  bookmark:
+    specs: [bookmarks-panel]
+    implemented: 1
+    total: 1
+    coverage: 100%
+
+  content:
+    specs: [text-extraction-search, image-insertion]
+    implemented: 1
+    partial: 1
+    total: 2
+    coverage: 75%
+
+  observability:
+    specs: [observability-dashboard, ai-quality-agent]
+    implemented: 1
+    not_started: 1
+    total: 2
+    coverage: 50%
+
+  conversion:
+    specs: [office-document-conversion]
+    partial: 1
+    total: 1
+    coverage: 50%
+
+  watermark:
+    specs: [watermarks]
+    partial: 1
+    total: 1
+    coverage: 70%
+
+  testing:
+    specs: [autonomous-verification-api, flaui-testing, cli-test-infrastructure]
+    implemented: 3
+    total: 3
+    coverage: 100%

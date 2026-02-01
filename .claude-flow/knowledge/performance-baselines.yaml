@@ -1,0 +1,275 @@
+# Performance Baselines
+# Reference metrics for performance audit workflow
+
+version: "1.0.0"
+updated: "2026-01-25"
+measurement_environment:
+  os: "Windows 11"
+  cpu: "Intel Core i7"
+  ram: "16GB"
+  gpu: "Integrated"
+  dotnet: "8.0"
+
+# ============================================================================
+# RENDERING PERFORMANCE
+# ============================================================================
+
+rendering:
+  single_page:
+    description: "Time to render one page"
+    metrics:
+      - name: "96 DPI (100%)"
+        target_ms: 50
+        acceptable_ms: 75
+        critical_ms: 150
+
+      - name: "144 DPI (150%)"
+        target_ms: 75
+        acceptable_ms: 100
+        critical_ms: 200
+
+      - name: "192 DPI (200%)"
+        target_ms: 100
+        acceptable_ms: 150
+        critical_ms: 300
+
+      - name: "288 DPI (300%)"
+        target_ms: 150
+        acceptable_ms: 225
+        critical_ms: 450
+
+  thumbnail:
+    description: "Time to generate thumbnail"
+    metrics:
+      - name: "72 DPI thumbnail"
+        target_ms: 30
+        acceptable_ms: 50
+        critical_ms: 100
+
+      - name: "96 DPI thumbnail"
+        target_ms: 40
+        acceptable_ms: 60
+        critical_ms: 120
+
+  batch_render:
+    description: "Rendering multiple pages"
+    metrics:
+      - name: "10 pages sequential"
+        target_ms: 500
+        acceptable_ms: 750
+        critical_ms: 1500
+
+      - name: "100 pages for thumbnails"
+        target_ms: 3000
+        acceptable_ms: 5000
+        critical_ms: 10000
+
+# ============================================================================
+# DOCUMENT OPERATIONS PERFORMANCE
+# ============================================================================
+
+document_operations:
+  load:
+    description: "Time to load and parse PDF"
+    metrics:
+      - name: "Small PDF (< 10 pages)"
+        target_ms: 50
+        acceptable_ms: 100
+        critical_ms: 200
+
+      - name: "Medium PDF (10-100 pages)"
+        target_ms: 150
+        acceptable_ms: 300
+        critical_ms: 600
+
+      - name: "Large PDF (100+ pages)"
+        target_ms: 500
+        acceptable_ms: 1000
+        critical_ms: 2000
+
+  merge:
+    description: "Time to merge PDFs"
+    metrics:
+      - name: "2 small PDFs"
+        target_ms: 200
+        acceptable_ms: 400
+        critical_ms: 800
+
+      - name: "10 medium PDFs"
+        target_ms: 1000
+        acceptable_ms: 2000
+        critical_ms: 4000
+
+  split:
+    description: "Time to split PDF"
+    metrics:
+      - name: "Extract 10 pages from 100-page PDF"
+        target_ms: 300
+        acceptable_ms: 500
+        critical_ms: 1000
+
+  optimize:
+    description: "Time to optimize/compress PDF"
+    metrics:
+      - name: "Small PDF"
+        target_ms: 500
+        acceptable_ms: 1000
+        critical_ms: 2000
+
+      - name: "Medium PDF"
+        target_ms: 2000
+        acceptable_ms: 4000
+        critical_ms: 8000
+
+# ============================================================================
+# MEMORY PERFORMANCE
+# ============================================================================
+
+memory:
+  per_page_rendered:
+    description: "Memory per rendered page at different DPIs"
+    metrics:
+      - name: "96 DPI"
+        target_mb: 5
+        acceptable_mb: 8
+        critical_mb: 15
+
+      - name: "192 DPI"
+        target_mb: 20
+        acceptable_mb: 30
+        critical_mb: 50
+
+      - name: "288 DPI"
+        target_mb: 45
+        acceptable_mb: 60
+        critical_mb: 100
+
+  idle:
+    description: "Memory when document loaded but not rendering"
+    metrics:
+      - name: "Small PDF loaded"
+        target_mb: 50
+        acceptable_mb: 75
+        critical_mb: 150
+
+      - name: "Large PDF loaded"
+        target_mb: 150
+        acceptable_mb: 250
+        critical_mb: 500
+
+  native_memory:
+    description: "Native (PDFium) memory allocation"
+    metrics:
+      - name: "Per document handle"
+        target_mb: 10
+        acceptable_mb: 20
+        critical_mb: 50
+
+# ============================================================================
+# UI RESPONSIVENESS
+# ============================================================================
+
+ui:
+  startup:
+    description: "Application startup time"
+    metrics:
+      - name: "Cold start to main window"
+        target_ms: 1000
+        acceptable_ms: 2000
+        critical_ms: 4000
+
+      - name: "Warm start"
+        target_ms: 500
+        acceptable_ms: 1000
+        critical_ms: 2000
+
+  navigation:
+    description: "Page navigation responsiveness"
+    metrics:
+      - name: "Go to page (cached)"
+        target_ms: 50
+        acceptable_ms: 100
+        critical_ms: 200
+
+      - name: "Go to page (uncached)"
+        target_ms: 150
+        acceptable_ms: 250
+        critical_ms: 500
+
+  zoom:
+    description: "Zoom operation responsiveness"
+    metrics:
+      - name: "Zoom in/out"
+        target_ms: 100
+        acceptable_ms: 200
+        critical_ms: 400
+
+  thumbnail_scroll:
+    description: "Thumbnail panel scrolling"
+    metrics:
+      - name: "FPS during scroll"
+        target_fps: 60
+        acceptable_fps: 30
+        critical_fps: 15
+
+# ============================================================================
+# API SERVER PERFORMANCE
+# ============================================================================
+
+api:
+  health_check:
+    description: "Health endpoint response"
+    metrics:
+      - name: "GET /api/health"
+        target_ms: 10
+        acceptable_ms: 50
+        critical_ms: 100
+
+  document_load:
+    description: "Load document via API"
+    metrics:
+      - name: "POST /api/document/load"
+        target_ms: 200
+        acceptable_ms: 400
+        critical_ms: 800
+
+  render:
+    description: "Render page via API"
+    metrics:
+      - name: "GET /api/render/{id}/{page}"
+        target_ms: 200
+        acceptable_ms: 400
+        critical_ms: 800
+
+# ============================================================================
+# BENCHMARK COMMANDS
+# ============================================================================
+
+benchmarks:
+  run_all: |
+    dotnet test tests/FluentPDF.Benchmarks.Tests --logger trx
+
+  run_rendering: |
+    dotnet test tests/FluentPDF.Benchmarks.Tests --filter "Rendering"
+
+  run_memory: |
+    dotnet test tests/FluentPDF.Benchmarks.Tests --filter "Memory"
+
+  profile_marshalling: |
+    FluentPDF.App.exe --profile-marshalling
+
+# ============================================================================
+# REGRESSION DETECTION
+# ============================================================================
+
+regression:
+  threshold_percent: 20
+  description: |
+    A regression is detected when performance degrades by more than
+    the threshold percentage compared to baseline.
+
+  action_on_regression: |
+    1. Identify the commit that introduced regression
+    2. Profile the affected operation
+    3. Create issue with performance comparison
+    4. Block merge until resolved or justified

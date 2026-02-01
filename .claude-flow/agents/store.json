@@ -1,0 +1,117 @@
+{
+  "agents": {
+    "inventory-analyst": {
+      "agentId": "inventory-analyst",
+      "agentType": "analyst",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-02-01T14:47:14.974Z",
+      "domain": "analysis",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "core-architect": {
+      "agentId": "core-architect",
+      "agentType": "system-architect",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "opus"
+      },
+      "createdAt": "2026-02-01T14:47:20.521Z",
+      "domain": "architecture",
+      "model": "opus",
+      "modelRoutedBy": "explicit"
+    },
+    "feature-porter-1": {
+      "agentId": "feature-porter-1",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-02-01T14:47:25.398Z",
+      "domain": "implementation",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "feature-porter-2": {
+      "agentId": "feature-porter-2",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-02-01T14:47:30.058Z",
+      "domain": "implementation",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "build-fixer": {
+      "agentId": "build-fixer",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-02-01T14:47:35.029Z",
+      "domain": "bugfix",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "cleanup-engineer": {
+      "agentId": "cleanup-engineer",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-02-01T14:47:40.758Z",
+      "domain": "refactor",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    },
+    "quality-validator": {
+      "agentId": "quality-validator",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-02-01T14:47:45.252Z",
+      "domain": "testing",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "migration-coordinator": {
+      "agentId": "migration-coordinator",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "opus"
+      },
+      "createdAt": "2026-02-01T14:47:50.517Z",
+      "domain": "coordination",
+      "model": "opus",
+      "modelRoutedBy": "explicit"
+    }
+  },
+  "version": "3.0.0"
+}

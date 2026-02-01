@@ -1,0 +1,382 @@
+# Architecture Knowledge Base
+# Service dependencies, patterns, and architecture decisions
+
+version: "1.0.0"
+updated: "2026-01-25"
+
+# ============================================================================
+# LAYER ARCHITECTURE
+# ============================================================================
+
+layers:
+  core:
+    name: FluentPDF.Core
+    description: "Contracts and domain models (no dependencies)"
+    dependencies: []
+    contains:
+      - Service interfaces (I*Service)
+      - Domain models
+      - Error handling (PdfError)
+      - Observability contracts
+    rules:
+      - "No reference to FluentPDF.Rendering"
+      - "No reference to FluentPDF.App"
+      - "No WinUI 3 dependencies"
+      - "Cross-platform compatible"
+
+  rendering:
+    name: FluentPDF.Rendering
+    description: "Service implementations using PDFium/QPDF"
+    dependencies: [core]
+    contains:
+      - Service implementations
+      - Native interop (P/Invoke)
+      - SafeHandle wrappers
+    rules:
+      - "No reference to FluentPDF.App"
+      - "No WinUI 3 dependencies"
+      - "Cross-platform compatible"
+
+  app:
+    name: FluentPDF.App
+    description: "WinUI 3 application"
+    dependencies: [core, rendering]
+    contains:
+      - ViewModels
+      - Views (XAML)
+      - Controls
+      - DI configuration
+      - Platform-specific services
+    rules:
+      - "Windows only"
+      - "ViewModels use service interfaces only"
+
+# ============================================================================
+# SERVICE DEPENDENCY GRAPH
+# ============================================================================
+
+services:
+  # Document services
+  IPdfDocumentService:
+    implementation: PdfDocumentService
+    layer: rendering
+    dependencies:
+      - PdfiumInterop
+      - ILogger
+    consumers:
+      - PdfViewerViewModel
+      - IDocumentEditingService
+
+  IDocumentEditingService:
+    implementation: DocumentEditingService
+    layer: rendering
+    dependencies:
+      - QpdfNative
+      - IPdfDocumentService
+      - ITelemetryService
+      - ILogger
+    consumers:
+      - PdfViewerViewModel
+
+  # Rendering services
+  IPdfRenderingService:
+    implementation: PdfRenderingService
+    layer: rendering
+    dependencies:
+      - PdfiumInterop
+      - IDpiDetectionService
+      - IMetricsCollectionService
+      - ILogger
+    consumers:
+      - PdfViewerViewModel
+      - IThumbnailRenderingService
+
+  IThumbnailRenderingService:
+    implementation: ThumbnailRenderingService
+    layer: rendering
+    dependencies:
+      - IPdfRenderingService
+      - ILogger
+    consumers:
+      - ThumbnailsViewModel
+
+  IDpiDetectionService:
+    implementation: DpiDetectionService
+    layer: rendering
+    dependencies:
+      - ILogger
+    consumers:
+      - IPdfRenderingService
+      - PdfViewerViewModel
+
+  # Form services
+  IPdfFormService:
+    implementation: PdfFormService
+    layer: rendering
+    dependencies:
+      - PdfiumFormInterop
+      - ILogger
+    consumers:
+      - FormFieldViewModel
+
+  IFormValidationService:
+    implementation: FormValidationService
+    layer: rendering
+    dependencies:
+      - ILogger
+    consumers:
+      - FormFieldViewModel
+      - IPdfFormService
+
+  # Annotation services
+  IAnnotationService:
+    implementation: AnnotationService
+    layer: rendering
+    dependencies:
+      - PdfiumAnnotationInterop
+      - ILogger
+    consumers:
+      - AnnotationViewModel
+
+  # Bookmark services
+  IBookmarkService:
+    implementation: BookmarkService
+    layer: rendering
+    dependencies:
+      - PdfiumBookmarkInterop
+      - ILogger
+    consumers:
+      - BookmarksViewModel
+
+  # Content services
+  ITextExtractionService:
+    implementation: TextExtractionService
+    layer: rendering
+    dependencies:
+      - PdfiumInterop
+      - ILogger
+    consumers:
+      - PdfViewerViewModel
+
+  ITextSearchService:
+    implementation: TextSearchService
+    layer: rendering
+    dependencies:
+      - ITextExtractionService
+      - ILogger
+    consumers:
+      - PdfViewerViewModel
+
+  IImageInsertionService:
+    implementation: ImageInsertionService
+    layer: rendering
+    dependencies:
+      - PdfiumInterop
+      - ILogger
+    consumers:
+      - ImageInsertionViewModel
+
+  # Observability services
+  IMetricsCollectionService:
+    implementation: MetricsCollectionService
+    layer: rendering
+    dependencies:
+      - IMeterFactory
+      - ILogger
+    consumers:
+      - DiagnosticsPanelViewModel
+      - IPdfRenderingService
+
+  ILogExportService:
+    implementation: LogExportService
+    layer: rendering
+    dependencies:
+      - ILogger
+    consumers:
+      - LogViewerViewModel
+
+  ITelemetryService:
+    implementation: TelemetryService
+    layer: rendering
+    dependencies:
+      - TracerProvider
+      - ILogger
+    consumers:
+      - Multiple services
+
+# ============================================================================
+# KEY PATTERNS
+# ============================================================================
+
+patterns:
+  result_pattern:
+    description: "All service operations return Result<T> instead of throwing"
+    example: |
+      public async Task<Result<PdfDocument>> LoadAsync(string path)
+      {
+          try
+          {
+              var handle = PdfiumInterop.FPDF_LoadDocument(path, null);
+              if (handle == IntPtr.Zero)
+                  return Result.Fail(new PdfError("PDF_LOAD_FAILED", ...));
+              return Result.Ok(new PdfDocument { Handle = handle });
+          }
+          catch (Exception ex)
+          {
+              return Result.Fail(new PdfError("PDF_LOAD_FAILED", ...));
+          }
+      }
+    used_by:
+      - All services in Core/Rendering
+
+  safe_handle:
+    description: "All native handles wrapped in SafeHandle for memory safety"
+    example: |
+      public class SafePdfDocumentHandle : SafeHandleZeroOrMinusOneIsInvalid
+      {
+          protected override bool ReleaseHandle()
+          {
+              PdfiumInterop.FPDF_CloseDocument(handle);
+              return true;
+          }
+      }
+    used_by:
+      - SafePdfDocumentHandle
+      - SafePdfPageHandle
+      - SafePdfFormHandle
+      - SafeQpdfJobHandle
+
+  mvvm:
+    description: "ViewModels use CommunityToolkit.Mvvm"
+    example: |
+      public partial class PdfViewerViewModel : ObservableObject
+      {
+          [ObservableProperty]
+          private PdfDocument? _document;
+
+          [RelayCommand]
+          private async Task LoadDocumentAsync(string path)
+          {
+              var result = await _documentService.LoadAsync(path);
+              if (result.IsSuccess)
+                  Document = result.Value;
+          }
+      }
+    used_by:
+      - All ViewModels
+
+  dependency_injection:
+    description: "All services registered in DI container"
+    example: |
+      services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
+      services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
+      services.AddTransient<PdfViewerViewModel>();
+    location: src/FluentPDF.App/App.xaml.cs
+
+# ============================================================================
+# ARCHITECTURE DECISIONS
+# ============================================================================
+
+decisions:
+  - id: ADR-001
+    title: "Use FluentResults for error handling"
+    status: accepted
+    context: "Need type-safe error handling that works with async/await"
+    decision: "Use FluentResults library with custom PdfError class"
+    consequences:
+      - "No exceptions thrown from service layer"
+      - "Callers must handle Result.IsFailed"
+      - "Error context preserved with structured data"
+
+  - id: ADR-002
+    title: "SafeHandle for all native resources"
+    status: accepted
+    context: "PDFium requires careful handle lifecycle management"
+    decision: "Wrap all native handles in SafeHandle derivatives"
+    consequences:
+      - "GC-safe native resource management"
+      - "Deterministic cleanup with IDisposable"
+      - "Protection against memory leaks"
+
+  - id: ADR-003
+    title: "Layer separation with interfaces"
+    status: accepted
+    context: "Need testable, maintainable architecture"
+    decision: "Interfaces in Core, implementations in Rendering/App"
+    consequences:
+      - "Easy mocking for unit tests"
+      - "Cross-platform Core/Rendering"
+      - "Clear dependency direction"
+
+  - id: ADR-004
+    title: "CLI-first diagnostics"
+    status: accepted
+    context: "Need autonomous testing without UI"
+    decision: "Implement CLI commands for all diagnostic operations"
+    consequences:
+      - "CI/CD friendly testing"
+      - "Headless verification possible"
+      - "REST API for automation"
+
+  - id: ADR-005
+    title: "MVVM with CommunityToolkit"
+    status: accepted
+    context: "Need clean separation of UI and logic"
+    decision: "Use CommunityToolkit.Mvvm for ViewModels"
+    consequences:
+      - "Source-generated commands and properties"
+      - "Consistent pattern across ViewModels"
+      - "Easy testing of presentation logic"
+
+# ============================================================================
+# DI REGISTRATION ORDER
+# ============================================================================
+
+di_registration:
+  description: "Service registration order in App.xaml.cs"
+  order:
+    1: "Logging (Serilog)"
+    2: "OpenTelemetry"
+    3: "Core services (IPdfDocumentService, etc.)"
+    4: "Rendering services"
+    5: "Observability services"
+    6: "API server"
+    7: "ViewModels"
+  location: src/FluentPDF.App/App.xaml.cs
+  lines: "100-300 approximately"
+
+# ============================================================================
+# CRITICAL PATHS
+# ============================================================================
+
+critical_paths:
+  document_load:
+    description: "Path from file to displayed page"
+    steps:
+      - "User opens file"
+      - "PdfViewerViewModel.LoadDocumentCommand"
+      - "IPdfDocumentService.LoadAsync"
+      - "PdfiumInterop.FPDF_LoadDocument"
+      - "SafePdfDocumentHandle created"
+      - "PdfDocument model created"
+      - "First page render triggered"
+
+  page_render:
+    description: "Path from page request to displayed image"
+    steps:
+      - "PdfViewerViewModel.RenderPageAsync"
+      - "IDpiDetectionService.GetCurrentDisplayInfo"
+      - "IPdfRenderingService.RenderPageAsync"
+      - "PdfiumInterop.FPDF_RenderPageBitmap"
+      - "WriteableBitmap created"
+      - "Image displayed in UI"
+
+  form_save:
+    description: "Path from form edit to saved file"
+    steps:
+      - "User edits form field"
+      - "FormFieldViewModel.UpdateFieldValueCommand"
+      - "IPdfFormService.SetFieldValueAsync"
+      - "IFormValidationService.ValidateField"
+      - "IPdfFormService.SaveFormDataAsync"
+      - "PdfiumInterop.FPDFDoc_SaveWithVersion"

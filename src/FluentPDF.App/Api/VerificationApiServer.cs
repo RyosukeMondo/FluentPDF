@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using Serilog;
 
 namespace FluentPDF.App.Api;
@@ -100,7 +101,51 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
             options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         });
 
+        // Configure Swagger/OpenAPI (development mode only)
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Version = "v1",
+                Title = "FluentPDF Verification API",
+                Description = "REST API for autonomous testing and verification of FluentPDF document operations and rendering",
+                Contact = new OpenApiContact
+                {
+                    Name = "FluentPDF Project",
+                    Url = new Uri("https://github.com/yourusername/FluentPDF")
+                },
+                License = new OpenApiLicense
+                {
+                    Name = "MIT License",
+                    Url = new Uri("https://opensource.org/licenses/MIT")
+                }
+            });
+
+            // Include XML comments if available
+            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+            if (File.Exists(xmlPath))
+            {
+                options.IncludeXmlComments(xmlPath);
+            }
+        });
+
         _webApp = builder.Build();
+
+        // Enable Swagger UI (serves at root URL for convenience)
+        _webApp.UseSwagger();
+        _webApp.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "FluentPDF Verification API v1");
+            options.RoutePrefix = string.Empty; // Serve Swagger UI at root URL
+            options.DocumentTitle = "FluentPDF Verification API";
+            options.DefaultModelsExpandDepth(2);
+            options.DefaultModelExpandDepth(2);
+            options.DisplayRequestDuration();
+            options.EnableDeepLinking();
+            options.EnableFilter();
+        });
 
         // Add correlation ID middleware
         _webApp.Use(async (context, next) =>
@@ -128,10 +173,12 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
 
         _logger.LogInformation("Verification API server started at {BaseUrl}", _baseUrl);
         Console.WriteLine($"Verification API server running at {_baseUrl}");
-        Console.WriteLine($"  Health: GET {_baseUrl}/api/health");
-        Console.WriteLine($"  Load:   POST {_baseUrl}/api/document/load");
-        Console.WriteLine($"  Render: POST {_baseUrl}/api/render");
-        Console.WriteLine($"  Verify: POST {_baseUrl}/api/verify/render");
+        Console.WriteLine($"  Swagger UI:  {_baseUrl}/");
+        Console.WriteLine($"  OpenAPI:     {_baseUrl}/swagger/v1/swagger.json");
+        Console.WriteLine($"  Health:      GET {_baseUrl}/api/health");
+        Console.WriteLine($"  Load:        POST {_baseUrl}/api/document/load");
+        Console.WriteLine($"  Render:      POST {_baseUrl}/api/render");
+        Console.WriteLine($"  Verify:      POST {_baseUrl}/api/verify/render");
     }
 
     /// <inheritdoc />

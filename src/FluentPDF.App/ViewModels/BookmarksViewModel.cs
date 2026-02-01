@@ -44,6 +44,12 @@ public partial class BookmarksViewModel : ObservableObject
     private bool _isLoading;
 
     /// <summary>
+    /// Gets or sets whether the bookmarks sidebar is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isVisible = true;
+
+    /// <summary>
     /// Gets or sets the message displayed when the document has no bookmarks.
     /// </summary>
     [ObservableProperty]

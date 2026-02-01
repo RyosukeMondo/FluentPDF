@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>FluentPDF.Cli</RootNamespace>
+        <AssemblyName>fluentpdf</AssemblyName>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!-- Console application settings -->
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>true</PublishSingleFile>
+        <PublishTrimmed>false</PublishTrimmed>
+
+        <!-- Suppress warnings -->
+        <NoWarn>$(NoWarn);IL2026</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Project references -->
+        <ProjectReference Include="..\FluentPDF.Core\FluentPDF.Core.csproj" />
+        <ProjectReference Include="..\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Logging -->
+        <PackageReference Include="Serilog" Version="4.3.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+
+        <!-- Dependency Injection -->
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+
+        <!-- JSON -->
+        <PackageReference Include="System.Text.Json" Version="10.0.0" />
+
+        <!-- Command line parsing -->
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Copy PDFium DLL to output -->
+        <Content Include="..\..\libs\x64\bin\pdfium.dll">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>pdfium.dll</Link>
+        </Content>
+    </ItemGroup>
+</Project>

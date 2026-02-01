@@ -1,0 +1,109 @@
+# Performance Audit Workflow
+# Use for: Profile and optimize rendering performance
+
+name: performance-audit
+version: "1.0.0"
+description: Profile, benchmark, and optimize performance
+
+triggers:
+  - "slow"
+  - "performance"
+  - "optimize"
+  - "benchmark"
+  - "memory"
+
+topology: mesh
+max_agents: 4
+
+phases:
+  - name: baseline
+    description: Establish performance baseline
+    agents:
+      - verification-engineer
+    tasks:
+      - Run benchmark suite
+      - Collect baseline metrics
+      - Document current performance
+    commands:
+      - "dotnet test tests/FluentPDF.Benchmarks.Tests --logger trx"
+      - "FluentPDF.App.exe --profile-marshalling"
+    outputs:
+      - Baseline metrics JSON
+      - Memory profile
+
+  - name: profile
+    description: Deep profiling analysis
+    agents:
+      - pdf-rendering-specialist
+      - observability-analyst
+    depends_on: [baseline]
+    tasks:
+      - Profile rendering pipeline
+      - Analyze memory allocations
+      - Identify hot paths
+      - Check for memory leaks
+    tools:
+      - dotnet-trace
+      - dotnet-counters
+      - PerfView
+    outputs:
+      - Hot path report
+      - Memory allocation analysis
+
+  - name: optimize
+    description: Implement optimizations
+    agents:
+      - pdf-rendering-specialist
+      - coder
+    depends_on: [profile]
+    tasks:
+      - Target identified bottlenecks
+      - Implement optimizations
+      - Measure improvement
+    patterns:
+      - Prefer pooling over allocation
+      - Use Span<T> for buffer operations
+      - Cache expensive computations
+
+  - name: validate
+    description: Verify improvements
+    agents:
+      - verification-engineer
+    depends_on: [optimize]
+    tasks:
+      - Re-run benchmark suite
+      - Compare with baseline
+      - Verify no regressions
+    quality_gates:
+      - no_performance_regression
+      - memory_usage_stable_or_improved
+      - all_tests_pass
+
+  - name: document
+    description: Document changes
+    agents:
+      - observability-analyst
+    depends_on: [validate]
+    tasks:
+      - Update metrics in claude-flow
+      - Document optimizations
+      - Add to performance history
+
+benchmarks:
+  render_single_page:
+    description: Time to render one page at 150 DPI
+    target: "<100ms"
+
+  render_thumbnail:
+    description: Time to render thumbnail
+    target: "<50ms"
+
+  document_load:
+    description: Time to load and parse PDF
+    target: "<200ms for 100-page PDF"
+
+  memory_per_page:
+    description: Memory used per rendered page
+    target: "<10MB at 150 DPI"
+
+metrics_storage: .claude-flow/metrics/performance.json

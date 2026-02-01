@@ -299,6 +299,182 @@ public class CommandLineOptions
     public string ApiBindAddress { get; set; } = "localhost";
 
     /// <summary>
+    /// Gets or sets the file path for image export test.
+    /// When set, application will export all pages as images.
+    /// </summary>
+    public string? TestExportImages { get; set; }
+
+    /// <summary>
+    /// Gets or sets the image export format (png, jpeg, bmp). Default: png.
+    /// </summary>
+    public string? ExportImageFormat { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DPI for exported images. Default: 300.
+    /// </summary>
+    public int ExportImageDpi { get; set; } = 300;
+
+    /// <summary>
+    /// Gets or sets the JPEG quality (1-100) when exporting as JPEG. Default: 90.
+    /// </summary>
+    public int ExportImageQuality { get; set; } = 90;
+
+    /// <summary>
+    /// Gets or sets the page range to export (e.g., "1-5", "all"). Default: "all".
+    /// </summary>
+    public string? ExportImagePageRange { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for PDF merge test.
+    /// </summary>
+    public string? TestMerge { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for PDF split test.
+    /// </summary>
+    public string? TestSplit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the page ranges for split operation (e.g., "1-5,10-15").
+    /// </summary>
+    public string? SplitRanges { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for PDF optimization test.
+    /// </summary>
+    public string? TestOptimize { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum reduction percentage for optimization.
+    /// </summary>
+    public int MinReduction { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to verify visual quality after optimization.
+    /// </summary>
+    public bool VerifyVisual { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to verify PDF structure integrity.
+    /// </summary>
+    public bool VerifyStructure { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to verify page count and content.
+    /// </summary>
+    public bool VerifyPages { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for watermark test.
+    /// </summary>
+    public string? TestWatermark { get; set; }
+
+    /// <summary>
+    /// Gets or sets the watermark text content.
+    /// </summary>
+    public string? WatermarkText { get; set; }
+
+    /// <summary>
+    /// Gets or sets the watermark image path.
+    /// </summary>
+    public string? WatermarkImage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the watermark position (e.g., "center", "top-left").
+    /// </summary>
+    public string? WatermarkPosition { get; set; }
+
+    /// <summary>
+    /// Gets or sets the watermark opacity (0.0 to 1.0).
+    /// </summary>
+    public double WatermarkOpacity { get; set; } = 0.5;
+
+    /// <summary>
+    /// Gets or sets the file path for encryption test.
+    /// </summary>
+    public string? TestEncrypt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user password for encryption.
+    /// </summary>
+    public string? EncryptUserPassword { get; set; }
+
+    /// <summary>
+    /// Gets or sets the owner password for encryption.
+    /// </summary>
+    public string? EncryptOwnerPassword { get; set; }
+
+    /// <summary>
+    /// Gets or sets the encryption strength (128 or 256).
+    /// </summary>
+    public int EncryptionStrength { get; set; } = 256;
+
+    /// <summary>
+    /// Gets or sets whether to allow printing in encrypted PDF.
+    /// </summary>
+    public bool AllowPrint { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to allow copying in encrypted PDF.
+    /// </summary>
+    public bool AllowCopy { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to allow modification in encrypted PDF.
+    /// </summary>
+    public bool AllowModify { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to allow annotations in encrypted PDF.
+    /// </summary>
+    public bool AllowAnnotate { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the file path for annotations test.
+    /// </summary>
+    public string? TestAnnotationsCmd { get; set; }
+
+    /// <summary>
+    /// Gets or sets the JSON file path containing annotations data.
+    /// </summary>
+    public string? AnnotationsJsonPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to verify annotation persistence.
+    /// </summary>
+    public bool VerifyPersistence { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for form fields test.
+    /// </summary>
+    public string? TestFormsCmd { get; set; }
+
+    /// <summary>
+    /// Gets or sets the JSON file path containing form data.
+    /// </summary>
+    public string? FormDataJsonPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to verify form validation.
+    /// </summary>
+    public bool VerifyValidation { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for stamp test.
+    /// </summary>
+    public string? TestStamp { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stamp type (e.g., "Approved", "Rejected").
+    /// </summary>
+    public string? StampType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file path for document conversion test.
+    /// </summary>
+    public string? TestConversion { get; set; }
+
+    /// <summary>
     /// Parses command-line arguments into structured options.
     /// </summary>
     /// <param name="args">Command-line arguments from Environment.GetCommandLineArgs().</param>
@@ -569,6 +745,62 @@ public class CommandLineOptions
                     }
                     break;
 
+                case "--test-merge":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestMerge = args[++i];
+                    }
+                    break;
+
+                case "--test-split":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestSplit = args[++i];
+                    }
+                    break;
+
+                case "--split-ranges":
+                    if (i + 1 < args.Length)
+                    {
+                        options.SplitRanges = args[++i];
+                    }
+                    break;
+
+                case "--test-forms":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestFormsCmd = args[++i];
+                    }
+                    break;
+
+                case "--test-annotations-cmd":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestAnnotationsCmd = args[++i];
+                    }
+                    break;
+
+                case "--test-watermark":
+                    if (i + 1 < args.Length)
+                    {
+                        options.TestWatermark = args[++i];
+                    }
+                    break;
+
+                case "--watermark-text":
+                    if (i + 1 < args.Length)
+                    {
+                        options.WatermarkText = args[++i];
+                    }
+                    break;
+
+                case "--watermark-opacity":
+                    if (i + 1 < args.Length && double.TryParse(args[++i], out var wOpacity))
+                    {
+                        options.WatermarkOpacity = wOpacity;
+                    }
+                    break;
+
                 case "--api-server":
                     options.ApiServer = true;
                     break;
@@ -701,6 +933,23 @@ Document Operations Test Commands:
   --test-metadata <path>        Test metadata extraction
                                 Returns exit code: 0=pass, 1=fail
 
+Document Editing Test Commands:
+  --test-merge <path>           Test PDF merge functionality (merges 2-3 test PDFs)
+                                Returns exit code: 0=success, 1=failure
+  --test-split <path>           Test PDF split by page ranges
+  --split-ranges <ranges>       Page ranges for split (e.g., ""1-5,10-15"")
+                                Returns exit code: 0=success, 1=failure
+  --test-forms <path>           Test form field filling (text fields, checkboxes, radio buttons)
+                                Verifies persistence after save/reload
+                                Returns exit code: 0=success, 1=failure
+  --test-annotations-cmd <path> Test annotation creation (highlight, underline, shapes, notes)
+                                Saves to FDF and verifies export
+                                Returns exit code: 0=success, 1=failure
+  --test-watermark <path>       Test text watermark application
+  --watermark-text <text>       Watermark text to apply (default: ""CONFIDENTIAL"")
+  --watermark-opacity <value>   Watermark opacity 0.0-1.0 (default: 0.5)
+                                Returns exit code: 0=success, 1=failure
+
 Verification API Server:
   --api-server                  Start the verification REST API server
   --port <port>                 Port for API server (default: 5000)
@@ -759,15 +1008,17 @@ Examples:
   FluentPDF.App.exe --profile-marshalling --compare-baseline ""baseline.json"" --json-output ""profile.json""
   FluentPDF.App.exe --test-workarounds --verbose
 
+  # Document editing tests (Feature F2.1.1-F5.2.5)
+  FluentPDF.App.exe --test-merge ""test.pdf"" --verbose
+  FluentPDF.App.exe --test-split ""multi-page.pdf"" --split-ranges ""1-5,10-15"" --output ""C:/output""
+  FluentPDF.App.exe --test-forms ""form.pdf"" --verbose
+  FluentPDF.App.exe --test-annotations-cmd ""sample.pdf"" --verbose
+  FluentPDF.App.exe --test-watermark ""doc.pdf"" --watermark-text ""DRAFT"" --watermark-opacity 0.3
+
   # Start verification API server
   FluentPDF.App.exe --api-server
   FluentPDF.App.exe --api-server --port 8080 --headless
-  FluentPDF.App.exe --api-server --bind-address 0.0.0.0 --port 5000
-
-  # Example API usage with curl
-  curl http://localhost:5000/api/health
-  curl -X POST http://localhost:5000/api/document/load -H ""Content-Type: application/json"" -d '{""path"":""C:/test.pdf""}'
-  curl http://localhost:5000/api/render/SESSION_ID/0 -o page0.png
+  FluentPDF.App.exe --api-server --bind-address ""0.0.0.0"" --port 5000
 ";
     }
 }

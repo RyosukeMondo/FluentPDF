@@ -1,0 +1,11 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    FluentPDF Button Styles
+
+    Consistent button styling for various actions (primary, destructive, etc.)
+    Note: Avalonia uses Styles/Selector approach rather than TargetType/Key approach
+    -->
+
+</ResourceDictionary>

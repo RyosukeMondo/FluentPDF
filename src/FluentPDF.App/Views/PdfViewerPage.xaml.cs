@@ -50,18 +50,26 @@ public sealed partial class PdfViewerPage : Page, IDisposable
         }
         else
         {
-            var app = (App)Application.Current;
-            ViewModel = app.GetService<PdfViewerViewModel>();
+            ViewModel = App.GetService<PdfViewerViewModel>();
         }
 
         // Set DataContext for runtime binding (x:Bind doesn't need this, but good practice)
         this.DataContext = ViewModel;
 
-        // Hook up keyboard handlers for form field navigation
+        // Hook up keyboard handlers for form field navigation and page navigation
         this.KeyDown += OnPageKeyDown;
+
+        // Set up keyboard accelerators for page navigation (Task 2.2)
+        SetupPageNavigationAccelerators();
 
         // Hook up event handler for search panel visibility changes
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        // Hook up event handler for annotation tool changes (Task 2.3)
+        if (ViewModel.AnnotationViewModel != null)
+        {
+            ViewModel.AnnotationViewModel.PropertyChanged += OnAnnotationViewModelPropertyChanged;
+        }
 
         // Hook up lifecycle events for DPI monitoring
         this.Loaded += OnPageLoaded;
@@ -74,6 +82,83 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Sets up keyboard accelerators for page navigation and zoom controls.
+    /// Implements Phase 2: Keyboard Navigation (Tasks 2.2, 2.3).
+    /// </summary>
+    private void SetupPageNavigationAccelerators()
+    {
+        // Page Up: Previous page
+        var pageUpAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.PageUp
+        };
+        pageUpAccelerator.Invoked += OnPageUpAccelerator;
+        this.KeyboardAccelerators.Add(pageUpAccelerator);
+
+        // Page Down: Next page
+        var pageDownAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.PageDown
+        };
+        pageDownAccelerator.Invoked += OnPageDownAccelerator;
+        this.KeyboardAccelerators.Add(pageDownAccelerator);
+
+        // Home: First page
+        var homeAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.Home
+        };
+        homeAccelerator.Invoked += OnHomeAccelerator;
+        this.KeyboardAccelerators.Add(homeAccelerator);
+
+        // End: Last page
+        var endAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.End
+        };
+        endAccelerator.Invoked += OnEndAccelerator;
+        this.KeyboardAccelerators.Add(endAccelerator);
+
+        // Ctrl+G: Go to page dialog
+        var goToPageAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.G,
+            Modifiers = VirtualKeyModifiers.Control
+        };
+        goToPageAccelerator.Invoked += OnGoToPageAccelerator;
+        this.KeyboardAccelerators.Add(goToPageAccelerator);
+
+        // Note: Zoom shortcuts (Ctrl+Plus/Minus/0) are already defined in XAML on the toolbar buttons
+        // but we'll add alternative key bindings for better accessibility
+
+        // Ctrl+Plus (main keyboard): Zoom in
+        var zoomInAccelerator = new KeyboardAccelerator
+        {
+            Key = (VirtualKey)187, // VirtualKey.Add/Plus
+            Modifiers = VirtualKeyModifiers.Control
+        };
+        zoomInAccelerator.Invoked += OnZoomInAccelerator;
+        this.KeyboardAccelerators.Add(zoomInAccelerator);
+
+        // Ctrl+Minus (main keyboard): Zoom out
+        var zoomOutAccelerator = new KeyboardAccelerator
+        {
+            Key = (VirtualKey)189, // VirtualKey.Subtract/Minus
+            Modifiers = VirtualKeyModifiers.Control
+        };
+        zoomOutAccelerator.Invoked += OnZoomOutAccelerator;
+        this.KeyboardAccelerators.Add(zoomOutAccelerator);
+
+        // Escape: Close panels and dialogs (Task 2.3 - Focus Management)
+        var escapeAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.Escape
+        };
+        escapeAccelerator.Invoked += OnEscapeAccelerator;
+        this.KeyboardAccelerators.Add(escapeAccelerator);
+    }
+
+    /// <summary>
     /// Handles view mode changes to wire up the appropriate viewer control.
     /// </summary>
     private async Task UpdateViewModeAsync()
@@ -83,14 +168,24 @@ public sealed partial class PdfViewerPage : Page, IDisposable
             return;
         }
 
+        // Unsubscribe from previous mode events
+        UnsubscribeViewModeEvents();
+
         switch (ViewModel.ViewMode)
         {
             case PageViewMode.ContinuousScroll:
                 await ContinuousScrollViewerControl.LoadDocumentAsync(ViewModel.CurrentDocument, ViewModel.ZoomLevel);
+                // Subscribe to continuous scroll events
+                ContinuousScrollViewerControl.CurrentPageChanged += OnContinuousScrollPageChanged;
+                ContinuousScrollViewerControl.TextSelectionStarted += OnContinuousScrollTextSelectionStarted;
+                ContinuousScrollViewerControl.TextSelectionUpdated += OnContinuousScrollTextSelectionUpdated;
+                ContinuousScrollViewerControl.TextSelectionEnded += OnContinuousScrollTextSelectionEnded;
                 break;
 
             case PageViewMode.TwoPage:
                 await TwoPageViewerControl.LoadDocumentAsync(ViewModel.CurrentDocument, ViewModel.CurrentPageNumber, ViewModel.ZoomLevel);
+                // Subscribe to two-page viewer events if needed
+                TwoPageViewerControl.CurrentPageChanged += OnTwoPageViewerPageChanged;
                 break;
 
             case PageViewMode.SinglePage:
@@ -98,6 +193,79 @@ public sealed partial class PdfViewerPage : Page, IDisposable
                 // Single page mode is handled directly by ViewModel
                 break;
         }
+    }
+
+    /// <summary>
+    /// Unsubscribes from view mode specific events when switching modes.
+    /// </summary>
+    private void UnsubscribeViewModeEvents()
+    {
+        ContinuousScrollViewerControl.CurrentPageChanged -= OnContinuousScrollPageChanged;
+        ContinuousScrollViewerControl.TextSelectionStarted -= OnContinuousScrollTextSelectionStarted;
+        ContinuousScrollViewerControl.TextSelectionUpdated -= OnContinuousScrollTextSelectionUpdated;
+        ContinuousScrollViewerControl.TextSelectionEnded -= OnContinuousScrollTextSelectionEnded;
+
+        TwoPageViewerControl.CurrentPageChanged -= OnTwoPageViewerPageChanged;
+    }
+
+    /// <summary>
+    /// Handles current page changes from continuous scroll viewer.
+    /// </summary>
+    private void OnContinuousScrollPageChanged(object? sender, int pageNumber)
+    {
+        // Update ViewModel's current page number
+        if (ViewModel.CurrentPageNumber != pageNumber)
+        {
+            ViewModel.CurrentPageNumber = pageNumber;
+        }
+    }
+
+    /// <summary>
+    /// Handles current page changes from two-page viewer.
+    /// </summary>
+    private void OnTwoPageViewerPageChanged(object? sender, int pageNumber)
+    {
+        // Update ViewModel's current page number
+        if (ViewModel.CurrentPageNumber != pageNumber)
+        {
+            ViewModel.CurrentPageNumber = pageNumber;
+        }
+    }
+
+    /// <summary>
+    /// Handles text selection started in continuous scroll mode.
+    /// </summary>
+    private void OnContinuousScrollTextSelectionStarted(object? sender, Controls.TextSelectionEventArgs e)
+    {
+        // Store the selection start point and page
+        _selectionStartPoint = e.StartPoint;
+
+        // Update ViewModel's current page to the selected page
+        if (ViewModel.CurrentPageNumber != e.PageIndex + 1)
+        {
+            ViewModel.CurrentPageNumber = e.PageIndex + 1;
+        }
+
+        // Begin text selection in ViewModel
+        ViewModel.BeginTextSelectionCommand.Execute(e.StartPoint);
+    }
+
+    /// <summary>
+    /// Handles text selection updated in continuous scroll mode.
+    /// </summary>
+    private void OnContinuousScrollTextSelectionUpdated(object? sender, Controls.TextSelectionEventArgs e)
+    {
+        // Update text selection in ViewModel
+        ViewModel.UpdateTextSelectionCommand.Execute(e.EndPoint);
+    }
+
+    /// <summary>
+    /// Handles text selection ended in continuous scroll mode.
+    /// </summary>
+    private async void OnContinuousScrollTextSelectionEnded(object? sender, Controls.TextSelectionEventArgs e)
+    {
+        // End text selection in ViewModel
+        await ViewModel.EndTextSelectionCommand.ExecuteAsync(null);
     }
 
     /// <summary>
@@ -132,6 +300,15 @@ public sealed partial class PdfViewerPage : Page, IDisposable
             {
                 ClearSelectionRectangle();
             }
+
+            // Handle zoom changes in continuous scroll mode
+            if (e.PropertyName == nameof(ViewModel.ZoomLevel) && ViewModel.ViewMode == PageViewMode.ContinuousScroll)
+            {
+                _ = DispatcherQueue.TryEnqueue(async () =>
+                {
+                    await ContinuousScrollViewerControl.UpdateZoomAsync(ViewModel.ZoomLevel);
+                });
+            }
         }
         else if (e.PropertyName == nameof(ViewModel.ViewMode))
         {
@@ -141,6 +318,49 @@ public sealed partial class PdfViewerPage : Page, IDisposable
                 await UpdateViewModeAsync();
             });
         }
+    }
+
+    /// <summary>
+    /// Handles AnnotationViewModel property changes to update cursor and status.
+    /// </summary>
+    private void OnAnnotationViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.AnnotationViewModel.ActiveTool))
+        {
+            UpdateCursorForActiveTool();
+        }
+        else if (e.PropertyName == nameof(ViewModel.AnnotationViewModel.StatusMessage))
+        {
+            // Status message is already bound in XAML, no action needed here
+        }
+    }
+
+    /// <summary>
+    /// Updates the cursor based on the currently active annotation tool.
+    /// </summary>
+    private void UpdateCursorForActiveTool()
+    {
+        if (ViewModel?.AnnotationViewModel == null)
+        {
+            return;
+        }
+
+        var tool = ViewModel.AnnotationViewModel.ActiveTool;
+
+        // Update cursor for PdfPageImage (where user interacts with PDF)
+        var cursor = tool switch
+        {
+            AnnotationTool.Highlight => Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Cross),
+            AnnotationTool.Underline => Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Cross),
+            AnnotationTool.Strikethrough => Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Cross),
+            AnnotationTool.Freehand => Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Hand),
+            AnnotationTool.Rectangle => Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Cross),
+            AnnotationTool.Circle => Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Cross),
+            _ => null // Default cursor
+        };
+
+        // Apply cursor to the page (this will be inherited by PdfPageImage)
+        this.ProtectedCursor = cursor;
     }
 
     /// <summary>
@@ -175,7 +395,7 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     /// </summary>
     private void OnConvertDocxClick(object sender, RoutedEventArgs e)
     {
-        var navigationService = ((App)Application.Current).GetService<INavigationService>();
+        var navigationService = App.GetService<INavigationService>();
         navigationService.NavigateTo(typeof(ConversionPage));
     }
 
@@ -191,7 +411,7 @@ public sealed partial class PdfViewerPage : Page, IDisposable
 
         try
         {
-            var watermarkViewModel = ((App)Application.Current).GetService<WatermarkViewModel>();
+            var watermarkViewModel = App.GetService<WatermarkViewModel>();
 
             var applied = await WatermarkDialog.ShowAsync(
                 this.XamlRoot,
@@ -646,6 +866,173 @@ public sealed partial class PdfViewerPage : Page, IDisposable
     }
 
     /// <summary>
+    /// Handles Page Up accelerator to navigate to previous page.
+    /// </summary>
+    private void OnPageUpAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.GoToPreviousPageCommand.CanExecute(null))
+        {
+            _ = ViewModel.GoToPreviousPageCommand.ExecuteAsync(null);
+        }
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Page Down accelerator to navigate to next page.
+    /// </summary>
+    private void OnPageDownAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.GoToNextPageCommand.CanExecute(null))
+        {
+            _ = ViewModel.GoToNextPageCommand.ExecuteAsync(null);
+        }
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Home accelerator to navigate to first page.
+    /// </summary>
+    private void OnHomeAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.CurrentDocument != null)
+        {
+            ViewModel.CurrentPageNumber = 1;
+        }
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles End accelerator to navigate to last page.
+    /// </summary>
+    private void OnEndAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.CurrentDocument != null)
+        {
+            ViewModel.CurrentPageNumber = ViewModel.TotalPages;
+        }
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Ctrl+G accelerator to show go to page dialog.
+    /// </summary>
+    private async void OnGoToPageAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.CurrentDocument == null)
+        {
+            args.Handled = true;
+            return;
+        }
+
+        try
+        {
+            var textBox = new TextBox
+            {
+                PlaceholderText = $"Enter page number (1-{ViewModel.TotalPages})",
+                Text = ViewModel.CurrentPageNumber.ToString()
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Go to Page",
+                Content = textBox,
+                PrimaryButtonText = "Go",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            // Focus the textbox when dialog opens
+            dialog.Opened += (s, e) =>
+            {
+                textBox.Focus(FocusState.Programmatic);
+                textBox.SelectAll();
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                if (int.TryParse(textBox.Text, out int pageNumber))
+                {
+                    if (pageNumber >= 1 && pageNumber <= ViewModel.TotalPages)
+                    {
+                        ViewModel.CurrentPageNumber = pageNumber;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error(ex, "Failed to show go to page dialog");
+        }
+
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Ctrl+Plus accelerator to zoom in.
+    /// </summary>
+    private void OnZoomInAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.ZoomInCommand.CanExecute(null))
+        {
+            _ = ViewModel.ZoomInCommand.ExecuteAsync(null);
+        }
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Ctrl+Minus accelerator to zoom out.
+    /// </summary>
+    private void OnZoomOutAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.ZoomOutCommand.CanExecute(null))
+        {
+            _ = ViewModel.ZoomOutCommand.ExecuteAsync(null);
+        }
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Escape accelerator to close panels and dialogs (Focus Management - Task 2.3).
+    /// </summary>
+    private void OnEscapeAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        // Priority order: Close search panel -> Close bookmarks -> Close thumbnails -> Close diagnostics
+        if (ViewModel.IsSearchPanelVisible)
+        {
+            ViewModel.ToggleSearchPanelCommand.Execute(null);
+            args.Handled = true;
+            return;
+        }
+
+        if (ViewModel.BookmarksViewModel.IsPanelVisible)
+        {
+            ViewModel.BookmarksViewModel.TogglePanelCommand.Execute(null);
+            args.Handled = true;
+            return;
+        }
+
+        if (ViewModel.IsSidebarVisible)
+        {
+            ViewModel.ToggleSidebarCommand.Execute(null);
+            args.Handled = true;
+            return;
+        }
+
+        if (ViewModel.DiagnosticsPanelViewModel.IsVisible)
+        {
+            ViewModel.ToggleDiagnosticsCommand.Execute(null);
+            args.Handled = true;
+            return;
+        }
+
+        // No panels to close, don't mark as handled to allow default Escape behavior
+        args.Handled = false;
+    }
+
+    /// <summary>
     /// Disposes resources used by the page.
     /// </summary>
     public void Dispose()
@@ -663,12 +1050,21 @@ public sealed partial class PdfViewerPage : Page, IDisposable
             PdfScrollViewer.PointerReleased -= OnScrollViewerPointerReleased;
         }
 
+        // Unsubscribe from view mode events
+        UnsubscribeViewModeEvents();
+
         // Unregister accessibility notification message handler
         WeakReferenceMessenger.Default.Unregister<AccessibilityNotificationMessage>(this);
 
         if (ViewModel != null)
         {
             ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+
+            if (ViewModel.AnnotationViewModel != null)
+            {
+                ViewModel.AnnotationViewModel.PropertyChanged -= OnAnnotationViewModelPropertyChanged;
+            }
+
             ViewModel.Dispose();
         }
     }

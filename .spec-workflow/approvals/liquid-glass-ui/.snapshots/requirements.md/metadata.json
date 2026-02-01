@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/liquid-glass-ui/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-01-29T15:43:00.742Z",
+      "trigger": "initial",
+      "approvalId": "approval_1769701380718_qnqcdxtxz",
+      "approvalTitle": "Liquid Glass UI Requirements - Comprehensive UI/UX Enhancement"
+    }
+  ]
+}

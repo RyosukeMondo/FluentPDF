@@ -1,0 +1,106 @@
+# Intelligence Route Hook
+# Advanced task routing with pattern matching and learning
+
+name: route
+version: "1.0.0"
+description: Intelligent agent routing based on task analysis
+
+enabled: true
+priority: critical
+
+analysis:
+  # Extract keywords and intent from task description
+  extractors:
+    - type: keywords
+      weight: 0.4
+    - type: file_patterns
+      weight: 0.3
+    - type: historical_success
+      weight: 0.3
+
+routing_matrix:
+  # Domain -> Agent mapping with confidence thresholds
+  pdf_rendering:
+    primary: pdf-rendering-specialist
+    secondary: coder
+    threshold: 0.7
+    indicators:
+      - "render"
+      - "pdfium"
+      - "thumbnail"
+      - "bitmap"
+      - "page"
+      - "dpi"
+
+  native_interop:
+    primary: interop-validator
+    secondary: pdf-rendering-specialist
+    threshold: 0.8  # Higher threshold - critical code
+    indicators:
+      - "marshal"
+      - "p/invoke"
+      - "native"
+      - "interop"
+      - "crash"
+      - "handle"
+
+  user_interface:
+    primary: ui-coordinator
+    secondary: coder
+    threshold: 0.6
+    indicators:
+      - "ui"
+      - "xaml"
+      - "view"
+      - "binding"
+      - "theme"
+      - "control"
+
+  testing:
+    primary: verification-engineer
+    secondary: tester
+    threshold: 0.6
+    indicators:
+      - "test"
+      - "e2e"
+      - "verify"
+      - "api"
+      - "benchmark"
+
+  observability:
+    primary: observability-analyst
+    secondary: researcher
+    threshold: 0.5
+    indicators:
+      - "log"
+      - "metric"
+      - "error"
+      - "telemetry"
+
+  general:
+    primary: coder
+    secondary: researcher
+    threshold: 0.0  # Fallback
+    indicators: []
+
+multi_agent_triggers:
+  # When to spawn multiple agents
+  - condition: "feature implementation"
+    agents: [architecture, coder, tester, reviewer]
+    topology: hierarchical
+
+  - condition: "critical bug fix"
+    agents: [interop-validator, pdf-rendering-specialist, verification-engineer]
+    topology: mesh
+
+  - condition: "performance issue"
+    agents: [pdf-rendering-specialist, observability-analyst, verification-engineer]
+    topology: mesh
+
+learning:
+  enabled: true
+  feedback_loop: true
+  metrics:
+    - routing_accuracy
+    - task_completion_time
+    - agent_utilization

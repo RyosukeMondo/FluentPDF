@@ -14,10 +14,26 @@
   - Update PrimaryAction style to use TextOnAccentFillColorPrimaryBrush
   - _Requirements: REQ-1_
 
-- [ ] 1.3 Create comprehensive theme resource dictionary
+- [ ] 1.3 [NEXT] Create comprehensive theme resource dictionary
+  **Action Steps**:
+  1. Check if src/FluentPDF.App/Styles/ directory exists. If not: Create it
+  2. Create file src/FluentPDF.App/Styles/ThemeResources.xaml
+  3. Add ResourceDictionary root element
+  4. Add Light theme colors (ThemeDictionary with Key="Light"):
+     - PdfViewerBackgroundBrush (Brush, not Color)
+     - AnnotationHighlightBrush
+     - AnnotationUnderlineBrush
+     - AnnotationStrikethroughBrush
+     - ThumbnailBackgroundBrush
+     - ThumbnailBorderBrush
+     - BookmarkExpandedBrush
+     - SearchHighlightBrush
+     - (Add 12 total semantic brushes)
+  5. Add Dark theme variant with same brush names, different values
+  6. Reference in App.xaml: Add <ResourceDictionary Source="Styles/ThemeResources.xaml"/> to MergedDictionaries
+  7. Build: dotnet build src/FluentPDF.App -p:Platform=x64
+  8. Verify: Open App.xaml in IDE, verify ThemeResources.xaml shows in IntelliSense, no XAML errors
   - File: src/FluentPDF.App/Styles/ThemeResources.xaml (new)
-  - Define semantic color tokens for app-specific needs
-  - Include light/dark variants for custom colors
   - _Requirements: REQ-1_
 
 - [ ] 1.4 Add real-time system theme change detection

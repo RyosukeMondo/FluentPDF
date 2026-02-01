@@ -37,6 +37,7 @@ public class Program
             Console.WriteLine("  --memory           Run memory benchmarks");
             Console.WriteLine("  --startup          Run startup benchmarks");
             Console.WriteLine("  --navigation       Run navigation benchmarks");
+            Console.WriteLine("  --animation        Run animation benchmarks (liquid glass UI)");
             Console.WriteLine();
             Console.WriteLine("Examples:");
             Console.WriteLine("  dotnet run -c Release --project tests/FluentPDF.Benchmarks -- --rendering");
@@ -65,6 +66,9 @@ public class Program
                 Console.WriteLine("=== Navigation Benchmarks ===");
                 BenchmarkRunner.Run<NavigationBenchmarks>(config);
                 Console.WriteLine();
+                Console.WriteLine("=== Animation Benchmarks ===");
+                BenchmarkRunner.Run<AnimationBenchmarks>(config);
+                Console.WriteLine();
                 Console.WriteLine("All benchmark suites completed.");
                 break;
 
@@ -86,6 +90,11 @@ public class Program
             case "--navigation":
                 Console.WriteLine("Running navigation benchmarks...");
                 BenchmarkRunner.Run<NavigationBenchmarks>(config);
+                break;
+
+            case "--animation":
+                Console.WriteLine("Running animation benchmarks...");
+                BenchmarkRunner.Run<AnimationBenchmarks>(config);
                 break;
 
             default:

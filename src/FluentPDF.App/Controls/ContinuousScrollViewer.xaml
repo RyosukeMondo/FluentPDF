@@ -36,12 +36,31 @@
                                 CornerRadius="4"
                                 Shadow="{StaticResource SharedShadow}">
                                 <Grid>
-                                    <!-- Page image -->
+                                    <!-- Page image with pointer events for text selection -->
                                     <Image
+                                        x:Name="PageImage"
                                         Source="{Binding PageImage}"
                                         Stretch="None"
                                         HorizontalAlignment="Center"
-                                        VerticalAlignment="Center" />
+                                        VerticalAlignment="Center"
+                                        Tag="{Binding PageIndex}" />
+
+                                    <!-- Canvas for selection rectangle overlay -->
+                                    <Canvas
+                                        x:Name="SelectionCanvas"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Width="{Binding ElementName=PageImage, Path=ActualWidth}"
+                                        Height="{Binding ElementName=PageImage, Path=ActualHeight}"
+                                        IsHitTestVisible="False">
+                                        <Rectangle
+                                            x:Name="SelectionRectangle"
+                                            Visibility="Collapsed"
+                                            Stroke="{ThemeResource SystemAccentColor}"
+                                            StrokeThickness="2"
+                                            Fill="{ThemeResource SystemAccentColor}"
+                                            Opacity="0.2" />
+                                    </Canvas>
 
                                     <!-- Page number badge -->
                                     <Border
@@ -50,7 +69,8 @@
                                         Padding="12,4"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Top"
-                                        Margin="8">
+                                        Margin="8"
+                                        IsHitTestVisible="False">
                                         <TextBlock
                                             Text="{Binding PageNumber}"
                                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
@@ -64,7 +84,8 @@
                                         Width="40"
                                         Height="40"
                                         HorizontalAlignment="Center"
-                                        VerticalAlignment="Center" />
+                                        VerticalAlignment="Center"
+                                        IsHitTestVisible="False" />
                                 </Grid>
                             </Border>
                         </Grid>

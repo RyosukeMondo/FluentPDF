@@ -1,0 +1,124 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    FluentPDF Theme Resources
+
+    Semantic color tokens for app-specific needs.
+    All colors use DynamicResource for automatic light/dark theme support.
+    -->
+
+    <!-- Document Background Colors -->
+    <SolidColorBrush x:Key="PdfViewerBackgroundBrush" Color="{DynamicResource SystemAltHighColor}" />
+    <SolidColorBrush x:Key="PdfPageBackgroundBrush" Color="{DynamicResource SystemChromeMediumColor}" />
+
+    <!-- Sidebar and Panel Colors -->
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{DynamicResource SystemChromeMediumColor}" />
+    <SolidColorBrush x:Key="SidebarHeaderBackgroundBrush" Color="{DynamicResource SystemChromeMediumLowColor}" />
+    <SolidColorBrush x:Key="SidebarBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+
+    <!-- Toolbar Colors -->
+    <SolidColorBrush x:Key="ToolbarBackgroundBrush" Color="{DynamicResource SystemChromeMediumColor}" />
+    <SolidColorBrush x:Key="ToolbarBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+    <SolidColorBrush x:Key="ToolbarSeparatorBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+
+    <!-- Status Bar Colors -->
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="{DynamicResource SystemChromeMediumColor}" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="{DynamicResource SystemBaseHighColor}" />
+    <SolidColorBrush x:Key="StatusBarBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+
+    <!-- Document State Indicators -->
+    <SolidColorBrush x:Key="ModifiedIndicatorBrush" Color="#FFE81123" />
+    <SolidColorBrush x:Key="SecureIndicatorBrush" Color="#FF107C10" />
+    <SolidColorBrush x:Key="ErrorIndicatorBrush" Color="#FFE81123" />
+    <SolidColorBrush x:Key="WarningIndicatorBrush" Color="#FFFFA500" />
+
+    <!-- Annotation Colors (Semantic names) -->
+    <SolidColorBrush x:Key="AnnotationHighlightBrush" Color="#66FFFF00" />
+    <SolidColorBrush x:Key="AnnotationUnderlineBrush" Color="#FF0000FF" />
+    <SolidColorBrush x:Key="AnnotationStrikethroughBrush" Color="#FFFF0000" />
+    <SolidColorBrush x:Key="AnnotationCommentBrush" Color="#FFFFA500" />
+
+    <!-- Selection and Focus Colors -->
+    <SolidColorBrush x:Key="TextSelectionBrush" Color="{DynamicResource SystemAccentColor}" />
+    <SolidColorBrush x:Key="TextSelectionHighlightBrush" Color="{DynamicResource SystemAccentColorLight1}" />
+    <SolidColorBrush x:Key="FocusStrokeBrush" Color="{DynamicResource SystemAccentColor}" />
+
+    <!-- Page Navigation Colors -->
+    <SolidColorBrush x:Key="PageNumberBackgroundBrush" Color="{DynamicResource SystemChromeMediumLowColor}" />
+    <SolidColorBrush x:Key="PageNumberForegroundBrush" Color="{DynamicResource SystemBaseHighColor}" />
+    <SolidColorBrush x:Key="PageNumberBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+
+    <!-- Thumbnail Colors -->
+    <SolidColorBrush x:Key="ThumbnailBackgroundBrush" Color="{DynamicResource SystemChromeMediumLowColor}" />
+    <SolidColorBrush x:Key="ThumbnailBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+    <SolidColorBrush x:Key="ThumbnailSelectedBorderBrush" Color="{DynamicResource SystemAccentColor}" />
+    <SolidColorBrush x:Key="ThumbnailHoverBackgroundBrush" Color="{DynamicResource SystemChromeMediumColor}" />
+
+    <!-- Loading State Colors -->
+    <SolidColorBrush x:Key="LoadingSkeletonBrush" Color="{DynamicResource SystemChromeMediumLowColor}" />
+    <SolidColorBrush x:Key="LoadingShimmerBrush" Color="{DynamicResource SystemChromeLowColor}" />
+    <SolidColorBrush x:Key="LoadingProgressBrush" Color="{DynamicResource SystemAccentColor}" />
+
+    <!-- Dialog and Overlay Colors -->
+    <SolidColorBrush x:Key="DialogBackgroundBrush" Color="{DynamicResource SystemChromeMediumColor}" />
+    <SolidColorBrush x:Key="DialogBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+    <SolidColorBrush x:Key="DialogOverlayBrush" Color="#80000000" />
+
+    <!-- Form Field Colors -->
+    <SolidColorBrush x:Key="FormFieldBackgroundBrush" Color="{DynamicResource SystemAltMediumColor}" />
+    <SolidColorBrush x:Key="FormFieldBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+    <SolidColorBrush x:Key="FormFieldFocusBorderBrush" Color="{DynamicResource SystemAccentColor}" />
+    <SolidColorBrush x:Key="FormFieldErrorBorderBrush" Color="#FFE81123" />
+
+    <!-- Search Panel Colors -->
+    <SolidColorBrush x:Key="SearchMatchBackgroundBrush" Color="#FFFFA500" Opacity="0.3" />
+    <SolidColorBrush x:Key="SearchMatchBorderBrush" Color="#FFFFA500" />
+    <SolidColorBrush x:Key="SearchCurrentMatchBackgroundBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.5" />
+
+    <!-- Grid Splitter Colors -->
+    <SolidColorBrush x:Key="SplitterBackgroundBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
+    <SolidColorBrush x:Key="SplitterHoverBackgroundBrush" Color="{DynamicResource SystemChromeMediumColor}" />
+
+    <!-- Common Spacing Values (8px grid) -->
+    <x:Double x:Key="SpacingXSmall">4</x:Double>
+    <x:Double x:Key="SpacingSmall">8</x:Double>
+    <x:Double x:Key="SpacingMedium">16</x:Double>
+    <x:Double x:Key="SpacingLarge">24</x:Double>
+    <x:Double x:Key="SpacingXLarge">32</x:Double>
+
+    <!-- Common Corner Radius Values -->
+    <CornerRadius x:Key="ControlCornerRadiusSmall">4</CornerRadius>
+    <CornerRadius x:Key="ControlCornerRadiusMedium">8</CornerRadius>
+    <CornerRadius x:Key="ControlCornerRadiusLarge">12</CornerRadius>
+
+    <!-- Common Border Thickness Values -->
+    <Thickness x:Key="BorderThicknessThin">1</Thickness>
+    <Thickness x:Key="BorderThicknessMedium">2</Thickness>
+    <Thickness x:Key="BorderThicknessThick">3</Thickness>
+
+    <!-- Common Shadow Depths -->
+    <x:Double x:Key="ShadowDepthSmall">8</x:Double>
+    <x:Double x:Key="ShadowDepthMedium">16</x:Double>
+    <x:Double x:Key="ShadowDepthLarge">32</x:Double>
+
+    <!-- Typography Scale (Avalonia compatible) -->
+    <x:Double x:Key="FontSizeCaption">12</x:Double>
+    <x:Double x:Key="FontSizeBody">14</x:Double>
+    <x:Double x:Key="FontSizeBodyLarge">16</x:Double>
+    <x:Double x:Key="FontSizeSubtitle">18</x:Double>
+    <x:Double x:Key="FontSizeTitle">24</x:Double>
+    <x:Double x:Key="FontSizeTitleLarge">32</x:Double>
+    <x:Double x:Key="FontSizeDisplay">40</x:Double>
+
+    <!-- Animation Durations (stored as milliseconds for Avalonia) -->
+    <x:Double x:Key="AnimationDurationFast">150</x:Double>
+    <x:Double x:Key="AnimationDurationNormal">300</x:Double>
+    <x:Double x:Key="AnimationDurationSlow">500</x:Double>
+
+    <!-- Minimum Touch Target Sizes (WCAG 2.1 AA) -->
+    <x:Double x:Key="MinimumTouchTargetSize">44</x:Double>
+    <x:Double x:Key="MinimumButtonHeight">32</x:Double>
+    <x:Double x:Key="MinimumButtonWidth">120</x:Double>
+
+</ResourceDictionary>

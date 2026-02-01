@@ -16,11 +16,69 @@
         <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
         <converters:InverseCountToVisibilityConverter x:Key="InverseCountToVisibilityConverter" />
 
-        <!-- Hierarchical DataTemplate for BookmarkNode -->
+        <!-- Smooth expand/collapse animation for TreeViewItem (200ms ease-out) -->
+        <Storyboard x:Key="ExpandAnimation">
+            <DoubleAnimation
+                Storyboard.TargetProperty="Opacity"
+                From="0"
+                To="1"
+                Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                From="0.8"
+                To="1"
+                Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <Storyboard x:Key="CollapseAnimation">
+            <DoubleAnimation
+                Storyboard.TargetProperty="Opacity"
+                From="1"
+                To="0"
+                Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                From="1"
+                To="0.8"
+                Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- TreeViewItem style with smooth expand/collapse animations -->
+        <Style x:Key="AnimatedTreeViewItemStyle" TargetType="TreeViewItem" BasedOn="{StaticResource DefaultTreeViewItemStyle}">
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <TransitionCollection>
+                        <EntranceThemeTransition/>
+                    </TransitionCollection>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Hierarchical DataTemplate for BookmarkNode with animation support -->
         <DataTemplate x:Key="BookmarkNodeTemplate" x:DataType="models:BookmarkNode">
             <TreeViewItem
                 ItemsSource="{x:Bind Children, Mode=OneTime}"
-                AutomationProperties.Name="{x:Bind Title, Mode=OneTime}">
+                AutomationProperties.Name="{x:Bind Title, Mode=OneTime}"
+                Style="{StaticResource AnimatedTreeViewItemStyle}">
+                <TreeViewItem.RenderTransform>
+                    <ScaleTransform ScaleY="1" CenterY="0"/>
+                </TreeViewItem.RenderTransform>
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE8A5;" FontSize="14"/>
                     <TextBlock
@@ -33,38 +91,44 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid>
-        <!-- Empty state (visible when bookmarks count is 0 and not loading) -->
-        <TextBlock
-            Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Style="{StaticResource SubtitleTextBlockStyle}"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-            <TextBlock.Visibility>
-                <Binding Path="ViewModel.Bookmarks.Count" ElementName="RootControl" Converter="{StaticResource CountToVisibilityConverter}" ConverterParameter="0" />
-            </TextBlock.Visibility>
-        </TextBlock>
+    <!-- Glass panel container with elevation -->
+    <local:GlassPanel
+        CornerRadius="8"
+        Elevation="8"
+        Padding="12">
+        <Grid>
+            <!-- Empty state (visible when bookmarks count is 0 and not loading) -->
+            <TextBlock
+                Text="{x:Bind ViewModel.EmptyMessage, Mode=OneWay}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                <TextBlock.Visibility>
+                    <Binding Path="ViewModel.Bookmarks.Count" ElementName="RootControl" Converter="{StaticResource CountToVisibilityConverter}" ConverterParameter="0" />
+                </TextBlock.Visibility>
+            </TextBlock>
 
-        <!-- Loading indicator -->
-        <ProgressRing
-            IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
-            Width="60"
-            Height="60"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"/>
+            <!-- Loading indicator -->
+            <ProgressRing
+                IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}"
+                Width="60"
+                Height="60"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"/>
 
-        <!-- TreeView (visible when bookmarks count > 0) -->
-        <TreeView
-            x:Name="BookmarksTreeView"
-            AutomationProperties.AutomationId="BookmarksTreeView"
-            ItemsSource="{x:Bind ViewModel.Bookmarks, Mode=OneWay}"
-            ItemTemplate="{StaticResource BookmarkNodeTemplate}"
-            SelectionMode="Single"
-            ItemInvoked="BookmarksTreeView_ItemInvoked">
-            <TreeView.Visibility>
-                <Binding Path="ViewModel.Bookmarks.Count" ElementName="RootControl" Converter="{StaticResource InverseCountToVisibilityConverter}" ConverterParameter="0" />
-            </TreeView.Visibility>
-        </TreeView>
-    </Grid>
+            <!-- TreeView with glass background (visible when bookmarks count > 0) -->
+            <TreeView
+                x:Name="BookmarksTreeView"
+                AutomationProperties.AutomationId="BookmarksTreeView"
+                ItemsSource="{x:Bind ViewModel.Bookmarks, Mode=OneWay}"
+                ItemTemplate="{StaticResource BookmarkNodeTemplate}"
+                SelectionMode="Single"
+                ItemInvoked="BookmarksTreeView_ItemInvoked">
+                <TreeView.Visibility>
+                    <Binding Path="ViewModel.Bookmarks.Count" ElementName="RootControl" Converter="{StaticResource InverseCountToVisibilityConverter}" ConverterParameter="0" />
+                </TreeView.Visibility>
+            </TreeView>
+        </Grid>
+    </local:GlassPanel>
 </UserControl>

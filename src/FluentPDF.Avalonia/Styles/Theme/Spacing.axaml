@@ -1,0 +1,307 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    FluentPDF Liquid Glass UI - Spacing System
+
+    4px-based grid system following Fluent Design principles.
+    All spacing values are multiples of 4px for consistent alignment.
+
+    Reference: Requirement 1.6 - Fluent Design 4px grid
+    -->
+
+    <!-- ================================================================ -->
+    <!-- Base Spacing Scale (4px increments)                              -->
+    <!-- ================================================================ -->
+
+    <!-- XXS: 4px - Minimal spacing for very tight layouts -->
+    <x:Double x:Key="SpacingXXS">4</x:Double>
+
+    <!-- XS: 8px - Compact spacing for related elements -->
+    <x:Double x:Key="SpacingXS">8</x:Double>
+
+    <!-- S: 12px - Small spacing for grouped content -->
+    <x:Double x:Key="SpacingS">12</x:Double>
+
+    <!-- M: 16px - Standard spacing (most common) -->
+    <x:Double x:Key="SpacingM">16</x:Double>
+
+    <!-- L: 24px - Large spacing for separated sections -->
+    <x:Double x:Key="SpacingL">24</x:Double>
+
+    <!-- XL: 32px - Extra large spacing for major divisions -->
+    <x:Double x:Key="SpacingXL">32</x:Double>
+
+    <!-- XXL: 48px - Maximum spacing for page-level separation -->
+    <x:Double x:Key="SpacingXXL">48</x:Double>
+
+    <!-- ================================================================ -->
+    <!-- Margin Thickness Resources                                       -->
+    <!-- ================================================================ -->
+
+    <!-- Uniform Margins -->
+    <Thickness x:Key="MarginXXS">4</Thickness>
+    <Thickness x:Key="MarginXS">8</Thickness>
+    <Thickness x:Key="MarginS">12</Thickness>
+    <Thickness x:Key="MarginM">16</Thickness>
+    <Thickness x:Key="MarginL">24</Thickness>
+    <Thickness x:Key="MarginXL">32</Thickness>
+    <Thickness x:Key="MarginXXL">48</Thickness>
+
+    <!-- Horizontal Margins (Left, Right) -->
+    <Thickness x:Key="MarginHorizontalXXS">4,0</Thickness>
+    <Thickness x:Key="MarginHorizontalXS">8,0</Thickness>
+    <Thickness x:Key="MarginHorizontalS">12,0</Thickness>
+    <Thickness x:Key="MarginHorizontalM">16,0</Thickness>
+    <Thickness x:Key="MarginHorizontalL">24,0</Thickness>
+    <Thickness x:Key="MarginHorizontalXL">32,0</Thickness>
+    <Thickness x:Key="MarginHorizontalXXL">48,0</Thickness>
+
+    <!-- Vertical Margins (Top, Bottom) -->
+    <Thickness x:Key="MarginVerticalXXS">0,4</Thickness>
+    <Thickness x:Key="MarginVerticalXS">0,8</Thickness>
+    <Thickness x:Key="MarginVerticalS">0,12</Thickness>
+    <Thickness x:Key="MarginVerticalM">0,16</Thickness>
+    <Thickness x:Key="MarginVerticalL">0,24</Thickness>
+    <Thickness x:Key="MarginVerticalXL">0,32</Thickness>
+    <Thickness x:Key="MarginVerticalXXL">0,48</Thickness>
+
+    <!-- Left Margin Only -->
+    <Thickness x:Key="MarginLeftXXS">4,0,0,0</Thickness>
+    <Thickness x:Key="MarginLeftXS">8,0,0,0</Thickness>
+    <Thickness x:Key="MarginLeftS">12,0,0,0</Thickness>
+    <Thickness x:Key="MarginLeftM">16,0,0,0</Thickness>
+    <Thickness x:Key="MarginLeftL">24,0,0,0</Thickness>
+    <Thickness x:Key="MarginLeftXL">32,0,0,0</Thickness>
+    <Thickness x:Key="MarginLeftXXL">48,0,0,0</Thickness>
+
+    <!-- Right Margin Only -->
+    <Thickness x:Key="MarginRightXXS">0,0,4,0</Thickness>
+    <Thickness x:Key="MarginRightXS">0,0,8,0</Thickness>
+    <Thickness x:Key="MarginRightS">0,0,12,0</Thickness>
+    <Thickness x:Key="MarginRightM">0,0,16,0</Thickness>
+    <Thickness x:Key="MarginRightL">0,0,24,0</Thickness>
+    <Thickness x:Key="MarginRightXL">0,0,32,0</Thickness>
+    <Thickness x:Key="MarginRightXXL">0,0,48,0</Thickness>
+
+    <!-- Top Margin Only -->
+    <Thickness x:Key="MarginTopXXS">0,4,0,0</Thickness>
+    <Thickness x:Key="MarginTopXS">0,8,0,0</Thickness>
+    <Thickness x:Key="MarginTopS">0,12,0,0</Thickness>
+    <Thickness x:Key="MarginTopM">0,16,0,0</Thickness>
+    <Thickness x:Key="MarginTopL">0,24,0,0</Thickness>
+    <Thickness x:Key="MarginTopXL">0,32,0,0</Thickness>
+    <Thickness x:Key="MarginTopXXL">0,48,0,0</Thickness>
+
+    <!-- Bottom Margin Only -->
+    <Thickness x:Key="MarginBottomXXS">0,0,0,4</Thickness>
+    <Thickness x:Key="MarginBottomXS">0,0,0,8</Thickness>
+    <Thickness x:Key="MarginBottomS">0,0,0,12</Thickness>
+    <Thickness x:Key="MarginBottomM">0,0,0,16</Thickness>
+    <Thickness x:Key="MarginBottomL">0,0,0,24</Thickness>
+    <Thickness x:Key="MarginBottomXL">0,0,0,32</Thickness>
+    <Thickness x:Key="MarginBottomXXL">0,0,0,48</Thickness>
+
+    <!-- ================================================================ -->
+    <!-- Padding Thickness Resources                                      -->
+    <!-- ================================================================ -->
+
+    <!-- Uniform Padding -->
+    <Thickness x:Key="PaddingXXS">4</Thickness>
+    <Thickness x:Key="PaddingXS">8</Thickness>
+    <Thickness x:Key="PaddingS">12</Thickness>
+    <Thickness x:Key="PaddingM">16</Thickness>
+    <Thickness x:Key="PaddingL">24</Thickness>
+    <Thickness x:Key="PaddingXL">32</Thickness>
+    <Thickness x:Key="PaddingXXL">48</Thickness>
+
+    <!-- Horizontal Padding (Left, Right) -->
+    <Thickness x:Key="PaddingHorizontalXXS">4,0</Thickness>
+    <Thickness x:Key="PaddingHorizontalXS">8,0</Thickness>
+    <Thickness x:Key="PaddingHorizontalS">12,0</Thickness>
+    <Thickness x:Key="PaddingHorizontalM">16,0</Thickness>
+    <Thickness x:Key="PaddingHorizontalL">24,0</Thickness>
+    <Thickness x:Key="PaddingHorizontalXL">32,0</Thickness>
+    <Thickness x:Key="PaddingHorizontalXXL">48,0</Thickness>
+
+    <!-- Vertical Padding (Top, Bottom) -->
+    <Thickness x:Key="PaddingVerticalXXS">0,4</Thickness>
+    <Thickness x:Key="PaddingVerticalXS">0,8</Thickness>
+    <Thickness x:Key="PaddingVerticalS">0,12</Thickness>
+    <Thickness x:Key="PaddingVerticalM">0,16</Thickness>
+    <Thickness x:Key="PaddingVerticalL">0,24</Thickness>
+    <Thickness x:Key="PaddingVerticalXL">0,32</Thickness>
+    <Thickness x:Key="PaddingVerticalXXL">0,48</Thickness>
+
+    <!-- ================================================================ -->
+    <!-- Border Thickness Resources                                       -->
+    <!-- ================================================================ -->
+
+    <!-- Standard Border Thicknesses -->
+    <Thickness x:Key="BorderThicknessNone">0</Thickness>
+    <Thickness x:Key="BorderThicknessThin">1</Thickness>
+    <Thickness x:Key="BorderThicknessMedium">2</Thickness>
+    <Thickness x:Key="BorderThicknessThick">4</Thickness>
+
+    <!-- Directional Borders -->
+    <Thickness x:Key="BorderThicknessTop">0,1,0,0</Thickness>
+    <Thickness x:Key="BorderThicknessBottom">0,0,0,1</Thickness>
+    <Thickness x:Key="BorderThicknessLeft">1,0,0,0</Thickness>
+    <Thickness x:Key="BorderThicknessRight">0,0,1,0</Thickness>
+
+    <!-- Focus Border (typically thicker for visibility) -->
+    <Thickness x:Key="BorderThicknessFocus">2</Thickness>
+
+    <!-- ================================================================ -->
+    <!-- Corner Radius Resources                                          -->
+    <!-- ================================================================ -->
+
+    <!-- Standard Corner Radii (4px increments) -->
+    <CornerRadius x:Key="CornerRadiusNone">0</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusXS">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusS">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusM">12</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusL">16</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusXL">20</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusXXL">24</CornerRadius>
+
+    <!-- Pill Shape (fully rounded) -->
+    <CornerRadius x:Key="CornerRadiusPill">9999</CornerRadius>
+
+    <!-- Common Component-Specific Corner Radii -->
+    <CornerRadius x:Key="CornerRadiusButton">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusInput">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusCard">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusDialog">12</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusPanel">8</CornerRadius>
+
+    <!-- ================================================================ -->
+    <!-- Touch Target Sizes (WCAG 2.1 AA Compliance)                      -->
+    <!-- ================================================================ -->
+
+    <!-- Minimum touch target: 44x44px (WCAG 2.1 Level AA) -->
+    <x:Double x:Key="MinimumTouchTargetSize">44</x:Double>
+
+    <!-- Recommended touch target: 48x48px -->
+    <x:Double x:Key="RecommendedTouchTargetSize">48</x:Double>
+
+    <!-- Minimum button dimensions -->
+    <x:Double x:Key="MinimumButtonHeight">32</x:Double>
+    <x:Double x:Key="MinimumButtonWidth">120</x:Double>
+
+    <!-- Icon button touch targets -->
+    <x:Double x:Key="IconButtonSmall">32</x:Double>
+    <x:Double x:Key="IconButtonMedium">40</x:Double>
+    <x:Double x:Key="IconButtonLarge">48</x:Double>
+
+    <!-- ================================================================ -->
+    <!-- Component-Specific Spacing                                       -->
+    <!-- ================================================================ -->
+
+    <!-- Toolbar Spacing -->
+    <x:Double x:Key="ToolbarHeight">48</x:Double>
+    <Thickness x:Key="ToolbarPadding">8,4</Thickness>
+    <x:Double x:Key="ToolbarItemSpacing">4</x:Double>
+    <x:Double x:Key="ToolbarGroupSpacing">12</x:Double>
+
+    <!-- Sidebar Spacing -->
+    <x:Double x:Key="SidebarMinWidth">200</x:Double>
+    <x:Double x:Key="SidebarDefaultWidth">280</x:Double>
+    <x:Double x:Key="SidebarMaxWidth">400</x:Double>
+    <Thickness x:Key="SidebarPadding">12</Thickness>
+
+    <!-- Panel Spacing -->
+    <Thickness x:Key="PanelContentPadding">16</Thickness>
+    <Thickness x:Key="PanelHeaderPadding">16,12</Thickness>
+    <x:Double x:Key="PanelItemSpacing">8</x:Double>
+
+    <!-- Dialog Spacing -->
+    <Thickness x:Key="DialogPadding">24</Thickness>
+    <Thickness x:Key="DialogContentPadding">24,16</Thickness>
+    <x:Double x:Key="DialogButtonSpacing">8</x:Double>
+    <x:Double x:Key="DialogMinWidth">320</x:Double>
+    <x:Double x:Key="DialogMaxWidth">640</x:Double>
+
+    <!-- List and Grid Spacing -->
+    <x:Double x:Key="ListItemHeight">40</x:Double>
+    <Thickness x:Key="ListItemPadding">12,8</Thickness>
+    <x:Double x:Key="ListItemSpacing">4</x:Double>
+    <x:Double x:Key="GridItemSpacing">8</x:Double>
+
+    <!-- Form Spacing -->
+    <x:Double x:Key="FormLabelSpacing">8</x:Double>
+    <x:Double x:Key="FormFieldSpacing">16</x:Double>
+    <x:Double x:Key="FormSectionSpacing">24</x:Double>
+    <Thickness x:Key="FormInputPadding">12,8</Thickness>
+
+    <!-- Card Spacing -->
+    <Thickness x:Key="CardPadding">16</Thickness>
+    <Thickness x:Key="CardHeaderPadding">16,12</Thickness>
+    <x:Double x:Key="CardSpacing">16</x:Double>
+
+    <!-- ================================================================ -->
+    <!-- Elevation and Shadow Depths                                      -->
+    <!-- ================================================================ -->
+
+    <!-- Shadow blur radius values (for DropShadowEffect) -->
+    <x:Double x:Key="ElevationNone">0</x:Double>
+    <x:Double x:Key="ElevationXS">4</x:Double>
+    <x:Double x:Key="ElevationS">8</x:Double>
+    <x:Double x:Key="ElevationM">16</x:Double>
+    <x:Double x:Key="ElevationL">24</x:Double>
+    <x:Double x:Key="ElevationXL">32</x:Double>
+
+    <!-- Shadow offset distances -->
+    <x:Double x:Key="ShadowOffsetXS">2</x:Double>
+    <x:Double x:Key="ShadowOffsetS">4</x:Double>
+    <x:Double x:Key="ShadowOffsetM">8</x:Double>
+    <x:Double x:Key="ShadowOffsetL">12</x:Double>
+
+    <!-- ================================================================ -->
+    <!-- Layout Grid System                                               -->
+    <!-- ================================================================ -->
+
+    <!-- Base grid unit -->
+    <x:Double x:Key="GridUnit">4</x:Double>
+
+    <!-- Common column widths (multiples of 4px) -->
+    <x:Double x:Key="ColumnWidth1">48</x:Double>   <!-- 12 grid units -->
+    <x:Double x:Key="ColumnWidth2">96</x:Double>   <!-- 24 grid units -->
+    <x:Double x:Key="ColumnWidth3">144</x:Double>  <!-- 36 grid units -->
+    <x:Double x:Key="ColumnWidth4">192</x:Double>  <!-- 48 grid units -->
+    <x:Double x:Key="ColumnWidth5">240</x:Double>  <!-- 60 grid units -->
+    <x:Double x:Key="ColumnWidth6">288</x:Double>  <!-- 72 grid units -->
+
+    <!-- Gutter spacing for multi-column layouts -->
+    <x:Double x:Key="GutterXS">8</x:Double>
+    <x:Double x:Key="GutterS">16</x:Double>
+    <x:Double x:Key="GutterM">24</x:Double>
+    <x:Double x:Key="GutterL">32</x:Double>
+
+    <!-- ================================================================ -->
+    <!-- Icon Sizes                                                       -->
+    <!-- ================================================================ -->
+
+    <!-- Standard icon sizes (4px increments) -->
+    <x:Double x:Key="IconSizeXS">12</x:Double>
+    <x:Double x:Key="IconSizeS">16</x:Double>
+    <x:Double x:Key="IconSizeM">20</x:Double>
+    <x:Double x:Key="IconSizeL">24</x:Double>
+    <x:Double x:Key="IconSizeXL">32</x:Double>
+    <x:Double x:Key="IconSizeXXL">48</x:Double>
+
+    <!-- ================================================================ -->
+    <!-- Animation and Transition Offsets                                 -->
+    <!-- ================================================================ -->
+
+    <!-- Slide distances for panel animations -->
+    <x:Double x:Key="SlideOffsetXS">8</x:Double>
+    <x:Double x:Key="SlideOffsetS">16</x:Double>
+    <x:Double x:Key="SlideOffsetM">32</x:Double>
+    <x:Double x:Key="SlideOffsetL">48</x:Double>
+
+    <!-- Scale factors for press feedback -->
+    <x:Double x:Key="ScalePressedButton">0.95</x:Double>
+    <x:Double x:Key="ScalePressedCard">0.98</x:Double>
+
+</ResourceDictionary>

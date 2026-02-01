@@ -1,0 +1,258 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FluentPDF.Avalonia.ViewModels"
+             xmlns:controls="using:FluentPDF.Avalonia.Controls"
+             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="400"
+             x:Class="FluentPDF.Avalonia.Views.DiagnosticsPanel"
+             x:DataType="vm:DiagnosticsPanelViewModel"
+             IsVisible="{Binding IsVisible}">
+
+    <Design.DataContext>
+        <!-- Design-time data context for previewing -->
+        <vm:DiagnosticsPanelViewModel />
+    </Design.DataContext>
+
+    <!-- Glass panel container with elevation shadow -->
+    <controls:GlassPanel BlurRadius="20"
+                        TintOpacity="0.8"
+                        Elevation="16"
+                        GlassCornerRadius="8"
+                        Padding="{StaticResource SpacingM}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="{StaticResource SpacingL}"
+                        Width="320"
+                        MaxHeight="600">
+
+        <StackPanel Spacing="{StaticResource SpacingM}">
+
+            <!-- Header -->
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                          Text="Performance Diagnostics"
+                          FontSize="{StaticResource FontSizeSubtitle}"
+                          FontWeight="SemiBold"
+                          Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+
+                <Button Grid.Column="1"
+                       Content="✕"
+                       Command="{Binding ToggleVisibilityCommand}"
+                       Background="Transparent"
+                       BorderThickness="0"
+                       Padding="8,4"
+                       ToolTip.Tip="Close diagnostics panel (Ctrl+Shift+D)"
+                       AutomationProperties.AutomationId="DiagnosticsCloseButton"
+                       AutomationProperties.Name="Close diagnostics panel" />
+            </Grid>
+
+            <Separator Background="{DynamicResource GlassBorderBrush}"
+                      Margin="0,0,0,{StaticResource SpacingS}" />
+
+            <!-- FPS Display (Color-coded) -->
+            <StackPanel Spacing="{StaticResource SpacingXS}">
+                <TextBlock Text="Frames Per Second"
+                          FontSize="{StaticResource FontSizeCaption}"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Grid ColumnDefinitions="Auto,*">
+                    <TextBlock Grid.Column="0"
+                              Text="{Binding CurrentFPS, StringFormat='{}{0:F1} FPS'}"
+                              FontSize="{StaticResource FontSizeTitle}"
+                              FontWeight="Bold"
+                              Foreground="{Binding FpsColor}"
+                              VerticalAlignment="Center"
+                              AutomationProperties.AutomationId="DiagnosticsFpsValue"
+                              AutomationProperties.Name="Current FPS" />
+                    <TextBlock Grid.Column="1"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}({0})">
+                                <Binding Path="CurrentFPS" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                        <TextBlock.Text>
+                            <Binding Path="CurrentFPS">
+                                <Binding.Converter>
+                                    <x:Static Member="FluentPDF.Avalonia.Converters.FpsToLevelConverter.Instance" />
+                                </Binding.Converter>
+                            </Binding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </Grid>
+                <!-- FPS Color Legend -->
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpacingS}" Margin="0,4,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Width="12" Height="12" Background="Green" CornerRadius="2" />
+                        <TextBlock Text="≥60" FontSize="{StaticResource FontSizeCaption}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Width="12" Height="12" Background="Orange" CornerRadius="2" />
+                        <TextBlock Text="30-60" FontSize="{StaticResource FontSizeCaption}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Width="12" Height="12" Background="Red" CornerRadius="2" />
+                        <TextBlock Text="&lt;30" FontSize="{StaticResource FontSizeCaption}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+            <Separator Background="{DynamicResource GlassBorderBrush}"
+                      Margin="0,{StaticResource SpacingXS}" />
+
+            <!-- Memory Usage -->
+            <StackPanel Spacing="{StaticResource SpacingXS}">
+                <TextBlock Text="Memory Usage"
+                          FontSize="{StaticResource FontSizeCaption}"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                <!-- Total Memory -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                              Text="Total"
+                              FontSize="{StaticResource FontSizeBody}"
+                              Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Grid.Column="1"
+                              Text="{Binding TotalMemoryMB, StringFormat='{}{0} MB'}"
+                              FontSize="{StaticResource FontSizeBody}"
+                              FontWeight="SemiBold"
+                              Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                              AutomationProperties.AutomationId="DiagnosticsTotalMemoryValue"
+                              AutomationProperties.Name="Total memory usage" />
+                </Grid>
+
+                <!-- Managed Memory -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                              Text="  Managed"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Grid.Column="1"
+                              Text="{Binding ManagedMemoryMB, StringFormat='{}{0} MB'}"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              AutomationProperties.AutomationId="DiagnosticsManagedMemoryValue"
+                              AutomationProperties.Name="Managed memory usage" />
+                </Grid>
+
+                <!-- Native Memory -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                              Text="  Native"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Grid.Column="1"
+                              Text="{Binding NativeMemoryMB, StringFormat='{}{0} MB'}"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              AutomationProperties.AutomationId="DiagnosticsNativeMemoryValue"
+                              AutomationProperties.Name="Native memory usage" />
+                </Grid>
+            </StackPanel>
+
+            <Separator Background="{DynamicResource GlassBorderBrush}"
+                      Margin="0,{StaticResource SpacingXS}" />
+
+            <!-- Frame Timing -->
+            <StackPanel Spacing="{StaticResource SpacingXS}">
+                <TextBlock Text="Frame Timing"
+                          FontSize="{StaticResource FontSizeCaption}"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                <!-- Last Render Time -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                              Text="Last Render"
+                              FontSize="{StaticResource FontSizeBody}"
+                              Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Grid.Column="1"
+                              Text="{Binding LastRenderTimeMs, StringFormat='{}{0:F2} ms'}"
+                              FontSize="{StaticResource FontSizeBody}"
+                              FontWeight="SemiBold"
+                              Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                              AutomationProperties.AutomationId="DiagnosticsLastRenderTimeValue"
+                              AutomationProperties.Name="Last render time" />
+                </Grid>
+
+                <!-- Current Page -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                              Text="Current Page"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Grid.Column="1"
+                              Text="{Binding CurrentPageNumber}"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              AutomationProperties.AutomationId="DiagnosticsCurrentPageValue"
+                              AutomationProperties.Name="Current page number" />
+                </Grid>
+
+                <!-- Target Frame Time (16.67ms for 60 FPS) -->
+                <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                    <TextBlock Grid.Column="0"
+                              Text="Target (60 FPS)"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <TextBlock Grid.Column="1"
+                              Text="16.67 ms"
+                              FontSize="{StaticResource FontSizeCaption}"
+                              Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                </Grid>
+            </StackPanel>
+
+            <Separator Background="{DynamicResource GlassBorderBrush}"
+                      Margin="0,{StaticResource SpacingXS}" />
+
+            <!-- Actions -->
+            <StackPanel Spacing="{StaticResource SpacingS}">
+                <Button Content="Export Metrics"
+                       Command="{Binding ExportMetricsCommand}"
+                       HorizontalAlignment="Stretch"
+                       Padding="{StaticResource SpacingM},6"
+                       AutomationProperties.AutomationId="DiagnosticsExportButton"
+                       AutomationProperties.Name="Export performance metrics" />
+
+                <!-- Performance Status Indicator -->
+                <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                       BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                       BorderThickness="1"
+                       CornerRadius="4"
+                       Padding="{StaticResource SpacingS}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Status"
+                                  FontSize="{StaticResource FontSizeCaption}"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock FontSize="{StaticResource FontSizeBody}"
+                                  FontWeight="SemiBold"
+                                  Foreground="{Binding FpsColor}"
+                                  AutomationProperties.AutomationId="DiagnosticsStatusText">
+                            <TextBlock.Text>
+                                <Binding Path="CurrentFPS">
+                                    <Binding.Converter>
+                                        <x:Static Member="FluentPDF.Avalonia.Converters.FpsToStatusConverter.Instance" />
+                                    </Binding.Converter>
+                                </Binding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Footer with update interval info -->
+            <TextBlock Text="Updates every 500ms"
+                      FontSize="{StaticResource FontSizeCaption}"
+                      Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                      HorizontalAlignment="Center"
+                      Margin="0,{StaticResource SpacingS},0,0" />
+
+        </StackPanel>
+    </controls:GlassPanel>
+
+</UserControl>

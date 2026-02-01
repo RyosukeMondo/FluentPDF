@@ -1,0 +1,31 @@
+            // Set up menu item state updates (marshal to UI thread to avoid threading errors)
+            ViewModel.PropertyChanged += (s, evt) =>
+            {
+                if (evt.PropertyName == nameof(ViewModel.ActiveTab))
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        try
+                        {
+                            UpdateMenuItemStates();
+                            SubscribeToActiveTabChanges();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"ERROR in property changed handler: {ex.Message}");
+                        }
+                    });
+                }
+            };
+            Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    UpdateMenuItemStates();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ERROR in initial UpdateMenuItemStates: {ex.Message}");
+                }
+            });
+            Console.WriteLine("Property change handling set");

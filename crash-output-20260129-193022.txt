@@ -1,0 +1,64 @@
+[19:30:22.938]   PROGRAM START
+[19:30:22.936] 
+============================================================
+[19:30:22.938] Arguments: 
+[19:30:22.938] ============================================================
+[19:30:22.939] Log file location: C:\Users\ryosu\OneDrive\�f�X�N�g�b�v\FluentPDF-Diagnostic-20260129-193022.log
+[19:30:22.940] Global exception handlers registered
+[19:30:22.940] Building Avalonia app...
+[19:30:22.942] Configuring AppBuilder...
+[19:30:22.969] AppBuilder configured successfully
+[19:30:22.969] AppBuilder created successfully
+[19:30:22.970] Starting classic desktop lifetime...
+============================================================
+[19:30:23.223] 
+[19:30:23.224]   APP INITIALIZE
+[19:30:23.224] ============================================================
+[19:30:23.224] Creating Serilog logger...
+[19:30:23.245] Serilog logger created successfully
+[19:30:23.258] Logged startup message via Serilog
+[19:30:23.258] Setting up exception handlers...
+[19:30:23.259] Exception handlers configured
+[19:30:23.259] Creating DI host...
+[19:30:23.290] Configuring services...
+[19:30:23.290] Adding Serilog to DI...
+[19:30:23.291] Serilog added to DI
+[19:30:23.307] All services registered successfully
+[19:30:23.345] DI host built successfully
+[19:30:23.346] Loading XAML...
+[19:30:23.391] XAML loaded successfully
+[19:30:23.391] 
+============================================================
+[19:30:23.391]   APP INITIALIZE COMPLETE
+[19:30:23.392] ============================================================
+>>> [1/7] OnFrameworkInitializationCompleted STARTED
+>>> Debug log: C:\Users\ryosu\OneDrive\�f�X�N�g�b�v\FluentPDF-Hang-Debug-20260129-193023.txt
+>>> [2/7] Initializing PDFium...
+>>> [3/7] PDFium initialized successfully
+>>> [4/7] Getting MainViewModel from DI...
+>>> [4.5/7] MainViewModel obtained
+>>> [5/7] Creating MainWindow...
+>>> MainWindow constructor [1/10] - ENTRY
+>>> MainWindow constructor [3/10] - Creating log entries collection
+>>> MainWindow constructor [4/10] - Creating timer
+>>> MainWindow constructor [5/10] - Calling InitializeComponent...
+>>> MainWindow constructor [2/10] - Setting ViewModel
+>>> MainWindow constructor [6/10] - InitializeComponent complete
+>>> MainWindow constructor [7/10] - Setting window properties
+>>> MainWindow constructor [8/10] - Setting DataContext
+>>> MainWindow constructor [9/10] - Registering Loaded event
+>>> MainWindow constructor [10/10] - COMPLETE
+>>> [5.5/7] MainWindow created
+>>> [6/7] Setting desktop.MainWindow...
+>>> [6.5/7] desktop.MainWindow set
+>>> [7/7] Calling base.OnFrameworkInitializationCompleted()...
+>>> [7.5/7] base.OnFrameworkInitializationCompleted() returned
+>>> OnFrameworkInitializationCompleted COMPLETE
+=== Window Loaded - Deferring initialization ===
+=== Window Loaded event complete ===
+Starting deferred initialization...
+=== Deferred initialization complete ===
+
+
+=== ERRORS ===
+

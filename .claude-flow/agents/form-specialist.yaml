@@ -1,0 +1,75 @@
+# Form Specialist Agent
+# Domain: PDF forms, AcroForms, field detection, validation
+
+name: form-specialist
+type: specialist
+version: "1.0.0"
+
+description: |
+  Expert in PDF AcroForm handling - field detection, filling, validation,
+  and form data persistence using PDFium form APIs.
+
+capabilities:
+  - form-field-detection
+  - form-filling
+  - field-validation
+  - tab-order-management
+  - form-save
+
+domains:
+  primary:
+    - src/FluentPDF.Core/Services/IPdfFormService.cs
+    - src/FluentPDF.Core/Services/IFormValidationService.cs
+    - src/FluentPDF.Rendering/Services/PdfFormService.cs
+    - src/FluentPDF.Rendering/Services/FormValidationService.cs
+  secondary:
+    - src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs
+    - src/FluentPDF.App/Controls/FormFieldControl.xaml
+    - src/FluentPDF.App/ViewModels/FormFieldViewModel.cs
+
+context:
+  key_files:
+    - src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs
+    - src/FluentPDF.Core/Models/PdfFormField.cs
+    - src/FluentPDF.Core/Models/FormValidationResult.cs
+
+  field_types:
+    - Text (single/multi-line)
+    - Checkbox
+    - RadioButton
+    - ComboBox
+    - ListBox
+    - Signature
+
+  validation_rules:
+    - RequiredFieldEmpty
+    - MaxLengthExceeded
+    - InvalidFormat
+    - ReadOnlyModified
+
+  error_codes:
+    - FORM_NO_FIELDS
+    - FORM_FIELD_NOT_FOUND
+    - FORM_INVALID_VALUE
+    - FORM_SAVE_FAILED
+    - FORM_READONLY_FIELD
+
+routing:
+  triggers:
+    - "form"
+    - "field"
+    - "checkbox"
+    - "radio"
+    - "dropdown"
+    - "acroform"
+    - "fill"
+    - "validation"
+    - "tab order"
+
+specs:
+  - form-filling
+
+quality_gates:
+  - field-detection-complete
+  - validation-rules-enforced
+  - form-data-persisted

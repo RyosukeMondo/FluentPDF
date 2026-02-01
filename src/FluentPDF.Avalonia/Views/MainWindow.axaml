@@ -1,0 +1,341 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:FluentPDF.Avalonia.ViewModels"
+        xmlns:converters="using:FluentPDF.Avalonia.Converters"
+        xmlns:controls="using:FluentPDF.Avalonia.Controls"
+        xmlns:views="using:FluentPDF.Avalonia.Views"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="FluentPDF.Avalonia.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="FluentPDF"
+        Width="1200"
+        Height="800">
+
+    <Window.Resources>
+        <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        <converters:LogLevelToColorConverter x:Key="LogLevelToColorConverter" />
+    </Window.Resources>
+
+    <Grid Background="{DynamicResource ApplicationPageBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <!-- Menu bar -->
+            <RowDefinition Height="Auto" />
+            <!-- Toolbar -->
+            <RowDefinition Height="Auto" />
+            <!-- Tab view -->
+            <RowDefinition Height="*" />
+            <!-- Debug console - ALWAYS VISIBLE -->
+            <RowDefinition Height="250" MinHeight="100" />
+        </Grid.RowDefinitions>
+
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0" x:Name="MainMenu">
+            <MenuItem Header="_File" x:Name="FileMenuItem" AutomationProperties.AutomationId="FileMenuBarItem">
+                <MenuItem Header="_Open..."
+                          x:Name="OpenMenuItem"
+                          InputGesture="Ctrl+O"
+                          AutomationProperties.AutomationId="OpenMenuItem" />
+                <Separator />
+                <MenuItem Header="_Save"
+                          x:Name="SaveMenuItem"
+                          InputGesture="Ctrl+S"
+                          AutomationProperties.AutomationId="SaveMenuItem" />
+                <MenuItem Header="Save _As..."
+                          x:Name="SaveAsMenuItem"
+                          InputGesture="Ctrl+Shift+S"
+                          AutomationProperties.AutomationId="SaveAsMenuItem" />
+                <Separator />
+                <MenuItem Header="_Recent Files"
+                          x:Name="RecentFilesSubMenu"
+                          AutomationProperties.AutomationId="RecentFilesSubMenu">
+                    <!-- Dynamic recent files items will be added in code-behind -->
+                </MenuItem>
+                <MenuItem Header="_Clear Recent Files..."
+                          x:Name="ClearRecentFilesMenuItem"
+                          AutomationProperties.AutomationId="ClearRecentFilesMenuItem" />
+                <Separator />
+                <MenuItem Header="E_xit"
+                          x:Name="ExitMenuItem"
+                          AutomationProperties.AutomationId="ExitMenuItem" />
+            </MenuItem>
+            <MenuItem Header="_Tools" x:Name="ToolsMenuItem" AutomationProperties.AutomationId="ToolsMenuBarItem">
+                <MenuItem Header="_Settings..."
+                          x:Name="SettingsMenuItem"
+                          AutomationProperties.AutomationId="SettingsMenuItem" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Toolbar with Acrylic Background -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource ToolbarAcrylicMaterial}"
+                BorderBrush="{DynamicResource GlassBorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="{StaticResource SpacingM}">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpacingS}">
+
+                <!-- File Operations -->
+                <controls:LiquidButton Content="Open"
+                                      x:Name="ToolbarOpenButton"
+                                      AutomationProperties.AutomationId="ToolbarOpenButton"
+                                      ToolTip.Tip="Open PDF file (Ctrl+O)"
+                                      Padding="{StaticResource SpacingM},6" />
+
+                <Separator Width="1"
+                          Height="24"
+                          Background="{DynamicResource GlassBorderBrush}"
+                          Margin="{StaticResource SpacingS},0" />
+
+                <!-- Navigation -->
+                <controls:LiquidButton Content="◀"
+                                      x:Name="ToolbarPreviousPageButton"
+                                      AutomationProperties.AutomationId="ToolbarPreviousPageButton"
+                                      ToolTip.Tip="Previous page"
+                                      Padding="12,6"
+                                      MinWidth="40" />
+
+                <TextBlock Text="Page"
+                          VerticalAlignment="Center"
+                          Margin="4,0" />
+
+                <TextBox x:Name="ToolbarPageNumberBox"
+                        Width="60"
+                        Text="1"
+                        TextAlignment="Center"
+                        VerticalAlignment="Center"
+                        AutomationProperties.AutomationId="ToolbarPageNumberBox" />
+
+                <TextBlock x:Name="ToolbarTotalPagesText"
+                          Text="of 0"
+                          VerticalAlignment="Center"
+                          Margin="4,0" />
+
+                <controls:LiquidButton Content="▶"
+                                      x:Name="ToolbarNextPageButton"
+                                      AutomationProperties.AutomationId="ToolbarNextPageButton"
+                                      ToolTip.Tip="Next page"
+                                      Padding="12,6"
+                                      MinWidth="40" />
+
+                <Separator Width="1"
+                          Height="24"
+                          Background="{DynamicResource GlassBorderBrush}"
+                          Margin="{StaticResource SpacingS},0" />
+
+                <!-- Zoom Controls -->
+                <controls:LiquidButton Content="−"
+                                      x:Name="ToolbarZoomOutButton"
+                                      AutomationProperties.AutomationId="ToolbarZoomOutButton"
+                                      ToolTip.Tip="Zoom out"
+                                      Padding="12,6"
+                                      MinWidth="40" />
+
+                <ComboBox x:Name="ToolbarZoomComboBox"
+                         Width="100"
+                         VerticalAlignment="Center"
+                         AutomationProperties.AutomationId="ToolbarZoomComboBox">
+                    <ComboBoxItem Content="50%" />
+                    <ComboBoxItem Content="75%" />
+                    <ComboBoxItem Content="100%" IsSelected="True" />
+                    <ComboBoxItem Content="125%" />
+                    <ComboBoxItem Content="150%" />
+                    <ComboBoxItem Content="200%" />
+                    <ComboBoxItem Content="Fit Width" />
+                    <ComboBoxItem Content="Fit Page" />
+                </ComboBox>
+
+                <controls:LiquidButton Content="+"
+                                      x:Name="ToolbarZoomInButton"
+                                      AutomationProperties.AutomationId="ToolbarZoomInButton"
+                                      ToolTip.Tip="Zoom in"
+                                      Padding="12,6"
+                                      MinWidth="40" />
+
+                <Separator Width="1"
+                          Height="24"
+                          Background="{DynamicResource GlassBorderBrush}"
+                          Margin="{StaticResource SpacingS},0" />
+
+                <!-- View Toggles -->
+                <ToggleButton x:Name="ToolbarToggleThumbnailsButton"
+                             Content="📄"
+                             AutomationProperties.AutomationId="ToolbarToggleThumbnailsButton"
+                             ToolTip.Tip="Toggle thumbnails"
+                             Padding="12,6"
+                             MinWidth="40" />
+
+                <ToggleButton x:Name="ToolbarToggleBookmarksButton"
+                             Content="🔖"
+                             AutomationProperties.AutomationId="ToolbarToggleBookmarksButton"
+                             ToolTip.Tip="Toggle bookmarks"
+                             Padding="12,6"
+                             MinWidth="40" />
+
+                <controls:LiquidButton Content="🔍"
+                                      x:Name="ToolbarSearchButton"
+                                      AutomationProperties.AutomationId="ToolbarSearchButton"
+                                      ToolTip.Tip="Search (Ctrl+F)"
+                                      Padding="12,6"
+                                      MinWidth="40" />
+            </StackPanel>
+        </Border>
+
+        <!-- TabControl for multi-document interface -->
+        <TabControl Grid.Row="2"
+                    x:Name="MainTabControl"
+                    ItemsSource="{Binding Tabs}"
+                    SelectedItem="{Binding ActiveTab, Mode=TwoWay}"
+                    AutomationProperties.AutomationId="MainTabView">
+
+            <TabControl.ItemTemplate>
+                <DataTemplate DataType="vm:TabViewModel">
+                    <TextBlock Text="{Binding DisplayName}" />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+
+            <TabControl.ContentTemplate>
+                <DataTemplate DataType="vm:TabViewModel">
+                    <controls:PdfViewerControl ViewerViewModel="{Binding ViewerViewModel}" />
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+        </TabControl>
+
+        <!-- Empty state overlay when no tabs are open -->
+        <Grid Grid.Row="2"
+              x:Name="EmptyStateOverlay"
+              IsVisible="{Binding Tabs.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=0}"
+              Background="{DynamicResource ApplicationPageBackgroundBrush}">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="16">
+                <!-- Document icon (scaled 3x) -->
+                <Viewbox Width="96" Height="96">
+                    <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                </Viewbox>
+
+                <TextBlock Text="No PDFs open"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center" />
+
+                <Button Content="Open File"
+                        x:Name="EmptyStateOpenButton"
+                        AutomationProperties.AutomationId="EmptyStateOpenButton"
+                        Classes="accent"
+                        HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Debug Console Panel -->
+        <Border Grid.Row="3"
+                x:Name="DebugConsolePanel"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Background="{DynamicResource LayerFillColorDefaultBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Console Header -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                        Padding="12,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="Debug Console"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                            <Button Content="Copy Last 50"
+                                    x:Name="CopyLogsButton"
+                                    AutomationProperties.AutomationId="CopyLogsButton"
+                                    Padding="12,6" />
+                            <Button Content="Download Log"
+                                    x:Name="DownloadLogButton"
+                                    AutomationProperties.AutomationId="DownloadLogButton"
+                                    Padding="12,6" />
+                            <Button Content="Clear"
+                                    x:Name="ClearLogsButton"
+                                    AutomationProperties.AutomationId="ClearLogsButton"
+                                    Padding="12,6" />
+                            <ToggleButton x:Name="ToggleConsoleButton"
+                                          Content="▼"
+                                          IsChecked="True"
+                                          Padding="8,6"
+                                          ToolTip.Tip="Toggle console visibility" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Console Content -->
+                <ScrollViewer Grid.Row="1"
+                              x:Name="LogScrollViewer"
+                              IsVisible="{Binding #ToggleConsoleButton.IsChecked}">
+                    <ItemsControl x:Name="LogItemsControl"
+                                  Padding="12">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="4,2"
+                                        Margin="0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss.fff}'}"
+                                                   FontFamily="Consolas,Courier New,monospace"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Level}"
+                                                   FontFamily="Consolas,Courier New,monospace"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   Foreground="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}" />
+
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Source}"
+                                                   FontFamily="Consolas,Courier New,monospace"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding Message}"
+                                                   FontFamily="Consolas,Courier New,monospace"
+                                                   FontSize="11"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Diagnostics Panel Overlay (Ctrl+Shift+D to toggle) -->
+        <views:DiagnosticsPanel Grid.Row="0"
+                               Grid.RowSpan="4"
+                               x:Name="DiagnosticsPanelOverlay"
+                               DataContext="{Binding DiagnosticsPanelViewModel}"
+                               AutomationProperties.AutomationId="DiagnosticsPanelOverlay" />
+    </Grid>
+</Window>

@@ -1,0 +1,86 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!-- Cross-platform runtime identifiers -->
+    <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- Release build optimizations -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <PublishTrimmed>false</PublishTrimmed>
+    <!-- Trimming disabled due to reflection usage in verification APIs -->
+    <!-- <TrimMode>link</TrimMode> -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <!-- Avalonia packages -->
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.9" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.9" Condition="'$(Configuration)' == 'Debug'" />
+
+    <!-- MVVM Toolkit (same as WinUI 3) -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+
+    <!-- Hosting and DI (same as WinUI 3) -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
+    <PackageReference Include="Serilog" Version="4.*" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="10.*" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.*" />
+    <PackageReference Include="Serilog.Sinks.Async" Version="2.*" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.*" />
+
+    <!-- FluentResults for error handling (match Core project) -->
+    <PackageReference Include="FluentResults" Version="4.*" />
+
+    <!-- Image processing -->
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.*" />
+
+    <!-- OpenTelemetry -->
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.*" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.*" />
+
+    <!-- ASP.NET Core for REST API server -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <!-- Project references (100% reusable) -->
+  <ItemGroup>
+    <ProjectReference Include="..\FluentPDF.Core\FluentPDF.Core.csproj" />
+    <ProjectReference Include="..\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
+  </ItemGroup>
+
+  <!-- Native libraries (platform-specific) -->
+  <!-- Windows x64 (also used for development without RID) -->
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64' OR ('$(OS)' == 'Windows_NT' AND '$(RuntimeIdentifier)' == '')">
+    <None Include="..\..\libs\x64\bin\pdfium.dll" Link="pdfium.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\libs\x64\bin\qpdf.dll" Link="qpdf.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' OR '$(RuntimeIdentifier)' == 'osx-arm64'">
+    <!-- macOS libraries will be added when built -->
+    <None Include="..\..\libs\macos\bin\libpdfium.dylib" Link="libpdfium.dylib" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\libs\macos\bin\libpdfium.dylib')" />
+    <None Include="..\..\libs\macos\bin\libqpdf.dylib" Link="libqpdf.dylib" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\libs\macos\bin\libqpdf.dylib')" />
+  </ItemGroup>
+</Project>

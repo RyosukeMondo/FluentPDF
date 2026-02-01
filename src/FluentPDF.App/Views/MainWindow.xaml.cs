@@ -67,7 +67,8 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Sets up keyboard accelerators for tab management.
+    /// Sets up keyboard accelerators for tab management and global shortcuts.
+    /// Implements Phase 2: Keyboard Navigation (Tasks 2.1, 2.2, 2.3).
     /// </summary>
     private void SetupKeyboardAccelerators()
     {
@@ -75,6 +76,7 @@ public sealed partial class MainWindow : Window
         if (this.Content is not UIElement rootElement)
             return;
 
+        // Tab Management
         // Ctrl+Tab: Next tab
         var nextTabAccelerator = new KeyboardAccelerator
         {
@@ -102,6 +104,7 @@ public sealed partial class MainWindow : Window
         closeTabAccelerator.Invoked += OnCloseTabAccelerator;
         rootElement.KeyboardAccelerators.Add(closeTabAccelerator);
 
+        // Standard Shortcuts (Task 2.1)
         // Ctrl+O: Open file
         var openFileAccelerator = new KeyboardAccelerator
         {
@@ -110,6 +113,33 @@ public sealed partial class MainWindow : Window
         };
         openFileAccelerator.Invoked += OnOpenFileAccelerator;
         rootElement.KeyboardAccelerators.Add(openFileAccelerator);
+
+        // Ctrl+S: Save document
+        var saveAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.S,
+            Modifiers = VirtualKeyModifiers.Control
+        };
+        saveAccelerator.Invoked += OnSaveAccelerator;
+        rootElement.KeyboardAccelerators.Add(saveAccelerator);
+
+        // Ctrl+P: Print dialog (placeholder for future implementation)
+        var printAccelerator = new KeyboardAccelerator
+        {
+            Key = VirtualKey.P,
+            Modifiers = VirtualKeyModifiers.Control
+        };
+        printAccelerator.Invoked += OnPrintAccelerator;
+        rootElement.KeyboardAccelerators.Add(printAccelerator);
+
+        // Ctrl+Comma: Settings dialog
+        var settingsAccelerator = new KeyboardAccelerator
+        {
+            Key = (VirtualKey)188, // VirtualKey.Comma
+            Modifiers = VirtualKeyModifiers.Control
+        };
+        settingsAccelerator.Invoked += OnSettingsAccelerator;
+        rootElement.KeyboardAccelerators.Add(settingsAccelerator);
     }
 
     /// <summary>
@@ -171,6 +201,37 @@ public sealed partial class MainWindow : Window
     private void OnOpenFileAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         OnOpenFileClick(sender, null);
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Ctrl+S to save the current document.
+    /// </summary>
+    private void OnSaveAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        if (ViewModel.ActiveTab?.ViewerViewModel?.SaveCommand is { } saveCommand && saveCommand.CanExecute(null))
+        {
+            _ = saveCommand.ExecuteAsync(null);
+        }
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Ctrl+P for print dialog (placeholder for future implementation).
+    /// </summary>
+    private void OnPrintAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        // TODO: Implement print dialog when print functionality is added
+        // For now, just mark as handled to prevent default behavior
+        args.Handled = true;
+    }
+
+    /// <summary>
+    /// Handles Ctrl+Comma to open settings dialog.
+    /// </summary>
+    private void OnSettingsAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        OnSettingsClick(sender, null!);
         args.Handled = true;
     }
 

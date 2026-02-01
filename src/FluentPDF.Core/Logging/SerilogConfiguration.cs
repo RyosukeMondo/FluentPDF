@@ -33,16 +33,17 @@ public static class SerilogConfiguration
                 logPath,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7))
-            .WriteTo.OpenTelemetry(options =>
-            {
-                options.Endpoint = "http://localhost:4317";
-                options.Protocol = OtlpProtocol.Grpc;
-                options.ResourceAttributes = new Dictionary<string, object>
-                {
-                    ["service.name"] = "FluentPDF.Desktop",
-                    ["service.version"] = version
-                };
-            })
+            // OpenTelemetry disabled - was causing DLL initialization failures
+            //.WriteTo.OpenTelemetry(options =>
+            //{
+            //    options.Endpoint = "http://localhost:4317";
+            //    options.Protocol = OtlpProtocol.Grpc;
+            //    options.ResourceAttributes = new Dictionary<string, object>
+            //    {
+            //        ["service.name"] = "FluentPDF.Desktop",
+            //        ["service.version"] = version
+            //    };
+            //})
             .CreateLogger();
     }
 

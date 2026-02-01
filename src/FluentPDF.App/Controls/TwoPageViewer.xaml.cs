@@ -68,8 +68,15 @@ public sealed partial class TwoPageViewer : UserControl
             return;
         }
 
+        var previousPage = _currentPage;
         _currentPage = pageNumber;
         await RenderCurrentPagesAsync();
+
+        // Notify page change if it actually changed
+        if (previousPage != _currentPage)
+        {
+            CurrentPageChanged?.Invoke(this, _currentPage);
+        }
     }
 
     /// <summary>
@@ -164,7 +171,7 @@ public sealed partial class TwoPageViewer : UserControl
 
             if (result.IsSuccess && result.Value != null)
             {
-                await App.MainWindow.DispatcherQueue.EnqueueAsync(async () =>
+                App.MainWindow.DispatcherQueue.TryEnqueue(async () =>
                 {
                     using var stream = result.Value;
                     var bitmap = new BitmapImage();
@@ -227,4 +234,9 @@ public sealed partial class TwoPageViewer : UserControl
     /// Gets the current page number being displayed.
     /// </summary>
     public int CurrentPage => _currentPage;
+
+    /// <summary>
+    /// Event raised when the current page changes.
+    /// </summary>
+    public event EventHandler<int>? CurrentPageChanged;
 }

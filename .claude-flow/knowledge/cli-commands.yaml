@@ -1,0 +1,266 @@
+# CLI Command Catalog
+# Complete reference for FluentPDF diagnostic commands
+
+version: "1.0.0"
+updated: "2026-01-25"
+
+# ============================================================================
+# DIAGNOSTIC COMMANDS
+# ============================================================================
+
+diagnostic:
+  test-render:
+    command: "FluentPDF.App.exe --test-render <path>"
+    description: "Test rendering of a PDF file"
+    arguments:
+      path: "Path to PDF file to test"
+    options:
+      --verbose: "Enable verbose logging"
+      --capture-crash-dump: "Capture dump on failure"
+    exit_codes:
+      0: "Success - PDF rendered correctly"
+      1: "Load failed - Could not open PDF"
+      2: "Render failed - PDFium render error"
+      3: "UI failed - WinUI error"
+    example: |
+      FluentPDF.App.exe --test-render "C:\test\sample.pdf"
+      FluentPDF.App.exe --test-render "sample.pdf" --verbose
+
+  diagnostics:
+    command: "FluentPDF.App.exe --diagnostics"
+    description: "Display system diagnostics"
+    options:
+      --verbose: "Include detailed system info"
+    output:
+      - "OS version"
+      - ".NET runtime version"
+      - "PDFium version"
+      - "Available memory"
+      - "DPI/scaling info"
+    exit_codes:
+      0: "Success"
+    example: |
+      FluentPDF.App.exe --diagnostics
+      FluentPDF.App.exe --diagnostics --verbose
+
+  render-test:
+    command: "FluentPDF.App.exe --render-test <path> --output <dir>"
+    description: "Render all pages of a PDF to PNG files"
+    arguments:
+      path: "Path to PDF file"
+    options:
+      --output: "Output directory for PNGs"
+      --dpi: "DPI for rendering (default: 150)"
+      --verbose: "Enable verbose logging"
+    exit_codes:
+      0: "Success - All pages rendered"
+      1: "Load failed"
+      2: "Render failed"
+      4: "Output directory error"
+    example: |
+      FluentPDF.App.exe --render-test "sample.pdf" --output "C:\output"
+      FluentPDF.App.exe --render-test "sample.pdf" --output "out" --dpi 300
+
+# ============================================================================
+# VALIDATION COMMANDS
+# ============================================================================
+
+validation:
+  validate-marshalling:
+    command: "FluentPDF.App.exe --validate-marshalling"
+    description: "Validate P/Invoke marshalling correctness"
+    options:
+      --verbose: "Show detailed validation results"
+    tests:
+      - "Handle creation and disposal"
+      - "String marshalling"
+      - "Struct layout"
+      - "Return value conversion"
+    exit_codes:
+      0: "All validations passed"
+      1: "One or more validations failed"
+    example: |
+      FluentPDF.App.exe --validate-marshalling
+      FluentPDF.App.exe --validate-marshalling --verbose
+
+  profile-marshalling:
+    command: "FluentPDF.App.exe --profile-marshalling"
+    description: "Profile marshalling performance"
+    options:
+      --iterations: "Number of iterations (default: 1000)"
+    output:
+      - "Average call time"
+      - "Memory allocations"
+      - "GC collections"
+    exit_codes:
+      0: "Profiling complete"
+    example: |
+      FluentPDF.App.exe --profile-marshalling
+      FluentPDF.App.exe --profile-marshalling --iterations 5000
+
+# ============================================================================
+# API SERVER COMMANDS
+# ============================================================================
+
+api:
+  api-server:
+    command: "FluentPDF.App.exe --api-server"
+    description: "Start embedded REST API server"
+    options:
+      --port: "Port number (default: 5000)"
+      --headless: "Run without UI"
+      --verbose: "Enable verbose logging"
+    endpoints:
+      "GET /api/health": "Health check"
+      "POST /api/document/load": "Load PDF document"
+      "GET /api/document/{id}": "Get document info"
+      "DELETE /api/document/{id}": "Close document"
+      "POST /api/render": "Render page to PNG"
+      "GET /api/render/{id}/{page}": "Render page (convenience)"
+      "POST /api/verify/render": "Verify page render"
+      "POST /api/verify/batch": "Batch verify pages"
+    exit_codes:
+      0: "Server stopped normally"
+      1: "Server startup failed"
+    example: |
+      FluentPDF.App.exe --api-server
+      FluentPDF.App.exe --api-server --port 8080 --headless
+      FluentPDF.App.exe --api-server --verbose
+
+# ============================================================================
+# TESTING COMMANDS
+# ============================================================================
+
+testing:
+  test-thumbnails:
+    command: "FluentPDF.App.exe --test-thumbnails <path>"
+    description: "Test thumbnail generation"
+    arguments:
+      path: "Path to PDF file"
+    options:
+      --output: "Output directory"
+    exit_codes:
+      0: "Success"
+      1: "Failed"
+
+  test-text-extract:
+    command: "FluentPDF.App.exe --test-text-extract <path>"
+    description: "Test text extraction"
+    arguments:
+      path: "Path to PDF file"
+    options:
+      --page: "Specific page number"
+      --output: "Output text file"
+    exit_codes:
+      0: "Success"
+      1: "Failed"
+
+  test-forms:
+    command: "FluentPDF.App.exe --test-forms <path>"
+    description: "Test form field detection"
+    arguments:
+      path: "Path to PDF with forms"
+    output:
+      - "Field count"
+      - "Field types"
+      - "Field names"
+    exit_codes:
+      0: "Success"
+      1: "Failed"
+
+# ============================================================================
+# DOTNET CLI COMMANDS
+# ============================================================================
+
+dotnet:
+  build:
+    core:
+      command: "dotnet build src/FluentPDF.Core"
+      description: "Build Core project (cross-platform)"
+
+    rendering:
+      command: "dotnet build src/FluentPDF.Rendering"
+      description: "Build Rendering project (cross-platform)"
+
+    app:
+      command: "dotnet build src/FluentPDF.App -p:Platform=x64"
+      description: "Build WinUI 3 app (Windows only, x64)"
+
+  test:
+    core:
+      command: "dotnet test tests/FluentPDF.Core.Tests"
+      description: "Run Core unit tests"
+
+    rendering:
+      command: "dotnet test tests/FluentPDF.Rendering.Tests"
+      description: "Run Rendering tests"
+
+    architecture:
+      command: "dotnet test tests/FluentPDF.Architecture.Tests"
+      description: "Run architecture compliance tests"
+
+    verification:
+      command: "dotnet test tests/FluentPDF.Verification.Pdfium.Tests"
+      description: "Run PDFium verification tests"
+
+    e2e:
+      command: "dotnet test tests/FluentPDF.E2E.Tests"
+      description: "Run end-to-end tests"
+
+    all:
+      command: "dotnet test tests/"
+      description: "Run all tests"
+
+    filtered:
+      command: 'dotnet test tests/ --filter "Category=Unit"'
+      description: "Run filtered tests"
+
+# ============================================================================
+# POWERSHELL SCRIPTS
+# ============================================================================
+
+scripts:
+  verify-rendering:
+    path: "tools/verify-rendering.ps1"
+    description: "Run autonomous verification"
+    parameters:
+      -PdfPath: "Path to test PDF"
+      -Port: "API server port"
+    example: |
+      pwsh tools/verify-rendering.ps1
+      pwsh tools/verify-rendering.ps1 -PdfPath "test.pdf" -Port 8080
+
+  verify-theme:
+    path: "tools/verify-theme.ps1"
+    description: "Verify theme consistency"
+    example: |
+      pwsh tools/verify-theme.ps1
+
+# ============================================================================
+# QUICK REFERENCE
+# ============================================================================
+
+quick_reference:
+  build_and_test: |
+    # Full build and test cycle
+    dotnet build src/FluentPDF.App -p:Platform=x64
+    dotnet test tests/
+    FluentPDF.App.exe --validate-marshalling
+
+  quick_validation: |
+    # Quick validation before commit
+    dotnet build src/FluentPDF.Core
+    dotnet test tests/FluentPDF.Core.Tests
+
+  full_verification: |
+    # Full verification suite
+    FluentPDF.App.exe --api-server --headless &
+    Start-Sleep 2
+    pwsh tools/verify-rendering.ps1
+    Stop-Process -Name "FluentPDF.App"
+
+  diagnose_issue: |
+    # Diagnose rendering issue
+    FluentPDF.App.exe --diagnostics --verbose
+    FluentPDF.App.exe --test-render "problem.pdf" --verbose
+    FluentPDF.App.exe --validate-marshalling --verbose

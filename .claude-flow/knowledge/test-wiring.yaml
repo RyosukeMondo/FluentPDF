@@ -1,0 +1,366 @@
+# Test Wiring Configuration
+# Maps test projects to domains, agents, and quality gates
+
+version: "1.0.0"
+updated: "2026-01-25"
+
+# ============================================================================
+# TEST PROJECT MAPPING
+# ============================================================================
+
+test_projects:
+  # --------------------------------------------------------------------------
+  # CORE TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.Core.Tests:
+    path: tests/FluentPDF.Core.Tests
+    domain: core
+    priority: critical
+    coverage_threshold: 85
+    agents: [coder, tester]
+    categories:
+      - unit
+      - models
+      - utilities
+    run_on:
+      - pre_commit
+      - pre_merge
+    command: "dotnet test tests/FluentPDF.Core.Tests --verbosity quiet"
+
+  # --------------------------------------------------------------------------
+  # RENDERING TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.Rendering.Tests:
+    path: tests/FluentPDF.Rendering.Tests
+    domain: rendering
+    priority: high
+    coverage_threshold: 80
+    agents: [pdf-rendering-specialist, verification-engineer]
+    categories:
+      - integration
+      - services
+      - rendering
+    run_on:
+      - pre_merge
+    command: "dotnet test tests/FluentPDF.Rendering.Tests"
+
+    test_categories:
+      services:
+        - PdfRenderingServiceTests
+        - ThumbnailRenderingServiceTests
+        - DpiDetectionServiceTests
+        - PdfDocumentServiceTests
+        agent: pdf-rendering-specialist
+
+      interop:
+        - HiDpiRenderingIntegrationTests
+        - PdfViewerIntegrationTests
+        agent: interop-validator
+
+      forms:
+        - PdfFormServiceTests
+        - FormValidationServiceTests
+        - FormFillingIntegrationTests
+        agent: form-specialist
+
+      annotations:
+        - AnnotationServiceTests
+        - AnnotationIntegrationTests
+        agent: annotation-specialist
+
+      bookmarks:
+        - BookmarkServiceTests
+        - BookmarkIntegrationTests
+        agent: ui-coordinator
+
+      content:
+        - TextExtractionServiceTests
+        - TextExtractionIntegrationTests
+        agent: content-specialist
+
+      conversion:
+        - DocxConverterServiceTests
+        - DocxConversionIntegrationTests
+        agent: conversion-specialist
+
+  # --------------------------------------------------------------------------
+  # VERIFICATION TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.Verification.Pdfium.Tests:
+    path: tests/FluentPDF.Verification.Pdfium.Tests
+    domain: interop
+    priority: critical
+    coverage_threshold: 95
+    agents: [interop-validator]
+    categories:
+      - marshalling
+      - regression
+      - memory
+    run_on:
+      - pre_commit
+      - pre_merge
+    command: "dotnet test tests/FluentPDF.Verification.Pdfium.Tests"
+
+    test_categories:
+      marshalling:
+        - MarshallingRegressionTests
+        - HandleDisposalTests
+        agent: interop-validator
+
+      memory:
+        - MemoryLeakTests
+        - MemorySafetyTests
+        agent: interop-validator
+
+  # --------------------------------------------------------------------------
+  # ARCHITECTURE TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.Architecture.Tests:
+    path: tests/FluentPDF.Architecture.Tests
+    domain: core
+    priority: critical
+    agents: [reviewer]
+    categories:
+      - architecture
+      - layers
+    run_on:
+      - pre_commit
+      - pre_merge
+    command: "dotnet test tests/FluentPDF.Architecture.Tests"
+
+  # --------------------------------------------------------------------------
+  # E2E TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.E2E.Tests:
+    path: tests/FluentPDF.E2E.Tests
+    domain: testing
+    priority: high
+    agents: [verification-engineer]
+    categories:
+      - e2e
+      - integration
+      - workflow
+    run_on:
+      - pre_merge
+      - release
+    command: "dotnet test tests/FluentPDF.E2E.Tests"
+
+    test_categories:
+      document:
+        - DocumentLoadingTests
+        - MergeTests
+        - SplitTests
+        agent: document-operations-specialist
+
+      navigation:
+        - NavigationTests
+        - ZoomTests
+        - SearchTests
+        agent: pdf-rendering-specialist
+
+      forms:
+        - FormFillingTests
+        agent: form-specialist
+
+      annotations:
+        - AnnotationTests
+        agent: annotation-specialist
+
+      conversion:
+        - ConversionTests
+        agent: conversion-specialist
+
+      watermark:
+        - WatermarkTests
+        agent: content-specialist
+
+  # --------------------------------------------------------------------------
+  # APP TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.App.Tests:
+    path: tests/FluentPDF.App.Tests
+    domain: presentation
+    priority: medium
+    coverage_threshold: 75
+    agents: [ui-coordinator, verification-engineer]
+    categories:
+      - viewmodel
+      - controls
+      - integration
+    run_on:
+      - pre_merge
+    command: "dotnet test tests/FluentPDF.App.Tests"
+
+  # --------------------------------------------------------------------------
+  # BENCHMARK TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.Benchmarks.Tests:
+    path: tests/FluentPDF.Benchmarks.Tests
+    domain: observability
+    priority: medium
+    agents: [observability-analyst]
+    categories:
+      - performance
+      - benchmark
+    run_on:
+      - release
+    command: "dotnet test tests/FluentPDF.Benchmarks.Tests"
+
+  # --------------------------------------------------------------------------
+  # VALIDATION TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.Validation.Tests:
+    path: tests/FluentPDF.Validation.Tests
+    domain: validation
+    priority: medium
+    agents: [verification-engineer]
+    categories:
+      - validation
+      - visual
+    run_on:
+      - pre_merge
+    command: "dotnet test tests/FluentPDF.Validation.Tests"
+
+  # --------------------------------------------------------------------------
+  # QUALITY AGENT TESTS
+  # --------------------------------------------------------------------------
+  FluentPDF.QualityAgent.Tests:
+    path: tests/FluentPDF.QualityAgent.Tests
+    domain: observability
+    priority: low
+    agents: [observability-analyst]
+    categories:
+      - ai
+      - parsing
+    run_on:
+      - pre_merge
+    command: "dotnet test tests/FluentPDF.QualityAgent.Tests"
+
+# ============================================================================
+# DOMAIN-TEST ROUTING
+# ============================================================================
+
+domain_routing:
+  # When working on these domains, run these test suites
+  document:
+    tests:
+      - FluentPDF.Core.Tests
+      - FluentPDF.Rendering.Tests/services/DocumentEditingServiceTests
+      - FluentPDF.Rendering.Tests/services/PageOperationsServiceTests
+      - FluentPDF.E2E.Tests/MergeTests
+      - FluentPDF.E2E.Tests/SplitTests
+    agent: document-operations-specialist
+
+  rendering:
+    tests:
+      - FluentPDF.Rendering.Tests/services/PdfRenderingServiceTests
+      - FluentPDF.Rendering.Tests/services/ThumbnailRenderingServiceTests
+      - FluentPDF.Rendering.Tests/services/DpiDetectionServiceTests
+      - FluentPDF.Verification.Pdfium.Tests
+    agent: pdf-rendering-specialist
+
+  interop:
+    tests:
+      - FluentPDF.Verification.Pdfium.Tests
+      - FluentPDF.Architecture.Tests
+    agent: interop-validator
+
+  form:
+    tests:
+      - FluentPDF.Rendering.Tests/services/PdfFormServiceTests
+      - FluentPDF.Rendering.Tests/services/FormValidationServiceTests
+      - FluentPDF.E2E.Tests/FormFillingTests
+    agent: form-specialist
+
+  annotation:
+    tests:
+      - FluentPDF.Rendering.Tests/services/AnnotationServiceTests
+      - FluentPDF.E2E.Tests/AnnotationTests
+    agent: annotation-specialist
+
+  bookmark:
+    tests:
+      - FluentPDF.Rendering.Tests/services/BookmarkServiceTests
+    agent: ui-coordinator
+
+  content:
+    tests:
+      - FluentPDF.Rendering.Tests/services/TextExtractionServiceTests
+      - FluentPDF.E2E.Tests/SearchTests
+    agent: content-specialist
+
+  conversion:
+    tests:
+      - FluentPDF.Rendering.Tests/services/DocxConverterServiceTests
+      - FluentPDF.E2E.Tests/ConversionTests
+    agent: conversion-specialist
+
+  observability:
+    tests:
+      - FluentPDF.Rendering.Tests/services/MetricsCollectionServiceTests
+      - FluentPDF.App.Tests/E2E/ObservabilityE2ETests
+    agent: observability-analyst
+
+  presentation:
+    tests:
+      - FluentPDF.App.Tests
+    agent: ui-coordinator
+
+# ============================================================================
+# TEST RUN COMMANDS
+# ============================================================================
+
+commands:
+  all: "dotnet test tests/"
+
+  critical: |
+    dotnet test tests/FluentPDF.Core.Tests
+    dotnet test tests/FluentPDF.Architecture.Tests
+    dotnet test tests/FluentPDF.Verification.Pdfium.Tests
+
+  pre_commit: |
+    dotnet test tests/FluentPDF.Core.Tests --verbosity quiet
+    dotnet test tests/FluentPDF.Architecture.Tests --verbosity quiet
+
+  pre_merge: |
+    dotnet test tests/FluentPDF.Core.Tests
+    dotnet test tests/FluentPDF.Rendering.Tests
+    dotnet test tests/FluentPDF.Architecture.Tests
+    dotnet test tests/FluentPDF.Verification.Pdfium.Tests
+
+  e2e: "dotnet test tests/FluentPDF.E2E.Tests"
+
+  benchmarks: "dotnet run --project tests/FluentPDF.Benchmarks"
+
+  coverage: "dotnet test tests/ --collect:\"XPlat Code Coverage\""
+
+# ============================================================================
+# FAILURE ROUTING
+# ============================================================================
+
+failure_routing:
+  # When tests fail, route to appropriate agent
+  patterns:
+    - regex: "Marshal|Interop|Native|Handle|Access.*violation"
+      agent: interop-validator
+      domain: interop
+
+    - regex: "Render|Bitmap|Thumbnail|Dpi"
+      agent: pdf-rendering-specialist
+      domain: rendering
+
+    - regex: "Form|Field|Validation"
+      agent: form-specialist
+      domain: form
+
+    - regex: "Annotation|Highlight|Markup"
+      agent: annotation-specialist
+      domain: annotation
+
+    - regex: "ViewModel|Binding|XAML|UI"
+      agent: ui-coordinator
+      domain: presentation
+
+    - regex: "Metric|Log|Performance|Telemetry"
+      agent: observability-analyst
+      domain: observability

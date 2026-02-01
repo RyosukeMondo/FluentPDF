@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="250"
+        x:Class="FluentPDF.Avalonia.Views.ConfirmDialog"
+        Title="Confirm"
+        Width="450"
+        Height="250"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        SystemDecorations="BorderOnly">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Content Area -->
+        <StackPanel Grid.Row="0"
+                    Spacing="16"
+                    Margin="24"
+                    VerticalAlignment="Center">
+
+            <!-- Icon -->
+            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                      Width="48"
+                      Height="48"
+                      HorizontalAlignment="Center"
+                      Foreground="{DynamicResource SystemAccentColor}"/>
+
+            <!-- Title -->
+            <TextBlock x:Name="TitleTextBlock"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"/>
+
+            <!-- Message -->
+            <TextBlock x:Name="MessageTextBlock"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       MaxWidth="400"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </StackPanel>
+
+        <!-- Button Area -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="12"
+                        HorizontalAlignment="Center">
+                <Button x:Name="YesButton"
+                        Content="Yes"
+                        MinWidth="100"
+                        Click="OnYesClick"
+                        Classes="accent"/>
+                <Button x:Name="NoButton"
+                        Content="No"
+                        MinWidth="100"
+                        Click="OnNoClick"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

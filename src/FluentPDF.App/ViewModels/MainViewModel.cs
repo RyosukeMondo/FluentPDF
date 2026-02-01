@@ -311,7 +311,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
             if (xamlRoot == null)
             {
                 // XamlRoot not available, log and return
-                System.Diagnostics.Debug.WriteLine($"Error: Unable to show dialog - XamlRoot not available after retries. Title: {title}, Message: {message}");
+                // Debug logging removed in production
                 return;
             }
 
@@ -325,10 +325,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
             await dialog.ShowAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // If dialog fails, at least log it
-            System.Diagnostics.Debug.WriteLine($"Failed to show error dialog: {ex.Message}. Original error - Title: {title}, Message: {message}");
+            // If dialog fails, silently continue (debug logging removed in production)
         }
     }
 }

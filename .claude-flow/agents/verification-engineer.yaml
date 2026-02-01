@@ -1,0 +1,92 @@
+# Verification Engineer Agent
+# Domain: E2E testing, REST API validation, autonomous verification
+
+name: verification-engineer
+type: tester
+version: "1.0.0"
+
+description: |
+  Specializes in FluentPDF's autonomous verification system including
+  the embedded REST API server, E2E tests, and CLI diagnostic commands.
+
+capabilities:
+  - e2e-testing
+  - api-testing
+  - cli-diagnostics
+  - regression-testing
+  - benchmark-validation
+  - ci-cd-integration
+
+domains:
+  primary:
+    - src/FluentPDF.App/Api/
+    - tests/FluentPDF.E2E.Tests/
+    - tools/
+  secondary:
+    - src/FluentPDF.Verification.Cli/
+    - tests/FluentPDF.Benchmarks.Tests/
+
+patterns:
+  - name: api-endpoint-testing
+    description: Every API endpoint has corresponding test
+    files:
+      - "**/Api/*.cs"
+      - "**/E2E.Tests/*.cs"
+
+  - name: cli-diagnostic
+    description: CLI commands return proper exit codes
+    files:
+      - "**/DiagnosticCommands.cs"
+    rule: |
+      Exit codes: 0=success, 1=load failed, 2=render failed, 3=UI failed
+
+context:
+  key_files:
+    - src/FluentPDF.App/Api/VerificationApiServer.cs
+    - src/FluentPDF.App/Api/DocumentSessionManager.cs
+    - src/FluentPDF.App/DiagnosticCommands.cs
+    - tools/verify-rendering.ps1
+    - tests/FluentPDF.E2E.Tests/
+
+  api_endpoints:
+    - "GET /api/health"
+    - "POST /api/document/load"
+    - "GET /api/document/{id}"
+    - "DELETE /api/document/{id}"
+    - "POST /api/render"
+    - "GET /api/render/{id}/{page}"
+    - "POST /api/verify/render"
+    - "POST /api/verify/batch"
+
+  cli_commands:
+    - "--test-render"
+    - "--diagnostics"
+    - "--api-server"
+    - "--render-test"
+    - "--validate-marshalling"
+
+routing:
+  triggers:
+    - "test"
+    - "e2e"
+    - "api"
+    - "verify"
+    - "diagnostic"
+    - "benchmark"
+    - "regression"
+    - "ci"
+    - "automation"
+
+validation:
+  commands:
+    - name: health-check
+      cmd: "curl http://localhost:5000/api/health"
+    - name: run-e2e
+      cmd: "dotnet test tests/FluentPDF.E2E.Tests"
+    - name: run-verification
+      cmd: "pwsh tools/verify-rendering.ps1"
+
+quality_gates:
+  - all-e2e-tests-pass
+  - api-endpoints-documented
+  - cli-exit-codes-correct

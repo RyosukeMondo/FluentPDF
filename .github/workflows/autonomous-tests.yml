@@ -1,0 +1,166 @@
+name: Autonomous Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  autonomous-tests:
+    name: Run Autonomous Tests
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Application
+        run: dotnet build src/FluentPDF.App -p:Platform=x64 --configuration Debug
+
+      - name: Run Autonomous Tests
+        id: tests
+        run: |
+          pwsh tools/run-autonomous-tests.ps1
+        continue-on-error: true
+
+      - name: Generate JUnit Report
+        if: always()
+        run: |
+          pwsh tools/ci-test-runner.ps1 -ExportJunit -CollectArtifacts ./test-artifacts
+        continue-on-error: true
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-artifacts/
+          retention-days: 30
+
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action/windows@v2
+        with:
+          files: |
+            test-artifacts/test-results.xml
+          check_name: Autonomous Test Results
+
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('tests/reports/test-report.json', 'utf8'));
+
+            const comment = `## Test Results
+
+            - **Passed**: ${report.summary.totalPassed}
+            - **Failed**: ${report.summary.totalFailed}
+            - **Skipped**: ${report.skipped.length}
+            - **Success Rate**: ${report.summary.successRate}%
+
+            ${report.summary.totalFailed > 0 ? '### Failed Tests\n' + report.failures.map(f => `- ${f.category} > ${f.name}: ${f.message}`).join('\n') : '✅ All tests passed!'}
+
+            [View detailed report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail if tests failed
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
+
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: windows-latest
+    needs: autonomous-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Build Application
+        run: dotnet build src/FluentPDF.App -p:Platform=x64 --configuration Release
+
+      - name: Run Performance Tests
+        run: |
+          # Run tests multiple times to get consistent metrics
+          pwsh -Command {
+            $times = @()
+            for ($i = 0; $i -lt 3; $i++) {
+              $start = Get-Date
+              pwsh tools/run-autonomous-tests.ps1 -OutputDir "./perf-reports/run-$i"
+              $elapsed = (Get-Date) - $start
+              $times += $elapsed.TotalSeconds
+            }
+
+            Write-Host "Performance Summary"
+            Write-Host "==================="
+            Write-Host "Run times (seconds):"
+            $times | ForEach-Object { Write-Host "  - $_" }
+            Write-Host "Average: $([Math]::Round(($times | Measure-Object -Average).Average, 2))s"
+          }
+        continue-on-error: true
+
+      - name: Upload Benchmarks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-benchmarks
+          path: perf-reports/
+          retention-days: 90
+
+  notify-failures:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: autonomous-tests
+    if: failure()
+
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1.25
+        with:
+          payload: |
+            {
+              "text": "FluentPDF autonomous tests failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*FluentPDF Autonomous Tests Failed*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        if: secrets.SLACK_WEBHOOK_URL != ''

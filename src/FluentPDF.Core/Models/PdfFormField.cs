@@ -74,6 +74,24 @@ public sealed class PdfFormField
     public string? GroupName { get; set; }
 
     /// <summary>
+    /// Gets or sets the available options for ComboBox and ListBox fields.
+    /// Null for other field types.
+    /// </summary>
+    public List<string>? Options { get; set; }
+
+    /// <summary>
+    /// Gets or sets the selected option for ComboBox fields.
+    /// Null for other field types.
+    /// </summary>
+    public string? SelectedOption { get; set; }
+
+    /// <summary>
+    /// Gets or sets the selected index for ComboBox and ListBox fields.
+    /// -1 indicates no selection. Null for other field types.
+    /// </summary>
+    public int? SelectedIndex { get; set; }
+
+    /// <summary>
     /// Gets or sets the native PDFium handle for this field.
     /// Used internally by the rendering layer.
     /// </summary>

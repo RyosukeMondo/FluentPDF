@@ -22,8 +22,7 @@ namespace FluentPDF.App.Views
             this.InitializeComponent();
 
             // Resolve ViewModel from DI container
-            var app = (App)Microsoft.UI.Xaml.Application.Current;
-            ViewModel = app.GetService<SettingsViewModel>();
+            ViewModel = App.GetService<SettingsViewModel>();
 
             // Set DataContext for runtime binding
             this.DataContext = ViewModel;

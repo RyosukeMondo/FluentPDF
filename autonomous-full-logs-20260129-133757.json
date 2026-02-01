@@ -1,0 +1,41 @@
+{
+  "count": 6,
+  "logs": [
+    {
+      "timestamp": "2026-01-29T13:37:25.5298746+09:00",
+      "level": "Info",
+      "message": "OperationWatchdog initialized - autonomous error detection enabled",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T13:37:25.530634+09:00",
+      "level": "Info",
+      "message": "MainViewModel initialized",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T13:37:27.5631509+09:00",
+      "level": "Info",
+      "message": "[REST API] Received open-file request: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T13:37:27.563253+09:00",
+      "level": "Info",
+      "message": "[REST API] Using Post (fire-and-forget) to trigger file open...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T13:37:27.563381+09:00",
+      "level": "Info",
+      "message": "[REST API] Post dispatched. Polling for completion (15s timeout)...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T13:37:42.8995111+09:00",
+      "level": "Error",
+      "message": "[REST API] Timeout waiting for file open to complete",
+      "source": "GuiStateEndpoints"
+    }
+  ]
+}

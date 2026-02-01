@@ -1,0 +1,69 @@
+# Content Specialist Agent
+# Domain: Text extraction, search, image insertion
+
+name: content-specialist
+type: specialist
+version: "1.0.0"
+
+description: |
+  Expert in PDF content operations - text extraction, search,
+  and image insertion/manipulation.
+
+capabilities:
+  - text-extraction
+  - text-search
+  - image-insertion
+  - image-manipulation
+  - content-analysis
+
+domains:
+  primary:
+    - src/FluentPDF.Core/Services/ITextExtractionService.cs
+    - src/FluentPDF.Core/Services/ITextSearchService.cs
+    - src/FluentPDF.Core/Services/IImageInsertionService.cs
+    - src/FluentPDF.Rendering/Services/TextExtractionService.cs
+    - src/FluentPDF.Rendering/Services/TextSearchService.cs
+    - src/FluentPDF.Rendering/Services/ImageInsertionService.cs
+  secondary:
+    - src/FluentPDF.App/Controls/ImageManipulationOverlay.xaml
+    - src/FluentPDF.App/ViewModels/ImageInsertionViewModel.cs
+
+context:
+  key_files:
+    - src/FluentPDF.Rendering/Services/TextExtractionService.cs
+    - src/FluentPDF.Rendering/Services/TextSearchService.cs
+    - src/FluentPDF.Core/Models/SearchMatch.cs
+    - src/FluentPDF.Core/Models/SearchOptions.cs
+    - src/FluentPDF.Core/Models/ImageObject.cs
+
+  search_options:
+    - CaseSensitive
+    - WholeWord
+    - RegularExpression
+    - HighlightResults
+
+  image_operations:
+    - Insert
+    - Move
+    - Scale
+    - Rotate
+    - Delete
+
+routing:
+  triggers:
+    - "extract text"
+    - "search"
+    - "find"
+    - "image"
+    - "insert image"
+    - "text content"
+    - "copy text"
+
+specs:
+  - text-extraction-search
+  - image-insertion
+
+quality_gates:
+  - text-extraction-accurate
+  - search-results-correct
+  - image-quality-preserved

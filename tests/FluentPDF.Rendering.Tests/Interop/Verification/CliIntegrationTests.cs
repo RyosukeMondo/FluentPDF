@@ -100,7 +100,8 @@ public class CliIntegrationTests
 
         // Validate JSON is parseable
         using var jsonDoc = JsonDocument.Parse(jsonContent);
-        Assert.NotNull(jsonDoc.RootElement);
+        // RootElement is a value type, so NotNull check is unnecessary
+        Assert.NotEqual(default, jsonDoc.RootElement);
 
         // Verify console output
         Assert.Contains("validation", output, StringComparison.OrdinalIgnoreCase);
@@ -147,7 +148,8 @@ public class CliIntegrationTests
         // Verify JSON structure
         var jsonContent = await File.ReadAllTextAsync(jsonPath);
         using var jsonDoc = JsonDocument.Parse(jsonContent);
-        Assert.NotNull(jsonDoc.RootElement);
+        // RootElement is a value type, so NotNull check is unnecessary
+        Assert.NotEqual(default, jsonDoc.RootElement);
 
         // Clean up
         File.Delete(baselinePath);
@@ -316,7 +318,8 @@ public class CliIntegrationTests
         // Verify JSON is valid
         var jsonContent = await File.ReadAllTextAsync(jsonPath);
         using var jsonDoc = JsonDocument.Parse(jsonContent);
-        Assert.NotNull(jsonDoc.RootElement);
+        // RootElement is a value type, so NotNull check is unnecessary
+        Assert.NotEqual(default, jsonDoc.RootElement);
 
         // Verify HTML is valid
         var htmlContent = await File.ReadAllTextAsync(htmlPath);

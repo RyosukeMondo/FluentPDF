@@ -1,0 +1,522 @@
+# FluentPDF Domain-Driven Design Structure
+# Maps business domains to code modules and responsibilities
+
+version: "1.0.0"
+project: FluentPDF
+
+# ============================================================================
+# CORE DOMAINS
+# ============================================================================
+
+domains:
+  # --------------------------------------------------------------------------
+  # DOCUMENT DOMAIN
+  # Aggregate Root: PdfDocument
+  # --------------------------------------------------------------------------
+  document:
+    name: Document Management
+    description: |
+      Core PDF document lifecycle - loading, saving, and structure operations.
+      Aggregate root is PdfDocument with page management.
+
+    aggregate_roots:
+      - PdfDocument
+
+    entities:
+      - PdfPage
+      - PageRange
+      - OptimizationResult
+
+    value_objects:
+      - FilePath
+      - PageNumber
+      - OptimizationOptions
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/IPdfDocumentService.cs
+        - src/FluentPDF.Core/Services/IDocumentEditingService.cs
+        - src/FluentPDF.Core/Services/IPageOperationsService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/PdfDocumentService.cs
+        - src/FluentPDF.Rendering/Services/DocumentEditingService.cs
+        - src/FluentPDF.Rendering/Services/PageOperationsService.cs
+
+    models:
+      - src/FluentPDF.Core/Models/PdfDocument.cs
+      - src/FluentPDF.Core/Models/PdfPage.cs
+      - src/FluentPDF.Core/Models/PageRange.cs
+      - src/FluentPDF.Core/Models/OptimizationOptions.cs
+
+    native_dependencies:
+      - PDFium (document loading)
+      - QPDF (merge, split, optimize)
+
+    specs:
+      - document-structure-operations
+      - page-operations
+      - save-document
+
+  # --------------------------------------------------------------------------
+  # RENDERING DOMAIN
+  # --------------------------------------------------------------------------
+  rendering:
+    name: PDF Rendering
+    description: |
+      Page rendering, thumbnails, and display management.
+      Handles DPI scaling, zoom, and rendering strategies.
+
+    entities:
+      - DisplayInfo
+      - RenderingQuality
+      - ThumbnailCache
+
+    value_objects:
+      - EffectiveDpi
+      - ZoomLevel
+      - RenderBounds
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/IPdfRenderingService.cs
+        - src/FluentPDF.Core/Services/IThumbnailRenderingService.cs
+        - src/FluentPDF.Core/Services/IDpiDetectionService.cs
+        - src/FluentPDF.Core/Services/IRenderingSettingsService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/PdfRenderingService.cs
+        - src/FluentPDF.Rendering/Services/ThumbnailRenderingService.cs
+        - src/FluentPDF.Rendering/Services/DpiDetectionService.cs
+
+    strategies:
+      - src/FluentPDF.App/Services/Strategies/WriteableBitmapRenderingStrategy.cs
+      - src/FluentPDF.App/Services/Strategies/FileBasedRenderingStrategy.cs
+
+    interop:
+      - src/FluentPDF.Rendering/Interop/PdfiumInterop.cs
+      - src/FluentPDF.Rendering/Interop/SafePdfDocumentHandle.cs
+      - src/FluentPDF.Rendering/Interop/SafePdfPageHandle.cs
+
+    specs:
+      - pdf-viewer-core
+      - hidpi-display-scaling
+      - thumbnails-sidebar
+      - pdf-rendering-reliability
+
+  # --------------------------------------------------------------------------
+  # ANNOTATION DOMAIN
+  # --------------------------------------------------------------------------
+  annotation:
+    name: PDF Annotations
+    description: |
+      Highlight, underline, strikethrough, text notes, shapes, and freehand ink.
+      Annotations overlay rendered pages with interactive editing.
+
+    entities:
+      - Annotation
+      - AnnotationType
+      - AnnotationLayer
+
+    value_objects:
+      - AnnotationBounds
+      - InkPath
+      - AnnotationColor
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/IAnnotationService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/AnnotationService.cs
+
+    interop:
+      - src/FluentPDF.Rendering/Interop/PdfiumAnnotationInterop.cs
+
+    ui:
+      - src/FluentPDF.App/Controls/AnnotationLayer.xaml
+      - src/FluentPDF.App/ViewModels/AnnotationViewModel.cs
+
+    specs:
+      - annotation-tools
+
+  # --------------------------------------------------------------------------
+  # FORM DOMAIN
+  # --------------------------------------------------------------------------
+  form:
+    name: PDF Forms
+    description: |
+      AcroForm field detection, filling, validation, and saving.
+      Supports text fields, checkboxes, radio buttons, dropdowns.
+
+    entities:
+      - PdfFormField
+      - FormFieldType
+      - FormValidationResult
+      - FieldValidationError
+
+    value_objects:
+      - FieldValue
+      - FormatMask
+      - TabOrder
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/IPdfFormService.cs
+        - src/FluentPDF.Core/Services/IFormValidationService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/PdfFormService.cs
+        - src/FluentPDF.Rendering/Services/FormValidationService.cs
+
+    interop:
+      - src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs
+      - src/FluentPDF.Rendering/Interop/SafePdfFormHandle.cs
+
+    ui:
+      - src/FluentPDF.App/Controls/FormFieldControl.xaml
+      - src/FluentPDF.App/ViewModels/FormFieldViewModel.cs
+
+    specs:
+      - form-filling
+
+  # --------------------------------------------------------------------------
+  # BOOKMARK DOMAIN
+  # --------------------------------------------------------------------------
+  bookmark:
+    name: PDF Bookmarks
+    description: |
+      PDF outline/bookmark tree extraction and navigation.
+      Hierarchical structure with page destinations.
+
+    entities:
+      - BookmarkNode
+      - BookmarkDestination
+
+    value_objects:
+      - BookmarkTitle
+      - PageDestination
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/IBookmarkService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/BookmarkService.cs
+
+    interop:
+      - src/FluentPDF.Rendering/Interop/PdfiumBookmarkInterop.cs
+
+    ui:
+      - src/FluentPDF.App/Controls/BookmarksPanel.xaml
+      - src/FluentPDF.App/ViewModels/BookmarksViewModel.cs
+
+    specs:
+      - bookmarks-panel
+
+  # --------------------------------------------------------------------------
+  # CONTENT DOMAIN
+  # --------------------------------------------------------------------------
+  content:
+    name: PDF Content
+    description: |
+      Text extraction, search, and image insertion.
+      Content manipulation without affecting structure.
+
+    entities:
+      - SearchMatch
+      - ImageObject
+      - ExtractedText
+
+    value_objects:
+      - SearchOptions
+      - TextPosition
+      - ImageBounds
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/ITextExtractionService.cs
+        - src/FluentPDF.Core/Services/ITextSearchService.cs
+        - src/FluentPDF.Core/Services/IImageInsertionService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/TextExtractionService.cs
+        - src/FluentPDF.Rendering/Services/TextSearchService.cs
+        - src/FluentPDF.Rendering/Services/ImageInsertionService.cs
+
+    ui:
+      - src/FluentPDF.App/Controls/ImageManipulationOverlay.xaml
+      - src/FluentPDF.App/ViewModels/ImageInsertionViewModel.cs
+
+    specs:
+      - text-extraction-search
+      - image-insertion
+
+  # --------------------------------------------------------------------------
+  # OBSERVABILITY DOMAIN
+  # --------------------------------------------------------------------------
+  observability:
+    name: Observability & Diagnostics
+    description: |
+      Logging, metrics, telemetry, and performance monitoring.
+      Integrated with Serilog and OpenTelemetry.
+
+    entities:
+      - PerformanceMetrics
+      - LogEntry
+      - PerformanceLevel
+
+    value_objects:
+      - CorrelationId
+      - LogFilterCriteria
+      - MetricSnapshot
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Observability/IMetricsCollectionService.cs
+        - src/FluentPDF.Core/Observability/ILogExportService.cs
+        - src/FluentPDF.Core/Observability/ITelemetryService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/MetricsCollectionService.cs
+        - src/FluentPDF.Rendering/Services/LogExportService.cs
+        - src/FluentPDF.App/Services/Observability/RenderingObservabilityService.cs
+        - src/FluentPDF.App/Services/Observability/MemoryMonitor.cs
+
+    error_handling:
+      - src/FluentPDF.Core/ErrorHandling/PdfError.cs
+      - src/FluentPDF.Core/ErrorHandling/ErrorCategory.cs
+      - src/FluentPDF.Core/ErrorHandling/ErrorSeverity.cs
+
+    ui:
+      - src/FluentPDF.App/Controls/DiagnosticsPanelControl.xaml
+      - src/FluentPDF.App/Controls/LogViewerControl.xaml
+      - src/FluentPDF.App/ViewModels/DiagnosticsPanelViewModel.cs
+      - src/FluentPDF.App/ViewModels/LogViewerViewModel.cs
+
+    specs:
+      - observability-dashboard
+      - ai-quality-agent
+
+  # --------------------------------------------------------------------------
+  # INTEROP DOMAIN (Infrastructure)
+  # --------------------------------------------------------------------------
+  interop:
+    name: Native Interop
+    description: |
+      P/Invoke declarations, safe handles, and marshalling for PDFium and QPDF.
+      Critical infrastructure for memory safety.
+
+    entities:
+      - SafePdfDocumentHandle
+      - SafePdfPageHandle
+      - SafePdfFormHandle
+      - SafeQpdfJobHandle
+
+    native_libraries:
+      - pdfium.dll
+      - qpdf.dll
+
+    interop_files:
+      - src/FluentPDF.Rendering/Interop/PdfiumInterop.cs
+      - src/FluentPDF.Rendering/Interop/PdfiumFormInterop.cs
+      - src/FluentPDF.Rendering/Interop/PdfiumBookmarkInterop.cs
+      - src/FluentPDF.Rendering/Interop/PdfiumAnnotationInterop.cs
+      - src/FluentPDF.Rendering/Interop/QpdfNative.cs
+      - src/FluentPDF.Rendering/Interop/NativeMethods.cs
+
+    safe_handles:
+      - src/FluentPDF.Rendering/Interop/SafePdfDocumentHandle.cs
+      - src/FluentPDF.Rendering/Interop/SafePdfPageHandle.cs
+      - src/FluentPDF.Rendering/Interop/SafePdfFormHandle.cs
+      - src/FluentPDF.Rendering/Interop/SafeQpdfJobHandle.cs
+
+    verification:
+      - src/FluentPDF.Verification.Core/
+      - src/FluentPDF.Verification.Pdfium/
+      - tests/FluentPDF.Verification.Pdfium.Tests/
+
+    specs:
+      - pdfium-marshaling-verification
+      - pdfium-library-verification
+      - pinvoke-marshalling-safety
+      - pdfium-threading-fix
+
+  # --------------------------------------------------------------------------
+  # PRESENTATION DOMAIN (Application Layer)
+  # --------------------------------------------------------------------------
+  presentation:
+    name: User Interface
+    description: |
+      WinUI 3 application layer with MVVM ViewModels, views, and controls.
+      Coordinates all domain services through dependency injection.
+
+    viewmodels:
+      - src/FluentPDF.App/ViewModels/MainViewModel.cs
+      - src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs
+      - src/FluentPDF.App/ViewModels/ThumbnailsViewModel.cs
+      - src/FluentPDF.App/ViewModels/BookmarksViewModel.cs
+      - src/FluentPDF.App/ViewModels/AnnotationViewModel.cs
+      - src/FluentPDF.App/ViewModels/FormFieldViewModel.cs
+      - src/FluentPDF.App/ViewModels/SettingsViewModel.cs
+      - src/FluentPDF.App/ViewModels/ConversionViewModel.cs
+      - src/FluentPDF.App/ViewModels/WatermarkViewModel.cs
+      - src/FluentPDF.App/ViewModels/ImageInsertionViewModel.cs
+      - src/FluentPDF.App/ViewModels/DiagnosticsPanelViewModel.cs
+      - src/FluentPDF.App/ViewModels/LogViewerViewModel.cs
+
+    views:
+      - src/FluentPDF.App/Views/MainWindow.xaml
+      - src/FluentPDF.App/Views/PdfViewerPage.xaml
+      - src/FluentPDF.App/Views/SettingsPage.xaml
+
+    di_configuration:
+      - src/FluentPDF.App/App.xaml.cs
+
+    settings:
+      - src/FluentPDF.Core/Models/AppSettings.cs
+      - src/FluentPDF.Core/Services/ISettingsService.cs
+      - src/FluentPDF.Core/Services/IRecentFilesService.cs
+
+    specs:
+      - settings-preferences
+      - recent-files-management
+      - ui-ux-overhaul
+
+  # --------------------------------------------------------------------------
+  # VALIDATION DOMAIN
+  # --------------------------------------------------------------------------
+  validation:
+    name: PDF Validation
+    description: |
+      PDF/A compliance, format validation, and quality checks.
+      Integrates VeraPdf and Jhove validators.
+
+    services:
+      - src/FluentPDF.Validation/
+
+    external_tools:
+      - VeraPdf (PDF/A validation)
+      - Jhove (format validation)
+      - qpdf (internal validation)
+
+    specs:
+      - pdf-validation-integration
+
+  # --------------------------------------------------------------------------
+  # CONVERSION DOMAIN
+  # --------------------------------------------------------------------------
+  conversion:
+    name: Document Conversion
+    description: |
+      Convert Office documents (Word, HTML) to PDF.
+      Quality validation after conversion.
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/IDocxConverterService.cs
+        - src/FluentPDF.Core/Services/IDocxParserService.cs
+        - src/FluentPDF.Core/Services/IHtmlToPdfService.cs
+        - src/FluentPDF.Core/Services/IQualityValidationService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/DocxConverterService.cs
+        - src/FluentPDF.Rendering/Services/HtmlToPdfService.cs
+
+    models:
+      - src/FluentPDF.Core/Models/ConversionOptions.cs
+      - src/FluentPDF.Core/Models/ConversionResult.cs
+      - src/FluentPDF.Core/Models/QualityReport.cs
+
+    specs:
+      - office-document-conversion
+
+  # --------------------------------------------------------------------------
+  # WATERMARK DOMAIN
+  # --------------------------------------------------------------------------
+  watermark:
+    name: Watermarks
+    description: |
+      Apply text and image watermarks to PDF pages.
+      Configurable position, opacity, and rotation.
+
+    entities:
+      - WatermarkConfig
+
+    services:
+      interfaces:
+        - src/FluentPDF.Core/Services/IWatermarkService.cs
+      implementations:
+        - src/FluentPDF.Rendering/Services/WatermarkService.cs
+
+    ui:
+      - src/FluentPDF.App/ViewModels/WatermarkViewModel.cs
+
+    specs:
+      - watermarks
+
+# ============================================================================
+# DOMAIN RELATIONSHIPS
+# ============================================================================
+
+relationships:
+  - from: presentation
+    to: [document, rendering, annotation, form, bookmark, content, observability]
+    type: depends_on
+    description: ViewModels consume domain services via DI
+
+  - from: rendering
+    to: [interop]
+    type: depends_on
+    description: Rendering uses PDFium interop for native calls
+
+  - from: document
+    to: [interop]
+    type: depends_on
+    description: Document operations use PDFium and QPDF interop
+
+  - from: annotation
+    to: [interop, rendering]
+    type: depends_on
+    description: Annotations use PDFium and render on page
+
+  - from: form
+    to: [interop, rendering]
+    type: depends_on
+    description: Forms use PDFium and overlay on rendered pages
+
+  - from: bookmark
+    to: [interop]
+    type: depends_on
+    description: Bookmarks extracted via PDFium
+
+  - from: content
+    to: [interop]
+    type: depends_on
+    description: Text/image operations use PDFium
+
+  - from: observability
+    to: [rendering]
+    type: monitors
+    description: Metrics collected from rendering pipeline
+
+# ============================================================================
+# BOUNDED CONTEXTS
+# ============================================================================
+
+bounded_contexts:
+  pdf_core:
+    description: Core PDF operations and rendering
+    domains: [document, rendering, interop]
+
+  pdf_editing:
+    description: Content modification capabilities
+    domains: [annotation, form, content, watermark]
+
+  pdf_navigation:
+    description: Document navigation and structure
+    domains: [bookmark]
+
+  pdf_quality:
+    description: Validation and observability
+    domains: [validation, observability]
+
+  office_integration:
+    description: Office document conversion
+    domains: [conversion]
+
+  user_experience:
+    description: Application UI and settings
+    domains: [presentation]

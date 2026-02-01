@@ -1,0 +1,215 @@
+{
+  "count": 35,
+  "logs": [
+    {
+      "timestamp": "2026-01-29T14:06:09.0761752+09:00",
+      "level": "Info",
+      "message": "OperationWatchdog initialized - autonomous error detection enabled",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:09.0769032+09:00",
+      "level": "Info",
+      "message": "MainViewModel initialized",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:09.7828609+09:00",
+      "level": "Info",
+      "message": "Debug console initialized - real-time logging enabled",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:09.7828633+09:00",
+      "level": "Info",
+      "message": "Click 'Copy Last 50' to copy recent logs to clipboard",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:09.7828635+09:00",
+      "level": "Info",
+      "message": "Click 'Download Log' to save full log file",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:09.7828637+09:00",
+      "level": "Info",
+      "message": "---",
+      "source": "MainWindow"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.130972+09:00",
+      "level": "Info",
+      "message": "[REST API] Received open-file request: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.1310704+09:00",
+      "level": "Info",
+      "message": "[REST API] Triggering file open via direct command execution...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.1311057+09:00",
+      "level": "Info",
+      "message": "[REST API] Command execution started. Polling for completion (15s timeout)...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.1316656+09:00",
+      "level": "Info",
+      "message": "[REST API] Executing OpenRecentFileCommand...",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.1353593+09:00",
+      "level": "Info",
+      "message": "🔍 WATCHDOG: Monitoring 'Open File: sample-with-text.pdf' (timeout: 15000ms)",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.1354458+09:00",
+      "level": "Info",
+      "message": "[1/8] Starting OpenFileInTabAsync for: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.1354892+09:00",
+      "level": "Info",
+      "message": "[2/8] File not already open. Current tab count: 0",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.1354975+09:00",
+      "level": "Info",
+      "message": "[3/8] Requesting PdfViewerViewModel from DI container...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2780785+09:00",
+      "level": "Info",
+      "message": "[3/8] PdfViewerViewModel created: True",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2780865+09:00",
+      "level": "Info",
+      "message": "[4/8] Requesting ILogger<TabViewModel> from DI container...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2782094+09:00",
+      "level": "Info",
+      "message": "[4/8] TabLogger created: True",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2782185+09:00",
+      "level": "Info",
+      "message": "[5/8] Creating TabViewModel with filePath: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2798597+09:00",
+      "level": "Info",
+      "message": "[5/8] TabViewModel created successfully",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2798719+09:00",
+      "level": "Info",
+      "message": "[6/8] Adding tab to collection (current count: 0)",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2801473+09:00",
+      "level": "Info",
+      "message": "[6/8] Tab added (new count: 1)",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2801551+09:00",
+      "level": "Info",
+      "message": "[6/8] Activating tab...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2811655+09:00",
+      "level": "Error",
+      "message": "❌ WATCHDOG: 'Open File: sample-with-text.pdf' FAILED after 145ms - Call from invalid thread",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2812893+09:00",
+      "level": "Error",
+      "message": "[ERROR] CRITICAL: Failed to open file in tab: C:\\Users\\ryosu\\repos\\FluentPDF\\tests\\Fixtures\\sample-with-text.pdf: Call from invalid thread",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.281316+09:00",
+      "level": "Error",
+      "message": "[ERROR] Exception Type: InvalidOperationException",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2813198+09:00",
+      "level": "Error",
+      "message": "[ERROR] Exception Message: Call from invalid thread",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2892876+09:00",
+      "level": "Error",
+      "message": "[ERROR] Stack Trace:    at Avalonia.Threading.Dispatcher.<VerifyAccess>g__ThrowVerifyAccess|16_0()\r\n   at Avalonia.Threading.Dispatcher.VerifyAccess()\r\n   at Avalonia.AvaloniaObject.VerifyAccess()\r\n   at Avalonia.AvaloniaObject.GetValue[T](StyledProperty`1 property)\r\n   at Avalonia.Controls.NameScope.GetNameScope(StyledElement styled)\r\n   at Avalonia.Controls.NameScopeExtensions.<>c.<FindNameScope>b__4_0(StyledElement x)\r\n   at System.Linq.Enumerable.SelectEnumerableIterator`2.MoveNext()\r\n   at System.Linq.Enumerable.TryGetFirst[TSource](IEnumerable`1 source, Func`2 predicate, Boolean& found)\r\n   at System.Linq.Enumerable.FirstOrDefault[TSource](IEnumerable`1 source, Func`2 predicate)\r\n   at Avalonia.Controls.NameScopeExtensions.FindNameScope(ILogical control)\r\n   at Avalonia.Controls.ControlExtensions.FindControl[T](Control control, String name)\r\n   at FluentPDF.Avalonia.Views.MainWindow.UpdateMenuItemStates()\r\n   at FluentPDF.Avalonia.Views.MainWindow.<OnWindowLoaded>b__9_2(Object s, PropertyChangedEventArgs evt)\r\n   at CommunityToolkit.Mvvm.ComponentModel.ObservableObject.OnPropertyChanged(PropertyChangedEventArgs e)\r\n   at FluentPDF.Avalonia.ViewModels.MainViewModel.set_ActiveTab(TabViewModel value)\r\n   at FluentPDF.Avalonia.ViewModels.MainViewModel.ActivateTab(TabViewModel tab)\r\n   at FluentPDF.Avalonia.ViewModels.MainViewModel.OpenFileInTabAsync(String filePath)",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2893283+09:00",
+      "level": "Info",
+      "message": "[CLEANUP] Removing failed tab. Count before: 1",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2894356+09:00",
+      "level": "Info",
+      "message": "[CLEANUP] Tab removed. Count after: 0",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2914578+09:00",
+      "level": "Info",
+      "message": "[CLEANUP] Tab disposed",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2914679+09:00",
+      "level": "Info",
+      "message": "[UI] Attempting to show error dialog to user...",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2918155+09:00",
+      "level": "Info",
+      "message": "[UI] Error dialog shown successfully",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2918308+09:00",
+      "level": "Error",
+      "message": "[FINAL] File opening failed. Check logs above for details.",
+      "source": "MainViewModel"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.2919988+09:00",
+      "level": "Info",
+      "message": "[REST API] OpenRecentFileCommand completed successfully",
+      "source": "GuiStateEndpoints"
+    },
+    {
+      "timestamp": "2026-01-29T14:06:11.6375165+09:00",
+      "level": "Info",
+      "message": "[REST API] Command execution confirmed",
+      "source": "GuiStateEndpoints"
+    }
+  ]
+}

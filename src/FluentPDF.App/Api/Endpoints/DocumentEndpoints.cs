@@ -85,11 +85,13 @@ public static class DocumentEndpoints
         })
         .WithName("LoadDocument")
         .WithTags("Document")
-        .Produces<LoadDocumentResponse>()
-        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
-        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
-        .Produces<ErrorResponse>(StatusCodes.Status422UnprocessableEntity);
+        .WithSummary("Load a PDF document")
+        .WithDescription("Loads a PDF document from the file system and returns a session ID for subsequent operations.")
+        .Produces<LoadDocumentResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status422UnprocessableEntity, "application/json");
 
         // Get document info
         app.MapGet("/api/document/{documentId}", (
@@ -115,8 +117,10 @@ public static class DocumentEndpoints
         })
         .WithName("GetDocument")
         .WithTags("Document")
-        .Produces<LoadDocumentResponse>()
-        .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
+        .WithSummary("Get document information")
+        .WithDescription("Retrieves metadata for a loaded document by session ID.")
+        .Produces<LoadDocumentResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json");
 
         // Close document
         app.MapDelete("/api/document/{documentId}", (
@@ -135,7 +139,9 @@ public static class DocumentEndpoints
         })
         .WithName("CloseDocument")
         .WithTags("Document")
-        .Produces<CloseDocumentResponse>()
-        .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
+        .WithSummary("Close a document session")
+        .WithDescription("Closes a document session and releases associated resources.")
+        .Produces<CloseDocumentResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json");
     }
 }

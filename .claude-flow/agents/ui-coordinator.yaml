@@ -1,0 +1,95 @@
+# UI Coordinator Agent
+# Domain: WinUI 3, MVVM, ViewModels, XAML, user experience
+
+name: ui-coordinator
+type: specialist
+version: "1.0.0"
+
+description: |
+  Expert in WinUI 3 development, MVVM patterns with CommunityToolkit.Mvvm,
+  and FluentPDF's multi-tab document viewer architecture.
+
+capabilities:
+  - winui3-development
+  - mvvm-patterns
+  - xaml-design
+  - viewmodel-architecture
+  - data-binding
+  - theme-management
+  - accessibility
+
+domains:
+  primary:
+    - src/FluentPDF.App/ViewModels/
+    - src/FluentPDF.App/Views/
+    - src/FluentPDF.App/Controls/
+  secondary:
+    - src/FluentPDF.App/Converters/
+    - src/FluentPDF.App/Styles/
+    - prototype/src/components/
+
+patterns:
+  - name: mvvm-viewmodel
+    description: Use ObservableObject base, RelayCommand for commands
+    files:
+      - "**/ViewModels/*.cs"
+    rule: |
+      ViewModels must:
+      1. Inherit from ObservableObject
+      2. Use [ObservableProperty] for bindable properties
+      3. Use [RelayCommand] for commands
+      4. Inject services via constructor
+
+  - name: design-tokens
+    description: Use design tokens for consistent theming
+    files:
+      - "**/Styles/*.xaml"
+      - "prototype/src/styles/*.css"
+    rule: |
+      Edit design-tokens/tokens.json, then run npm run generate-tokens
+
+  - name: prototype-first
+    description: Complex UI changes start in React prototype
+    files:
+      - "prototype/src/components/*.tsx"
+
+context:
+  key_files:
+    - src/FluentPDF.App/ViewModels/MainViewModel.cs
+    - src/FluentPDF.App/ViewModels/PdfViewerViewModel.cs
+    - src/FluentPDF.App/Views/MainWindow.xaml
+    - src/FluentPDF.App/Views/PdfViewerPage.xaml
+    - src/FluentPDF.App/App.xaml.cs
+    - design-tokens/tokens.json
+    - docs/component-mapping.md
+
+  architecture:
+    - MainViewModel: Singleton, manages tabs and app state
+    - PdfViewerViewModel: Transient, one per document tab
+    - Services injected via DI container
+
+routing:
+  triggers:
+    - "ui"
+    - "xaml"
+    - "viewmodel"
+    - "binding"
+    - "theme"
+    - "dark mode"
+    - "layout"
+    - "control"
+    - "button"
+    - "panel"
+
+workflow:
+  complex_ui:
+    1: "Design in prototype/ (npm run dev)"
+    2: "Screenshot finalized design"
+    3: "Translate to XAML using docs/component-mapping.md"
+    4: "Wire ViewModel bindings"
+    5: "Add WinUI 3 specific features"
+
+quality_gates:
+  - ui-binding-verification
+  - theme-consistency-check
+  - accessibility-audit

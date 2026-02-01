@@ -1,0 +1,17 @@
+{
+  "count": 2,
+  "logs": [
+    {
+      "timestamp": "2026-01-29T08:25:54.5633057+09:00",
+      "level": "Info",
+      "message": "OperationWatchdog initialized - autonomous error detection enabled",
+      "source": "Watchdog"
+    },
+    {
+      "timestamp": "2026-01-29T08:25:54.5637287+09:00",
+      "level": "Info",
+      "message": "MainViewModel initialized",
+      "source": "MainViewModel"
+    }
+  ]
+}

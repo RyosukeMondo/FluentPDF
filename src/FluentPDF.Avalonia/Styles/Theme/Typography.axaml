@@ -1,0 +1,178 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    FluentPDF Typography Scale
+
+    Implements Fluent Design System type ramp with Segoe UI Variable font.
+    All sizes optimized for HiDPI displays (100%-300% scaling).
+
+    Font Sizes (Fluent Type Ramp):
+    - Caption: 10pt (13.3px) - Small labels, captions, timestamps
+    - Body: 12pt (16px) - Default body text, descriptions
+    - BodyStrong: 14pt (18.7px) - Emphasized body text, list items
+    - Subtitle: 18pt (24px) - Section headings, dialog titles
+    - Title: 24pt (32px) - Page titles, main headings
+
+    Font Weights:
+    - Regular: 400 - Default body text
+    - SemiBold: 600 - Emphasized text, headings
+    - Bold: 700 - Strong emphasis, critical information
+
+    Line Heights:
+    - Body text: 1.5x font size (optimal readability)
+    - Headings: 1.2x font size (tighter, more compact)
+    -->
+
+    <!-- Font Family -->
+    <FontFamily x:Key="PrimaryFontFamily">Segoe UI Variable,Segoe UI,Helvetica Neue,Arial,sans-serif</FontFamily>
+    <FontFamily x:Key="MonospaceFontFamily">Cascadia Mono,Consolas,Courier New,monospace</FontFamily>
+
+    <!-- Font Sizes (Fluent Type Ramp) -->
+    <!-- Using pixel values for Avalonia (1pt = 1.333px at 96 DPI) -->
+    <x:Double x:Key="FontSizeCaption">13.3</x:Double>        <!-- 10pt -->
+    <x:Double x:Key="FontSizeBody">16</x:Double>             <!-- 12pt -->
+    <x:Double x:Key="FontSizeBodyStrong">18.7</x:Double>     <!-- 14pt -->
+    <x:Double x:Key="FontSizeSubtitle">24</x:Double>         <!-- 18pt -->
+    <x:Double x:Key="FontSizeTitle">32</x:Double>            <!-- 24pt -->
+
+    <!-- Extended Sizes (for future use) -->
+    <x:Double x:Key="FontSizeTitleLarge">40</x:Double>       <!-- 30pt -->
+    <x:Double x:Key="FontSizeDisplay">53.3</x:Double>        <!-- 40pt -->
+
+    <!-- Font Weights -->
+    <FontWeight x:Key="FontWeightRegular">Regular</FontWeight>      <!-- 400 -->
+    <FontWeight x:Key="FontWeightSemiBold">SemiBold</FontWeight>    <!-- 600 -->
+    <FontWeight x:Key="FontWeightBold">Bold</FontWeight>            <!-- 700 -->
+
+    <!-- Line Heights (body: 1.5x, headings: 1.2x) -->
+    <x:Double x:Key="LineHeightCaption">20</x:Double>        <!-- 13.3 * 1.5 -->
+    <x:Double x:Key="LineHeightBody">24</x:Double>           <!-- 16 * 1.5 -->
+    <x:Double x:Key="LineHeightBodyStrong">28</x:Double>     <!-- 18.7 * 1.5 -->
+    <x:Double x:Key="LineHeightSubtitle">28.8</x:Double>     <!-- 24 * 1.2 -->
+    <x:Double x:Key="LineHeightTitle">38.4</x:Double>        <!-- 32 * 1.2 -->
+    <x:Double x:Key="LineHeightTitleLarge">48</x:Double>     <!-- 40 * 1.2 -->
+    <x:Double x:Key="LineHeightDisplay">64</x:Double>        <!-- 53.3 * 1.2 -->
+
+    <!--
+    TextBlock Styles (Ready-to-use styles for common text elements)
+    Apply via Style="{StaticResource CaptionTextBlockStyle}"
+    -->
+
+    <!-- Caption Style (10pt, Regular, 1.5x line height) -->
+    <Style Selector="TextBlock.Caption" x:Key="CaptionTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeCaption}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightRegular}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightCaption}" />
+    </Style>
+
+    <!-- Body Style (12pt, Regular, 1.5x line height) -->
+    <Style Selector="TextBlock.Body" x:Key="BodyTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightRegular}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightBody}" />
+    </Style>
+
+    <!-- BodyStrong Style (14pt, SemiBold, 1.5x line height) -->
+    <Style Selector="TextBlock.BodyStrong" x:Key="BodyStrongTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBodyStrong}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightBodyStrong}" />
+    </Style>
+
+    <!-- Subtitle Style (18pt, SemiBold, 1.2x line height) -->
+    <Style Selector="TextBlock.Subtitle" x:Key="SubtitleTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSubtitle}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightSubtitle}" />
+    </Style>
+
+    <!-- Title Style (24pt, SemiBold, 1.2x line height) -->
+    <Style Selector="TextBlock.Title" x:Key="TitleTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightTitle}" />
+    </Style>
+
+    <!-- TitleLarge Style (30pt, Bold, 1.2x line height) -->
+    <Style Selector="TextBlock.TitleLarge" x:Key="TitleLargeTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitleLarge}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightBold}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightTitleLarge}" />
+    </Style>
+
+    <!-- Display Style (40pt, Bold, 1.2x line height) -->
+    <Style Selector="TextBlock.Display" x:Key="DisplayTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeDisplay}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightBold}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightDisplay}" />
+    </Style>
+
+    <!-- Monospace Style (for code, logs, technical text) -->
+    <Style Selector="TextBlock.Monospace" x:Key="MonospaceTextBlockStyle">
+        <Setter Property="FontFamily" Value="{StaticResource MonospaceFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightRegular}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeightBody}" />
+    </Style>
+
+    <!--
+    TextBox Styles (for input fields)
+    Apply via Style="{StaticResource BodyTextBoxStyle}"
+    -->
+
+    <Style Selector="TextBox.Body" x:Key="BodyTextBoxStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightRegular}" />
+    </Style>
+
+    <Style Selector="TextBox.BodyStrong" x:Key="BodyStrongTextBoxStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBodyStrong}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}" />
+    </Style>
+
+    <!--
+    Button Styles (for buttons with text)
+    Apply via Style="{StaticResource BodyButtonStyle}"
+    -->
+
+    <Style Selector="Button.Body" x:Key="BodyButtonStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}" />
+    </Style>
+
+    <Style Selector="Button.BodyStrong" x:Key="BodyStrongButtonStyle">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBodyStrong}" />
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightBold}" />
+    </Style>
+
+    <!--
+    Usage Examples:
+
+    1. Using resource keys directly:
+    <TextBlock FontSize="{StaticResource FontSizeBody}"
+               FontWeight="{StaticResource FontWeightRegular}"
+               FontFamily="{StaticResource PrimaryFontFamily}" />
+
+    2. Using predefined styles:
+    <TextBlock Classes="Body" Text="Body text" />
+    <TextBlock Classes="Title" Text="Page Title" />
+
+    3. Mixing styles with overrides:
+    <TextBlock Classes="Body"
+               FontWeight="{StaticResource FontWeightBold}"
+               Text="Bold body text" />
+    -->
+
+</ResourceDictionary>

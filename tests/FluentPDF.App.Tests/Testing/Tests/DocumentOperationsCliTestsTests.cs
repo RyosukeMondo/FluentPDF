@@ -106,14 +106,14 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var bookmarks = new List<BookmarkNode>
         {
             new() { Title = "Chapter 1", PageNumber = 1, Children = new List<BookmarkNode>() },
             new() { Title = "Chapter 2", PageNumber = 2, Children = new List<BookmarkNode>() }
         };
-        _mockBookmarkService.Setup(s => s.ExtractBookmarksAsync(mockDocument.Object))
+        _mockBookmarkService.Setup(s => s.ExtractBookmarksAsync(mockDocument))
             .ReturnsAsync(Result.Ok(bookmarks));
 
         var result = await test.RunAsync(context);
@@ -142,14 +142,14 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var bookmarks = new List<BookmarkNode>
         {
             new() { Title = "Chapter 1", PageNumber = 1, Children = new List<BookmarkNode>() },
             new() { Title = "Chapter 999", PageNumber = 999, Children = new List<BookmarkNode>() }
         };
-        _mockBookmarkService.Setup(s => s.ExtractBookmarksAsync(mockDocument.Object))
+        _mockBookmarkService.Setup(s => s.ExtractBookmarksAsync(mockDocument))
             .ReturnsAsync(Result.Ok(bookmarks));
 
         var result = await test.RunAsync(context);
@@ -256,14 +256,14 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var matches = new List<SearchMatch>
         {
             new() { PageNumber = 0, CharIndex = 10, Length = 4, Text = "test", BoundingBox = new BoundingBox { Left = 10, Top = 20, Right = 30, Bottom = 40 } },
             new() { PageNumber = 1, CharIndex = 50, Length = 4, Text = "test", BoundingBox = new BoundingBox { Left = 15, Top = 25, Right = 35, Bottom = 45 } }
         };
-        _mockSearchService.Setup(s => s.SearchAsync(mockDocument.Object, "test", It.IsAny<SearchOptions>()))
+        _mockSearchService.Setup(s => s.SearchAsync(mockDocument, "test", It.IsAny<SearchOptions>()))
             .ReturnsAsync(Result.Ok((IReadOnlyList<SearchMatch>)matches));
 
         var result = await test.RunAsync(context);
@@ -292,10 +292,10 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var matches = new List<SearchMatch>();
-        _mockSearchService.Setup(s => s.SearchAsync(mockDocument.Object, "nonexistent", It.IsAny<SearchOptions>()))
+        _mockSearchService.Setup(s => s.SearchAsync(mockDocument, "nonexistent", It.IsAny<SearchOptions>()))
             .ReturnsAsync(Result.Ok((IReadOnlyList<SearchMatch>)matches));
 
         var result = await test.RunAsync(context);
@@ -383,12 +383,12 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
-        _mockPageOpsService.Setup(s => s.RotatePagesAsync(mockDocument.Object, new[] { 0, 1 }, RotationAngle.Rotate90))
+        _mockPageOpsService.Setup(s => s.RotatePagesAsync(mockDocument, new[] { 0, 1 }, RotationAngle.Rotate90))
             .ReturnsAsync(Result.Ok());
 
-        _mockDocumentService.Setup(s => s.SaveDocumentAsync(mockDocument.Object, It.IsAny<string>()))
+        _mockDocumentService.Setup(s => s.SaveDocumentAsync(mockDocument, It.IsAny<string>()))
             .ReturnsAsync(Result.Ok());
 
         var result = await test.RunAsync(context);
@@ -414,7 +414,7 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var result = await test.RunAsync(context);
 
@@ -490,13 +490,13 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
-        _mockPageOpsService.Setup(s => s.DeletePagesAsync(mockDocument.Object, new[] { 1 }))
+        _mockPageOpsService.Setup(s => s.DeletePagesAsync(mockDocument, new[] { 1 }))
             .ReturnsAsync(Result.Ok())
             .Callback(() => mockDocument.Setup(d => d.PageCount).Returns(2));
 
-        _mockDocumentService.Setup(s => s.SaveDocumentAsync(mockDocument.Object, It.IsAny<string>()))
+        _mockDocumentService.Setup(s => s.SaveDocumentAsync(mockDocument, It.IsAny<string>()))
             .ReturnsAsync(Result.Ok());
 
         var result = await test.RunAsync(context);
@@ -524,7 +524,7 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var result = await test.RunAsync(context);
 
@@ -604,12 +604,12 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
-        _mockPageOpsService.Setup(s => s.ReorderPagesAsync(mockDocument.Object, new[] { 2 }, 0))
+        _mockPageOpsService.Setup(s => s.ReorderPagesAsync(mockDocument, new[] { 2 }, 0))
             .ReturnsAsync(Result.Ok());
 
-        _mockDocumentService.Setup(s => s.SaveDocumentAsync(mockDocument.Object, It.IsAny<string>()))
+        _mockDocumentService.Setup(s => s.SaveDocumentAsync(mockDocument, It.IsAny<string>()))
             .ReturnsAsync(Result.Ok());
 
         var result = await test.RunAsync(context);
@@ -636,7 +636,7 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 3);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var result = await test.RunAsync(context);
 
@@ -712,16 +712,16 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 2);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var annotations = new List<Annotation>
         {
             new() { Id = "1", Type = AnnotationType.Highlight, Bounds = new BoundingBox { Left = 10, Top = 20, Right = 30, Bottom = 40 } },
             new() { Id = "2", Type = AnnotationType.Text, Bounds = new BoundingBox { Left = 15, Top = 25, Right = 35, Bottom = 45 } }
         };
-        _mockAnnotationService.Setup(s => s.GetAnnotationsAsync(mockDocument.Object, 0))
+        _mockAnnotationService.Setup(s => s.GetAnnotationsAsync(mockDocument, 0))
             .ReturnsAsync(Result.Ok((IReadOnlyList<Annotation>)annotations));
-        _mockAnnotationService.Setup(s => s.GetAnnotationsAsync(mockDocument.Object, 1))
+        _mockAnnotationService.Setup(s => s.GetAnnotationsAsync(mockDocument, 1))
             .ReturnsAsync(Result.Ok((IReadOnlyList<Annotation>)new List<Annotation>()));
 
         var result = await test.RunAsync(context);
@@ -747,9 +747,9 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
 
         var mockDocument = CreateMockDocument(pageCount: 2);
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
-        _mockAnnotationService.Setup(s => s.GetAnnotationsAsync(mockDocument.Object, It.IsAny<int>()))
+        _mockAnnotationService.Setup(s => s.GetAnnotationsAsync(mockDocument, It.IsAny<int>()))
             .ReturnsAsync(Result.Ok((IReadOnlyList<Annotation>)new List<Annotation>()));
 
         var result = await test.RunAsync(context);
@@ -866,7 +866,7 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
         mockDocument.Setup(d => d.LoadedAt).Returns(DateTime.UtcNow);
 
         _mockDocumentService.Setup(s => s.LoadDocumentAsync(testPdfPath))
-            .ReturnsAsync(Result.Ok(mockDocument.Object));
+            .ReturnsAsync(Result.Ok(mockDocument));
 
         var result = await test.RunAsync(context);
 
@@ -975,13 +975,16 @@ public sealed class DocumentOperationsCliTestsTests : IDisposable
         );
     }
 
-    private Mock<IPdfDocument> CreateMockDocument(int pageCount)
+    private PdfDocument CreateMockDocument(int pageCount)
     {
-        var mockDocument = new Mock<IPdfDocument>();
-        mockDocument.Setup(d => d.PageCount).Returns(pageCount);
-        mockDocument.Setup(d => d.FilePath).Returns("test.pdf");
-        mockDocument.Setup(d => d.FileSizeBytes).Returns(1024L);
-        mockDocument.Setup(d => d.LoadedAt).Returns(DateTime.UtcNow);
+        return new PdfDocument
+        {
+            PageCount = pageCount,
+            FilePath = "test.pdf",
+            FileSizeBytes = 1024L,
+            LoadedAt = DateTime.UtcNow,
+            Handle = Mock.Of<IDisposable>()
+        };
         return mockDocument;
     }
 

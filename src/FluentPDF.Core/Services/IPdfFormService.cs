@@ -64,6 +64,26 @@ public interface IPdfFormService
     Task<Result> SetCheckboxStateAsync(PdfFormField field, bool isChecked);
 
     /// <summary>
+    /// Sets the selected option for a ComboBox field by option text.
+    /// </summary>
+    /// <param name="field">The ComboBox form field to update.</param>
+    /// <param name="selectedOption">The option to select.</param>
+    /// <returns>
+    /// A successful result if the selection was updated, or an error if the operation fails.
+    /// </returns>
+    Task<Result> SetComboBoxSelectionAsync(PdfFormField field, string selectedOption);
+
+    /// <summary>
+    /// Sets the selected option for a ComboBox field by index.
+    /// </summary>
+    /// <param name="field">The ComboBox form field to update.</param>
+    /// <param name="selectedIndex">The zero-based index to select. Use -1 to clear selection.</param>
+    /// <returns>
+    /// A successful result if the selection was updated, or an error if the operation fails.
+    /// </returns>
+    Task<Result> SetComboBoxSelectionAsync(PdfFormField field, int selectedIndex);
+
+    /// <summary>
     /// Saves the PDF document with all form field modifications persisted.
     /// Uses PDFium's save API to write the updated document to disk.
     /// </summary>
@@ -84,4 +104,14 @@ public interface IPdfFormService
     /// </returns>
     Result<IReadOnlyList<PdfFormField>> GetFieldsInTabOrder(
         IReadOnlyList<PdfFormField> fields);
+
+    /// <summary>
+    /// Resets all form fields on a specific page to their default values.
+    /// </summary>
+    /// <param name="document">The PDF document containing the form.</param>
+    /// <param name="pageNumber">The 1-based page number to reset fields on.</param>
+    /// <returns>
+    /// A successful result if the form was reset, or an error if the operation fails.
+    /// </returns>
+    Task<Result> ResetFormAsync(PdfDocument document, int pageNumber);
 }

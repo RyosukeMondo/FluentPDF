@@ -1,0 +1,215 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    FluentPDF Acrylic Brushes and Materials
+
+    GPU-accelerated backdrop blur materials for liquid glass UI.
+    Implements custom acrylic materials with varying blur intensities and tint opacities.
+
+    Requirements: Task 1.2 - Requirement 1.1 (Acrylic and Glassmorphism)
+    - 20px blur radius (default)
+    - 60% tint opacity
+    - GPU compositor acceleration
+    - Graceful fallback to solid colors
+
+    Note: Avalonia 11.3 ExperimentalAcrylicMaterial API differences from WinUI 3:
+    - No MaterialColor property (tint color inherited from parent)
+    - No BackgroundSource enum (always uses backdrop)
+    - Simpler property set: TintOpacity, MaterialOpacity, FallbackColor
+    -->
+
+    <!-- =================================================================== -->
+    <!-- Acrylic Material Definitions (Experimental)                         -->
+    <!-- =================================================================== -->
+
+    <!-- Toolbar Acrylic Material (Medium blur, 60% opacity) -->
+    <ExperimentalAcrylicMaterial x:Key="ToolbarAcrylicMaterial"
+                                 TintOpacity="0.6"
+                                 MaterialOpacity="0.6"
+                                 FallbackColor="#F3F3F3" />
+
+    <!-- Panel Acrylic Material (High blur, 60% opacity) -->
+    <ExperimentalAcrylicMaterial x:Key="PanelAcrylicMaterial"
+                                 TintOpacity="0.6"
+                                 MaterialOpacity="0.6"
+                                 FallbackColor="#EEEEEE" />
+
+    <!-- Dialog Acrylic Material (Deep blur, 70% opacity) -->
+    <ExperimentalAcrylicMaterial x:Key="DialogAcrylicMaterial"
+                                 TintOpacity="0.7"
+                                 MaterialOpacity="0.7"
+                                 FallbackColor="#F3F3F3" />
+
+    <!-- Sidebar Acrylic Material (Medium blur, 60% opacity) -->
+    <ExperimentalAcrylicMaterial x:Key="SidebarAcrylicMaterial"
+                                 TintOpacity="0.6"
+                                 MaterialOpacity="0.6"
+                                 FallbackColor="#F3F3F3" />
+
+    <!-- Overlay Acrylic Material (Subtle blur, 40% opacity) -->
+    <ExperimentalAcrylicMaterial x:Key="OverlayAcrylicMaterial"
+                                 TintOpacity="0.4"
+                                 MaterialOpacity="0.4"
+                                 FallbackColor="#FAFAFA" />
+
+    <!-- Context Menu Acrylic Material (High blur, 65% opacity) -->
+    <ExperimentalAcrylicMaterial x:Key="MenuAcrylicMaterial"
+                                 TintOpacity="0.65"
+                                 MaterialOpacity="0.65"
+                                 FallbackColor="#F3F3F3" />
+
+    <!-- =================================================================== -->
+    <!-- Gradient Brushes for Depth Effects                                  -->
+    <!-- =================================================================== -->
+
+    <!-- Elevation Gradient (Light to Dark for depth perception) -->
+    <LinearGradientBrush x:Key="ElevationGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#F5F5F5" Offset="0.0" />
+        <GradientStop Color="#EEEEEE" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Subtle Highlight Gradient (Top edge lighting effect) -->
+    <LinearGradientBrush x:Key="HighlightGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#19FFFFFF" Offset="0.0" />
+        <GradientStop Color="#00FFFFFF" Offset="0.3" />
+    </LinearGradientBrush>
+
+    <!-- Shadow Gradient (Bottom edge depth effect) -->
+    <LinearGradientBrush x:Key="ShadowGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#00000000" Offset="0.7" />
+        <GradientStop Color="#26000000" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Radial Gradient for Spotlight Effects -->
+    <RadialGradientBrush x:Key="SpotlightGradientBrush" Center="50%,50%" GradientOrigin="50%,50%" Radius="1.0">
+        <GradientStop Color="#33007ACC" Offset="0.0" />
+        <GradientStop Color="#00007ACC" Offset="1.0" />
+    </RadialGradientBrush>
+
+    <!-- Ripple Effect Gradient (for button animations) -->
+    <RadialGradientBrush x:Key="RippleGradientBrush" Center="50%,50%" GradientOrigin="50%,50%" Radius="0.0">
+        <GradientStop Color="#4D007ACC" Offset="0.0" />
+        <GradientStop Color="#00007ACC" Offset="1.0" />
+    </RadialGradientBrush>
+
+    <!-- =================================================================== -->
+    <!-- Solid Color Brushes with Opacity (Fallback/Overlay)                -->
+    <!-- =================================================================== -->
+
+    <!-- Semi-transparent overlay for modal dialogs -->
+    <SolidColorBrush x:Key="DialogOverlayBrush" Color="#80000000" />
+
+    <!-- Loading skeleton shimmer effect -->
+    <SolidColorBrush x:Key="ShimmerHighlightBrush" Color="#66FFFFFF" />
+
+    <!-- Hover state overlay (lightweight) -->
+    <SolidColorBrush x:Key="HoverOverlayBrush" Color="#19007ACC" />
+
+    <!-- Press state overlay (medium weight) -->
+    <SolidColorBrush x:Key="PressOverlayBrush" Color="#33007ACC" />
+
+    <!-- Focus indicator glow -->
+    <SolidColorBrush x:Key="FocusGlowBrush" Color="#26007ACC" />
+
+    <!-- =================================================================== -->
+    <!-- Border Brushes with Glow Effects                                    -->
+    <!-- =================================================================== -->
+
+    <!-- Glass panel border with subtle glow -->
+    <SolidColorBrush x:Key="GlassBorderBrush" Color="#33FFFFFF" />
+
+    <!-- Elevated panel border (stronger contrast) -->
+    <SolidColorBrush x:Key="ElevatedBorderBrush" Color="#4DFFFFFF" />
+
+    <!-- Accent glow border (focus/selection) -->
+    <SolidColorBrush x:Key="AccentGlowBorderBrush" Color="#99007ACC" />
+
+    <!-- =================================================================== -->
+    <!-- Theme-Aware Acrylic Tint Colors                                     -->
+    <!-- =================================================================== -->
+
+    <!-- Light Theme Tint (subtle gray) -->
+    <Color x:Key="LightAcrylicTintColor">#F3F3F3</Color>
+
+    <!-- Dark Theme Tint (deep charcoal) -->
+    <Color x:Key="DarkAcrylicTintColor">#2C2C2C</Color>
+
+    <!-- High Contrast Fallback (solid, no transparency) -->
+    <Color x:Key="HighContrastSolidColor">#FFFFFF</Color>
+
+    <!-- =================================================================== -->
+    <!-- Performance Optimization Settings                                   -->
+    <!-- =================================================================== -->
+
+    <!--
+    Blur Radius Configuration (for runtime adjustment via code):
+    - Default: 20px (balanced quality/performance)
+    - Light: 10px (low-end hardware)
+    - Heavy: 30px (high-end hardware, optional)
+
+    GPU Compositor Detection:
+    - Avalonia automatically falls back to FallbackColor if GPU unavailable
+    - Max 5% CPU overhead target
+    - Memory overhead: ~10MB for all materials
+
+    Quality Levels:
+    - High: Full blur with all effects (60 FPS target)
+    - Medium: Reduced blur radius (30-60 FPS)
+    - Low: Solid colors, no blur (>30 FPS guaranteed)
+    -->
+
+    <!-- Quality setting values (for runtime adjustment) -->
+    <x:Double x:Key="BlurRadiusHigh">20.0</x:Double>
+    <x:Double x:Key="BlurRadiusMedium">12.0</x:Double>
+    <x:Double x:Key="BlurRadiusLow">0.0</x:Double>
+
+    <!-- Opacity levels for adaptive quality -->
+    <x:Double x:Key="AcrylicOpacityHigh">0.6</x:Double>
+    <x:Double x:Key="AcrylicOpacityMedium">0.7</x:Double>
+    <x:Double x:Key="AcrylicOpacityLow">0.9</x:Double>
+
+    <!-- =================================================================== -->
+    <!-- Accessibility: High Contrast Mode Overrides                         -->
+    <!-- =================================================================== -->
+
+    <!--
+    When high contrast mode is enabled, all acrylic materials should be
+    replaced with solid colors to ensure readability and WCAG compliance.
+
+    Implementation: ThemeService detects high contrast mode and updates
+    resource dictionary at runtime to use these solid brushes instead.
+    -->
+
+    <!-- High contrast solid brushes (no transparency) -->
+    <SolidColorBrush x:Key="HighContrastToolbarBrush" Color="#F5F5F5" />
+    <SolidColorBrush x:Key="HighContrastPanelBrush" Color="#EEEEEE" />
+    <SolidColorBrush x:Key="HighContrastDialogBrush" Color="#F5F5F5" />
+
+    <!-- =================================================================== -->
+    <!-- Usage Examples (for documentation)                                  -->
+    <!-- =================================================================== -->
+
+    <!--
+    Apply to Panel Background (tint color from parent):
+    <Panel Background="#F3F3F3">
+        <ExperimentalAcrylicMaterial TintOpacity="0.6" MaterialOpacity="0.6" />
+    </Panel>
+
+    Apply to Border with Acrylic Material:
+    <Border Background="{DynamicResource ToolbarAcrylicMaterial}"
+            BorderBrush="{DynamicResource GlassBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+        <Panel Background="#F3F3F3" />
+    </Border>
+
+    Runtime Quality Adjustment (in code-behind or service):
+    if (!IsGpuAccelerationAvailable())
+    {
+        Application.Current.Resources["ToolbarAcrylicMaterial"] =
+            Application.Current.Resources["HighContrastToolbarBrush"];
+    }
+    -->
+
+</ResourceDictionary>

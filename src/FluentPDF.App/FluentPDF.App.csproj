@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+        <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
         <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
         <OutputType>WinExe</OutputType>
 
@@ -69,6 +69,7 @@
         <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.*" />
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.*" />
         <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.*" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
         <PackageReference Include="System.Reactive" Version="6.1.0" />
 
         <Manifest Include="$(ApplicationManifest)" />
@@ -87,15 +88,12 @@
         </PropertyGroup>
 
         <!-- Check pdfium.dll (critical for app startup) -->
-        <Error Condition="!Exists('$(PdfiumDllPath)')"
-               Text="Native dependency missing: pdfium.dll not found at $(PdfiumDllPath)%0A%0ATo build native dependencies, run:%0A  pwsh $(BuildLibsScript) -Triplet $(Platform)-windows%0A%0AFor more information, see: tools\build-libs.ps1" />
+        <Error Condition="!Exists('$(PdfiumDllPath)')" Text="Native dependency missing: pdfium.dll not found at $(PdfiumDllPath)%0A%0ATo build native dependencies, run:%0A  pwsh $(BuildLibsScript) -Triplet $(Platform)-windows%0A%0AFor more information, see: tools\build-libs.ps1" />
 
         <!-- Check qpdf.dll -->
-        <Error Condition="!Exists('$(QpdfDllPath)')"
-               Text="Native dependency missing: qpdf.dll not found at $(QpdfDllPath)%0A%0ATo build native dependencies, run:%0A  pwsh $(BuildLibsScript) -Triplet $(Platform)-windows" />
+        <Error Condition="!Exists('$(QpdfDllPath)')" Text="Native dependency missing: qpdf.dll not found at $(QpdfDllPath)%0A%0ATo build native dependencies, run:%0A  pwsh $(BuildLibsScript) -Triplet $(Platform)-windows" />
 
-        <Message Importance="high"
-                 Text="✓ Native dependencies validated: pdfium.dll, qpdf.dll [Platform: $(Platform)]" />
+        <Message Importance="high" Text="✓ Native dependencies validated: pdfium.dll, qpdf.dll [Platform: $(Platform)]" />
     </Target>
 
     <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">

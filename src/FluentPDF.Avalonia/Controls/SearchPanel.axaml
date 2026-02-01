@@ -1,0 +1,151 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FluentPDF.Avalonia.ViewModels"
+             xmlns:controls="using:FluentPDF.Avalonia.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="50"
+             x:Class="FluentPDF.Avalonia.Controls.SearchPanel"
+             x:DataType="vm:SearchPanelViewModel"
+             x:Name="SearchPanelRoot">
+
+    <!-- Glass panel container with 20px blur and slide animations -->
+    <controls:GlassPanel x:Name="GlassPanelContainer"
+                        BlurRadius="20"
+                        TintOpacity="0.6"
+                        Elevation="8"
+                        CornerRadius="0,0,8,8"
+                        Padding="12,8">
+
+        <!-- Slide-in/out animation transitions -->
+        <controls:GlassPanel.Transitions>
+            <Transitions>
+                <!-- Slide from top animation (250ms cubic-ease-out) -->
+                <TransformOperationsTransition Property="RenderTransform"
+                                              Duration="0:0:0.25"
+                                              Easing="CubicEaseOut"/>
+                <DoubleTransition Property="Opacity"
+                                 Duration="0:0:0.25"
+                                 Easing="CubicEaseOut"/>
+            </Transitions>
+        </controls:GlassPanel.Transitions>
+
+        <!-- Bottom border separator -->
+        <controls:GlassPanel.Child>
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="0,0,0,1">
+
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto">
+
+            <!-- Search Icon -->
+            <PathIcon Grid.Column="0"
+                      Data="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                      Width="16"
+                      Height="16"
+                      Margin="0,0,8,0"
+                      VerticalAlignment="Center"/>
+
+            <!-- Search TextBox -->
+            <TextBox Grid.Column="1"
+                     Text="{Binding SearchText, Mode=TwoWay}"
+                     Watermark="Search in document..."
+                     MinWidth="200"
+                     AutomationProperties.Name="Search input"
+                     VerticalContentAlignment="Center"
+                     Margin="0,0,8,0"/>
+
+            <!-- Match Counter -->
+            <TextBlock Grid.Column="2"
+                       Text="{Binding SearchResultsText}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0"
+                       MinWidth="80"
+                       TextAlignment="Center"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+
+            <!-- Previous Match Button -->
+            <Button Grid.Column="3"
+                    Content="◀"
+                    Command="{Binding PreviousMatchCommand}"
+                    IsEnabled="{Binding HasMatches}"
+                    ToolTip.Tip="Previous match (Shift+F3)"
+                    Width="32"
+                    Height="32"
+                    Margin="0,0,4,0"
+                    AutomationProperties.Name="Previous match"/>
+
+            <!-- Next Match Button -->
+            <Button Grid.Column="4"
+                    Content="▶"
+                    Command="{Binding NextMatchCommand}"
+                    IsEnabled="{Binding HasMatches}"
+                    ToolTip.Tip="Next match (F3)"
+                    Width="32"
+                    Height="32"
+                    Margin="0,0,12,0"
+                    AutomationProperties.Name="Next match"/>
+
+            <!-- Options Panel -->
+            <StackPanel Grid.Column="5"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        Margin="0,0,12,0">
+
+                <!-- Case Sensitive Toggle -->
+                <ToggleButton IsChecked="{Binding CaseSensitive, Mode=TwoWay}"
+                              ToolTip.Tip="Match case"
+                              Width="32"
+                              Height="32"
+                              AutomationProperties.Name="Match case">
+                    <TextBlock Text="Aa"
+                               FontWeight="Bold"
+                               FontSize="12"/>
+                </ToggleButton>
+
+                <!-- Whole Word Toggle -->
+                <ToggleButton IsChecked="{Binding WholeWord, Mode=TwoWay}"
+                              ToolTip.Tip="Match whole word"
+                              Width="32"
+                              Height="32"
+                              AutomationProperties.Name="Match whole word">
+                    <TextBlock Text="Ab|"
+                               FontWeight="Bold"
+                               FontSize="12"/>
+                </ToggleButton>
+            </StackPanel>
+
+            <!-- Replace Section (conditionally visible) -->
+            <StackPanel Grid.Column="6"
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        Margin="0,0,12,0">
+                <TextBox Text="{Binding ReplaceText, Mode=TwoWay}"
+                         Watermark="Replace with..."
+                         Width="150"
+                         VerticalContentAlignment="Center"
+                         IsVisible="{Binding HasMatches}"/>
+                <Button Content="Replace"
+                        Command="{Binding ReplaceCommand}"
+                        IsEnabled="{Binding HasMatches}"
+                        IsVisible="{Binding HasMatches}"
+                        ToolTip.Tip="Replace current match"/>
+                <Button Content="Replace All"
+                        Command="{Binding ReplaceAllCommand}"
+                        IsEnabled="{Binding HasMatches}"
+                        IsVisible="{Binding HasMatches}"
+                        ToolTip.Tip="Replace all matches"/>
+            </StackPanel>
+
+            <!-- Close Button -->
+            <Button Grid.Column="7"
+                    Content="✕"
+                    Command="{Binding CloseSearchCommand}"
+                    ToolTip.Tip="Close search (Esc)"
+                    Width="32"
+                    Height="32"
+                    AutomationProperties.Name="Close search"/>
+        </Grid>
+            </Border>
+        </controls:GlassPanel.Child>
+    </controls:GlassPanel>
+</UserControl>

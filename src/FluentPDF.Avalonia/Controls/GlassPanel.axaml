@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="FluentPDF.Avalonia.Controls.GlassPanel">
+
+    <Design.DataContext>
+        <!-- Design-time data context for previewing -->
+    </Design.DataContext>
+
+    <!-- Glass container with backdrop blur and elevation shadow -->
+    <Border x:Name="GlassContainer"
+            CornerRadius="{Binding GlassCornerRadius, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            ClipToBounds="True">
+
+        <!-- Acrylic backdrop with blur effect (GPU-accelerated) -->
+        <Panel>
+            <!-- Background blur layer -->
+            <ExperimentalAcrylicBorder x:Name="AcrylicBackdrop"
+                                       Material="{Binding AcrylicMaterial, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <ExperimentalAcrylicBorder.Material>
+                    <ExperimentalAcrylicMaterial BackgroundSource="Digger"
+                                                 TintColor="{DynamicResource SystemChromeMediumColor}"
+                                                 TintOpacity="0.6"
+                                                 MaterialOpacity="0.9"
+                                                 FallbackColor="{DynamicResource SystemChromeMediumColor}"
+                                                 PlatformTransparencyCompensationLevel="1.0" />
+                </ExperimentalAcrylicBorder.Material>
+            </ExperimentalAcrylicBorder>
+
+            <!-- Tint overlay layer -->
+            <Border x:Name="TintOverlay"
+                    Background="{DynamicResource SystemChromeMediumColor}"
+                    Opacity="0.6" />
+
+            <!-- Subtle border glow effect -->
+            <Border x:Name="BorderGlow"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource SystemBaseMediumLowColor}"
+                    CornerRadius="{Binding GlassCornerRadius, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+            <!-- Content container -->
+            <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            Padding="{TemplateBinding Padding}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </Panel>
+    </Border>
+
+</UserControl>

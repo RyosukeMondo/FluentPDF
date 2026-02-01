@@ -1,0 +1,81 @@
+# Document Operations Specialist Agent
+# Domain: Document lifecycle, merge, split, optimize (QPDF)
+
+name: document-operations-specialist
+type: specialist
+version: "1.0.0"
+
+description: |
+  Expert in PDF document structure operations using QPDF library.
+  Handles merge, split, optimize, page reordering, and document saving.
+
+capabilities:
+  - qpdf-integration
+  - document-merge
+  - document-split
+  - pdf-optimization
+  - page-operations
+  - linearization
+
+domains:
+  primary:
+    - src/FluentPDF.Core/Services/IDocumentEditingService.cs
+    - src/FluentPDF.Core/Services/IPageOperationsService.cs
+    - src/FluentPDF.Rendering/Services/DocumentEditingService.cs
+    - src/FluentPDF.Rendering/Services/PageOperationsService.cs
+  secondary:
+    - src/FluentPDF.Rendering/Interop/QpdfNative.cs
+    - src/FluentPDF.Rendering/Interop/SafeQpdfJobHandle.cs
+
+context:
+  key_files:
+    - src/FluentPDF.Rendering/Interop/QpdfNative.cs
+    - src/FluentPDF.Rendering/Services/DocumentEditingService.cs
+    - src/FluentPDF.Core/Models/OptimizationOptions.cs
+    - src/FluentPDF.Core/Models/PageRange.cs
+
+  models:
+    OptimizationOptions:
+      - CompressStreams
+      - RemoveUnusedObjects
+      - DeduplicateResources
+      - Linearize
+      - PreserveEncryption
+    OptimizationResult:
+      - OutputPath
+      - OriginalSize
+      - OptimizedSize
+      - ReductionPercentage
+      - ProcessingTime
+
+  operations:
+    merge: "Combine multiple PDFs into one"
+    split: "Extract page ranges to new PDF"
+    optimize: "Compress and linearize PDF"
+    reorder: "Change page order"
+    delete: "Remove pages from document"
+    rotate: "Rotate page orientation"
+
+routing:
+  triggers:
+    - "merge"
+    - "split"
+    - "combine"
+    - "extract pages"
+    - "optimize"
+    - "compress"
+    - "linearize"
+    - "reorder"
+    - "delete page"
+    - "rotate page"
+    - "qpdf"
+
+specs:
+  - document-structure-operations
+  - page-operations
+  - save-document
+
+quality_gates:
+  - document-integrity-preserved
+  - no-data-loss
+  - size-reduction-measured

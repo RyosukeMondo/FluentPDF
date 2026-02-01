@@ -21,9 +21,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\FluentPDF.App\FluentPDF.App.csproj" />
+    <!-- Temporarily disabled: App requires pdfium.dll native dependency -->
+    <!-- <ProjectReference Include="..\..\src\FluentPDF.App\FluentPDF.App.csproj" /> -->
     <ProjectReference Include="..\..\src\FluentPDF.Core\FluentPDF.Core.csproj" />
     <ProjectReference Include="..\..\src\FluentPDF.Rendering\FluentPDF.Rendering.csproj" />
+    <!-- Temporarily disabled due to build errors in Avalonia project -->
+    <!-- <ProjectReference Include="..\..\src\FluentPDF.Avalonia\FluentPDF.Avalonia.csproj" /> -->
   </ItemGroup>
 
   <ItemGroup>

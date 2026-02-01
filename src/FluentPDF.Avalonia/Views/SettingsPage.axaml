@@ -1,0 +1,196 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FluentPDF.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="FluentPDF.Avalonia.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto"
+                  Background="{DynamicResource ApplicationPageBackgroundBrush}">
+
+        <StackPanel Spacing="24" Margin="32" MaxWidth="800">
+
+            <!-- Page Title -->
+            <TextBlock Text="Settings"
+                       FontSize="28"
+                       FontWeight="SemiBold"/>
+
+            <!-- Appearance Section -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="0,0,0,16">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Appearance"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+
+                    <!-- Theme Selection -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Theme"
+                                   FontWeight="Medium"/>
+                        <StackPanel Spacing="8">
+                            <RadioButton Content="Light"
+                                         IsChecked="{Binding IsLightTheme, Mode=TwoWay}"
+                                         GroupName="Theme"/>
+                            <RadioButton Content="Dark"
+                                         IsChecked="{Binding IsDarkTheme, Mode=TwoWay}"
+                                         GroupName="Theme"/>
+                            <RadioButton Content="Use system setting"
+                                         IsChecked="{Binding IsSystemTheme, Mode=TwoWay}"
+                                         GroupName="Theme"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Rendering Section -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="0,0,0,16">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Rendering"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+
+                    <!-- Quality Selection -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Rendering Quality"
+                                   FontWeight="Medium"/>
+                        <ComboBox ItemsSource="{Binding QualityOptions}"
+                                  SelectedItem="{Binding SelectedQualityOption, Mode=TwoWay}"
+                                  MinWidth="300"
+                                  HorizontalAlignment="Left">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <!-- Quality Description -->
+                        <TextBlock Text="{Binding SelectedQualityOption.Description}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                   MaxWidth="600"
+                                   HorizontalAlignment="Left"
+                                   Margin="0,4,0,0"/>
+
+                        <!-- Ultra Quality Warning -->
+                        <Border Background="#FFF4CE"
+                                BorderBrush="#FFD700"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="12"
+                                MaxWidth="600"
+                                HorizontalAlignment="Left"
+                                IsVisible="{Binding IsUltraQualitySelected}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                          Width="20"
+                                          Height="20"
+                                          Foreground="#856404"/>
+                                <TextBlock Text="Warning: Ultra quality may cause out-of-memory errors on large documents or low-memory systems."
+                                           TextWrapping="Wrap"
+                                           Foreground="#856404"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Content="Apply Quality Settings"
+                                Command="{Binding ApplyQualityCommand}"
+                                HorizontalAlignment="Left"
+                                Margin="0,8,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Default Settings Section -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="0,0,0,16">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Default Settings"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+
+                    <!-- Default Zoom -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Default Zoom Level"
+                                   FontWeight="Medium"/>
+                        <ComboBox ItemsSource="{Binding ZoomLevels}"
+                                  SelectedItem="{Binding DefaultZoom, Mode=TwoWay}"
+                                  MinWidth="200"
+                                  HorizontalAlignment="Left"/>
+                    </StackPanel>
+
+                    <!-- Scroll Mode -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Scroll Mode"
+                                   FontWeight="Medium"/>
+                        <ComboBox ItemsSource="{Binding ScrollModes}"
+                                  SelectedItem="{Binding ScrollMode, Mode=TwoWay}"
+                                  MinWidth="200"
+                                  HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Privacy Section -->
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="0,0,0,16">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Privacy"
+                               FontSize="20"
+                               FontWeight="SemiBold"/>
+
+                    <!-- Telemetry -->
+                    <CheckBox Content="Send anonymous usage telemetry"
+                              IsChecked="{Binding TelemetryEnabled, Mode=TwoWay}">
+                        <ToolTip.Tip>
+                            <TextBlock Text="Helps improve FluentPDF by sharing anonymous usage data"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="300"/>
+                        </ToolTip.Tip>
+                    </CheckBox>
+
+                    <!-- Crash Reporting -->
+                    <CheckBox Content="Send anonymous crash reports"
+                              IsChecked="{Binding CrashReportingEnabled, Mode=TwoWay}">
+                        <ToolTip.Tip>
+                            <TextBlock Text="Helps fix bugs by automatically reporting crashes"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="300"/>
+                        </ToolTip.Tip>
+                    </CheckBox>
+                </StackPanel>
+            </Border>
+
+            <!-- About Section -->
+            <StackPanel Spacing="16">
+                <TextBlock Text="About"
+                           FontSize="20"
+                           FontWeight="SemiBold"/>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="FluentPDF"
+                               FontSize="16"
+                               FontWeight="Medium"/>
+                    <TextBlock Text="Version 1.0.0"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <TextBlock Text="Cross-platform PDF viewer and editor"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+
+                <!-- Reset Button -->
+                <Button Content="Reset All Settings to Defaults"
+                        Command="{Binding ResetToDefaultsCommand}"
+                        HorizontalAlignment="Left"
+                        Margin="0,8,0,0"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

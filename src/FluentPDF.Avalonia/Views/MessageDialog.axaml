@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="250"
+        x:Class="FluentPDF.Avalonia.Views.MessageDialog"
+        Title="Message"
+        Width="450"
+        Height="250"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        SystemDecorations="BorderOnly">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Content Area -->
+        <StackPanel Grid.Row="0"
+                    Spacing="16"
+                    Margin="24"
+                    VerticalAlignment="Center">
+
+            <!-- Icon -->
+            <PathIcon x:Name="DialogIcon"
+                      Width="48"
+                      Height="48"
+                      HorizontalAlignment="Center"/>
+
+            <!-- Title -->
+            <TextBlock x:Name="TitleTextBlock"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"/>
+
+            <!-- Message -->
+            <TextBlock x:Name="MessageTextBlock"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       MaxWidth="400"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </StackPanel>
+
+        <!-- Button Area -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16">
+            <Button x:Name="OkButton"
+                    Content="OK"
+                    HorizontalAlignment="Center"
+                    MinWidth="100"
+                    Click="OnOkClick"/>
+        </Border>
+    </Grid>
+</Window>

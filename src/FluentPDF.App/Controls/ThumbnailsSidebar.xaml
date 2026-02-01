@@ -18,7 +18,7 @@
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 
-        <!-- Data template for thumbnail items -->
+        <!-- Data template for thumbnail items with shimmer -->
         <DataTemplate x:Key="ThumbnailItemTemplate" x:DataType="models:ThumbnailItem">
             <Button
                 x:Name="ThumbnailButton"
@@ -123,16 +123,11 @@
                                 VerticalAlignment="Center"
                                 Visibility="{Binding Thumbnail, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}"/>
 
-                            <!-- Loading placeholder -->
-                            <Grid Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <Rectangle Fill="{ThemeResource LayerFillColorDefaultBrush}"/>
-                                <ProgressRing
-                                    IsActive="{x:Bind IsLoading, Mode=OneWay}"
-                                    Width="40"
-                                    Height="40"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"/>
-                            </Grid>
+                            <!-- Shimmer placeholder for loading state -->
+                            <local:ShimmerPlaceholder
+                                Width="150"
+                                Height="190"
+                                Visibility="{x:Bind IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                         </Grid>
 
                         <!-- Page number label -->
@@ -147,8 +142,12 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid>
-        <!-- ScrollViewer with ItemsRepeater -->
+    <!-- Glass panel container -->
+    <local:GlassPanel
+        Padding="8"
+        GlassCornerRadius="12"
+        Elevation="8">
+        <!-- Virtualized ScrollViewer with ItemsRepeater -->
         <ScrollViewer
             x:Name="ThumbnailsScrollViewer"
             AutomationProperties.AutomationId="ThumbnailsScrollViewer"
@@ -162,9 +161,10 @@
                 ItemTemplate="{StaticResource ThumbnailItemTemplate}"
                 HorizontalAlignment="Center">
                 <ItemsRepeater.Layout>
+                    <!-- Virtualized layout for performance -->
                     <StackLayout Orientation="Vertical" Spacing="4"/>
                 </ItemsRepeater.Layout>
             </ItemsRepeater>
         </ScrollViewer>
-    </Grid>
+    </local:GlassPanel>
 </UserControl>

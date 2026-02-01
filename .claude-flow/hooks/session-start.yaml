@@ -1,0 +1,247 @@
+# Session Start Hook
+# Initialize context for FluentPDF development session
+
+name: session-start
+version: "2.0.0"
+description: Load project context and knowledge base at session start
+
+enabled: true
+priority: high
+
+# ============================================================================
+# KNOWLEDGE BASE LOADING
+# ============================================================================
+
+knowledge:
+  # Critical - always load
+  critical:
+    - path: .claude-flow/knowledge/known-issues.yaml
+      sections: [pdfium, qpdf, winui]
+      reason: "Avoid known pitfalls"
+
+    - path: .claude-flow/knowledge/error-codes.yaml
+      sections: [categories, errors]
+      reason: "Consistent error handling"
+
+  # High priority - load on start
+  high:
+    - path: .claude-flow/knowledge/architecture.yaml
+      sections: [layers, services, patterns]
+      reason: "Understand service dependencies"
+
+    - path: .claude-flow/knowledge/cli-commands.yaml
+      sections: [diagnostic, validation, api]
+      reason: "Know available commands"
+
+  # Medium priority - load on demand
+  medium:
+    - path: .claude-flow/knowledge/quality-gates.yaml
+      load_when: "testing, review, pre-merge"
+
+    - path: .claude-flow/knowledge/performance-baselines.yaml
+      load_when: "performance, optimization, benchmark"
+
+    - path: .claude-flow/knowledge/spec-traceability.yaml
+      load_when: "spec, implementation status, gaps"
+
+# ============================================================================
+# PROJECT CONTEXT
+# ============================================================================
+
+context:
+  # Always load
+  files:
+    - CLAUDE.md
+    - .claude-flow/PROJECT.md
+    - .claude-flow/domains.yaml
+
+  # Service interfaces for reference
+  interfaces:
+    - src/FluentPDF.Core/Services/
+
+  # DI configuration
+  di_config:
+    - src/FluentPDF.App/App.xaml.cs
+
+# ============================================================================
+# HEALTH CHECKS
+# ============================================================================
+
+health_checks:
+  - name: core_build
+    command: "dotnet build src/FluentPDF.Core --verbosity quiet"
+    on_failure: warn
+    message: "Core build failed - check for errors"
+
+  - name: recent_tests
+    command: "dotnet test tests/FluentPDF.Core.Tests --verbosity quiet --no-build"
+    on_failure: warn
+    message: "Some tests failing - review before changes"
+
+# ============================================================================
+# SESSION CONTEXT
+# ============================================================================
+
+session:
+  # Git context
+  git:
+    recent_commits: 5
+    recent_files: 10
+    current_branch: true
+
+  # Restore previous session if exists
+  restore:
+    enabled: true
+    path: .claude-flow/sessions/
+
+# ============================================================================
+# ENVIRONMENT CHECK
+# ============================================================================
+
+environment:
+  required:
+    - name: dotnet
+      command: "dotnet --version"
+      min_version: "8.0"
+
+  optional:
+    - name: node
+      command: "node --version"
+      purpose: "React prototype"
+
+    - name: pwsh
+      command: "pwsh --version"
+      purpose: "Verification scripts"
+
+# ============================================================================
+# SESSION SUMMARY DISPLAY
+# ============================================================================
+
+display:
+  template: |
+    FluentPDF Development Session
+    ═══════════════════════════════════════════════════════════════
+
+    PROJECT STRUCTURE
+    ─────────────────
+    • Core:      FluentPDF.Core (contracts, models)
+    • Rendering: FluentPDF.Rendering (PDFium/QPDF implementations)
+    • App:       FluentPDF.App (WinUI 3)
+
+    DOMAINS (see domains.yaml)
+    ─────────────────────────
+    Document | Rendering | Annotation | Form | Bookmark | Content
+    Observability | Interop | Presentation | Conversion | Validation
+
+    AGENTS (10 specialists)
+    ───────────────────────
+    pdf-rendering-specialist   | interop-validator      | ui-coordinator
+    verification-engineer      | observability-analyst  | document-operations-specialist
+    form-specialist           | annotation-specialist   | content-specialist
+    conversion-specialist
+
+    WORKFLOWS (10 workflows)
+    ────────────────────────
+    pdf-feature | rendering-fix | verification-run | performance-audit
+    ui-change | document-operations | form-feature | annotation-feature
+    interop-audit | observability-setup
+
+    KNOWLEDGE BASE
+    ──────────────
+    • known-issues.yaml   - PDFium/QPDF workarounds
+    • error-codes.yaml    - Error code registry
+    • architecture.yaml   - Service dependencies
+    • quality-gates.yaml  - Quality criteria
+    • performance-baselines.yaml - Benchmarks
+    • spec-traceability.yaml - Spec implementation status
+
+    QUICK COMMANDS
+    ──────────────
+    Build:      dotnet build src/FluentPDF.App -p:Platform=x64
+    Test:       dotnet test tests/FluentPDF.Core.Tests
+    Validate:   FluentPDF.App.exe --validate-marshalling
+    API Server: FluentPDF.App.exe --api-server --port 5000
+
+    SPEC STATUS (see spec-traceability.yaml)
+    ────────────────────────────────────────
+    Implemented: 12 | Partial: 3 | Not Started: 20
+
+# ============================================================================
+# CLAUDE-FLOW VALIDATION
+# ============================================================================
+
+validation:
+  # Run these checks silently on session start
+  checks:
+    - name: mcp_health
+      description: Verify MCP server is healthy
+      tool: mcp__claude-flow__system_health
+      on_failure:
+        action: warn
+        message: "Claude-flow MCP not responding. Some features may be unavailable."
+
+    - name: config_exists
+      description: Verify configuration files exist
+      paths:
+        - .claude-flow/config.yaml
+        - .claude-flow/domains.yaml
+      on_failure:
+        action: warn
+        message: "Missing claude-flow configuration files."
+
+    - name: agents_available
+      description: Verify agent definitions exist
+      path: .claude-flow/agents/
+      min_files: 10
+      on_failure:
+        action: warn
+        message: "Some agent definitions missing."
+
+    - name: knowledge_loaded
+      description: Verify knowledge base is accessible
+      paths:
+        - .claude-flow/knowledge/known-issues.yaml
+        - .claude-flow/knowledge/error-codes.yaml
+      on_failure:
+        action: warn
+        message: "Knowledge base files not found."
+
+  # Store validation result in memory
+  store_result:
+    key: "session_validation_result"
+    ttl: 3600  # 1 hour
+
+# ============================================================================
+# TASK-SPECIFIC CONTEXT LOADING
+# ============================================================================
+
+task_context:
+  rendering:
+    load:
+      - .claude-flow/knowledge/known-issues.yaml#pdfium
+      - .claude-flow/knowledge/performance-baselines.yaml#rendering
+    agents: [pdf-rendering-specialist]
+
+  interop:
+    load:
+      - .claude-flow/knowledge/known-issues.yaml
+      - .claude-flow/knowledge/quality-gates.yaml#interop
+    agents: [interop-validator]
+
+  form:
+    load:
+      - .claude-flow/knowledge/known-issues.yaml#pdfium
+      - .claude-flow/knowledge/spec-traceability.yaml#form-filling
+    agents: [form-specialist]
+
+  ui:
+    load:
+      - .claude-flow/knowledge/known-issues.yaml#winui
+      - .claude-flow/knowledge/architecture.yaml#presentation
+    agents: [ui-coordinator]
+
+  performance:
+    load:
+      - .claude-flow/knowledge/performance-baselines.yaml
+      - .claude-flow/knowledge/quality-gates.yaml
+    agents: [pdf-rendering-specialist, observability-analyst]

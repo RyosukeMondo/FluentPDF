@@ -69,6 +69,12 @@ public partial class ThumbnailsViewModel : ObservableObject, IDisposable
     private int _selectedPageNumber = 1;
 
     /// <summary>
+    /// Gets or sets whether the thumbnails sidebar is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isVisible = true;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ThumbnailsViewModel"/> class.
     /// </summary>
     /// <param name="thumbnailService">Service for rendering thumbnails.</param>
