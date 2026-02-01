@@ -70,10 +70,12 @@ public static class RenderEndpoints
         })
         .WithName("RenderPage")
         .WithTags("Render")
+        .WithSummary("Render a page to PNG")
+        .WithDescription("Renders a specific page of a document to PNG format with configurable DPI and zoom level.")
         .Produces(StatusCodes.Status200OK, contentType: "image/png")
-        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
-        .Produces<ErrorResponse>(StatusCodes.Status500InternalServerError);
+        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status500InternalServerError, "application/json");
 
         // Render page (GET - convenience endpoint)
         app.MapGet("/api/render/{documentId}/{pageIndex}", async (
@@ -129,9 +131,11 @@ public static class RenderEndpoints
         })
         .WithName("RenderPageGet")
         .WithTags("Render")
+        .WithSummary("Render a page to PNG (convenience GET endpoint)")
+        .WithDescription("Convenience GET endpoint for rendering a page. Accepts DPI and zoom as query parameters.")
         .Produces(StatusCodes.Status200OK, contentType: "image/png")
-        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
-        .Produces<ErrorResponse>(StatusCodes.Status404NotFound)
-        .Produces<ErrorResponse>(StatusCodes.Status500InternalServerError);
+        .Produces<ErrorResponse>(StatusCodes.Status400BadRequest, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status500InternalServerError, "application/json");
     }
 }

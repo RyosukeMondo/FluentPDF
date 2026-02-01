@@ -63,6 +63,7 @@
 
     <!-- ASP.NET Core for REST API server -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
   </ItemGroup>
 
   <!-- Project references (100% reusable) -->

@@ -3,20 +3,17 @@
 ## Project Structure
 - `src/FluentPDF.Core` - Business logic (.NET 8, cross-platform)
 - `src/FluentPDF.Rendering` - PDF rendering (cross-platform)
-- `src/FluentPDF.App` - WinUI 3 UI (Windows-only)
+- `src/FluentPDF.Avalonia` - Avalonia UI (cross-platform)
 - `tests/` - xUnit tests
 
 ## Build Commands
 ```bash
-# Cross-platform (Linux/macOS/Windows)
+# All projects are cross-platform (.NET 8)
 dotnet build src/FluentPDF.Core
 dotnet build src/FluentPDF.Rendering
+dotnet build src/FluentPDF.Avalonia
 dotnet test tests/FluentPDF.Core.Tests
-
-# Windows-only (WinUI 3) - requires x64 platform
-dotnet build src/FluentPDF.App -p:Platform=x64
 dotnet test tests/FluentPDF.Architecture.Tests
-dotnet test tests/FluentPDF.App.Tests
 ```
 
 ## Windows Build Environment
@@ -45,20 +42,20 @@ FluentPDF supports command-line diagnostic operations for testing and troublesho
 
 ```bash
 # Test rendering of a PDF file (returns exit code for automation)
-FluentPDF.App.exe --test-render "path/to/file.pdf"
+FluentPDF.Avalonia.exe --test-render "path/to/file.pdf"
 # Exit codes: 0=success, 1=load failed, 2=render failed, 3=UI failed
 
 # Display system diagnostics (OS, .NET, PDFium version, memory)
-FluentPDF.App.exe --diagnostics
+FluentPDF.Avalonia.exe --diagnostics
 
 # Render all pages of a PDF to PNG files
-FluentPDF.App.exe --render-test "path/to/file.pdf" --output "output/directory"
+FluentPDF.Avalonia.exe --render-test "path/to/file.pdf" --output "output/directory"
 
 # Enable verbose logging for any command
-FluentPDF.App.exe --diagnostics --verbose
+FluentPDF.Avalonia.exe --diagnostics --verbose
 
 # Capture crash dumps on failures (Windows Error Reporting)
-FluentPDF.App.exe --test-render "file.pdf" --capture-crash-dump
+FluentPDF.Avalonia.exe --test-render "file.pdf" --capture-crash-dump
 ```
 
 These commands execute without showing UI and are useful for:
@@ -129,13 +126,13 @@ FluentPDF includes an embedded REST API server for autonomous E2E verification w
 
 ```bash
 # Start API server on default port (5000)
-FluentPDF.App.exe --api-server
+FluentPDF.Avalonia.exe --api-server
 
 # Start on custom port in headless mode (no UI)
-FluentPDF.App.exe --api-server --port 8080 --headless
+FluentPDF.Avalonia.exe --api-server --port 8080 --headless
 
 # Start with verbose logging
-FluentPDF.App.exe --api-server --verbose
+FluentPDF.Avalonia.exe --api-server --verbose
 ```
 
 ### API Endpoints

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-01T15:34:53.135Z",
+  "timestamp": "2026-02-01T15:49:53.123Z",
   "projectRoot": "C:\\Users\\ryosu\\repos\\FluentPDF",
   "structure": {
     "hasPackageJson": true,
@@ -7,5 +7,5 @@
     "hasClaudeConfig": true,
     "hasClaudeFlow": true
   },
-  "scannedAt": 1769960093135
+  "scannedAt": 1769960993124
 }

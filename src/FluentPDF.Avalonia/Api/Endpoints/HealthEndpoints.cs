@@ -2,8 +2,7 @@
 
 using System.Reflection;
 using FluentPDF.Avalonia.Api.Models;
-using FluentPDF.Avalonia.Api.Services;
-using FluentPDF.Avalonia.Services;
+using FluentPDF.Core.Services;
 using FluentPDF.Rendering.Interop;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,9 +17,9 @@ public static class HealthEndpoints
     /// <summary>
     /// Maps health endpoints to the application.
     /// </summary>
-    public static void Map(WebApplication app, IOperationWatchdog? watchdog = null)
+    public static void Map(WebApplication app)
     {
-        app.MapGet("/api/health", (IDocumentSessionManager? sessionManager) =>
+        app.MapGet("/api/health", () =>
         {
             var version = Assembly.GetExecutingAssembly()
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
@@ -32,83 +31,17 @@ public static class HealthEndpoints
             if (!pdfiumLoaded)
             {
                 return Results.Json(
-                    new HealthResponse("unhealthy", version, false, 0, DateTime.UtcNow),
+                    new HealthResponse("unhealthy", version, false),
                     statusCode: StatusCodes.Status503ServiceUnavailable);
             }
 
-            var activeSessions = sessionManager?.SessionCount ?? 0;
-
-            return Results.Ok(new HealthResponse("healthy", version, true, activeSessions, DateTime.UtcNow));
+            return Results.Ok(new HealthResponse("healthy", version, true));
         })
         .WithName("HealthCheck")
         .WithTags("Health")
-        .Produces<HealthResponse>()
-        .Produces<HealthResponse>(StatusCodes.Status503ServiceUnavailable);
-
-        // Watchdog endpoints (if watchdog is available)
-        if (watchdog != null)
-        {
-            // Get watchdog status (all operations)
-            app.MapGet("/api/health/watchdog", () =>
-            {
-                var activeOps = watchdog.GetActiveOperations();
-                var hungOps = watchdog.GetHungOperations();
-
-                return Results.Ok(new
-                {
-                    TotalActive = activeOps.Length,
-                    TotalHung = hungOps.Length,
-                    IsHealthy = watchdog.IsHealthy(),
-                    Operations = activeOps.Select(op => new
-                    {
-                        op.OperationId,
-                        op.OperationName,
-                        op.StartTime,
-                        ElapsedMs = op.ElapsedTime.TotalMilliseconds,
-                        TimeoutMs = op.TimeoutMs,
-                        IsHung = op.IsHung,
-                        HungFor = op.IsHung ? op.ElapsedTime.TotalMilliseconds - op.TimeoutMs : 0,
-                        op.ErrorMessage
-                    }).ToList()
-                });
-            })
-            .WithName("WatchdogStatus")
-            .WithTags("Health")
-            .Produces<object>();
-
-            // Get only hung operations
-            app.MapGet("/api/health/hung", () =>
-            {
-                var hungOps = watchdog.GetHungOperations();
-
-                if (hungOps.Length == 0)
-                {
-                    return Results.Ok(new
-                    {
-                        Message = "No hung operations detected",
-                        HungOperations = Array.Empty<object>()
-                    });
-                }
-
-                return Results.Json(new
-                {
-                    Message = $"WARNING: {hungOps.Length} hung operation(s) detected",
-                    HungOperations = hungOps.Select(op => new
-                    {
-                        op.OperationId,
-                        op.OperationName,
-                        op.StartTime,
-                        ElapsedMs = op.ElapsedTime.TotalMilliseconds,
-                        TimeoutMs = op.TimeoutMs,
-                        HungForMs = op.ElapsedTime.TotalMilliseconds - op.TimeoutMs,
-                        Severity = op.ElapsedTime.TotalMilliseconds > op.TimeoutMs * 2 ? "CRITICAL" : "WARNING"
-                    }).ToList()
-                }, statusCode: StatusCodes.Status503ServiceUnavailable);
-            })
-            .WithName("GetHungOperations")
-            .WithTags("Health")
-            .Produces<object>()
-            .Produces<object>(StatusCodes.Status503ServiceUnavailable);
-        }
+        .WithSummary("Check API server health")
+        .WithDescription("Returns the health status of the API server, including version and PDFium initialization state.")
+        .Produces<HealthResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<HealthResponse>(StatusCodes.Status503ServiceUnavailable, "application/json");
     }
 }

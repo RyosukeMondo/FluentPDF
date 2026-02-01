@@ -9,7 +9,7 @@ param(
     [string]$File = ""
 )
 
-$exePath = ".\src\FluentPDF.App\bin\x64\Debug\net9.0-windows10.0.19041.0\win-x64\FluentPDF.App.exe"
+$exePath = ".\src\FluentPDF.Avalonia\bin\Debug\net8.0\FluentPDF.Avalonia.exe"
 
 switch ($Action.ToLower()) {
     "ui" {
@@ -31,7 +31,7 @@ switch ($Action.ToLower()) {
     }
     "build" {
         Write-Host "Building FluentPDF..." -ForegroundColor Cyan
-        dotnet build src\FluentPDF.App -p:Platform=x64 -p:SkipMarshallingVerification=true
+        dotnet build src\FluentPDF.Avalonia -p:AvaloniaXamlValidationMode=Skip
     }
     "help" {
         Write-Host "FluentPDF Quick Launcher" -ForegroundColor Cyan

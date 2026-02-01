@@ -1,6 +1,6 @@
 # FluentPDF
 
-High-quality, ethically-designed PDF application for Windows built on WinUI 3.
+High-quality, ethically-designed cross-platform PDF application built on Avalonia UI.
 
 [![Build Status](https://github.com/rmondo/FluentPDF/actions/workflows/build.yml/badge.svg)](https://github.com/rmondo/FluentPDF/actions/workflows/build.yml)
 [![Tests](https://github.com/rmondo/FluentPDF/actions/workflows/test.yml/badge.svg)](https://github.com/rmondo/FluentPDF/actions/workflows/test.yml)
@@ -10,7 +10,7 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 ## Features
 
 ### PDF Viewing
-- **Multi-Tab Interface**: Work with multiple PDF files simultaneously using WinUI 3 TabView
+- **Multi-Tab Interface**: Work with multiple PDF files simultaneously
 - **Recent Files**: Quick access to recently opened files via File menu and Windows Jump List
 - **High-Quality Rendering**: View PDF documents using Google's PDFium rendering engine
 - **HiDPI Display Scaling**: Automatic crisp rendering on high-resolution displays (4K, Surface devices)
@@ -31,7 +31,7 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
   - **All View Modes**: Annotations work in single page, continuous scroll, and two-page views
   - **Visual Feedback**: Crosshair cursor and status bar messages for active tools
   - **Lossless Persistence**: Annotations saved directly to PDF files with PDFium
-  - **Win2D GPU-Accelerated Rendering**: Smooth, high-performance annotation rendering
+  - **GPU-Accelerated Rendering**: Smooth, high-performance annotation rendering
 - **Thumbnails Sidebar**: Visual page navigation with thumbnail previews
   - Click thumbnails to jump to any page
   - Lazy loading with LRU cache (< 50MB memory for 100 pages)
@@ -46,7 +46,7 @@ High-quality, ethically-designed PDF application for Windows built on WinUI 3.
 
 ### PDF Form Filling
 - **Interactive Form Fields**: Fill PDF forms with text fields, checkboxes, and radio buttons
-- **Overlay Controls**: Form fields rendered as WinUI controls overlaid on PDF pages
+- **Overlay Controls**: Form fields rendered as Avalonia controls overlaid on PDF pages
 - **Keyboard Navigation**: Tab through form fields in document-defined tab order
 - **Real-Time Validation**: Validate required fields, max length, and format masks as you type
 - **Visual Feedback**: Clear visual states for hover, focus, error, and read-only fields
@@ -113,7 +113,7 @@ See [PERFORMANCE.md](docs/PERFORMANCE.md) for detailed performance characteristi
 - **Visual Studio 2022** with the following workloads:
   - .NET desktop development
   - Desktop development with C++ (for vcpkg)
-  - Windows application development (for WinUI 3)
+  - Windows application development (for Avalonia UI)
 - **Git** (for cloning and vcpkg)
 - **PowerShell 5.1+** (included with Windows)
 - **WebView2 Runtime** (for DOCX conversion - usually pre-installed on Windows 11)
@@ -633,7 +633,7 @@ The overall score is calculated using weighted metrics:
 
 ```
 FluentPDF
-├── FluentPDF.App          # WinUI 3 presentation layer (MVVM)
+├── FluentPDF.App          # Avalonia UI presentation layer (MVVM)
 │   ├── ViewModels/        # CommunityToolkit.Mvvm ViewModels
 │   ├── Views/             # XAML pages and controls
 │   └── Services/          # UI-specific services (navigation)
@@ -660,7 +660,7 @@ FluentPDF
 - **MVVM pattern**: ViewModels use CommunityToolkit.Mvvm source generators (`[ObservableProperty]`, `[RelayCommand]`)
 - **Error handling**: FluentResults `Result<T>` pattern instead of exceptions for expected failures
 - **Observability**: Structured logging with Serilog (JSON format) + OpenTelemetry
-- **PDFium threading constraint**: All PDFium services use `Task.Yield()` instead of `Task.Run` to prevent AccessViolation crashes in .NET 9.0 WinUI 3 self-contained deployments. See [ARCHITECTURE.md](docs/ARCHITECTURE.md#pdfium-threading-constraints) for details.
+- **PDFium threading constraint**: All PDFium services use `Task.Yield()` instead of `Task.Run` to prevent AccessViolation crashes in .NET 9.0 Avalonia UI self-contained deployments. See [ARCHITECTURE.md](docs/ARCHITECTURE.md#pdfium-threading-constraints) for details.
 
 ## Testing
 
@@ -988,7 +988,7 @@ FluentPDF/
 │   ├── ARCHITECTURE.md      # Architectural decision records
 │   └── TESTING.md           # Testing strategy
 ├── src/                     # Source code
-│   ├── FluentPDF.App/       # WinUI 3 application
+│   ├── FluentPDF.App/       # Avalonia UI application
 │   ├── FluentPDF.Core/      # Business logic
 │   └── FluentPDF.Rendering/ # PDF rendering
 ├── tests/                   # Test projects
@@ -1019,7 +1019,7 @@ FluentPDF/
 - **Mammoth.NET**: Semantic DOCX to HTML converter
 - **WebView2**: Microsoft's Chromium-based rendering engine
 - **vcpkg**: Microsoft's C/C++ package manager
-- **WinUI 3**: Microsoft's native Windows UI framework
+- **Avalonia UI**: Microsoft's native Windows UI framework
 - **CommunityToolkit.Mvvm**: .NET Community MVVM toolkit
 - **FluentResults**: Functional error handling library
 - **Serilog**: Structured logging framework
