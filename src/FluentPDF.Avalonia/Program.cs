@@ -37,9 +37,36 @@ internal sealed class Program
         catch (Exception ex)
         {
             DiagnosticLogger.LogError("FATAL: Unhandled exception in Main", ex);
-            Console.WriteLine($"\n\nFATAL ERROR - Check log file on desktop: {DiagnosticLogger.GetLogFilePath()}");
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
+
+#if DEBUG
+            // LOUD ERROR MESSAGE for development builds
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\n");
+            Console.WriteLine("╔═══════════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                       FATAL APPLICATION ERROR                      ║");
+            Console.WriteLine("╚═══════════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Error Type: {ex.GetType().Name}");
+            Console.WriteLine($"Message:    {ex.Message}");
+            Console.WriteLine();
+            Console.WriteLine($"Log File:   {DiagnosticLogger.GetLogFilePath()}");
+            Console.ResetColor();
+            Console.WriteLine();
+
+            // Only try to read key if console input is available
+            if (!Console.IsInputRedirected)
+            {
+                Console.WriteLine("Press any key to exit...");
+                try { Console.ReadKey(); } catch { }
+            }
+            else
+            {
+                Console.WriteLine("Application failed to start. See log file above for details.");
+            }
+#endif
+
             Environment.Exit(1);
         }
         finally

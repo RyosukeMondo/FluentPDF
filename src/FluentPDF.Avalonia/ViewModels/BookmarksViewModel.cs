@@ -26,7 +26,17 @@ public partial class BookmarksViewModel : ObservableObject
     /// <summary>
     /// Gets or sets a value indicating whether the bookmarks panel is visible.
     /// </summary>
-    [ObservableProperty]
+    public bool IsPanelVisible
+    {
+        get => _isPanelVisible;
+        set
+        {
+            if (SetProperty(ref _isPanelVisible, value))
+            {
+                _logger.LogInformation("Bookmarks panel visibility changed: {Visible}", value);
+            }
+        }
+    }
     private bool _isPanelVisible = true;
 
     /// <summary>
@@ -79,7 +89,6 @@ public partial class BookmarksViewModel : ObservableObject
         _bookmarkService = bookmarkService ?? throw new ArgumentNullException(nameof(bookmarkService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        LoadPanelState();
         _logger.LogInformation("BookmarksViewModel initialized. PanelVisible={PanelVisible}, PanelWidth={PanelWidth}",
             IsPanelVisible, PanelWidth);
     }
@@ -156,17 +165,6 @@ public partial class BookmarksViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Toggles the visibility of the bookmarks panel and saves the state.
-    /// </summary>
-    [RelayCommand]
-    private void TogglePanel()
-    {
-        IsPanelVisible = !IsPanelVisible;
-        _logger.LogInformation("Bookmarks panel toggled. Visible={Visible}", IsPanelVisible);
-        SavePanelState();
-    }
-
-    /// <summary>
     /// Navigates to the page specified by a bookmark.
     /// </summary>
     /// <param name="bookmark">The bookmark to navigate to.</param>
@@ -201,62 +199,6 @@ public partial class BookmarksViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Saves the current panel state (visibility and width) to application settings.
-    /// </summary>
-    private void SavePanelState()
-    {
-        try
-        {
-            // TODO: Implement Avalonia settings storage (use cross-platform paths)
-            var localFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var settingsPath = Path.Combine(localFolder, "FluentPDF", "bookmarks.json");
-            _logger.LogDebug("Panel state saved to {Path}. Visible={Visible}, Width={Width}", settingsPath, IsPanelVisible, PanelWidth);
-
-            // COMMENTED OUT - WinUI 3 implementation:
-            // var settings = ApplicationData.Current.LocalSettings;
-            // settings.Values["BookmarksPanelVisible"] = IsPanelVisible;
-            // settings.Values["BookmarksPanelWidth"] = PanelWidth;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to save panel state");
-        }
-    }
-
-    /// <summary>
-    /// Loads the panel state (visibility and width) from application settings.
-    /// </summary>
-    private void LoadPanelState()
-    {
-        try
-        {
-            // TODO: Implement Avalonia settings storage (use cross-platform paths)
-            var localFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var settingsPath = Path.Combine(localFolder, "FluentPDF", "bookmarks.json");
-            _logger.LogDebug("Panel state loaded from {Path}. Visible={Visible}, Width={Width}", settingsPath, IsPanelVisible, PanelWidth);
-
-            // COMMENTED OUT - WinUI 3 implementation:
-            // var settings = ApplicationData.Current.LocalSettings;
-            //
-            // if (settings.Values.TryGetValue("BookmarksPanelVisible", out var visible))
-            // {
-            //     IsPanelVisible = (bool)visible;
-            // }
-            //
-            // if (settings.Values.TryGetValue("BookmarksPanelWidth", out var width))
-            // {
-            //     var w = Convert.ToDouble(width);
-            //     PanelWidth = Math.Clamp(w, 150, 600);
-            // }
-
-            _logger.LogDebug("Panel state loaded. Visible={Visible}, Width={Width}", IsPanelVisible, PanelWidth);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to load panel state, using defaults");
-        }
-    }
 
     /// <summary>
     /// Called when a property value changes.
@@ -271,6 +213,5 @@ public partial class BookmarksViewModel : ObservableObject
         {
             PanelWidth = clampedWidth;
         }
-        SavePanelState();
     }
 }

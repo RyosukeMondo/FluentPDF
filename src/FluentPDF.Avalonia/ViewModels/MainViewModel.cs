@@ -350,12 +350,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Clears all recent files.
+    /// Clears all recent files from the recent files list.
     /// </summary>
-    [RelayCommand]
-    private void ClearRecentFiles()
+    public void ClearAllRecentFiles()
     {
-        _logger.LogInformation("ClearRecentFiles command invoked");
+        _logger.LogInformation("ClearRecentFiles invoked");
         _recentFilesService.ClearRecentFiles();
     }
 
@@ -391,43 +390,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
             // TODO: Implement Avalonia dialog service
             _logger.LogError("Dialog: {Title} - {Message}", title, message);
             await Task.CompletedTask;
-
-            // COMMENTED OUT - WinUI 3 implementation:
-            // // Initial delay to let window fully initialize
-            // await Task.Delay(200);
-            //
-            // // Wait for XamlRoot to be available with retries (up to 2 seconds)
-            // Microsoft.UI.Xaml.XamlRoot? xamlRoot = null;
-            // for (int i = 0; i < 20; i++)
-            // {
-            //     xamlRoot = App.MainWindow?.Content?.XamlRoot;
-            //     if (xamlRoot != null)
-            //         break;
-            //
-            //     await Task.Delay(100);
-            // }
-            //
-            // if (xamlRoot == null)
-            // {
-            //     // XamlRoot not available, log and return
-            //     System.Diagnostics.Debug.WriteLine($"Error: Unable to show dialog - XamlRoot not available after retries. Title: {title}, Message: {message}");
-            //     return;
-            // }
-            //
-            // var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
-            // {
-            //     Title = title,
-            //     Content = message,
-            //     CloseButtonText = "OK",
-            //     XamlRoot = xamlRoot
-            // };
-            //
-            // await dialog.ShowAsync();
         }
         catch (Exception ex)
         {
-            // If dialog fails, at least log it
-            System.Diagnostics.Debug.WriteLine($"Failed to show error dialog: {ex.Message}. Original error - Title: {title}, Message: {message}");
+            // If dialog fails, log via ILogger
+            _logger.LogError(ex, "Failed to show error dialog. Original error - Title: {Title}, Message: {Message}", title, message);
         }
     }
 }

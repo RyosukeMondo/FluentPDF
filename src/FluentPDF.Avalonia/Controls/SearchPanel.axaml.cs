@@ -6,11 +6,10 @@ using System;
 namespace FluentPDF.Avalonia.Controls;
 
 /// <summary>
-/// Search panel control with liquid glass aesthetic and slide animations.
+/// Search panel control with slide animations.
 /// </summary>
 /// <remarks>
-/// Implements task 2.3 of liquid-glass-ui spec:
-/// - Uses GlassPanel container with 20px blur
+/// SIMPLIFIED: Removed complex GlassPanel, now uses simple Border with:
 /// - Slide-in/out animations (250ms cubic-ease-out)
 /// - Preserves existing search functionality
 /// - Maintains ViewModel separation
@@ -98,7 +97,7 @@ public partial class SearchPanel : UserControl
     /// <param name="animated">Whether to animate the transition (250ms) or apply instantly.</param>
     private void UpdatePanelTransform(bool animated)
     {
-        if (this.FindControl<GlassPanel>("GlassPanelContainer") is not { } glassPanel)
+        if (this.FindControl<Border>("SearchPanelContainer") is not { } container)
         {
             return;
         }
@@ -114,21 +113,21 @@ public partial class SearchPanel : UserControl
         };
 
         // Apply transform and opacity
-        glassPanel.RenderTransform = transform;
-        glassPanel.Opacity = IsPanelVisible ? 1.0 : 0.0;
+        container.RenderTransform = transform;
+        container.Opacity = IsPanelVisible ? 1.0 : 0.0;
 
         // If not animated, disable transitions temporarily
         if (!animated)
         {
-            var transitions = glassPanel.Transitions;
-            glassPanel.Transitions = null;
+            var transitions = container.Transitions;
+            container.Transitions = null;
 
             // Re-enable transitions on next layout pass
             global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                if (glassPanel != null)
+                if (container != null)
                 {
-                    glassPanel.Transitions = transitions;
+                    container.Transitions = transitions;
                 }
             }, global::Avalonia.Threading.DispatcherPriority.Loaded);
         }

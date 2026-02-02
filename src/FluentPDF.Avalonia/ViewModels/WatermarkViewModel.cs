@@ -652,24 +652,12 @@ public partial class WatermarkViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Sets rotation to diagonal (45 degrees).
+    /// Sets rotation to diagonal (45 degrees) and regenerates preview.
     /// </summary>
-    [RelayCommand]
-    private async Task SetDiagonalAsync()
+    public async Task SetDiagonalRotation()
     {
         _logger.LogInformation("Setting diagonal rotation");
-
-        if (SelectedType == WatermarkType.Text)
-        {
-            TextConfig.RotationDegrees = 45f;
-            OnPropertyChanged(nameof(TextConfig));
-        }
-        else
-        {
-            ImageConfig.RotationDegrees = 45f;
-            OnPropertyChanged(nameof(ImageConfig));
-        }
-
+        Rotation = 45f; // Uses existing Rotation property
         await GeneratePreviewAsync();
     }
 

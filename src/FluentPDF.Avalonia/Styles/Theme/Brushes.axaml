@@ -82,13 +82,13 @@
     </LinearGradientBrush>
 
     <!-- Radial Gradient for Spotlight Effects -->
-    <RadialGradientBrush x:Key="SpotlightGradientBrush" Center="50%,50%" GradientOrigin="50%,50%" Radius="1.0">
+    <RadialGradientBrush x:Key="SpotlightGradientBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="100%" RadiusY="100%">
         <GradientStop Color="#33007ACC" Offset="0.0" />
         <GradientStop Color="#00007ACC" Offset="1.0" />
     </RadialGradientBrush>
 
     <!-- Ripple Effect Gradient (for button animations) -->
-    <RadialGradientBrush x:Key="RippleGradientBrush" Center="50%,50%" GradientOrigin="50%,50%" Radius="0.0">
+    <RadialGradientBrush x:Key="RippleGradientBrush" Center="50%,50%" GradientOrigin="50%,50%" RadiusX="0%" RadiusY="0%">
         <GradientStop Color="#4D007ACC" Offset="0.0" />
         <GradientStop Color="#00007ACC" Offset="1.0" />
     </RadialGradientBrush>

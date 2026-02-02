@@ -9,18 +9,18 @@
              x:DataType="vm:SearchPanelViewModel"
              x:Name="SearchPanelRoot">
 
-    <!-- Glass panel container with 20px blur and slide animations -->
-    <controls:GlassPanel x:Name="GlassPanelContainer"
-                        BlurRadius="20"
-                        TintOpacity="0.6"
-                        Elevation="8"
-                        CornerRadius="0,0,8,8"
-                        Padding="12,8">
+    <!-- SIMPLIFIED: Simple Border replaces complex GlassPanel -->
+    <Border x:Name="SearchPanelContainer"
+            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+            BorderThickness="0,0,0,1"
+            CornerRadius="0,0,8,8"
+            Padding="12,8"
+            BoxShadow="0 4 8 0 #40000000">
 
         <!-- Slide-in/out animation transitions -->
-        <controls:GlassPanel.Transitions>
+        <Border.Transitions>
             <Transitions>
-                <!-- Slide from top animation (250ms cubic-ease-out) -->
                 <TransformOperationsTransition Property="RenderTransform"
                                               Duration="0:0:0.25"
                                               Easing="CubicEaseOut"/>
@@ -28,12 +28,10 @@
                                  Duration="0:0:0.25"
                                  Easing="CubicEaseOut"/>
             </Transitions>
-        </controls:GlassPanel.Transitions>
+        </Border.Transitions>
 
-        <!-- Bottom border separator -->
-        <controls:GlassPanel.Child>
-            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                    BorderThickness="0,0,0,1">
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,0,0,1">
 
         <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto">
 
@@ -145,7 +143,6 @@
                     Height="32"
                     AutomationProperties.Name="Close search"/>
         </Grid>
-            </Border>
-        </controls:GlassPanel.Child>
-    </controls:GlassPanel>
+        </Border>
+    </Border>
 </UserControl>

@@ -19,7 +19,7 @@
         <converters:LogLevelToColorConverter x:Key="LogLevelToColorConverter" />
     </Window.Resources>
 
-    <Grid Background="{DynamicResource ApplicationPageBackgroundBrush}">
+    <Grid x:Name="MainGrid" Background="{DynamicResource ApplicationPageBackgroundBrush}">
         <Grid.RowDefinitions>
             <!-- Menu bar -->
             <RowDefinition Height="Auto" />
@@ -27,8 +27,8 @@
             <RowDefinition Height="Auto" />
             <!-- Tab view -->
             <RowDefinition Height="*" />
-            <!-- Debug console - ALWAYS VISIBLE -->
-            <RowDefinition Height="250" MinHeight="100" />
+            <!-- Debug console - Hidden by default -->
+            <RowDefinition Height="0" MinHeight="0" />
         </Grid.RowDefinitions>
 
         <!-- Menu Bar -->
@@ -70,26 +70,26 @@
 
         <!-- Toolbar with Acrylic Background -->
         <Border Grid.Row="1"
-                Background="{DynamicResource ToolbarAcrylicMaterial}"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                 BorderBrush="{DynamicResource GlassBorderBrush}"
                 BorderThickness="0,0,0,1"
-                Padding="{StaticResource SpacingM}">
+                Padding="16">
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpacingS}">
 
                 <!-- File Operations -->
-                <controls:LiquidButton Content="Open"
+                <Button Content="Open"
                                       x:Name="ToolbarOpenButton"
                                       AutomationProperties.AutomationId="ToolbarOpenButton"
                                       ToolTip.Tip="Open PDF file (Ctrl+O)"
-                                      Padding="{StaticResource SpacingM},6" />
+                                      Padding="16,6" />
 
                 <Separator Width="1"
                           Height="24"
                           Background="{DynamicResource GlassBorderBrush}"
-                          Margin="{StaticResource SpacingS},0" />
+                          Margin="12,0" />
 
                 <!-- Navigation -->
-                <controls:LiquidButton Content="◀"
+                <Button Content="◀"
                                       x:Name="ToolbarPreviousPageButton"
                                       AutomationProperties.AutomationId="ToolbarPreviousPageButton"
                                       ToolTip.Tip="Previous page"
@@ -112,7 +112,7 @@
                           VerticalAlignment="Center"
                           Margin="4,0" />
 
-                <controls:LiquidButton Content="▶"
+                <Button Content="▶"
                                       x:Name="ToolbarNextPageButton"
                                       AutomationProperties.AutomationId="ToolbarNextPageButton"
                                       ToolTip.Tip="Next page"
@@ -122,10 +122,10 @@
                 <Separator Width="1"
                           Height="24"
                           Background="{DynamicResource GlassBorderBrush}"
-                          Margin="{StaticResource SpacingS},0" />
+                          Margin="12,0" />
 
                 <!-- Zoom Controls -->
-                <controls:LiquidButton Content="−"
+                <Button Content="−"
                                       x:Name="ToolbarZoomOutButton"
                                       AutomationProperties.AutomationId="ToolbarZoomOutButton"
                                       ToolTip.Tip="Zoom out"
@@ -146,7 +146,7 @@
                     <ComboBoxItem Content="Fit Page" />
                 </ComboBox>
 
-                <controls:LiquidButton Content="+"
+                <Button Content="+"
                                       x:Name="ToolbarZoomInButton"
                                       AutomationProperties.AutomationId="ToolbarZoomInButton"
                                       ToolTip.Tip="Zoom in"
@@ -156,7 +156,7 @@
                 <Separator Width="1"
                           Height="24"
                           Background="{DynamicResource GlassBorderBrush}"
-                          Margin="{StaticResource SpacingS},0" />
+                          Margin="12,0" />
 
                 <!-- View Toggles -->
                 <ToggleButton x:Name="ToolbarToggleThumbnailsButton"
@@ -173,7 +173,7 @@
                              Padding="12,6"
                              MinWidth="40" />
 
-                <controls:LiquidButton Content="🔍"
+                <Button Content="🔍"
                                       x:Name="ToolbarSearchButton"
                                       AutomationProperties.AutomationId="ToolbarSearchButton"
                                       ToolTip.Tip="Search (Ctrl+F)"
@@ -190,13 +190,15 @@
                     AutomationProperties.AutomationId="MainTabView">
 
             <TabControl.ItemTemplate>
-                <DataTemplate DataType="vm:TabViewModel">
-                    <TextBlock Text="{Binding DisplayName}" />
+                <DataTemplate>
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="13"
+                               VerticalAlignment="Center"/>
                 </DataTemplate>
             </TabControl.ItemTemplate>
 
             <TabControl.ContentTemplate>
-                <DataTemplate DataType="vm:TabViewModel">
+                <DataTemplate>
                     <controls:PdfViewerControl ViewerViewModel="{Binding ViewerViewModel}" />
                 </DataTemplate>
             </TabControl.ContentTemplate>
@@ -272,7 +274,7 @@
                                     Padding="12,6" />
                             <ToggleButton x:Name="ToggleConsoleButton"
                                           Content="▼"
-                                          IsChecked="True"
+                                          IsChecked="False"
                                           Padding="8,6"
                                           ToolTip.Tip="Toggle console visibility" />
                         </StackPanel>

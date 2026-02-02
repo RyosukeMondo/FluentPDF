@@ -92,7 +92,8 @@ public partial class DiagnosticsPanelViewModel : ObservableObject, IDisposable
         _metricsService = metricsService ?? throw new ArgumentNullException(nameof(metricsService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        LoadPanelState();
+        // Always start hidden
+        IsVisible = false;
 
         // Create and configure the update timer with 500ms interval
         _updateTimer = new DispatcherTimer
@@ -215,64 +216,6 @@ public partial class DiagnosticsPanelViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>
-    /// Toggles the visibility of the diagnostics panel.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleVisibility()
-    {
-        IsVisible = !IsVisible;
-        _logger.LogInformation("Diagnostics panel visibility toggled. Visible={Visible}", IsVisible);
-        SavePanelState();
-    }
-
-    /// <summary>
-    /// Saves the current panel state to application settings.
-    /// </summary>
-    private void SavePanelState()
-    {
-        try
-        {
-            // TODO: Implement Avalonia settings storage (use cross-platform paths)
-            var localFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var settingsPath = Path.Combine(localFolder, "FluentPDF", "diagnostics.json");
-            _logger.LogDebug("Panel state saved to {Path}. Visible={Visible}", settingsPath, IsVisible);
-
-            // COMMENTED OUT - WinUI 3 implementation:
-            // var settings = ApplicationData.Current.LocalSettings;
-            // settings.Values["DiagnosticsPanelVisible"] = IsVisible;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to save panel state");
-        }
-    }
-
-    /// <summary>
-    /// Loads the panel state from application settings.
-    /// </summary>
-    private void LoadPanelState()
-    {
-        try
-        {
-            // TODO: Implement Avalonia settings storage (use cross-platform paths)
-            var localFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var settingsPath = Path.Combine(localFolder, "FluentPDF", "diagnostics.json");
-            _logger.LogDebug("Panel state loaded from {Path}. Visible={Visible}", settingsPath, IsVisible);
-
-            // COMMENTED OUT - WinUI 3 implementation:
-            // var settings = ApplicationData.Current.LocalSettings;
-            //
-            // if (settings.Values.TryGetValue("DiagnosticsPanelVisible", out var visible))
-            // {
-            //     IsVisible = (bool)visible;
-            // }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to load panel state, using defaults");
-        }
-    }
 
     /// <summary>
     /// Disposes resources used by the view model.

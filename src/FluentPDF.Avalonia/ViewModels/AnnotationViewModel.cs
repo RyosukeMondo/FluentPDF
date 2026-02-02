@@ -78,8 +78,25 @@ public partial class AnnotationViewModel : ObservableObject
 
     /// <summary>
     /// Gets or sets a value indicating whether the annotation toolbar is visible.
+    /// Automatically clears the active tool when toolbar is hidden.
     /// </summary>
-    [ObservableProperty]
+    public bool IsToolbarVisible
+    {
+        get => _isToolbarVisible;
+        set
+        {
+            if (SetProperty(ref _isToolbarVisible, value))
+            {
+                _logger.LogInformation("Annotation toolbar visibility changed: {Visible}", value);
+
+                // Clear tool selection when hiding toolbar
+                if (!value)
+                {
+                    ActiveTool = AnnotationTool.None;
+                }
+            }
+        }
+    }
     private bool _isToolbarVisible;
 
     /// <summary>
@@ -622,22 +639,6 @@ public partial class AnnotationViewModel : ObservableObject
     }
 
     private bool CanSaveAnnotations() => _currentDocument != null && !IsLoading;
-
-    /// <summary>
-    /// Toggles the visibility of the annotation toolbar.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleToolbar()
-    {
-        _logger.LogInformation("Toggling annotation toolbar. Current={Current}", IsToolbarVisible);
-        IsToolbarVisible = !IsToolbarVisible;
-
-        // Clear tool selection when hiding toolbar
-        if (!IsToolbarVisible)
-        {
-            ActiveTool = AnnotationTool.None;
-        }
-    }
 
     /// <summary>
     /// Selects an annotation for editing or deletion.

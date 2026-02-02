@@ -172,6 +172,15 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         _isRunning = true;
 
         _logger.LogInformation("Verification API server started at {BaseUrl}", _baseUrl);
+        _logger.LogInformation("  Swagger UI:  {BaseUrl}/", _baseUrl);
+        _logger.LogInformation("  OpenAPI:     {BaseUrl}/swagger/v1/swagger.json", _baseUrl);
+        _logger.LogInformation("  Health:      GET {BaseUrl}/api/health", _baseUrl);
+        _logger.LogInformation("  Load:        POST {BaseUrl}/api/document/load", _baseUrl);
+        _logger.LogInformation("  Render:      POST {BaseUrl}/api/render", _baseUrl);
+        _logger.LogInformation("  Verify:      POST {BaseUrl}/api/verify/render", _baseUrl);
+
+#if DEBUG
+        // Debug console output for development convenience
         Console.WriteLine($"Verification API server running at {_baseUrl}");
         Console.WriteLine($"  Swagger UI:  {_baseUrl}/");
         Console.WriteLine($"  OpenAPI:     {_baseUrl}/swagger/v1/swagger.json");
@@ -179,6 +188,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         Console.WriteLine($"  Load:        POST {_baseUrl}/api/document/load");
         Console.WriteLine($"  Render:      POST {_baseUrl}/api/render");
         Console.WriteLine($"  Verify:      POST {_baseUrl}/api/verify/render");
+#endif
     }
 
     /// <inheritdoc />

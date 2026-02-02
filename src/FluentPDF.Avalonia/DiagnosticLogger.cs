@@ -30,7 +30,12 @@ public static class DiagnosticLogger
         }
         catch (Exception ex)
         {
+#if DEBUG
             Console.WriteLine($"Failed to initialize diagnostic log: {ex.Message}");
+#else
+            // Suppress unused variable warning in release builds
+            _ = ex;
+#endif
         }
     }
 
@@ -43,11 +48,13 @@ public static class DiagnosticLogger
         {
             try
             {
-                // Console output
-                Console.WriteLine(logLine);
-
-                // File output
+                // File output (always enabled for diagnostics)
                 File.AppendAllText(LogFile, logLine + Environment.NewLine);
+
+#if DEBUG
+                // Console output (debug builds only)
+                Console.WriteLine(logLine);
+#endif
             }
             catch
             {
@@ -82,11 +89,15 @@ public static class DiagnosticLogger
         {
             try
             {
+                // File output (always enabled for diagnostics)
+                File.AppendAllText(LogFile, logText);
+
+#if DEBUG
+                // Console output (debug builds only)
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(logText);
                 Console.ResetColor();
-
-                File.AppendAllText(LogFile, logText);
+#endif
             }
             catch
             {

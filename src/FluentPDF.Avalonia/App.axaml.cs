@@ -35,11 +35,17 @@ public partial class App : Application
     private static IHost _host = null!;
     private MainWindow? _window;
     private IVerificationApiServer? _apiServer;
+    private ILogger<App>? _logger;
 
     /// <summary>
     /// Gets the service provider for dependency injection.
     /// </summary>
     public static IServiceProvider Services => _host.Services;
+
+    /// <summary>
+    /// Gets the main application window for API access.
+    /// </summary>
+    public MainWindow? MainWindow => _window;
 
     /// <summary>
     /// Gets a service from the dependency injection container.
@@ -54,53 +60,78 @@ public partial class App : Application
 
     public override void Initialize()
     {
-        // Create early debug log BEFORE anything else
+#if DEBUG
+        // Create early debug log BEFORE anything else (DEBUG mode only)
         var earlyLogPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
             $"FluentPDF-Early-Debug-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
 
         var earlyLog = new System.IO.StreamWriter(earlyLogPath, append: true) { AutoFlush = true };
-        earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> App.Initialize() STARTED");
+#else
+        System.IO.StreamWriter? earlyLog = null;
+#endif
+        earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> App.Initialize() STARTED");
 
         DiagnosticLogger.LogSection("APP INITIALIZE");
 
-        // Initialize Serilog before anything else
+        // CRITICAL: Call base.Initialize() FIRST to let Avalonia load XAML automatically
+        earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Calling base.Initialize() for XAML loading...");
+        DiagnosticLogger.Log("Calling base.Initialize() for XAML loading...");
         try
         {
-            earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Creating Serilog logger...");
+            base.Initialize();
+            earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> base.Initialize() completed - XAML loaded");
+            DiagnosticLogger.Log("base.Initialize() completed successfully - XAML loaded");
+        }
+        catch (Exception ex)
+        {
+            earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> base.Initialize() FAILED: {ex.Message}");
+            DiagnosticLogger.LogError("Failed in base.Initialize()", ex);
+#if DEBUG
+            earlyLog?.Close();
+#endif
+            throw;
+        }
+
+        // Initialize Serilog after XAML is loaded
+        try
+        {
+            earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Creating Serilog logger...");
             DiagnosticLogger.Log("Creating Serilog logger...");
             Log.Logger = SerilogConfiguration.CreateLogger();
-            earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Serilog logger created");
+            earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Serilog logger created");
             DiagnosticLogger.Log("Serilog logger created successfully");
         }
         catch (Exception ex)
         {
-            earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> SERILOG FAILED: {ex.Message}");
+            earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> SERILOG FAILED: {ex.Message}");
             DiagnosticLogger.LogError("Failed to initialize Serilog", ex);
-            earlyLog.Close();
+#if DEBUG
+            earlyLog?.Close();
+#endif
             throw;
         }
 
-        earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Serilog startup logged");
+        earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Serilog startup logged");
         Log.Information("FluentPDF Avalonia application starting");
         DiagnosticLogger.Log("Logged startup message via Serilog");
 
         // Configure global exception handlers
-        earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Setting up exception handlers...");
+        earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Setting up exception handlers...");
         DiagnosticLogger.Log("Setting up exception handlers...");
         SetupExceptionHandlers();
-        earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Exception handlers configured");
+        earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Exception handlers configured");
         DiagnosticLogger.Log("Exception handlers configured");
 
         // Configure dependency injection container
-        earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Creating DI host...");
+        earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Creating DI host...");
         DiagnosticLogger.Log("Creating DI host...");
         try
         {
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
-                    earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Configuring services...");
+                    earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Configuring services...");
                     DiagnosticLogger.Log("Configuring services...");
 
                     // Configure logging with Serilog
@@ -164,7 +195,6 @@ public partial class App : Application
                 services.AddSingleton<RenderingCoordinator>();
 
                 // Register ViewModels (100% reusable from WinUI 3 and Core)
-                services.AddSingleton<FluentPDF.Core.ViewModels.MainViewModel>();
                 services.AddTransient<FluentPDF.Core.ViewModels.PdfViewerViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.ConversionViewModel>();
                 services.AddTransient<FluentPDF.Core.ViewModels.BookmarksViewModel>();
@@ -177,105 +207,92 @@ public partial class App : Application
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.DiagnosticsPanelViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.LogViewerViewModel>();
 
+                // Register factory functions for ViewModels that require dynamic creation
+                services.AddSingleton<Func<FluentPDF.Core.ViewModels.PdfViewerViewModel>>(sp =>
+                    () => sp.GetRequiredService<FluentPDF.Core.ViewModels.PdfViewerViewModel>());
+
+                services.AddSingleton<Func<string, FluentPDF.Core.ViewModels.PdfViewerViewModel, FluentPDF.Core.ViewModels.TabViewModel>>(sp =>
+                    (filePath, viewerViewModel) => new FluentPDF.Core.ViewModels.TabViewModel(
+                        filePath,
+                        viewerViewModel,
+                        sp.GetRequiredService<ILogger<FluentPDF.Core.ViewModels.TabViewModel>>()));
+
+                // Register MainViewModel after factories are configured
+                services.AddSingleton<FluentPDF.Core.ViewModels.MainViewModel>();
+
                 // Register operation watchdog for autonomous error detection
                 services.AddSingleton<IOperationWatchdog, OperationWatchdog>();
 
                 // Register API server
                 services.AddSingleton<IVerificationApiServer, VerificationApiServer>();
 
-                earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> All services registered");
+                earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> All services registered");
                 DiagnosticLogger.Log("All services registered successfully");
             })
             .Build();
 
-            earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> DI host built");
+            earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> DI host built");
             DiagnosticLogger.Log("DI host built successfully");
         }
         catch (Exception ex)
         {
-            earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> DI host build FAILED: {ex.Message}");
+            earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> DI host build FAILED: {ex.Message}");
             DiagnosticLogger.LogError("Failed to build DI host", ex);
-            earlyLog.Close();
+#if DEBUG
+            earlyLog?.Close();
+#endif
             throw;
         }
 
-        earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> Loading XAML...");
-        DiagnosticLogger.Log("Loading XAML...");
-        try
-        {
-            AvaloniaXamlLoader.Load(this);
-            earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> XAML loaded");
-            DiagnosticLogger.Log("XAML loaded successfully");
-        }
-        catch (Exception ex)
-        {
-            earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> XAML load FAILED: {ex.Message}");
-            DiagnosticLogger.LogError("Failed to load XAML", ex);
-            earlyLog.Close();
-            throw;
-        }
-
-        earlyLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> App.Initialize() COMPLETE");
-        earlyLog.Close();
+        earlyLog?.WriteLine($"{DateTime.Now:HH:mm:ss.fff} >>> App.Initialize() COMPLETE");
+#if DEBUG
+        earlyLog?.Close();
+#endif
         DiagnosticLogger.LogSection("APP INITIALIZE COMPLETE");
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // Create debug log file for hang diagnostics
-        var debugLogPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-            $"FluentPDF-Hang-Debug-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
+        // Get logger after DI is initialized
+        _logger = GetService<ILogger<App>>();
 
-        var debugLog = new System.IO.StreamWriter(debugLogPath, append: true) { AutoFlush = true };
-
-        void LogBoth(string message)
-        {
-            Console.WriteLine(message);
-            debugLog.WriteLine($"{DateTime.Now:HH:mm:ss.fff} {message}");
-        }
-
-        LogBoth(">>> [1/7] OnFrameworkInitializationCompleted STARTED");
-        LogBoth($">>> Debug log: {debugLogPath}");
+        _logger.LogInformation("Framework initialization started");
 
         try
         {
-            LogBoth(">>> [2/7] Initializing PDFium...");
+            _logger.LogInformation("Initializing PDFium library (step {Step}/{Total})", 1, 5);
             if (!PdfiumInterop.Initialize())
             {
-                LogBoth("FATAL: PDFium initialization failed");
-                debugLog.Close();
+                _logger.LogCritical("PDFium initialization failed - application cannot continue");
                 Environment.Exit(1);
             }
-            LogBoth(">>> [3/7] PDFium initialized successfully");
+            _logger.LogInformation("PDFium library initialized successfully");
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                LogBoth(">>> [4/7] Getting MainViewModel from DI...");
+                _logger.LogDebug("Retrieving MainViewModel from dependency injection container");
                 var mainViewModel = GetService<FluentPDF.Core.ViewModels.MainViewModel>();
-                LogBoth(">>> [4.5/7] MainViewModel obtained");
+                _logger.LogDebug("MainViewModel instance obtained");
 
-                LogBoth(">>> [5/7] Creating MainWindow...");
+                _logger.LogInformation("Creating main application window (step {Step}/{Total})", 2, 5);
                 _window = new MainWindow(mainViewModel, GetService<ILogger<MainWindow>>());
-                LogBoth(">>> [5.5/7] MainWindow created");
+                _logger.LogDebug("MainWindow instance created");
 
-                LogBoth(">>> [6/7] Setting desktop.MainWindow...");
+                _logger.LogDebug("Assigning main window to desktop lifetime");
                 desktop.MainWindow = _window;
-                LogBoth(">>> [6.5/7] desktop.MainWindow set");
 
                 desktop.ShutdownRequested += (s, e) =>
                 {
-                    debugLog.Close();
                     ShutdownAsync().GetAwaiter().GetResult();
                 };
             }
 
-            LogBoth(">>> [7/7] Calling base.OnFrameworkInitializationCompleted()...");
+            _logger.LogInformation("Calling base framework initialization (step {Step}/{Total})", 3, 5);
             base.OnFrameworkInitializationCompleted();
-            LogBoth(">>> [7.5/7] base.OnFrameworkInitializationCompleted() returned");
+            _logger.LogDebug("Base framework initialization completed");
 
             // AFTER base call - force window visible and responsive
-            LogBoth(">>> [7.6/7] Post-init: Making window visible...");
+            _logger.LogDebug("Post-initialization: ensuring window visibility");
             if (_window != null)
             {
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -285,11 +302,11 @@ public partial class App : Application
                         _window?.Show();
                         _window?.Activate();
                         _window?.Focus();
-                        Console.WriteLine(">>> Window should now be visible and focused");
+                        _logger?.LogDebug("Main window displayed and focused");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($">>> Error making window visible: {ex.Message}");
+                        _logger?.LogError(ex, "Failed to display main window");
                     }
                 }, global::Avalonia.Threading.DispatcherPriority.Send);
             }
@@ -298,8 +315,8 @@ public partial class App : Application
             var cmdOptions = CommandLineOptions.Current;
             if (cmdOptions?.ApiServer == true)
             {
-                LogBoth(">>> API server mode detected");
-                LogBoth($">>> Starting API server on port {cmdOptions.Port}...");
+                _logger.LogInformation("API server mode enabled - starting verification API (step {Step}/{Total})", 4, 5);
+                _logger.LogInformation("API server will listen on port {Port}", cmdOptions.Port);
 
                 // Start API server in background
                 Task.Run(async () =>
@@ -312,36 +329,31 @@ public partial class App : Application
                         _apiServer = GetService<IVerificationApiServer>();
                         await _apiServer.StartAsync(cmdOptions.Port, "localhost");
 
-                        var msg = $">>> API server started successfully on port {cmdOptions.Port}";
-                        Console.WriteLine(msg);
-                        Log.Information(msg);
+                        _logger.LogInformation("Verification API server started successfully on port {Port}", cmdOptions.Port);
+                        Log.Information("Verification API server started on port {Port}", cmdOptions.Port);
                     }
                     catch (Exception ex)
                     {
-                        var msg = $">>> API server failed to start: {ex.Message}";
-                        Console.WriteLine(msg);
+                        _logger.LogError(ex, "Failed to start verification API server on port {Port}", cmdOptions.Port);
                         Log.Error(ex, "API server startup failed");
                     }
                 });
             }
 
-            LogBoth(">>> OnFrameworkInitializationCompleted COMPLETE");
+            _logger.LogInformation("Framework initialization completed (step {Step}/{Total})", 5, 5);
 
-            // Keep debug log open a bit longer if API server is starting
+            // Keep thread alive briefly if API server is starting
             if (cmdOptions?.ApiServer == true)
             {
-                LogBoth(">>> Waiting for API server initialization (3 seconds)...");
+                _logger.LogDebug("Waiting for API server initialization to complete");
                 System.Threading.Thread.Sleep(3000);
-                LogBoth(">>> API server should be starting now");
+                _logger.LogDebug("API server initialization period completed");
             }
-
-            debugLog.Close();
         }
         catch (Exception ex)
         {
-            LogBoth($"FATAL ERROR in OnFrameworkInitializationCompleted: {ex.Message}");
-            LogBoth($"Stack trace: {ex.StackTrace}");
-            debugLog.Close();
+            _logger?.LogCritical(ex, "Fatal error during framework initialization");
+            Log.Fatal(ex, "Application initialization failed");
             Environment.Exit(1);
         }
     }

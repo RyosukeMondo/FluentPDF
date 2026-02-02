@@ -234,10 +234,9 @@ public partial class LogViewerViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Clears all filter criteria.
+    /// Clears all filter criteria and reapplies filters to show all logs.
     /// </summary>
-    [RelayCommand]
-    private void ClearFilters()
+    public void ClearAllFilters()
     {
         _logger.LogInformation("Clearing all filters");
 
@@ -317,13 +316,8 @@ public partial class LogViewerViewModel : ObservableObject
         try
         {
             // TODO: Implement Avalonia clipboard (use TopLevel.GetTopLevel().Clipboard)
-            _logger.LogInformation("Copied to clipboard (not yet implemented): {CorrelationId}",
+            _logger.LogInformation("Clipboard not yet implemented for correlation ID: {CorrelationId}",
                 SelectedLogEntry.CorrelationId);
-
-            // COMMENTED OUT - WinUI 3 implementation:
-            // var dataPackage = new DataPackage();
-            // dataPackage.SetText(SelectedLogEntry.CorrelationId);
-            // Clipboard.SetContent(dataPackage);
         }
         catch (Exception ex)
         {

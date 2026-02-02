@@ -83,8 +83,6 @@ public partial class ConversionViewModel : ObservableObject
 
     /// <summary>
     /// Opens a file picker dialog to select the source DOCX file.
-    /// TODO: Implement IFileDialogService to properly separate UI concerns from ViewModel
-    /// For now, this is commented out as file pickers violate MVVM pattern in ViewModels
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanSelectDocxFile))]
     private async Task SelectDocxFileAsync()
@@ -92,25 +90,12 @@ public partial class ConversionViewModel : ObservableObject
         _logger.LogInformation("SelectDocxFile command invoked");
         StatusMessage = "File picker not yet implemented in Avalonia - needs IFileDialogService";
         await Task.CompletedTask;
-
-        // TODO: Replace with proper service injection
-        // var filePath = await _fileDialogService.OpenFileAsync(new FileDialogOptions
-        // {
-        //     Filters = new[] { new FileDialogFilter { Name = "Word Documents", Extensions = { "docx" } } }
-        // });
-        // if (filePath != null)
-        // {
-        //     DocxFilePath = filePath;
-        //     StatusMessage = "DOCX file selected. Choose output location.";
-        //     SuggestOutputPath();
-        // }
     }
 
     private bool CanSelectDocxFile() => !IsConverting;
 
     /// <summary>
     /// Opens a file save picker dialog to choose the output PDF location.
-    /// TODO: Implement IFileDialogService to properly separate UI concerns from ViewModel
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanSelectOutputPath))]
     private async Task SelectOutputPathAsync()
@@ -118,18 +103,6 @@ public partial class ConversionViewModel : ObservableObject
         _logger.LogInformation("SelectOutputPath command invoked");
         StatusMessage = "File picker not yet implemented in Avalonia - needs IFileDialogService";
         await Task.CompletedTask;
-
-        // TODO: Replace with proper service injection
-        // var filePath = await _fileDialogService.SaveFileAsync(new FileDialogOptions
-        // {
-        //     Filters = new[] { new FileDialogFilter { Name = "PDF Documents", Extensions = { "pdf" } } },
-        //     DefaultFileName = Path.GetFileNameWithoutExtension(DocxFilePath) + ".pdf"
-        // });
-        // if (filePath != null)
-        // {
-        //     OutputFilePath = filePath;
-        //     StatusMessage = "Output location selected. Ready to convert.";
-        // }
     }
 
     private bool CanSelectOutputPath() => !IsConverting && !string.IsNullOrEmpty(DocxFilePath);
@@ -239,19 +212,12 @@ public partial class ConversionViewModel : ObservableObject
 
     /// <summary>
     /// Opens the converted PDF file in the PDF viewer.
-    /// TODO: Implement navigation service for Avalonia
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanOpenPdf))]
     private void OpenPdf()
     {
         _logger.LogInformation("OpenPdf command invoked");
         StatusMessage = "Navigation not yet implemented in Avalonia - needs INavigationService";
-
-        // TODO: Replace with proper navigation service
-        // if (Result != null && File.Exists(Result.OutputPath))
-        // {
-        //     await _navigationService.NavigateAsync("PdfViewer", Result.OutputPath);
-        // }
     }
 
     private bool CanOpenPdf() => !IsConverting && Result != null && File.Exists(Result.OutputPath);
@@ -307,25 +273,19 @@ public partial class ConversionViewModel : ObservableObject
 
     /// <summary>
     /// Shows an error dialog to the user.
-    /// TODO: Implement IDialogService for Avalonia
     /// </summary>
-    private static async Task ShowErrorDialogAsync(string title, string message)
+    private async Task ShowErrorDialogAsync(string title, string message)
     {
-        // TODO: Replace with Avalonia dialog service
-        // await _dialogService.ShowErrorAsync(title, message);
-        Console.WriteLine($"ERROR: {title} - {message}");
+        _logger.LogError("Conversion error - {Title}: {Message}", title, message);
         await Task.CompletedTask;
     }
 
     /// <summary>
     /// Shows a success dialog to the user.
-    /// TODO: Implement IDialogService for Avalonia
     /// </summary>
-    private static async Task ShowSuccessDialogAsync(string title, string message)
+    private async Task ShowSuccessDialogAsync(string title, string message)
     {
-        // TODO: Replace with Avalonia dialog service
-        // await _dialogService.ShowInfoAsync(title, message);
-        Console.WriteLine($"SUCCESS: {title} - {message}");
+        _logger.LogInformation("Conversion success - {Title}: {Message}", title, message);
         await Task.CompletedTask;
     }
 

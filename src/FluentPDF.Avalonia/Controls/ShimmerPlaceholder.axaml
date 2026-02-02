@@ -22,7 +22,7 @@
                 </LinearGradientBrush>
             </Rectangle.Fill>
             <Rectangle.RenderTransform>
-                <TranslateTransform x:Name="ShimmerTransform" X="-200"/>
+                <TranslateTransform X="-200"/>
             </Rectangle.RenderTransform>
         </Rectangle>
     </Grid>

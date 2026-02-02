@@ -37,11 +37,6 @@ public partial class MainToolbarViewModel : ObservableObject
     private object? _viewMode;
 
     // Commands
-    [RelayCommand]
-    private void OpenFile()
-    {
-        // TODO: Implement file open dialog
-    }
 
     [RelayCommand(CanExecute = nameof(CanGoPreviousPage))]
     private void PreviousPage()
@@ -63,59 +58,14 @@ public partial class MainToolbarViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void ZoomIn()
-    {
-        // TODO: Implement zoom in
-    }
 
-    [RelayCommand]
-    private void ZoomOut()
-    {
-        // TODO: Implement zoom out
-    }
 
-    [RelayCommand]
-    private void ResetZoom()
-    {
-        // TODO: Reset zoom to 100%
-    }
 
-    [RelayCommand]
-    private void ShowMergeDialog()
-    {
-        // TODO: Show merge dialog
-    }
 
-    [RelayCommand]
-    private void ShowSplitDialog()
-    {
-        // TODO: Show split dialog
-    }
 
-    [RelayCommand]
-    private void ShowOptimizeDialog()
-    {
-        // TODO: Show optimize dialog
-    }
 
-    [RelayCommand]
-    private void InsertImage()
-    {
-        // TODO: Insert image
-    }
 
-    [RelayCommand]
-    private void ShowWatermarkDialog()
-    {
-        // TODO: Show watermark dialog
-    }
 
-    [RelayCommand]
-    private void ShowConversionPage()
-    {
-        // TODO: Show conversion page
-    }
 
     private void UpdateNavigationState()
     {

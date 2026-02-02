@@ -87,15 +87,9 @@ public partial class SearchPanelViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void CloseSearch()
-    {
-        // TODO: Signal to parent to hide search panel
-    }
 
     partial void OnSearchTextChanged(string value)
     {
-        // TODO: Trigger search
         PerformSearch();
     }
 
