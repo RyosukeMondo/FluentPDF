@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Builds PDFium and QPDF native libraries using vcpkg.
+    Downloads PDFium pre-built binaries and builds QPDF via vcpkg.
 
 .DESCRIPTION
-    This script automates the process of building native PDF libraries (PDFium and QPDF)
-    using Microsoft's vcpkg package manager. It handles vcpkg bootstrap, library installation,
-    and copying of built artifacts to the libs/ directory.
+    PDFium is not available as a standard vcpkg port. This script downloads
+    pre-built PDFium binaries from the pdfium-binaries GitHub releases and
+    installs QPDF via vcpkg.
 
 .PARAMETER Triplet
     Target architecture triplet. Default: x64-windows
@@ -19,7 +19,7 @@
 
 .EXAMPLE
     .\build-libs.ps1
-    Builds PDFium and QPDF for x64 Windows.
+    Downloads PDFium and builds QPDF for x64 Windows.
 
 .EXAMPLE
     .\build-libs.ps1 -Triplet arm64-windows
@@ -43,7 +43,6 @@ param(
     [switch]$UseCache
 )
 
-# Error handling
 $ErrorActionPreference = "Stop"
 
 # Paths
@@ -55,8 +54,18 @@ $ArchName = $Triplet -replace '-windows', ''
 $LibsPath = Join-Path $RootPath "libs" $ArchName
 $InstalledPath = Join-Path $VcpkgPath "installed" $Triplet
 
-# Libraries to install
-$Libraries = @("pdfium", "qpdf")
+# PDFium configuration - downloaded from bblanchon/pdfium-binaries
+# Using 'latest' to always get the most recent stable build
+if ($ArchName -eq "x64") {
+    $PdfiumArchive = "pdfium-win-x64.tgz"
+} else {
+    $PdfiumArchive = "pdfium-win-arm64.tgz"
+}
+$PdfiumUrl = "https://github.com/bblanchon/pdfium-binaries/releases/latest/download/$PdfiumArchive"
+$PdfiumTempDir = Join-Path $PSScriptRoot "pdfium-temp"
+
+# vcpkg libraries (only QPDF, pdfium is downloaded separately)
+$VcpkgLibraries = @("qpdf")
 
 function Write-Step {
     param([string]$Message)
@@ -65,26 +74,25 @@ function Write-Step {
 
 function Write-Success {
     param([string]$Message)
-    Write-Host "✓ $Message" -ForegroundColor Green
+    Write-Host "[OK] $Message" -ForegroundColor Green
 }
 
-function Write-Warning {
+function Write-Warn {
     param([string]$Message)
-    Write-Host "⚠ $Message" -ForegroundColor Yellow
+    Write-Host "[WARN] $Message" -ForegroundColor Yellow
 }
 
-function Write-Error {
+function Write-Err {
     param([string]$Message)
-    Write-Host "✗ $Message" -ForegroundColor Red
+    Write-Host "[ERR] $Message" -ForegroundColor Red
 }
 
-# Main script
 try {
     Write-Host @"
-╔═══════════════════════════════════════════════════════════════╗
-║          FluentPDF Native Libraries Build Script              ║
-║                   PDFium + QPDF via vcpkg                      ║
-╚═══════════════════════════════════════════════════════════════╝
+===========================================================
+  FluentPDF Native Libraries Build Script
+  PDFium (pre-built) + QPDF (vcpkg)
+===========================================================
 "@ -ForegroundColor Magenta
 
     Write-Host "Target Triplet: $Triplet"
@@ -94,7 +102,7 @@ try {
 
     # Step 1: Clean if requested
     if ($Clean) {
-        Write-Step "Cleaning existing vcpkg installation and libraries..."
+        Write-Step "Cleaning existing installations and libraries..."
 
         if (Test-Path $VcpkgPath) {
             Remove-Item -Path $VcpkgPath -Recurse -Force
@@ -105,15 +113,103 @@ try {
             Remove-Item -Path $LibsPath -Recurse -Force
             Write-Success "Removed existing libraries"
         }
+
+        if (Test-Path $PdfiumTempDir) {
+            Remove-Item -Path $PdfiumTempDir -Recurse -Force
+            Write-Success "Removed PDFium temp directory"
+        }
     }
 
-    # Step 2: Clone vcpkg if not exists
+    # Step 2: Create output directories
+    Write-Step "Creating output directories..."
+
+    $BinPath = Join-Path $LibsPath "bin"
+    $IncludePath = Join-Path $LibsPath "include"
+
+    if (-not (Test-Path $BinPath)) {
+        New-Item -Path $BinPath -ItemType Directory -Force | Out-Null
+        Write-Success "Created $BinPath"
+    }
+
+    if (-not (Test-Path $IncludePath)) {
+        New-Item -Path $IncludePath -ItemType Directory -Force | Out-Null
+        Write-Success "Created $IncludePath"
+    }
+
+    # Step 3: Download PDFium pre-built binary
+    $PdfiumDll = Join-Path $BinPath "pdfium.dll"
+    if (Test-Path $PdfiumDll) {
+        Write-Success "PDFium binary already exists at $PdfiumDll"
+    }
+    else {
+        Write-Step "Downloading PDFium pre-built binary..."
+
+        if (Test-Path $PdfiumTempDir) {
+            Remove-Item -Path $PdfiumTempDir -Recurse -Force
+        }
+        New-Item -Path $PdfiumTempDir -ItemType Directory -Force | Out-Null
+
+        $TgzPath = Join-Path $PdfiumTempDir $PdfiumArchive
+
+        Write-Host "Downloading from: $PdfiumUrl"
+        Invoke-WebRequest -Uri $PdfiumUrl -OutFile $TgzPath -UseBasicParsing
+        Write-Success "Downloaded $PdfiumArchive"
+
+        Write-Host "Extracting archive..."
+        # Extract .tgz (tar.gz) archive
+        tar -xzf $TgzPath -C $PdfiumTempDir
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to extract PDFium archive"
+        }
+        Write-Success "Extracted archive"
+
+        # Copy pdfium.dll from the extracted archive
+        $ExtractedDll = Get-ChildItem -Path $PdfiumTempDir -Filter "pdfium.dll" -Recurse -File | Select-Object -First 1
+        if ($ExtractedDll) {
+            Copy-Item -Path $ExtractedDll.FullName -Destination $BinPath -Force
+            Write-Success "Copied pdfium.dll to $BinPath"
+        }
+        else {
+            throw "pdfium.dll not found in the downloaded archive"
+        }
+
+        # Copy pdfium headers if present
+        $ExtractedInclude = Get-ChildItem -Path $PdfiumTempDir -Directory -Recurse -Filter "include" | Select-Object -First 1
+        if ($ExtractedInclude) {
+            $PdfiumIncludeDest = Join-Path $IncludePath "pdfium"
+            if (-not (Test-Path $PdfiumIncludeDest)) {
+                New-Item -Path $PdfiumIncludeDest -ItemType Directory -Force | Out-Null
+            }
+            Copy-Item -Path (Join-Path $ExtractedInclude.FullName "*") -Destination $PdfiumIncludeDest -Recurse -Force
+            Write-Success "Copied PDFium headers to $PdfiumIncludeDest"
+        }
+
+        # Copy pdfium.lib if present (for linking)
+        $ExtractedLib = Get-ChildItem -Path $PdfiumTempDir -Filter "pdfium.dll.lib" -Recurse -File | Select-Object -First 1
+        if (-not $ExtractedLib) {
+            $ExtractedLib = Get-ChildItem -Path $PdfiumTempDir -Filter "pdfium.lib" -Recurse -File | Select-Object -First 1
+        }
+        if ($ExtractedLib) {
+            $LibOutputPath = Join-Path $LibsPath "lib"
+            if (-not (Test-Path $LibOutputPath)) {
+                New-Item -Path $LibOutputPath -ItemType Directory -Force | Out-Null
+            }
+            Copy-Item -Path $ExtractedLib.FullName -Destination $LibOutputPath -Force
+            Write-Success "Copied PDFium import library to $LibOutputPath"
+        }
+
+        # Cleanup temp directory
+        Remove-Item -Path $PdfiumTempDir -Recurse -Force
+        Write-Success "Cleaned up temp directory"
+    }
+
+    # Step 4: Clone vcpkg if not exists (for QPDF)
     if (-not (Test-Path $VcpkgPath)) {
-        Write-Step "Cloning vcpkg from GitHub..."
+        Write-Step "Cloning vcpkg from GitHub (for QPDF)..."
 
         Push-Location $PSScriptRoot
         try {
-            git clone https://github.com/microsoft/vcpkg.git vcpkg
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to clone vcpkg repository"
             }
@@ -127,7 +223,7 @@ try {
         Write-Success "vcpkg already exists at $VcpkgPath"
     }
 
-    # Step 3: Bootstrap vcpkg if vcpkg.exe doesn't exist
+    # Step 5: Bootstrap vcpkg if vcpkg.exe doesn't exist
     if (-not (Test-Path $VcpkgExe)) {
         Write-Step "Bootstrapping vcpkg..."
 
@@ -151,7 +247,7 @@ try {
         Write-Success "vcpkg.exe already exists"
     }
 
-    # Step 4: Configure binary caching if requested
+    # Step 6: Configure binary caching if requested
     if ($UseCache) {
         Write-Step "Configuring vcpkg binary caching..."
 
@@ -164,11 +260,10 @@ try {
         Write-Success "Binary caching enabled: $CachePath"
     }
 
-    # Step 5: Install libraries
-    Write-Step "Installing libraries: $($Libraries -join ', ')"
-    Write-Warning "This may take 30-60 minutes on first run (depending on hardware)"
+    # Step 7: Install QPDF via vcpkg
+    Write-Step "Installing vcpkg libraries: $($VcpkgLibraries -join ', ')"
 
-    foreach ($Library in $Libraries) {
+    foreach ($Library in $VcpkgLibraries) {
         $Package = "${Library}:${Triplet}"
         Write-Host "`nInstalling $Package..." -ForegroundColor Yellow
 
@@ -185,31 +280,15 @@ try {
         }
     }
 
-    # Step 6: Create output directories
-    Write-Step "Creating output directories..."
-
-    $BinPath = Join-Path $LibsPath "bin"
-    $IncludePath = Join-Path $LibsPath "include"
-
-    if (-not (Test-Path $BinPath)) {
-        New-Item -Path $BinPath -ItemType Directory -Force | Out-Null
-        Write-Success "Created $BinPath"
-    }
-
-    if (-not (Test-Path $IncludePath)) {
-        New-Item -Path $IncludePath -ItemType Directory -Force | Out-Null
-        Write-Success "Created $IncludePath"
-    }
-
-    # Step 7: Copy DLLs
-    Write-Step "Copying DLLs to libs/$ArchName/bin/..."
+    # Step 8: Copy QPDF DLLs from vcpkg
+    Write-Step "Copying QPDF DLLs to libs/$ArchName/bin/..."
 
     $SourceBinPath = Join-Path $InstalledPath "bin"
     if (Test-Path $SourceBinPath) {
         $DllFiles = Get-ChildItem -Path $SourceBinPath -Filter "*.dll" -File
 
         if ($DllFiles.Count -eq 0) {
-            Write-Warning "No DLL files found in $SourceBinPath"
+            Write-Warn "No DLL files found in $SourceBinPath"
         }
         else {
             foreach ($Dll in $DllFiles) {
@@ -220,23 +299,14 @@ try {
         }
     }
     else {
-        Write-Warning "Source bin path not found: $SourceBinPath"
+        Write-Warn "Source bin path not found: $SourceBinPath"
     }
 
-    # Step 8: Copy include headers
-    Write-Step "Copying include headers to libs/$ArchName/include/..."
+    # Step 9: Copy QPDF headers from vcpkg
+    Write-Step "Copying QPDF headers to libs/$ArchName/include/..."
 
     $SourceIncludePath = Join-Path $InstalledPath "include"
     if (Test-Path $SourceIncludePath) {
-        # Copy PDFium headers
-        $PdfiumInclude = Join-Path $SourceIncludePath "pdfium"
-        if (Test-Path $PdfiumInclude) {
-            $PdfiumDest = Join-Path $IncludePath "pdfium"
-            Copy-Item -Path $PdfiumInclude -Destination $PdfiumDest -Recurse -Force
-            Write-Success "Copied PDFium headers"
-        }
-
-        # Copy QPDF headers
         $QpdfInclude = Join-Path $SourceIncludePath "qpdf"
         if (Test-Path $QpdfInclude) {
             $QpdfDest = Join-Path $IncludePath "qpdf"
@@ -244,7 +314,6 @@ try {
             Write-Success "Copied QPDF headers"
         }
 
-        # Copy any top-level headers
         $HeaderFiles = Get-ChildItem -Path $SourceIncludePath -Filter "*.h" -File
         foreach ($Header in $HeaderFiles) {
             Copy-Item -Path $Header.FullName -Destination $IncludePath -Force
@@ -255,37 +324,29 @@ try {
         }
     }
     else {
-        Write-Warning "Source include path not found: $SourceIncludePath"
+        Write-Warn "Source include path not found: $SourceIncludePath"
     }
 
-    # Step 9: Display summary
-    Write-Host "`n" -NoNewline
+    # Step 10: Display summary
     Write-Host @"
-╔═══════════════════════════════════════════════════════════════╗
-║                       BUILD COMPLETE                          ║
-╚═══════════════════════════════════════════════════════════════╝
+
+===========================================================
+  BUILD COMPLETE
+===========================================================
 "@ -ForegroundColor Green
 
-    Write-Success "Built PDFium and QPDF for $Triplet"
+    Write-Success "PDFium downloaded and QPDF built for $Triplet"
     Write-Success "DLLs copied to: $BinPath"
     Write-Success "Headers copied to: $IncludePath"
-
-    Write-Host "`nNext Steps:" -ForegroundColor Cyan
-    Write-Host "  1. Add DLLs as Content items in FluentPDF.App.csproj:"
-    Write-Host "     <Content Include=`"..\libs\$ArchName\bin\*.dll`">" -ForegroundColor Gray
-    Write-Host "       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>" -ForegroundColor Gray
-    Write-Host "     </Content>" -ForegroundColor Gray
-    Write-Host "  2. Implement P/Invoke wrappers in FluentPDF.Rendering project"
-    Write-Host "  3. Reference headers in libs/$ArchName/include/ for P/Invoke signatures"
 
     # List built DLLs
     if (Test-Path $BinPath) {
         $BuiltDlls = Get-ChildItem -Path $BinPath -Filter "*.dll" -File
         if ($BuiltDlls.Count -gt 0) {
-            Write-Host "`nBuilt Libraries ($($BuiltDlls.Count)):" -ForegroundColor Cyan
+            Write-Host "`nLibraries ($($BuiltDlls.Count)):" -ForegroundColor Cyan
             foreach ($Dll in $BuiltDlls) {
                 $Size = [math]::Round($Dll.Length / 1MB, 2)
-                Write-Host "  • $($Dll.Name) ($Size MB)" -ForegroundColor Gray
+                Write-Host "  - $($Dll.Name) ($Size MB)" -ForegroundColor Gray
             }
         }
     }
@@ -295,7 +356,7 @@ try {
 }
 catch {
     Write-Host "`n" -NoNewline
-    Write-Error "BUILD FAILED: $_"
+    Write-Err "BUILD FAILED: $_"
     Write-Host "Error Details:" -ForegroundColor Red
     Write-Host $_.Exception.Message -ForegroundColor Red
     Write-Host "`nStack Trace:" -ForegroundColor Red
