@@ -50,9 +50,9 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Tool versions (updated periodically)
-$VeraPdfVersion = "1.26.1"
-$JhoveVersion = "1.30.1"
-$QpdfVersion = "11.9.1"
+$VeraPdfVersion = "1.28"
+$JhoveVersion = "1.34.0"
+$QpdfVersion = "12.3.2"
 
 # Installation directories
 $ScriptDir = $PSScriptRoot
@@ -131,11 +131,11 @@ function Install-VeraPDF {
 
     # Determine download URL based on OS
     $downloadUrl = if ($IsWindows) {
-        "https://downloads.verapdf.org/rel/verapdf-installer-$VeraPdfVersion.zip"
+        "https://software.verapdf.org/rel/verapdf-installer.zip"
     } elseif ($IsMacOS) {
-        "https://downloads.verapdf.org/rel/verapdf-greenfield-$VeraPdfVersion-installer.zip"
+        "https://software.verapdf.org/rel/verapdf-installer.zip"
     } else {
-        "https://downloads.verapdf.org/rel/verapdf-greenfield-$VeraPdfVersion-installer.zip"
+        "https://software.verapdf.org/rel/verapdf-installer.zip"
     }
 
     $zipFile = Join-Path $TempDir "verapdf.zip"
@@ -213,7 +213,7 @@ function Install-JHOVE {
         }
     }
 
-    $downloadUrl = "https://github.com/openpreserve/jhove/releases/download/v$JhoveVersion/jhove-$JhoveVersion.jar"
+    $downloadUrl = "http://software.openpreservation.org/rel/jhove-latest.jar"
     $jarFile = Join-Path $TempDir "jhove.jar"
 
     try {
@@ -285,7 +285,7 @@ function Install-QPDF {
 
     if ($IsWindows) {
         # Download Windows binary
-        $downloadUrl = "https://github.com/qpdf/qpdf/releases/download/v$QpdfVersion/qpdf-$QpdfVersion-bin-mingw64.zip"
+        $downloadUrl = "https://github.com/qpdf/qpdf/releases/download/v$QpdfVersion/qpdf-$QpdfVersion-mingw64.zip"
         $zipFile = Join-Path $TempDir "qpdf.zip"
         $extractDir = Join-Path $TempDir "qpdf-extract"
 
