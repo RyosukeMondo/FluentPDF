@@ -2,6 +2,8 @@
 
 using Avalonia.Threading;
 using FluentPDF.Avalonia.Views;
+using FluentPDF.Core.Models;
+using FluentPDF.Core.Services;
 using FluentPDF.Core.ViewModels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -30,6 +32,8 @@ public static class GuiEndpoints
         MapToggleEndpoint(group);
         MapCloseTabEndpoint(group);
         MapScreenshotEndpoint(group);
+        MapRefreshEndpoint(group);
+        MapAnnotateEndpoint(group);
     }
 
     private static MainWindow? GetMainWindow()
@@ -352,8 +356,137 @@ public static class GuiEndpoints
         .WithDescription("Captures a PNG screenshot of the main application window.");
     }
 
+    private static void MapRefreshEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/refresh", async (HttpContext ctx) =>
+        {
+            var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Dispatcher.UIThread.Post(() =>
+            {
+                _ = RefreshOnUiThread(tcs);
+            });
+
+            var result = await tcs.Task;
+            return Results.Json(result);
+        })
+        .WithName("RefreshPage")
+        .WithSummary("Force re-render current page")
+        .WithDescription("Forces the active viewer to re-render the current page, reflecting any annotation or content changes.");
+    }
+
+    private static async Task RefreshOnUiThread(TaskCompletionSource<object> tcs)
+    {
+        try
+        {
+            var viewer = GetActiveViewer();
+            if (viewer == null) { tcs.TrySetResult(new { success = false, error = "No active document" }); return; }
+
+            // Navigate to the same page triggers re-render
+            var page = viewer.CurrentPageNumber;
+            await viewer.GoToPageCommand.ExecuteAsync(page);
+            await Task.Delay(500);
+
+            tcs.TrySetResult(new { success = true, currentPage = viewer.CurrentPageNumber });
+        }
+        catch (Exception ex) { tcs.TrySetResult(new { success = false, error = ex.ToString() }); }
+    }
+
+    private static void MapAnnotateEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/annotate", async (HttpContext ctx, IAnnotationService annotationService) =>
+        {
+            try
+            {
+                var body = await ctx.Request.ReadFromJsonAsync<AnnotateRequest>();
+                if (body == null)
+                    return Results.BadRequest(new { error = "Request body is required" });
+
+                var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _ = AnnotateOnUiThread(body, annotationService, tcs);
+                });
+
+                var result = await tcs.Task;
+                return Results.Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { success = false, error = ex.ToString() });
+            }
+        })
+        .WithName("AnnotateGui")
+        .WithSummary("Create annotation on GUI document")
+        .WithDescription("Creates an annotation on the active GUI document and re-renders the page to show it.");
+    }
+
+    private static async Task AnnotateOnUiThread(
+        AnnotateRequest body,
+        IAnnotationService annotationService,
+        TaskCompletionSource<object> tcs)
+    {
+        try
+        {
+            var viewer = GetActiveViewer();
+            if (viewer == null) { tcs.TrySetResult(new { success = false, error = "No active document" }); return; }
+
+            var document = viewer.CurrentDocument;
+            if (document == null) { tcs.TrySetResult(new { success = false, error = "No document loaded" }); return; }
+
+            var annotType = Enum.TryParse<AnnotationType>(body.Type, true, out var at) ? at : AnnotationType.Highlight;
+            var pageNumber = body.PageNumber ?? (viewer.CurrentPageNumber - 1); // 0-based
+
+            var fillColor = System.Drawing.Color.FromArgb(80, 255, 255, 0); // default yellow highlight
+            if (!string.IsNullOrEmpty(body.Color))
+            {
+                try { fillColor = System.Drawing.ColorTranslator.FromHtml(body.Color); } catch { }
+            }
+
+            float x = body.X ?? 50;
+            float y = body.Y ?? 700;
+            float w = body.Width ?? 200;
+            float h = body.Height ?? 30;
+
+            var annotation = new Annotation
+            {
+                Type = annotType,
+                PageNumber = pageNumber,
+                Bounds = new PdfRectangle(x, y, x + w, y + h),
+                FillColor = fillColor,
+                StrokeColor = System.Drawing.Color.FromArgb(255, fillColor.R, fillColor.G, fillColor.B),
+                Contents = body.Contents ?? "",
+                Opacity = body.Opacity ?? 0.5f
+            };
+
+            var result = await annotationService.CreateAnnotationAsync(document, annotation);
+
+            if (!result.IsSuccess)
+            {
+                tcs.TrySetResult(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Failed" });
+                return;
+            }
+
+            // Re-render to show the annotation
+            await viewer.GoToPageCommand.ExecuteAsync(viewer.CurrentPageNumber);
+            await Task.Delay(500);
+
+            tcs.TrySetResult(new
+            {
+                success = true,
+                type = annotType.ToString(),
+                pageNumber,
+                annotationId = result.Value.Id
+            });
+        }
+        catch (Exception ex) { tcs.TrySetResult(new { success = false, error = ex.ToString() }); }
+    }
+
     private record OpenFileRequest(string? FilePath);
     private record NavigateRequest(int? Page, string? Action);
     private record ZoomRequest(double? Level, string? Action);
     private record ToggleRequest(string? Panel);
+    private record AnnotateRequest(
+        string? Type, int? PageNumber,
+        float? X, float? Y, float? Width, float? Height,
+        string? Color, string? Contents, float? Opacity);
 }

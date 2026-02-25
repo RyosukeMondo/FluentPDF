@@ -94,6 +94,13 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         // Re-use existing services from the main app's DI container
         builder.Services.AddSingleton(_appServices.GetRequiredService<IPdfDocumentService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<IPdfRenderingService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IPageOperationsService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IAnnotationService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<ITextExtractionService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<ITextReplacementService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IImageExportService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IDocumentEditingService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IPdfFormService>());
 
         // Configure JSON serialization
         builder.Services.ConfigureHttpJsonOptions(options =>
@@ -166,6 +173,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         RenderEndpoints.Map(_webApp);
         VerifyEndpoints.Map(_webApp);
         GuiEndpoints.Map(_webApp);
+        PdfOperationsEndpoints.Map(_webApp);
 
         _baseUrl = $"http://{bindAddress}:{port}";
 

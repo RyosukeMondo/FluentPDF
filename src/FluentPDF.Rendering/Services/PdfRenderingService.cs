@@ -236,7 +236,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                         sizeX: effectiveWidth,
                         sizeY: effectiveHeight,
                         rotate: 0,
-                        flags: PdfiumInterop.RenderFlags.Normal);
+                        flags: PdfiumInterop.RenderFlags.Normal | PdfiumInterop.RenderFlags.Annotations);
                 }
 
                 // Convert bitmap to PNG stream
@@ -478,7 +478,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                         sizeX: effectiveWidth,
                         sizeY: effectiveHeight,
                         rotate: 0,
-                        flags: PdfiumInterop.RenderFlags.Normal);
+                        flags: PdfiumInterop.RenderFlags.Normal | PdfiumInterop.RenderFlags.Annotations);
                 }
 
                 // Extract raw pixels directly (no PNG encode/decode)
