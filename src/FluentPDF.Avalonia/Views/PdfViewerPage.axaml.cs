@@ -11,8 +11,10 @@ using FluentPDF.Core.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentPDF.Rendering.Interop;
 
 namespace FluentPDF.Avalonia.Views;
 
@@ -31,6 +33,12 @@ public partial class PdfViewerPage : UserControl
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+
+    // Drawing state
+    private bool _isDrawing;
+    private Point _drawStartPoint;
+    private System.Collections.Generic.List<Point> _drawingPoints = new();
+    private global::Avalonia.Controls.Control? _drawingPreview;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerPage"/> class.
@@ -143,6 +151,14 @@ public partial class PdfViewerPage : UserControl
             PdfScrollViewer.PointerPressed += OnScrollViewerPointerPressed;
             PdfScrollViewer.PointerMoved += OnScrollViewerPointerMoved;
             PdfScrollViewer.PointerReleased += OnScrollViewerPointerReleased;
+        }
+
+        // Wire up drawing canvas events
+        if (DrawingCanvas != null)
+        {
+            DrawingCanvas.PointerPressed += OnDrawingCanvasPointerPressed;
+            DrawingCanvas.PointerMoved += OnDrawingCanvasPointerMoved;
+            DrawingCanvas.PointerReleased += OnDrawingCanvasPointerReleased;
         }
 
         // Wire up keyboard events for annotation shortcuts and text copy
@@ -260,26 +276,75 @@ public partial class PdfViewerPage : UserControl
 
     /// <summary>
     /// Handles keyboard events for annotation shortcuts (H/U/S keys).
-    /// Placeholder for future annotation integration.
+    /// Creates text markup annotations when text is selected.
     /// </summary>
     private void OnPageKeyDown(object? sender, KeyEventArgs e)
     {
-        switch (e.Key)
+        if (_viewModel?.HasSelectedText != true || _viewModel.LastTextSelection == null)
+            return;
+
+        AnnotationType? annotationType = e.Key switch
         {
-            case Key.H when !e.KeyModifiers.HasFlag(KeyModifiers.Control):
-                _logger.LogInformation("H key pressed - Highlight tool shortcut (not yet implemented)");
-                e.Handled = true;
-                break;
+            Key.H when !e.KeyModifiers.HasFlag(KeyModifiers.Control) => AnnotationType.Highlight,
+            Key.U when !e.KeyModifiers.HasFlag(KeyModifiers.Control) => AnnotationType.Underline,
+            Key.S when !e.KeyModifiers.HasFlag(KeyModifiers.Control) => AnnotationType.StrikeOut,
+            _ => null
+        };
 
-            case Key.U when !e.KeyModifiers.HasFlag(KeyModifiers.Control):
-                _logger.LogInformation("U key pressed - Underline tool shortcut (not yet implemented)");
-                e.Handled = true;
-                break;
+        if (annotationType.HasValue)
+        {
+            _ = CreateTextMarkupAnnotationAsync(annotationType.Value);
+            e.Handled = true;
+        }
+    }
 
-            case Key.S when !e.KeyModifiers.HasFlag(KeyModifiers.Control):
-                _logger.LogInformation("S key pressed - Strikethrough tool shortcut (not yet implemented)");
-                e.Handled = true;
-                break;
+    /// <summary>
+    /// Creates a text markup annotation (highlight, underline, strikethrough) from the current selection.
+    /// </summary>
+    private async Task CreateTextMarkupAnnotationAsync(AnnotationType type)
+    {
+        if (_viewModel?.CurrentDocument == null || _viewModel.LastTextSelection == null)
+            return;
+
+        try
+        {
+            var annotationService = App.GetService<IAnnotationService>();
+            var selection = _viewModel.LastTextSelection;
+
+            var annotation = new Annotation
+            {
+                Type = type,
+                PageNumber = _viewModel.CurrentPageNumber - 1,
+                Bounds = new PdfRectangle(
+                    selection.SelectionBounds.Left,
+                    selection.SelectionBounds.Top,
+                    selection.SelectionBounds.Right,
+                    selection.SelectionBounds.Bottom),
+                QuadPoints = selection.ToQuadPoints(),
+                FillColor = type == AnnotationType.Highlight
+                    ? System.Drawing.Color.FromArgb(128, 255, 255, 0)
+                    : System.Drawing.Color.FromArgb(255, 255, 0, 0),
+                Opacity = type == AnnotationType.Highlight ? 0.5 : 1.0
+            };
+
+            var result = await annotationService.CreateAnnotationAsync(
+                _viewModel.CurrentDocument, annotation);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("{Type} annotation created on page {Page}",
+                    type, _viewModel.CurrentPageNumber);
+                await _viewModel.RefreshCurrentPageAsync();
+            }
+            else
+            {
+                _logger.LogError("Failed to create {Type} annotation: {Error}",
+                    type, result.Errors.FirstOrDefault()?.Message ?? "Unknown error");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create {Type} annotation", type);
         }
     }
 
@@ -314,21 +379,24 @@ public partial class PdfViewerPage : UserControl
     }
 
     /// <summary>
-    /// Handles pointer moved event to update text selection.
+    /// Handles pointer moved event to update text selection and link cursor.
     /// </summary>
     private void OnImagePointerMoved(object? sender, PointerEventArgs e)
     {
-        if (!_isSelecting || PdfImage == null)
-        {
+        if (PdfImage == null)
             return;
-        }
 
         var point = e.GetCurrentPoint(PdfImage).Position;
 
-        // Update selection rectangle
-        ShowSelectionRectangle(_selectionStartPoint, point);
+        if (_isSelecting)
+        {
+            ShowSelectionRectangle(_selectionStartPoint, point);
+            e.Handled = true;
+            return;
+        }
 
-        e.Handled = true;
+        // Check for link under cursor to change cursor style
+        _ = UpdateLinkCursorAsync(point);
     }
 
     /// <summary>
@@ -361,10 +429,12 @@ public partial class PdfViewerPage : UserControl
         }
         else
         {
-            // Click without drag - clear selection
+            // Click without drag - check for link, then clear selection
+            _ = HandleLinkClickAsync(point);
             ClearSelectionRectangle();
             _viewModel.SelectedText = string.Empty;
             _viewModel.HasSelectedText = false;
+            _viewModel.LastTextSelection = null;
         }
 
         e.Handled = true;
@@ -572,6 +642,7 @@ public partial class PdfViewerPage : UserControl
             {
                 _viewModel.SelectedText = result.Value.Text;
                 _viewModel.HasSelectedText = true;
+                _viewModel.LastTextSelection = result.Value;
                 _logger.LogInformation("Selected text: \"{Text}\"",
                     result.Value.Text.Length > 100 ? result.Value.Text[..100] + "..." : result.Value.Text);
             }
@@ -579,6 +650,7 @@ public partial class PdfViewerPage : UserControl
             {
                 _viewModel.SelectedText = string.Empty;
                 _viewModel.HasSelectedText = false;
+                _viewModel.LastTextSelection = null;
                 _logger.LogDebug("No text found in selection area");
             }
         }
@@ -619,4 +691,414 @@ public partial class PdfViewerPage : UserControl
             _logger.LogError(ex, "Failed to copy text to clipboard");
         }
     }
+
+    #region Link Detection
+
+    /// <summary>
+    /// Converts a screen point on PdfImage to PDF page coordinates.
+    /// Returns null if conversion is not possible.
+    /// </summary>
+    private (float pdfX, float pdfY)? ScreenPointToPdfCoords(Point screenPoint)
+    {
+        if (_viewModel?.CurrentDocument == null || PdfImage == null)
+            return null;
+
+        var imageSource = PdfImage.Source as global::Avalonia.Media.Imaging.Bitmap;
+        if (imageSource == null)
+            return null;
+
+        var bitmapWidth = (double)imageSource.PixelSize.Width;
+        var bitmapHeight = (double)imageSource.PixelSize.Height;
+        var renderWidth = PdfImage.Bounds.Width;
+        var renderHeight = PdfImage.Bounds.Height;
+
+        if (renderWidth <= 0 || renderHeight <= 0 || bitmapWidth <= 0 || bitmapHeight <= 0)
+            return null;
+
+        var scaleX = renderWidth / bitmapWidth;
+        var scaleY = renderHeight / bitmapHeight;
+        var scale = Math.Min(scaleX, scaleY);
+
+        var offsetX = (renderWidth - bitmapWidth * scale) / 2.0;
+        var offsetY = (renderHeight - bitmapHeight * scale) / 2.0;
+
+        var bmpX = (screenPoint.X - offsetX) / scale;
+        var bmpY = (screenPoint.Y - offsetY) / scale;
+
+        var dpi = _viewModel.CurrentDisplayInfo?.EffectiveDpi ?? 96.0;
+        var zoom = _viewModel.ZoomLevel;
+        var pdfScale = zoom * dpi / 72.0;
+
+        var pdfX = (float)(bmpX / pdfScale);
+
+        var renderingService = App.GetService<IPdfRenderingService>();
+        var pageSizeResult = renderingService.GetPageSize(
+            _viewModel.CurrentDocument, _viewModel.CurrentPageNumber);
+        if (pageSizeResult.IsFailed) return null;
+
+        var pageHeight = pageSizeResult.Value.Height;
+        var pdfY = (float)(pageHeight - (bmpY / pdfScale));
+
+        return ((float)pdfX, (float)pdfY);
+    }
+
+    /// <summary>
+    /// Checks if a link exists at the clicked point and opens it in the default browser.
+    /// </summary>
+    private async Task HandleLinkClickAsync(Point screenPoint)
+    {
+        if (_viewModel?.CurrentDocument == null)
+            return;
+
+        try
+        {
+            var pdfCoords = ScreenPointToPdfCoords(screenPoint);
+            if (pdfCoords == null)
+                return;
+
+            var uri = await Task.Run(() =>
+            {
+                var docHandle = (SafePdfDocumentHandle)_viewModel.CurrentDocument.Handle;
+                using var pageHandle = PdfiumInterop.LoadPage(
+                    docHandle, _viewModel.CurrentPageNumber - 1);
+                if (pageHandle.IsInvalid) return null;
+
+                var link = PdfiumInterop.GetLinkAtPoint(
+                    pageHandle, pdfCoords.Value.pdfX, pdfCoords.Value.pdfY);
+                if (link == IntPtr.Zero) return null;
+
+                return PdfiumInterop.GetLinkUri(docHandle, link);
+            });
+
+            if (!string.IsNullOrEmpty(uri))
+            {
+                _logger.LogInformation("Opening link: {Uri}", uri);
+                Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to handle link click");
+        }
+    }
+
+    /// <summary>
+    /// Updates the cursor to a hand when hovering over a link.
+    /// </summary>
+    private async Task UpdateLinkCursorAsync(Point screenPoint)
+    {
+        if (_viewModel?.CurrentDocument == null || PdfImage == null)
+            return;
+
+        try
+        {
+            var pdfCoords = ScreenPointToPdfCoords(screenPoint);
+            if (pdfCoords == null)
+                return;
+
+            var hasLink = await Task.Run(() =>
+            {
+                var docHandle = (SafePdfDocumentHandle)_viewModel.CurrentDocument.Handle;
+                using var pageHandle = PdfiumInterop.LoadPage(
+                    docHandle, _viewModel.CurrentPageNumber - 1);
+                if (pageHandle.IsInvalid) return false;
+
+                var link = PdfiumInterop.GetLinkAtPoint(
+                    pageHandle, pdfCoords.Value.pdfX, pdfCoords.Value.pdfY);
+                return link != IntPtr.Zero;
+            });
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                PdfImage.Cursor = hasLink
+                    ? new Cursor(StandardCursorType.Hand)
+                    : new Cursor(StandardCursorType.Arrow);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to check link at cursor position");
+        }
+    }
+
+    #endregion
+
+    #region Drawing Canvas Handlers
+
+    private void OnDrawingCanvasPointerPressed(
+        object? sender, PointerPressedEventArgs e)
+    {
+        if (_viewModel == null || DrawingCanvas == null || PdfImage == null)
+            return;
+        if (_viewModel.ActiveDrawingTool == DrawingTool.None)
+            return;
+
+        var properties = e.GetCurrentPoint(DrawingCanvas).Properties;
+        if (!properties.IsLeftButtonPressed)
+            return;
+
+        var point = e.GetCurrentPoint(PdfImage).Position;
+        _drawStartPoint = point;
+        _isDrawing = true;
+        _drawingPoints.Clear();
+        _drawingPoints.Add(point);
+
+        var tool = _viewModel.ActiveDrawingTool;
+        var strokeBrush = ParseBrush(_viewModel.DrawingStrokeColor);
+        var strokeWidth = _viewModel.DrawingStrokeWidth;
+
+        switch (tool)
+        {
+            case DrawingTool.Rectangle:
+                var rect = new Rectangle
+                {
+                    Stroke = strokeBrush,
+                    Fill = new SolidColorBrush(Colors.Transparent),
+                    StrokeThickness = strokeWidth,
+                    Width = 0, Height = 0
+                };
+                Canvas.SetLeft(rect, point.X);
+                Canvas.SetTop(rect, point.Y);
+                DrawingCanvas.Children.Add(rect);
+                _drawingPreview = rect;
+                break;
+
+            case DrawingTool.Circle:
+                var ellipse = new Ellipse
+                {
+                    Stroke = strokeBrush,
+                    Fill = new SolidColorBrush(Colors.Transparent),
+                    StrokeThickness = strokeWidth,
+                    Width = 0, Height = 0
+                };
+                Canvas.SetLeft(ellipse, point.X);
+                Canvas.SetTop(ellipse, point.Y);
+                DrawingCanvas.Children.Add(ellipse);
+                _drawingPreview = ellipse;
+                break;
+
+            case DrawingTool.Line:
+                var line = new Line
+                {
+                    Stroke = strokeBrush,
+                    StrokeThickness = strokeWidth,
+                    StartPoint = point,
+                    EndPoint = point
+                };
+                DrawingCanvas.Children.Add(line);
+                _drawingPreview = line;
+                break;
+
+            case DrawingTool.Freehand:
+                var polyline = new Polyline
+                {
+                    Stroke = strokeBrush,
+                    StrokeThickness = strokeWidth,
+                    Points = new global::Avalonia.Collections.AvaloniaList<Point> { point }
+                };
+                DrawingCanvas.Children.Add(polyline);
+                _drawingPreview = polyline;
+                break;
+
+            case DrawingTool.Text:
+                _drawingPreview = null;
+                break;
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnDrawingCanvasPointerMoved(
+        object? sender, PointerEventArgs e)
+    {
+        if (!_isDrawing || _viewModel == null || PdfImage == null)
+            return;
+
+        var point = e.GetCurrentPoint(PdfImage).Position;
+        var tool = _viewModel.ActiveDrawingTool;
+
+        switch (tool)
+        {
+            case DrawingTool.Rectangle when _drawingPreview is Rectangle rect:
+                rect.Width = Math.Abs(point.X - _drawStartPoint.X);
+                rect.Height = Math.Abs(point.Y - _drawStartPoint.Y);
+                Canvas.SetLeft(rect, Math.Min(_drawStartPoint.X, point.X));
+                Canvas.SetTop(rect, Math.Min(_drawStartPoint.Y, point.Y));
+                break;
+
+            case DrawingTool.Circle when _drawingPreview is Ellipse ellipse:
+                ellipse.Width = Math.Abs(point.X - _drawStartPoint.X);
+                ellipse.Height = Math.Abs(point.Y - _drawStartPoint.Y);
+                Canvas.SetLeft(ellipse, Math.Min(_drawStartPoint.X, point.X));
+                Canvas.SetTop(ellipse, Math.Min(_drawStartPoint.Y, point.Y));
+                break;
+
+            case DrawingTool.Line when _drawingPreview is Line line:
+                line.EndPoint = point;
+                break;
+
+            case DrawingTool.Freehand when _drawingPreview is Polyline pl:
+                _drawingPoints.Add(point);
+                ((global::Avalonia.Collections.AvaloniaList<Point>)pl.Points).Add(point);
+                break;
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnDrawingCanvasPointerReleased(
+        object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_isDrawing || _viewModel == null || PdfImage == null)
+            return;
+
+        var point = e.GetCurrentPoint(PdfImage).Position;
+        _isDrawing = false;
+
+        if (_drawingPreview != null && DrawingCanvas != null)
+        {
+            DrawingCanvas.Children.Remove(_drawingPreview);
+            _drawingPreview = null;
+        }
+
+        _ = CommitDrawingAsync(point);
+        e.Handled = true;
+    }
+
+    private async Task CommitDrawingAsync(Point endPoint)
+    {
+        if (_viewModel?.CurrentDocument == null || PdfImage == null)
+            return;
+
+        try
+        {
+            var shapeService = App.GetService<IShapeService>();
+            var tool = _viewModel.ActiveDrawingTool;
+            var docId = _viewModel.CurrentDocument.FilePath;
+            var pageNumber = _viewModel.CurrentPageNumber;
+            var strokeColor = _viewModel.DrawingStrokeColor;
+            var fillColor = _viewModel.DrawingFillColor;
+            var strokeWidth = _viewModel.DrawingStrokeWidth;
+
+            var (pdfStart, pdfEnd) = ConvertScreenToPdfPoint(
+                _drawStartPoint, endPoint);
+            if (pdfStart == null || pdfEnd == null)
+                return;
+
+            bool success = false;
+
+            switch (tool)
+            {
+                case DrawingTool.Rectangle:
+                    var rx = Math.Min(pdfStart.Value.X, pdfEnd.Value.X);
+                    var ry = Math.Min(pdfStart.Value.Y, pdfEnd.Value.Y);
+                    var rw = Math.Abs(pdfEnd.Value.X - pdfStart.Value.X);
+                    var rh = Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y);
+                    if (rw > 1 && rh > 1)
+                        success = await shapeService.AddRectangleAsync(
+                            docId, pageNumber, rx, ry, rw, rh,
+                            fillColor, strokeColor, strokeWidth);
+                    break;
+
+                case DrawingTool.Circle:
+                    var cx = (pdfStart.Value.X + pdfEnd.Value.X) / 2;
+                    var cy = (pdfStart.Value.Y + pdfEnd.Value.Y) / 2;
+                    var radX = Math.Abs(pdfEnd.Value.X - pdfStart.Value.X) / 2;
+                    var radY = Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y) / 2;
+                    var radius = Math.Max(radX, radY);
+                    if (radius > 1)
+                        success = await shapeService.AddCircleAsync(
+                            docId, pageNumber, cx, cy, radius,
+                            fillColor, strokeColor, strokeWidth);
+                    break;
+
+                case DrawingTool.Line:
+                    success = await shapeService.AddLineAsync(
+                        docId, pageNumber,
+                        pdfStart.Value.X, pdfStart.Value.Y,
+                        pdfEnd.Value.X, pdfEnd.Value.Y,
+                        strokeColor, strokeWidth);
+                    break;
+
+                case DrawingTool.Freehand:
+                    if (_drawingPoints.Count >= 2)
+                    {
+                        var pdfPts = ConvertPointsToPdfArray(_drawingPoints);
+                        if (pdfPts != null && pdfPts.Length >= 4)
+                            success = await shapeService.AddFreehandPathAsync(
+                                docId, pageNumber, pdfPts,
+                                strokeColor, strokeWidth);
+                    }
+                    break;
+
+                case DrawingTool.Text:
+                    success = await shapeService.AddTextAsync(
+                        docId, pageNumber,
+                        pdfStart.Value.X, pdfStart.Value.Y,
+                        "Text", 12f, "Helvetica", strokeColor);
+                    break;
+            }
+
+            if (success)
+            {
+                _logger.LogInformation("Shape {Tool} drawn on page {Page}",
+                    tool, pageNumber);
+                await _viewModel.RefreshCurrentPageAsync();
+            }
+
+            _viewModel.ActiveDrawingTool = DrawingTool.None;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to commit drawing shape");
+        }
+    }
+
+    private (System.Drawing.PointF? start, System.Drawing.PointF? end)
+        ConvertScreenToPdfPoint(Point screenStart, Point screenEnd)
+    {
+        var s = ScreenPointToPdfCoords(screenStart);
+        var en = ScreenPointToPdfCoords(screenEnd);
+        if (s == null || en == null) return (null, null);
+        return (
+            new System.Drawing.PointF(s.Value.pdfX, s.Value.pdfY),
+            new System.Drawing.PointF(en.Value.pdfX, en.Value.pdfY));
+    }
+
+    private double[]? ConvertPointsToPdfArray(
+        System.Collections.Generic.List<Point> pts)
+    {
+        if (pts.Count < 2) return null;
+
+        var result = new double[pts.Count * 2];
+        for (int i = 0; i < pts.Count; i++)
+        {
+            var coords = ScreenPointToPdfCoords(pts[i]);
+            if (coords == null) return null;
+            result[i * 2] = coords.Value.pdfX;
+            result[i * 2 + 1] = coords.Value.pdfY;
+        }
+        return result;
+    }
+
+    private static SolidColorBrush ParseBrush(string hex)
+    {
+        try
+        {
+            hex = hex.TrimStart('#');
+            if (hex.Length >= 6)
+            {
+                var r = System.Convert.ToByte(hex[..2], 16);
+                var g = System.Convert.ToByte(hex[2..4], 16);
+                var b = System.Convert.ToByte(hex[4..6], 16);
+                byte a = hex.Length >= 8
+                    ? System.Convert.ToByte(hex[6..8], 16) : (byte)255;
+                return new SolidColorBrush(Color.FromArgb(a, r, g, b));
+            }
+        }
+        catch { }
+        return new SolidColorBrush(Colors.Red);
+    }
+
+    #endregion
 }

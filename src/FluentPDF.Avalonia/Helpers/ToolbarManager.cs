@@ -36,6 +36,7 @@ public sealed class ToolbarManager
         SetupNavigation();
         SetupZoom();
         SetupViewToggles();
+        SetupDrawingTools();
     }
 
     private void SetupFileOperations()
@@ -180,6 +181,28 @@ public sealed class ToolbarManager
     {
         if (_viewModel.ActiveTab?.ViewerViewModel?.ShowSearchCommand is { } cmd && cmd.CanExecute(null))
             cmd.Execute(null);
+    }
+
+    private void SetupDrawingTools()
+    {
+        WireDrawingButton("ToolbarDrawRectButton", "Rectangle");
+        WireDrawingButton("ToolbarDrawCircleButton", "Circle");
+        WireDrawingButton("ToolbarDrawLineButton", "Line");
+        WireDrawingButton("ToolbarDrawFreehandButton", "Freehand");
+    }
+
+    private void WireDrawingButton(string buttonName, string toolName)
+    {
+        var button = _owner.FindControl<Button>(buttonName);
+        if (button != null)
+        {
+            button.Click += (s, e) =>
+            {
+                var viewer = _viewModel.ActiveTab?.ViewerViewModel;
+                if (viewer?.SetDrawingToolCommand is { } cmd && cmd.CanExecute(toolName))
+                    cmd.Execute(toolName);
+            };
+        }
     }
 
     /// <summary>

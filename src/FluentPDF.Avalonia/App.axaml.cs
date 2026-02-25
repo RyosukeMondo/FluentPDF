@@ -171,6 +171,27 @@ public partial class App : Application
                 services.AddSingleton<Core.Services.IMetricsCollectionService, MetricsCollectionService>();
                 services.AddSingleton<Core.Services.ILogExportService, LogExportService>();
 
+                // Register shape drawing service with document resolver
+                services.AddSingleton<IShapeService>(sp =>
+                {
+                    var shapeLogger = sp.GetRequiredService<ILogger<FluentPDF.Rendering.Services.ShapeService>>();
+                    Func<string, FluentPDF.Core.Models.PdfDocument?> docResolver = filePath =>
+                    {
+                        var mainVm = sp.GetRequiredService<FluentPDF.Core.ViewModels.MainViewModel>();
+                        var activeDoc = mainVm.ActiveTab?.ViewerViewModel?.CurrentDocument;
+                        if (activeDoc != null && activeDoc.FilePath == filePath)
+                            return activeDoc;
+                        // Search all tabs
+                        foreach (var tab in mainVm.Tabs)
+                        {
+                            if (tab.ViewerViewModel?.CurrentDocument?.FilePath == filePath)
+                                return tab.ViewerViewModel.CurrentDocument;
+                        }
+                        return null;
+                    };
+                    return new FluentPDF.Rendering.Services.ShapeService(shapeLogger, docResolver);
+                });
+
                 // Register HiDPI and rendering services
                 services.AddSingleton<IDpiDetectionService, DpiDetectionService>();
                 services.AddSingleton<IRenderingSettingsService, RenderingSettingsService>();

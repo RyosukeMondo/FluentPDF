@@ -28,6 +28,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     private readonly IDpiDetectionService? _dpiDetectionService;
     private readonly IRenderingSettingsService? _renderingSettingsService;
     private readonly ISettingsService? _settingsService;
+    private readonly IPageOperationsService? _pageOperationsService;
 
     private PdfDocument? _currentDocument;
     private bool _disposed;
@@ -63,7 +64,8 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         IMetricsCollectionService? metricsService = null,
         IDpiDetectionService? dpiDetectionService = null,
         IRenderingSettingsService? renderingSettingsService = null,
-        ISettingsService? settingsService = null)
+        ISettingsService? settingsService = null,
+        IPageOperationsService? pageOperationsService = null)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
@@ -79,6 +81,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         _dpiDetectionService = dpiDetectionService;
         _renderingSettingsService = renderingSettingsService;
         _settingsService = settingsService;
+        _pageOperationsService = pageOperationsService;
 
         // Wire sub-ViewModels
         Navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
@@ -206,6 +209,11 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private bool _hasSelectedText;
 
+    /// <summary>
+    /// Stores the last text selection with character bounds for annotation placement.
+    /// </summary>
+    public TextSelection? LastTextSelection { get; set; }
+
     [ObservableProperty]
     private DisplayInfo? _currentDisplayInfo;
 
@@ -231,6 +239,21 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty]
     private bool _hasPageModifications;
+
+    [ObservableProperty]
+    private DrawingTool _activeDrawingTool = DrawingTool.None;
+
+    [ObservableProperty]
+    private string _drawingStrokeColor = "#FF0000";
+
+    [ObservableProperty]
+    private string _drawingFillColor = "#0000FF";
+
+    [ObservableProperty]
+    private float _drawingStrokeWidth = 2f;
+
+    /// <summary>Whether a drawing tool is currently active.</summary>
+    public bool IsDrawingToolActive => ActiveDrawingTool != DrawingTool.None;
 
     public bool HasUnsavedChanges => HasPageModifications;
 
@@ -275,6 +298,136 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     public IRelayCommand ShowSearchCommand => ViewState.ShowSearchCommand;
     public IRelayCommand ToggleSearchPanelCommand => ViewState.ToggleSearchPanelCommand;
     public IRelayCommand ToggleViewModeCommand => ViewState.ToggleViewModeCommand;
+
+    #endregion
+
+    #region Drawing Tool Commands
+
+    [RelayCommand]
+    private void SetDrawingTool(string toolName)
+    {
+        if (Enum.TryParse<DrawingTool>(toolName, ignoreCase: true, out var tool))
+        {
+            ActiveDrawingTool = ActiveDrawingTool == tool ? DrawingTool.None : tool;
+        }
+        else
+        {
+            ActiveDrawingTool = DrawingTool.None;
+        }
+    }
+
+    #endregion
+
+    #region Page Management Commands
+
+    private bool CanExecutePageOperation() =>
+        _currentDocument != null && !IsLoading && _pageOperationsService != null;
+
+    [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
+    private async Task RotatePageClockwiseAsync()
+    {
+        var result = await _pageOperationsService!.RotatePagesAsync(
+            _currentDocument!, new[] { CurrentPageIndex }, RotationAngle.Rotate90);
+        await HandlePageOperationResult(result, "rotate");
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
+    private async Task RotatePageCounterClockwiseAsync()
+    {
+        var result = await _pageOperationsService!.RotatePagesAsync(
+            _currentDocument!, new[] { CurrentPageIndex }, RotationAngle.Rotate270);
+        await HandlePageOperationResult(result, "rotate");
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
+    private async Task DeleteCurrentPageAsync()
+    {
+        if (TotalPages <= 1)
+        {
+            await ShowErrorAsync("Delete Page", "Cannot delete the only page in the document.");
+            return;
+        }
+
+        var result = await _pageOperationsService!.DeletePagesAsync(
+            _currentDocument!, new[] { CurrentPageIndex });
+
+        if (result.IsSuccess)
+        {
+            TotalPages--;
+            if (CurrentPageNumber > TotalPages)
+                CurrentPageNumber = TotalPages;
+            OnPropertyChanged(nameof(PageCount));
+        }
+
+        await HandlePageOperationResult(result, "delete page");
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
+    private async Task InsertBlankPageAsync()
+    {
+        var insertAt = CurrentPageIndex + 1;
+        var result = await _pageOperationsService!.InsertBlankPageAsync(
+            _currentDocument!, insertAt, PageSize.SameAsCurrent);
+
+        if (result.IsSuccess)
+        {
+            TotalPages++;
+            CurrentPageNumber = insertAt + 1;
+            OnPropertyChanged(nameof(PageCount));
+        }
+
+        await HandlePageOperationResult(result, "insert blank page");
+    }
+
+    private async Task HandlePageOperationResult(FluentResults.Result result, string operation)
+    {
+        if (result.IsSuccess)
+        {
+            HasPageModifications = true;
+            WeakReferenceMessenger.Default.Send(new PageModifiedMessage());
+            await RenderCurrentPageAsync();
+        }
+        else
+        {
+            var msg = result.Errors.Count > 0 ? result.Errors[0].Message : "Unknown error";
+            _logger.LogError("Failed to {Operation}: {Error}", operation, msg);
+            await ShowErrorAsync("Page Operation Failed", msg);
+        }
+    }
+
+    #endregion
+
+    #region Text Selection Commands
+
+    private bool CanSelectAllText() => _currentDocument != null && !IsLoading;
+
+    [RelayCommand(CanExecute = nameof(CanSelectAllText))]
+    private async Task SelectAllTextAsync()
+    {
+        if (_currentDocument == null) return;
+
+        try
+        {
+            var result = await _textExtractionService.ExtractTextAsync(_currentDocument, CurrentPageNumber);
+            if (result.IsSuccess && !string.IsNullOrEmpty(result.Value))
+            {
+                SelectedText = result.Value;
+                HasSelectedText = true;
+                _logger.LogInformation("Selected all text on page {Page}: {Length} characters",
+                    CurrentPageNumber, result.Value.Length);
+            }
+            else
+            {
+                SelectedText = string.Empty;
+                HasSelectedText = false;
+                _logger.LogDebug("No text found on page {Page}", CurrentPageNumber);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to select all text on page {Page}", CurrentPageNumber);
+        }
+    }
 
     #endregion
 
@@ -340,6 +493,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(PageCount));
 
             ApplyDefaultSettings();
+            NotifyPageCommandsCanExecuteChanged();
             await RenderCurrentPageAsync();
             await LoadSidePanelsAsync();
 
@@ -499,6 +653,14 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private void NotifyPageCommandsCanExecuteChanged()
+    {
+        RotatePageClockwiseCommand.NotifyCanExecuteChanged();
+        RotatePageCounterClockwiseCommand.NotifyCanExecuteChanged();
+        DeleteCurrentPageCommand.NotifyCanExecuteChanged();
+        InsertBlankPageCommand.NotifyCanExecuteChanged();
+    }
+
     private async Task ShowErrorAsync(string title, string message)
     {
         if (_dialogService != null)
@@ -559,12 +721,18 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         {
             Navigation.IsLoading = IsLoading;
             Zoom.IsLoading = IsLoading;
+            NotifyPageCommandsCanExecuteChanged();
         }
 
         if (e.PropertyName == nameof(HasPageModifications))
         {
             OnPropertyChanged(nameof(HasUnsavedChanges));
             SaveCommand.NotifyCanExecuteChanged();
+        }
+
+        if (e.PropertyName == nameof(ActiveDrawingTool))
+        {
+            OnPropertyChanged(nameof(IsDrawingToolActive));
         }
     }
 

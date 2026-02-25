@@ -19,6 +19,7 @@ public sealed class MenuManager
     private readonly Func<Task> _onSaveAs;
     private readonly Func<Task> _onSettings;
     private readonly Func<Task<bool>> _onClearRecentFiles;
+    private readonly ToolsMenuHandler _toolsHandler;
 
     public MenuManager(
         Window owner,
@@ -38,6 +39,7 @@ public sealed class MenuManager
         _onSettings = onSettings ?? throw new ArgumentNullException(nameof(onSettings));
         _onClearRecentFiles = onClearRecentFiles ?? throw new ArgumentNullException(nameof(onClearRecentFiles));
         _logger = logger;
+        _toolsHandler = new ToolsMenuHandler(owner, GetActiveViewer, logger);
     }
 
     /// <summary>
@@ -63,38 +65,41 @@ public sealed class MenuManager
 
         // Edit menu items
         var rotateClockwiseMenuItem = _owner.FindControl<MenuItem>("RotateClockwiseMenuItem");
-        if (rotateClockwiseMenuItem != null) rotateClockwiseMenuItem.Click += (s, e) =>
+        if (rotateClockwiseMenuItem != null) rotateClockwiseMenuItem.Click += async (s, e) =>
         {
-            // TODO: Wire to page rotation when ViewModel command available
-            _logger?.LogInformation("Rotate clockwise requested");
+            var viewer = GetActiveViewer();
+            if (viewer != null) await viewer.RotatePageClockwiseCommand.ExecuteAsync(null);
         };
 
         var rotateCounterClockwiseMenuItem = _owner.FindControl<MenuItem>("RotateCounterClockwiseMenuItem");
-        if (rotateCounterClockwiseMenuItem != null) rotateCounterClockwiseMenuItem.Click += (s, e) =>
+        if (rotateCounterClockwiseMenuItem != null) rotateCounterClockwiseMenuItem.Click += async (s, e) =>
         {
-            // TODO: Wire to page rotation when ViewModel command available
-            _logger?.LogInformation("Rotate counterclockwise requested");
+            var viewer = GetActiveViewer();
+            if (viewer != null) await viewer.RotatePageCounterClockwiseCommand.ExecuteAsync(null);
         };
 
         var deletePageMenuItem = _owner.FindControl<MenuItem>("DeletePageMenuItem");
-        if (deletePageMenuItem != null) deletePageMenuItem.Click += (s, e) =>
+        if (deletePageMenuItem != null) deletePageMenuItem.Click += async (s, e) =>
         {
-            // TODO: Wire to delete page command
-            _logger?.LogInformation("Delete page requested");
+            var viewer = GetActiveViewer();
+            if (viewer != null) await viewer.DeleteCurrentPageCommand.ExecuteAsync(null);
         };
 
         var insertBlankPageMenuItem = _owner.FindControl<MenuItem>("InsertBlankPageMenuItem");
-        if (insertBlankPageMenuItem != null) insertBlankPageMenuItem.Click += (s, e) =>
+        if (insertBlankPageMenuItem != null) insertBlankPageMenuItem.Click += async (s, e) =>
         {
-            // TODO: Wire to insert blank page command
-            _logger?.LogInformation("Insert blank page requested");
+            var viewer = GetActiveViewer();
+            if (viewer != null) await viewer.InsertBlankPageCommand.ExecuteAsync(null);
         };
 
         var selectAllTextMenuItem = _owner.FindControl<MenuItem>("SelectAllTextMenuItem");
-        if (selectAllTextMenuItem != null) selectAllTextMenuItem.Click += (s, e) =>
+        if (selectAllTextMenuItem != null) selectAllTextMenuItem.Click += async (s, e) =>
         {
-            // TODO: Wire to select all text command
-            _logger?.LogInformation("Select all text requested");
+            var viewer = GetActiveViewer();
+            if (viewer != null)
+            {
+                await viewer.SelectAllTextCommand.ExecuteAsync(null);
+            }
         };
 
         // View menu items
@@ -119,41 +124,21 @@ public sealed class MenuManager
             if (viewer != null) viewer.ShowSearchCommand.Execute(null);
         };
 
-        // Tools menu items
+        // Tools menu items - delegated to ToolsMenuHandler
         var watermarkMenuItem = _owner.FindControl<MenuItem>("WatermarkMenuItem");
-        if (watermarkMenuItem != null) watermarkMenuItem.Click += (s, e) =>
-        {
-            // TODO: Wire to watermark dialog
-            _logger?.LogInformation("Add watermark requested");
-        };
+        if (watermarkMenuItem != null) watermarkMenuItem.Click += async (s, e) => await _toolsHandler.OnWatermarkClickAsync();
 
         var stampMenuItem = _owner.FindControl<MenuItem>("StampMenuItem");
-        if (stampMenuItem != null) stampMenuItem.Click += (s, e) =>
-        {
-            // TODO: Wire to stamp dialog
-            _logger?.LogInformation("Add stamp requested");
-        };
+        if (stampMenuItem != null) stampMenuItem.Click += async (s, e) => await _toolsHandler.OnStampClickAsync();
 
         var exportImagesMenuItem = _owner.FindControl<MenuItem>("ExportImagesMenuItem");
-        if (exportImagesMenuItem != null) exportImagesMenuItem.Click += (s, e) =>
-        {
-            // TODO: Wire to export images dialog
-            _logger?.LogInformation("Export pages as images requested");
-        };
+        if (exportImagesMenuItem != null) exportImagesMenuItem.Click += async (s, e) => await _toolsHandler.OnExportImagesClickAsync();
 
         var exportFdfMenuItem = _owner.FindControl<MenuItem>("ExportFdfMenuItem");
-        if (exportFdfMenuItem != null) exportFdfMenuItem.Click += (s, e) =>
-        {
-            // TODO: Wire to FDF export
-            _logger?.LogInformation("Export FDF requested");
-        };
+        if (exportFdfMenuItem != null) exportFdfMenuItem.Click += async (s, e) => await _toolsHandler.OnExportFdfClickAsync();
 
         var securityMenuItem = _owner.FindControl<MenuItem>("SecurityMenuItem");
-        if (securityMenuItem != null) securityMenuItem.Click += (s, e) =>
-        {
-            // TODO: Wire to security dialog
-            _logger?.LogInformation("Document security requested");
-        };
+        if (securityMenuItem != null) securityMenuItem.Click += async (s, e) => await _toolsHandler.OnSecurityClickAsync();
     }
 
     private async void OnClearRecentFilesClick(object? sender, RoutedEventArgs e)
