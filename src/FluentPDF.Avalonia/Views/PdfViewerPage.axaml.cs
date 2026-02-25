@@ -395,8 +395,6 @@ public partial class PdfViewerPage : UserControl
             return;
         }
 
-        // Check for link under cursor to change cursor style
-        _ = UpdateLinkCursorAsync(point);
     }
 
     /// <summary>
