@@ -178,6 +178,78 @@ public partial class MainWindow : Window
             return true;
         }
 
+        // PDF viewer shortcuts
+        var viewer = ViewModel?.ActiveTab?.ViewerViewModel;
+        if (viewer != null)
+        {
+            if (key == Key.Home && modifiers == KeyModifiers.Control)
+            {
+                if (viewer.FirstPageCommand.CanExecute(null))
+                    await viewer.FirstPageCommand.ExecuteAsync(null);
+                return true;
+            }
+
+            if (key == Key.End && modifiers == KeyModifiers.Control)
+            {
+                if (viewer.LastPageCommand.CanExecute(null))
+                    await viewer.LastPageCommand.ExecuteAsync(null);
+                return true;
+            }
+
+            if (key == Key.D0 && modifiers == KeyModifiers.Control)
+            {
+                if (viewer.ResetZoomCommand.CanExecute(null))
+                    await viewer.ResetZoomCommand.ExecuteAsync(null);
+                return true;
+            }
+
+            if (key == Key.OemPlus && modifiers == KeyModifiers.Control)
+            {
+                if (viewer.ZoomInCommand.CanExecute(null))
+                    await viewer.ZoomInCommand.ExecuteAsync(null);
+                return true;
+            }
+
+            if (key == Key.OemMinus && modifiers == KeyModifiers.Control)
+            {
+                if (viewer.ZoomOutCommand.CanExecute(null))
+                    await viewer.ZoomOutCommand.ExecuteAsync(null);
+                return true;
+            }
+
+            if (key == Key.F && modifiers == KeyModifiers.Control)
+            {
+                viewer.ShowSearchCommand.Execute(null);
+                return true;
+            }
+
+            if (key == Key.G && modifiers == KeyModifiers.Control)
+            {
+                viewer.ToggleThumbnailsCommand.Execute(null);
+                return true;
+            }
+
+            if (key == Key.B && modifiers == KeyModifiers.Control)
+            {
+                viewer.ToggleBookmarksCommand.Execute(null);
+                return true;
+            }
+
+            if (key == Key.Left && modifiers == KeyModifiers.Alt)
+            {
+                if (viewer.GoToPreviousPageCommand.CanExecute(null))
+                    await viewer.GoToPreviousPageCommand.ExecuteAsync(null);
+                return true;
+            }
+
+            if (key == Key.Right && modifiers == KeyModifiers.Alt)
+            {
+                if (viewer.GoToNextPageCommand.CanExecute(null))
+                    await viewer.GoToNextPageCommand.ExecuteAsync(null);
+                return true;
+            }
+        }
+
         return false;
     }
 
