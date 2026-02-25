@@ -1,11 +1,95 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!--
-    FluentPDF Button Styles
+    <!-- Button.ToolbarIcon - Compact 32x32 icon-only button with liquid glass hover -->
+    <Style Selector="Button.ToolbarIcon">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundSecondaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+    </Style>
+    <Style Selector="Button.ToolbarIcon:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.ToolbarIcon:pressed">
+        <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}" />
+        <Setter Property="RenderTransform">
+            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+        </Setter>
+    </Style>
+    <Style Selector="Button.ToolbarIcon:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
 
-    Consistent button styling for various actions (primary, destructive, etc.)
-    Note: Avalonia uses Styles/Selector approach rather than TargetType/Key approach
-    -->
+    <!-- ToggleButton.ToolbarIcon - Same as Button.ToolbarIcon with checked state -->
+    <Style Selector="ToggleButton.ToolbarIcon">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundSecondaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+    </Style>
+    <Style Selector="ToggleButton.ToolbarIcon:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassBorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}" />
+    </Style>
+    <Style Selector="ToggleButton.ToolbarIcon:pressed">
+        <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}" />
+        <Setter Property="RenderTransform">
+            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+        </Setter>
+    </Style>
+    <Style Selector="ToggleButton.ToolbarIcon:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+    <Style Selector="ToggleButton.ToolbarIcon:checked">
+        <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}" />
+    </Style>
 
-</ResourceDictionary>
+    <!-- Button.accent - Primary action button with accent color -->
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="{DynamicResource AccentPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundInverseBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.accent:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+    </Style>
+    <Style Selector="Button.accent:pressed">
+        <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+    </Style>
+
+    <!-- Button.Ghost - Minimal transparent button -->
+    <Style Selector="Button.Ghost">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="Opacity" Value="0.6" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="Button.Ghost:pointerover">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+    </Style>
+
+</Styles>

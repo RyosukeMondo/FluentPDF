@@ -11,6 +11,7 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://FluentPDF.Avalonia/Styles/ButtonStyles.axaml"/>
     </Application.Styles>
 
     <Application.Resources>
@@ -28,7 +29,6 @@
 
                 <!-- Legacy Theme Resources (to be migrated) -->
                 <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/ThemeResources.axaml"/>
-                <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/ButtonStyles.axaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Define missing theme resources -->

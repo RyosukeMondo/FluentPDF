@@ -60,6 +60,100 @@ public sealed class MenuManager
         if (exitMenuItem != null) exitMenuItem.Click += (s, e) => _owner.Close();
         if (settingsMenuItem != null) settingsMenuItem.Click += async (s, e) => await _onSettings();
         if (emptyStateOpenButton != null) emptyStateOpenButton.Click += async (s, e) => await _onOpenFile();
+
+        // Edit menu items
+        var rotateClockwiseMenuItem = _owner.FindControl<MenuItem>("RotateClockwiseMenuItem");
+        if (rotateClockwiseMenuItem != null) rotateClockwiseMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to page rotation when ViewModel command available
+            _logger?.LogInformation("Rotate clockwise requested");
+        };
+
+        var rotateCounterClockwiseMenuItem = _owner.FindControl<MenuItem>("RotateCounterClockwiseMenuItem");
+        if (rotateCounterClockwiseMenuItem != null) rotateCounterClockwiseMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to page rotation when ViewModel command available
+            _logger?.LogInformation("Rotate counterclockwise requested");
+        };
+
+        var deletePageMenuItem = _owner.FindControl<MenuItem>("DeletePageMenuItem");
+        if (deletePageMenuItem != null) deletePageMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to delete page command
+            _logger?.LogInformation("Delete page requested");
+        };
+
+        var insertBlankPageMenuItem = _owner.FindControl<MenuItem>("InsertBlankPageMenuItem");
+        if (insertBlankPageMenuItem != null) insertBlankPageMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to insert blank page command
+            _logger?.LogInformation("Insert blank page requested");
+        };
+
+        var selectAllTextMenuItem = _owner.FindControl<MenuItem>("SelectAllTextMenuItem");
+        if (selectAllTextMenuItem != null) selectAllTextMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to select all text command
+            _logger?.LogInformation("Select all text requested");
+        };
+
+        // View menu items
+        var viewThumbnailsMenuItem = _owner.FindControl<MenuItem>("ViewThumbnailsMenuItem");
+        if (viewThumbnailsMenuItem != null) viewThumbnailsMenuItem.Click += (s, e) =>
+        {
+            var viewer = GetActiveViewer();
+            if (viewer != null) viewer.ToggleThumbnailsCommand.Execute(null);
+        };
+
+        var viewBookmarksMenuItem = _owner.FindControl<MenuItem>("ViewBookmarksMenuItem");
+        if (viewBookmarksMenuItem != null) viewBookmarksMenuItem.Click += (s, e) =>
+        {
+            var viewer = GetActiveViewer();
+            if (viewer != null) viewer.ToggleBookmarksCommand.Execute(null);
+        };
+
+        var viewSearchMenuItem = _owner.FindControl<MenuItem>("ViewSearchMenuItem");
+        if (viewSearchMenuItem != null) viewSearchMenuItem.Click += (s, e) =>
+        {
+            var viewer = GetActiveViewer();
+            if (viewer != null) viewer.ShowSearchCommand.Execute(null);
+        };
+
+        // Tools menu items
+        var watermarkMenuItem = _owner.FindControl<MenuItem>("WatermarkMenuItem");
+        if (watermarkMenuItem != null) watermarkMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to watermark dialog
+            _logger?.LogInformation("Add watermark requested");
+        };
+
+        var stampMenuItem = _owner.FindControl<MenuItem>("StampMenuItem");
+        if (stampMenuItem != null) stampMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to stamp dialog
+            _logger?.LogInformation("Add stamp requested");
+        };
+
+        var exportImagesMenuItem = _owner.FindControl<MenuItem>("ExportImagesMenuItem");
+        if (exportImagesMenuItem != null) exportImagesMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to export images dialog
+            _logger?.LogInformation("Export pages as images requested");
+        };
+
+        var exportFdfMenuItem = _owner.FindControl<MenuItem>("ExportFdfMenuItem");
+        if (exportFdfMenuItem != null) exportFdfMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to FDF export
+            _logger?.LogInformation("Export FDF requested");
+        };
+
+        var securityMenuItem = _owner.FindControl<MenuItem>("SecurityMenuItem");
+        if (securityMenuItem != null) securityMenuItem.Click += (s, e) =>
+        {
+            // TODO: Wire to security dialog
+            _logger?.LogInformation("Document security requested");
+        };
     }
 
     private async void OnClearRecentFilesClick(object? sender, RoutedEventArgs e)
@@ -143,5 +237,62 @@ public sealed class MenuManager
                 "Menu states updated. HasActiveTab={HasActiveTab}, HasUnsavedChanges={HasUnsavedChanges}",
                 hasActiveTab, hasUnsavedChanges);
         }
+
+        UpdateEditMenuStates();
     }
+
+    /// <summary>
+    /// Updates the enabled state of Edit menu items based on whether a document is open.
+    /// </summary>
+    public void UpdateEditMenuStates()
+    {
+        var hasActiveTab = _viewModel.ActiveTab != null;
+
+        var editMenuItems = new[]
+        {
+            "RotateClockwiseMenuItem",
+            "RotateCounterClockwiseMenuItem",
+            "DeletePageMenuItem",
+            "InsertBlankPageMenuItem",
+            "SelectAllTextMenuItem",
+        };
+
+        foreach (var name in editMenuItems)
+        {
+            var item = _owner.FindControl<MenuItem>(name);
+            if (item != null) item.IsEnabled = hasActiveTab;
+        }
+
+        // View menu items also depend on active document
+        var viewMenuItems = new[]
+        {
+            "ViewThumbnailsMenuItem",
+            "ViewBookmarksMenuItem",
+            "ViewSearchMenuItem",
+        };
+
+        foreach (var name in viewMenuItems)
+        {
+            var item = _owner.FindControl<MenuItem>(name);
+            if (item != null) item.IsEnabled = hasActiveTab;
+        }
+
+        // Tools menu items that require an open document
+        var toolsMenuItems = new[]
+        {
+            "WatermarkMenuItem",
+            "StampMenuItem",
+            "ExportImagesMenuItem",
+            "ExportFdfMenuItem",
+            "SecurityMenuItem",
+        };
+
+        foreach (var name in toolsMenuItems)
+        {
+            var item = _owner.FindControl<MenuItem>(name);
+            if (item != null) item.IsEnabled = hasActiveTab;
+        }
+    }
+
+    private PdfViewerViewModel? GetActiveViewer() => _viewModel.ActiveTab?.ViewerViewModel;
 }

@@ -178,6 +178,20 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (key == Key.R && modifiers == KeyModifiers.Control)
+        {
+            _logger?.LogInformation("Rotate clockwise shortcut");
+            // TODO: Wire to rotation command
+            return true;
+        }
+
+        if (key == Key.R && modifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+        {
+            _logger?.LogInformation("Rotate counterclockwise shortcut");
+            // TODO: Wire to rotation command
+            return true;
+        }
+
         // PDF viewer shortcuts
         var viewer = ViewModel?.ActiveTab?.ViewerViewModel;
         if (viewer != null)
