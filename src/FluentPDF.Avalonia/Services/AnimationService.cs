@@ -13,38 +13,63 @@ using System.Reactive.Subjects;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using CoreAnimationService = FluentPDF.Core.Services.IAnimationService;
+using CorePageTransitionDirection = FluentPDF.Core.Services.PageTransitionDirection;
+using CoreSlideDirection = FluentPDF.Core.Services.SlideDirection;
 
 namespace FluentPDF.Avalonia.Services;
 
 /// <summary>
+/// Defines animation types for page transitions.
+/// </summary>
+public enum PageTransitionType
+{
+    /// <summary>Slide animation with 350ms duration.</summary>
+    Slide,
+
+    /// <summary>Fade animation with 300ms duration.</summary>
+    Fade,
+
+    /// <summary>Zoom animation with 400ms duration.</summary>
+    Zoom
+}
+
+/// <summary>
+/// Defines slide direction for panel animations.
+/// </summary>
+public enum SlideDirection
+{
+    /// <summary>Slide from top to bottom.</summary>
+    FromTop,
+
+    /// <summary>Slide from bottom to top.</summary>
+    FromBottom,
+
+    /// <summary>Slide from left to right.</summary>
+    FromLeft,
+
+    /// <summary>Slide from right to left.</summary>
+    FromRight
+}
+
+/// <summary>
 /// Implements centralized animation orchestration with accessibility support.
 /// Detects reduced motion settings and provides GPU-accelerated animations.
-/// Automatically adapts to performance: disables animations if FPS &lt; 30 for &gt; 60 frames,
-/// re-enables when FPS &gt; 45 for 5 seconds.
+/// Implements both the Core IAnimationService (for ViewModel injection) and
+/// provides Avalonia-specific animation methods using Control types.
 /// </summary>
-public sealed class AnimationService : IAnimationService, IDisposable
+public sealed class AnimationService : CoreAnimationService, IDisposable
 {
     private readonly ILogger<AnimationService> _logger;
     private readonly BehaviorSubject<bool> _motionStateSubject;
-    private readonly IDisposable? _performanceSubscription;
     private bool _disposed;
     private bool _manuallyDisabled;
-    private bool _performanceDisabled;
-    private int _lowFpsFrameCount;
-    private int _highFpsFrameCount;
-    private const int LowFpsThreshold = 30;
-    private const int HighFpsThreshold = 45;
-    private const int LowFpsFramesToDisable = 60; // ~1 second at 60 FPS
-    private const int HighFpsFramesToEnable = 300; // ~5 seconds at 60 FPS
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AnimationService"/> class.
     /// </summary>
     /// <param name="logger">Logger for tracking animation operations.</param>
-    /// <param name="performanceMonitor">Optional performance monitor for adaptive quality.</param>
-    public AnimationService(
-        ILogger<AnimationService> logger,
-        IPerformanceMonitor? performanceMonitor = null)
+    public AnimationService(ILogger<AnimationService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -52,46 +77,93 @@ public sealed class AnimationService : IAnimationService, IDisposable
         var initialState = !reducedMotion;
         _motionStateSubject = new BehaviorSubject<bool>(initialState);
         _manuallyDisabled = false;
-        _performanceDisabled = false;
-        _lowFpsFrameCount = 0;
-        _highFpsFrameCount = 0;
-
-        // Subscribe to performance monitor if available
-        if (performanceMonitor != null)
-        {
-            _performanceSubscription = performanceMonitor.MetricsStream
-                .Subscribe(
-                    metrics => OnPerformanceMetrics(metrics),
-                    ex =>
-                    {
-                        var correlationId = Guid.NewGuid();
-                        Log.Error(ex,
-                            "Performance monitoring stream error [CorrelationId: {CorrelationId}]",
-                            correlationId);
-                    });
-
-            var perfCorrelationId = Guid.NewGuid();
-            Log.Information(
-                "AnimationService subscribed to PerformanceMonitor [CorrelationId: {CorrelationId}]",
-                perfCorrelationId);
-        }
 
         var correlationId = Guid.NewGuid();
         Log.Information(
-            "AnimationService initialized. ReducedMotion: {ReducedMotion}, MotionEnabled: {MotionEnabled}, PerformanceMonitoring: {PerformanceMonitoring} [CorrelationId: {CorrelationId}]",
-            reducedMotion, initialState, performanceMonitor != null, correlationId);
+            "AnimationService initialized. ReducedMotion: {ReducedMotion}, MotionEnabled: {MotionEnabled} [CorrelationId: {CorrelationId}]",
+            reducedMotion, initialState, correlationId);
     }
 
     /// <inheritdoc/>
-    public bool IsMotionEnabled => _motionStateSubject.Value && !_manuallyDisabled && !_performanceDisabled;
+    public bool IsMotionEnabled => _motionStateSubject.Value && !_manuallyDisabled;
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Observes changes to motion enabled state as a reactive stream.
+    /// </summary>
     public IObservable<bool> ObserveMotionState()
     {
         return _motionStateSubject.AsObservable();
     }
 
+    #region Core IAnimationService implementation (for ViewModel injection)
+
     /// <inheritdoc/>
+    async Task CoreAnimationService.AnimatePageTransitionAsync(
+        object? target,
+        CorePageTransitionDirection direction,
+        CancellationToken cancellationToken)
+    {
+        if (target is Control control)
+        {
+            var transitionType = direction == CorePageTransitionDirection.Jump
+                ? PageTransitionType.Fade
+                : PageTransitionType.Slide;
+            await AnimatePageTransitionAsync(control, transitionType, cancellationToken);
+        }
+        // When target is null (ViewModel calls), this is a no-op
+    }
+
+    /// <inheritdoc/>
+    async Task CoreAnimationService.AnimatePanelSlideAsync(
+        object panel,
+        CoreSlideDirection direction,
+        CancellationToken cancellationToken)
+    {
+        if (panel is Control control)
+        {
+            var slideDir = direction switch
+            {
+                CoreSlideDirection.FromTop => SlideDirection.FromTop,
+                CoreSlideDirection.FromBottom => SlideDirection.FromBottom,
+                CoreSlideDirection.FromLeft => SlideDirection.FromLeft,
+                CoreSlideDirection.FromRight => SlideDirection.FromRight,
+                // "To" directions map to slide-out with matching origin
+                CoreSlideDirection.ToTop => SlideDirection.FromTop,
+                CoreSlideDirection.ToBottom => SlideDirection.FromBottom,
+                CoreSlideDirection.ToLeft => SlideDirection.FromLeft,
+                CoreSlideDirection.ToRight => SlideDirection.FromRight,
+                _ => SlideDirection.FromLeft
+            };
+            var slideIn = direction is CoreSlideDirection.FromTop or CoreSlideDirection.FromBottom
+                or CoreSlideDirection.FromLeft or CoreSlideDirection.FromRight;
+            await AnimatePanelSlideAsync(control, slideDir, slideIn, cancellationToken);
+        }
+    }
+
+    /// <inheritdoc/>
+    async Task CoreAnimationService.AnimateFadeAsync(
+        object element,
+        double targetOpacity,
+        int durationMs,
+        CancellationToken cancellationToken)
+    {
+        if (element is Control control)
+        {
+            await AnimateFadeAsync(control, targetOpacity > 0.5, durationMs, cancellationToken);
+        }
+    }
+
+    /// <inheritdoc/>
+    void CoreAnimationService.SetMotionEnabled(bool enabled)
+    {
+        SetMotionEnabled(enabled);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Animates a page transition with the specified type.
+    /// </summary>
     public async Task<Result> AnimatePageTransitionAsync(
         Control control,
         PageTransitionType transitionType,
@@ -149,7 +221,9 @@ public sealed class AnimationService : IAnimationService, IDisposable
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Animates a panel sliding in or out with 250ms duration.
+    /// </summary>
     public async Task<Result> AnimatePanelSlideAsync(
         Control control,
         SlideDirection direction,
@@ -240,7 +314,9 @@ public sealed class AnimationService : IAnimationService, IDisposable
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Animates a fade in or fade out effect.
+    /// </summary>
     public async Task<Result> AnimateFadeAsync(
         Control control,
         bool fadeIn = true,
@@ -325,7 +401,9 @@ public sealed class AnimationService : IAnimationService, IDisposable
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Enables or disables animations.
+    /// </summary>
     public Result SetMotionEnabled(bool enabled)
     {
         try
@@ -337,13 +415,13 @@ public sealed class AnimationService : IAnimationService, IDisposable
 
             _manuallyDisabled = !enabled;
             var reducedMotion = IsReducedMotionEnabled();
-            var effectiveState = enabled && !reducedMotion && !_performanceDisabled;
+            var effectiveState = enabled && !reducedMotion;
 
             _motionStateSubject.OnNext(effectiveState);
 
             Log.Information(
-                "Motion state updated. ManuallyDisabled: {ManuallyDisabled}, ReducedMotion: {ReducedMotion}, PerformanceDisabled: {PerformanceDisabled}, Effective: {Effective} [CorrelationId: {CorrelationId}]",
-                _manuallyDisabled, reducedMotion, _performanceDisabled, effectiveState, correlationId);
+                "Motion state updated. ManuallyDisabled: {ManuallyDisabled}, ReducedMotion: {ReducedMotion}, Effective: {Effective} [CorrelationId: {CorrelationId}]",
+                _manuallyDisabled, reducedMotion, effectiveState, correlationId);
 
             return Result.Ok();
         }
@@ -357,7 +435,9 @@ public sealed class AnimationService : IAnimationService, IDisposable
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Checks if the system's reduced motion setting is enabled.
+    /// </summary>
     public bool IsReducedMotionEnabled()
     {
         try
@@ -532,96 +612,6 @@ public sealed class AnimationService : IAnimationService, IDisposable
     }
 
     /// <summary>
-    /// Handles performance metrics updates from PerformanceMonitor.
-    /// Implements hysteresis logic for adaptive animation quality:
-    /// - Disables animations if FPS &lt; 30 for &gt; 60 consecutive frames (~1 second)
-    /// - Re-enables animations if FPS &gt; 45 for &gt; 300 consecutive frames (~5 seconds)
-    /// </summary>
-    /// <param name="metrics">The latest performance metrics.</param>
-    private void OnPerformanceMetrics(PerformanceMetrics metrics)
-    {
-        try
-        {
-            var fps = metrics.CurrentFps;
-
-            // Track low FPS frames
-            if (fps < LowFpsThreshold)
-            {
-                _lowFpsFrameCount++;
-                _highFpsFrameCount = 0; // Reset high FPS counter
-
-                // Disable animations if sustained low FPS detected
-                if (!_performanceDisabled && _lowFpsFrameCount >= LowFpsFramesToDisable)
-                {
-                    _performanceDisabled = true;
-                    var correlationId = Guid.NewGuid();
-
-                    Log.Warning(
-                        "Performance degradation detected: FPS {Fps:F1} < {Threshold} for {FrameCount} frames (~{Duration}s). Disabling animations. [CorrelationId: {CorrelationId}]",
-                        fps,
-                        LowFpsThreshold,
-                        _lowFpsFrameCount,
-                        _lowFpsFrameCount / 60.0,
-                        correlationId);
-
-                    // Update motion state to notify observers
-                    var effectiveState = !IsReducedMotionEnabled() && !_manuallyDisabled && !_performanceDisabled;
-                    _motionStateSubject.OnNext(effectiveState);
-
-                    Log.Information(
-                        "Animations disabled due to performance. EffectiveMotionState: {EffectiveState} [CorrelationId: {CorrelationId}]",
-                        effectiveState,
-                        correlationId);
-                }
-            }
-            // Track high FPS frames for re-enabling
-            else if (fps >= HighFpsThreshold)
-            {
-                _highFpsFrameCount++;
-                _lowFpsFrameCount = 0; // Reset low FPS counter
-
-                // Re-enable animations if sustained high FPS detected
-                if (_performanceDisabled && _highFpsFrameCount >= HighFpsFramesToEnable)
-                {
-                    _performanceDisabled = false;
-                    _highFpsFrameCount = 0;
-                    var correlationId = Guid.NewGuid();
-
-                    Log.Information(
-                        "Performance recovered: FPS {Fps:F1} > {Threshold} for {FrameCount} frames (~{Duration}s). Re-enabling animations. [CorrelationId: {CorrelationId}]",
-                        fps,
-                        HighFpsThreshold,
-                        HighFpsFramesToEnable,
-                        HighFpsFramesToEnable / 60.0,
-                        correlationId);
-
-                    // Update motion state to notify observers
-                    var effectiveState = !IsReducedMotionEnabled() && !_manuallyDisabled && !_performanceDisabled;
-                    _motionStateSubject.OnNext(effectiveState);
-
-                    Log.Information(
-                        "Animations re-enabled after performance recovery. EffectiveMotionState: {EffectiveState} [CorrelationId: {CorrelationId}]",
-                        effectiveState,
-                        correlationId);
-                }
-            }
-            // In the middle range (30-45 FPS) - reset both counters
-            else
-            {
-                _lowFpsFrameCount = 0;
-                _highFpsFrameCount = 0;
-            }
-        }
-        catch (Exception ex)
-        {
-            var correlationId = Guid.NewGuid();
-            Log.Error(ex,
-                "Error processing performance metrics [CorrelationId: {CorrelationId}]",
-                correlationId);
-        }
-    }
-
-    /// <summary>
     /// Disposes resources used by the AnimationService.
     /// </summary>
     public void Dispose()
@@ -631,7 +621,6 @@ public sealed class AnimationService : IAnimationService, IDisposable
             return;
         }
 
-        _performanceSubscription?.Dispose();
         _motionStateSubject?.Dispose();
         _disposed = true;
 

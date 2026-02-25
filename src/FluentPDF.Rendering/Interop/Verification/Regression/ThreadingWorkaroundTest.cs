@@ -11,7 +11,7 @@ namespace FluentPDF.Rendering.Interop.Verification.Regression;
 /// <remarks>
 /// <para>
 /// The workaround uses Task.Yield() instead of Task.Run() because PDFium calls from Task.Run
-/// threads cause AccessViolation crashes in .NET 9.0 WinUI 3 self-contained deployments.
+/// threads cause AccessViolation crashes in .NET 9.0 self-contained deployments due to PDFium thread affinity.
 /// </para>
 /// <para>
 /// This test verifies that:
@@ -219,11 +219,11 @@ public class ThreadingWorkaroundTest : IWorkaroundTest
     {
         await Task.Yield();
 
-        // Check if current environment is .NET 9.0 WinUI 3 (where thread affinity issue exists)
+        // Check if current environment is .NET 9+ on Windows (where PDFium thread affinity issue exists)
         var runtimeVersion = Environment.Version;
         var isNet9 = runtimeVersion.Major >= 9;
 
-        // Check if running in Windows environment (required for WinUI 3)
+        // Check if running in Windows environment (where PDFium thread affinity is enforced)
         var isWindows = OperatingSystem.IsWindows();
 
         // If .NET 9+ on Windows, assume thread affinity is still required

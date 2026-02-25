@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/kiss-codebase-simplification/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-02-02T17:23:46.554Z",
+      "trigger": "initial",
+      "approvalId": "approval_1770053026531_dc3cw8io7",
+      "approvalTitle": "KISS Codebase Simplification - Requirements"
+    }
+  ]
+}

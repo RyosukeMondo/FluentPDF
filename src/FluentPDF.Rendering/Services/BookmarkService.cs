@@ -46,7 +46,7 @@ public sealed class BookmarkService : PdfiumServiceBase, IBookmarkService
         var startTime = DateTime.UtcNow;
 
         // CRITICAL: Use Task.Yield() instead of Task.Run to keep PDFium calls on calling thread.
-        // Task.Run would cause AccessViolation crashes in .NET 9.0 WinUI 3 self-contained deployments.
+        // Task.Run would cause AccessViolation crashes due to PDFium thread affinity in .NET 9.0.
         await Task.Yield();
 
         try

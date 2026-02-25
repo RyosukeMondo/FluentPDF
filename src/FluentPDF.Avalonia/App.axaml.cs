@@ -230,8 +230,8 @@ public partial class App : Application
                 // Register MainViewModel after factories are configured
                 services.AddSingleton<FluentPDF.Core.ViewModels.MainViewModel>();
 
-                // Register operation watchdog for autonomous error detection
-                services.AddSingleton<IOperationWatchdog, OperationWatchdog>();
+                // Register animation service (implements Core.IAnimationService for ViewModel injection)
+                services.AddSingleton<Core.Services.IAnimationService, FluentPDF.Avalonia.Services.AnimationService>();
 
                 // Register API server
                 services.AddSingleton<IVerificationApiServer, VerificationApiServer>();

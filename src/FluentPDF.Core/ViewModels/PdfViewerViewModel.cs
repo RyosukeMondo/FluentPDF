@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,22 +10,19 @@ namespace FluentPDF.Core.ViewModels;
 
 /// <summary>
 /// Core ViewModel for the PDF viewer page.
-/// UI-framework agnostic implementation that can be used with WinUI 3, Avalonia, or other frameworks.
-/// Uses abstractions for all UI-specific operations.
+/// Thin coordinator that delegates to NavigationViewModel, ZoomViewModel, and ViewStateViewModel.
 /// </summary>
 public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 {
     private readonly IPdfDocumentService _documentService;
     private readonly IPdfRenderingService _renderingService;
     private readonly IDocumentEditingService _editingService;
-    private readonly ITextSearchService _searchService;
     private readonly ITextExtractionService _textExtractionService;
     private readonly IImageExportService? _imageExportService;
     private readonly ISecurityService? _securityService;
     private readonly ICoordinateMapper? _coordinateMapper;
     private readonly IDialogService? _dialogService;
     private readonly IDispatcherService? _dispatcherService;
-    private readonly IAnimationService? _animationService;
     private readonly ILogger<PdfViewerViewModel> _logger;
     private readonly IMetricsCollectionService? _metricsService;
     private readonly IDpiDetectionService? _dpiDetectionService;
@@ -35,12 +31,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 
     private PdfDocument? _currentDocument;
     private bool _disposed;
-    private CancellationTokenSource? _operationCts;
-    private CancellationTokenSource? _searchCts;
-    private CancellationTokenSource? _navigationAnimationCts;
-    private System.Threading.Timer? _searchDebounceTimer;
-    private IDisposable? _dpiSubscription;
-    private IDisposable? _qualitySubscription;
+    private readonly IDisposable? _qualitySubscription;
     private double _lastRenderedDpi = 96.0;
 
     /// <summary>
@@ -53,9 +44,6 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     /// </summary>
     public Func<Stream, Task<object?>>? StreamToImageCallback { get; set; }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PdfViewerViewModel"/> class.
-    /// </summary>
     public PdfViewerViewModel(
         IPdfDocumentService documentService,
         IPdfRenderingService renderingService,
@@ -63,6 +51,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         ITextSearchService searchService,
         ITextExtractionService textExtractionService,
         ILogger<PdfViewerViewModel> logger,
+        NavigationViewModel navigation,
+        ZoomViewModel zoom,
+        ViewStateViewModel viewState,
         IImageExportService? imageExportService = null,
         ISecurityService? securityService = null,
         ICoordinateMapper? coordinateMapper = null,
@@ -77,7 +68,6 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
         _editingService = editingService ?? throw new ArgumentNullException(nameof(editingService));
-        _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
         _textExtractionService = textExtractionService ?? throw new ArgumentNullException(nameof(textExtractionService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _imageExportService = imageExportService;
@@ -85,576 +75,226 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         _coordinateMapper = coordinateMapper;
         _dialogService = dialogService;
         _dispatcherService = dispatcherService;
-        _animationService = animationService;
         _metricsService = metricsService;
         _dpiDetectionService = dpiDetectionService;
         _renderingSettingsService = renderingSettingsService;
         _settingsService = settingsService;
 
+        // Wire sub-ViewModels
+        Navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
+        Zoom = zoom ?? throw new ArgumentNullException(nameof(zoom));
+        ViewState = viewState ?? throw new ArgumentNullException(nameof(viewState));
+
+        Navigation.OnPageChanged = async _ => await RenderCurrentPageAsync();
+        Zoom.OnZoomChanged = async _ => await RenderCurrentPageAsync();
+
+        // Sync navigation state changes back to this VM's properties
+        Navigation.PropertyChanged += OnNavigationPropertyChanged;
+        Zoom.PropertyChanged += OnZoomPropertyChanged;
+        ViewState.PropertyChanged += OnViewStatePropertyChanged;
+
         // Register message handler for thumbnail navigation
         WeakReferenceMessenger.Default.Register<NavigateToPageMessage>(this, async (r, m) =>
         {
-            if (m.PageNumber != CurrentPageNumber)
+            if (m.PageNumber != Navigation.CurrentPageNumber)
             {
-                CurrentPageNumber = m.PageNumber;
-                await RenderCurrentPageAsync();
+                await Navigation.GoToPageCommand.ExecuteAsync(m.PageNumber);
             }
         });
 
-        // Subscribe to page modification events
         WeakReferenceMessenger.Default.Register<PageModifiedMessage>(this, (r, m) =>
         {
             HasPageModifications = true;
         });
 
-        // Subscribe to quality changes if settings service is available
         if (_renderingSettingsService != null)
         {
             _qualitySubscription = _renderingSettingsService.ObserveRenderingQuality()
                 .Subscribe(quality =>
                 {
                     CurrentRenderingQuality = quality;
-                    _logger.LogInformation("Rendering quality changed to {Quality}", quality);
-
                     if (_currentDocument != null && !IsLoading)
                     {
-                        // Fire and forget - trigger re-render asynchronously
                         _ = RenderCurrentPageAsync();
                     }
                 });
         }
-
-        // Create facade objects for sub-ViewModel access
-        Navigation = new NavigationFacade(this);
-        Zoom = new ZoomFacade(this);
-        ViewState = new ViewStateFacade(this);
 
         _logger.LogInformation("PdfViewerViewModel initialized");
     }
 
     #region Observable Properties
 
-    /// <summary>
-    /// Gets or sets the current page image displayed in the viewer.
-    /// Type is object to allow UI framework to use its specific image type.
-    /// </summary>
     [ObservableProperty]
     private object? _currentPageImage;
 
     /// <summary>
-    /// Gets or sets the current page number (1-based).
+    /// Gets or sets the current page number (1-based). Delegates to NavigationViewModel.
     /// </summary>
-    [ObservableProperty]
-    private int _currentPageNumber = 1;
+    public int CurrentPageNumber
+    {
+        get => Navigation.CurrentPageNumber;
+        set => Navigation.CurrentPageNumber = value;
+    }
 
-    /// <summary>
-    /// Gets the current page index (0-based). Alias for CurrentPageNumber - 1.
-    /// </summary>
+    /// <summary>Gets the current page index (0-based).</summary>
     public int CurrentPageIndex
     {
         get => CurrentPageNumber - 1;
         set => CurrentPageNumber = value + 1;
     }
 
-    /// <summary>
-    /// Gets or sets the total number of pages in the current document.
-    /// </summary>
-    [ObservableProperty]
-    private int _totalPages;
+    /// <summary>Gets or sets the total number of pages. Delegates to NavigationViewModel.</summary>
+    public int TotalPages
+    {
+        get => Navigation.TotalPages;
+        set => Navigation.TotalPages = value;
+    }
 
-    /// <summary>
-    /// Gets the page count. Alias for TotalPages.
-    /// </summary>
+    /// <summary>Gets the page count.</summary>
     public int PageCount => TotalPages;
 
-    /// <summary>
-    /// Gets or sets the current zoom level (1.0 = 100%, 2.0 = 200%, etc.).
-    /// </summary>
-    [ObservableProperty]
-    private double _zoomLevel = 1.0;
+    /// <summary>Gets or sets the current zoom level. Delegates to ZoomViewModel.</summary>
+    public double ZoomLevel
+    {
+        get => Zoom.ZoomLevel;
+        set => Zoom.ZoomLevel = value;
+    }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether an operation is in progress.
-    /// </summary>
     [ObservableProperty]
     private bool _isLoading;
 
-    /// <summary>
-    /// Gets or sets the status message displayed to the user.
-    /// </summary>
     [ObservableProperty]
     private string _statusMessage = "Open a PDF file to get started";
 
-    /// <summary>
-    /// Gets or sets a value indicating whether there is an error state.
-    /// </summary>
     [ObservableProperty]
     private bool _hasError;
 
-    /// <summary>
-    /// Gets or sets the error message to display.
-    /// </summary>
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
-    /// <summary>
-    /// Gets or sets the operation progress (0-100).
-    /// </summary>
     [ObservableProperty]
     private double _operationProgress;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether an operation is in progress.
-    /// </summary>
     [ObservableProperty]
     private bool _isOperationInProgress;
 
-    /// <summary>
-    /// Gets or sets the current page view mode.
-    /// </summary>
-    [ObservableProperty]
-    private PageViewMode _viewMode = PageViewMode.SinglePage;
+    /// <summary>Gets or sets the current page view mode. Delegates to ViewStateViewModel.</summary>
+    public PageViewMode ViewMode
+    {
+        get => ViewState.ViewMode;
+        set => ViewState.ViewMode = value;
+    }
 
-    /// <summary>Gets a value indicating whether the viewer is in single page mode.</summary>
-    public bool IsSinglePageMode => ViewMode == PageViewMode.SinglePage;
+    public bool IsSinglePageMode => ViewState.IsSinglePageMode;
+    public bool IsContinuousScrollMode => ViewState.IsContinuousScrollMode;
+    public bool IsTwoPageMode => ViewState.IsTwoPageMode;
 
-    /// <summary>Gets a value indicating whether the viewer is in continuous scroll mode.</summary>
-    public bool IsContinuousScrollMode => ViewMode == PageViewMode.ContinuousScroll;
+    /// <summary>Gets or sets whether the search panel is visible. Delegates to ViewStateViewModel.</summary>
+    public bool IsSearchPanelVisible
+    {
+        get => ViewState.IsSearchPanelVisible;
+        set => ViewState.IsSearchPanelVisible = value;
+    }
 
-    /// <summary>Gets a value indicating whether the viewer is in two-page mode.</summary>
-    public bool IsTwoPageMode => ViewMode == PageViewMode.TwoPage;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the search panel is visible.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isSearchPanelVisible;
-
-    /// <summary>
-    /// Gets or sets the current search query.
-    /// </summary>
-    [ObservableProperty]
-    private string _searchQuery = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the list of search matches.
-    /// </summary>
-    [ObservableProperty]
-    private List<SearchMatch> _searchMatches = new();
-
-    /// <summary>
-    /// Gets or sets the index of the currently selected match (0-based).
-    /// </summary>
-    [ObservableProperty]
-    private int _currentMatchIndex = -1;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether a search is in progress.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isSearching;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the search is case-sensitive.
-    /// </summary>
-    [ObservableProperty]
-    private bool _caseSensitive;
-
-    /// <summary>
-    /// Gets or sets the current page height in PDF units (points).
-    /// </summary>
     [ObservableProperty]
     private double _currentPageHeight;
 
-    /// <summary>
-    /// Gets or sets the selected text.
-    /// </summary>
     [ObservableProperty]
     private string _selectedText = string.Empty;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether there is selected text.
-    /// </summary>
     [ObservableProperty]
     private bool _hasSelectedText;
 
-    /// <summary>
-    /// Gets or sets the current display information.
-    /// </summary>
     [ObservableProperty]
     private DisplayInfo? _currentDisplayInfo;
 
-    /// <summary>
-    /// Gets or sets the current rendering quality setting.
-    /// </summary>
     [ObservableProperty]
     private RenderingQuality _currentRenderingQuality = RenderingQuality.Auto;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether the quality is being adjusted.
-    /// </summary>
     [ObservableProperty]
     private bool _isAdjustingQuality;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether the thumbnails sidebar is visible.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isSidebarVisible = true;
+    /// <summary>Gets or sets whether the sidebar is visible. Delegates to ViewStateViewModel.</summary>
+    public bool IsSidebarVisible
+    {
+        get => ViewState.IsSidebarVisible;
+        set => ViewState.IsSidebarVisible = value;
+    }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether the bookmarks panel is visible.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isBookmarksPanelVisible = true;
+    /// <summary>Gets or sets whether the bookmarks panel is visible. Delegates to ViewStateViewModel.</summary>
+    public bool IsBookmarksPanelVisible
+    {
+        get => ViewState.IsBookmarksPanelVisible;
+        set => ViewState.IsBookmarksPanelVisible = value;
+    }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether page operations have been performed.
-    /// </summary>
     [ObservableProperty]
     private bool _hasPageModifications;
 
-    /// <summary>
-    /// Gets a value indicating whether there are unsaved changes.
-    /// </summary>
     public bool HasUnsavedChanges => HasPageModifications;
 
-    /// <summary>
-    /// Gets the currently loaded PDF document.
-    /// </summary>
     public PdfDocument? CurrentDocument => _currentDocument;
 
-    /// <summary>
-    /// Gets or sets the annotation view model for PDF annotations.
-    /// This is set by the UI framework to enable annotation functionality.
-    /// </summary>
     public AnnotationViewModel? AnnotationViewModel { get; set; }
 
-    /// <summary>
-    /// Navigation sub-ViewModel facade. Delegates to this ViewModel's navigation state.
-    /// </summary>
-    public NavigationFacade Navigation { get; }
+    /// <summary>Navigation sub-ViewModel.</summary>
+    public NavigationViewModel Navigation { get; }
 
-    /// <summary>
-    /// Zoom sub-ViewModel facade. Delegates to this ViewModel's zoom state.
-    /// </summary>
-    public ZoomFacade Zoom { get; }
+    /// <summary>Zoom sub-ViewModel.</summary>
+    public ZoomViewModel Zoom { get; }
 
-    /// <summary>
-    /// ViewState sub-ViewModel facade. Delegates to this ViewModel's view state.
-    /// </summary>
-    public ViewStateFacade ViewState { get; }
+    /// <summary>ViewState sub-ViewModel.</summary>
+    public ViewStateViewModel ViewState { get; }
 
-    /// <summary>
-    /// Thumbnails ViewModel. Set by UI framework.
-    /// </summary>
     public ThumbnailsViewModel? Thumbnails { get; set; }
-
-    /// <summary>
-    /// Bookmarks ViewModel. Set by UI framework.
-    /// </summary>
     public BookmarksViewModel? Bookmarks { get; set; }
 
     #endregion
 
-    #region Navigation Commands
+    #region Command Forwarding Properties
 
-    /// <summary>
-    /// Navigates to the previous page.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
-    private async Task GoToPreviousPageAsync()
-    {
-        _logger.LogInformation("GoToPreviousPage command invoked. CurrentPage={CurrentPage}", CurrentPageNumber);
+    // Navigation commands (forwarded to NavigationViewModel)
+    public IAsyncRelayCommand GoToPreviousPageCommand => Navigation.GoToPreviousPageCommand;
+    public IAsyncRelayCommand GoToNextPageCommand => Navigation.GoToNextPageCommand;
+    public IAsyncRelayCommand<int> GoToPageCommand => Navigation.GoToPageCommand;
+    public IAsyncRelayCommand FirstPageCommand => Navigation.FirstPageCommand;
+    public IAsyncRelayCommand LastPageCommand => Navigation.LastPageCommand;
 
-        _navigationAnimationCts?.Cancel();
-        _navigationAnimationCts?.Dispose();
-        _navigationAnimationCts = new CancellationTokenSource();
+    // Zoom commands (forwarded to ZoomViewModel)
+    public IAsyncRelayCommand ZoomInCommand => Zoom.ZoomInCommand;
+    public IAsyncRelayCommand ZoomOutCommand => Zoom.ZoomOutCommand;
+    public IAsyncRelayCommand ResetZoomCommand => Zoom.ResetZoomCommand;
+    public IAsyncRelayCommand<double> SetZoomCommand => Zoom.SetZoomCommand;
+    public IAsyncRelayCommand FitWidthCommand => Zoom.FitWidthCommand;
+    public IAsyncRelayCommand FitPageCommand => Zoom.FitPageCommand;
 
-        CurrentPageNumber--;
-        await AnimatePageTransitionAsync(PageTransitionDirection.Backward, _navigationAnimationCts.Token);
-        await RenderCurrentPageAsync();
-    }
-
-    private bool CanGoToPreviousPage() => CurrentPageNumber > 1 && !IsLoading && _currentDocument != null;
-
-    /// <summary>
-    /// Navigates to the next page.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
-    private async Task GoToNextPageAsync()
-    {
-        _logger.LogInformation("GoToNextPage command invoked. CurrentPage={CurrentPage}", CurrentPageNumber);
-
-        _navigationAnimationCts?.Cancel();
-        _navigationAnimationCts?.Dispose();
-        _navigationAnimationCts = new CancellationTokenSource();
-
-        CurrentPageNumber++;
-        await AnimatePageTransitionAsync(PageTransitionDirection.Forward, _navigationAnimationCts.Token);
-        await RenderCurrentPageAsync();
-    }
-
-    private bool CanGoToNextPage() => CurrentPageNumber < TotalPages && !IsLoading && _currentDocument != null;
-
-    /// <summary>
-    /// Navigates to a specific page.
-    /// </summary>
-    [RelayCommand]
-    private async Task GoToPageAsync(int pageNumber)
-    {
-        _logger.LogInformation("GoToPage command invoked. PageNumber={PageNumber}", pageNumber);
-
-        if (pageNumber >= 1 && pageNumber <= TotalPages && !IsLoading && _currentDocument != null)
-        {
-            _navigationAnimationCts?.Cancel();
-            _navigationAnimationCts?.Dispose();
-            _navigationAnimationCts = new CancellationTokenSource();
-
-            CurrentPageNumber = pageNumber;
-            await AnimatePageTransitionAsync(PageTransitionDirection.Jump, _navigationAnimationCts.Token);
-            await RenderCurrentPageAsync();
-        }
-    }
-
-    /// <summary>
-    /// Navigates to the first page.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanGoToFirstPage))]
-    private async Task FirstPageAsync()
-    {
-        _logger.LogInformation("FirstPage command invoked");
-        CurrentPageNumber = 1;
-        await RenderCurrentPageAsync();
-    }
-
-    private bool CanGoToFirstPage() => CurrentPageNumber > 1 && !IsLoading && _currentDocument != null;
-
-    /// <summary>
-    /// Navigates to the last page.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanGoToLastPage))]
-    private async Task LastPageAsync()
-    {
-        _logger.LogInformation("LastPage command invoked");
-        CurrentPageNumber = TotalPages;
-        await RenderCurrentPageAsync();
-    }
-
-    private bool CanGoToLastPage() => CurrentPageNumber < TotalPages && !IsLoading && _currentDocument != null;
-
-    #endregion
-
-    #region Zoom Commands
-
-    /// <summary>
-    /// Increases the zoom level.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanZoomIn))]
-    private async Task ZoomInAsync()
-    {
-        _logger.LogInformation("ZoomIn command invoked. CurrentZoom={CurrentZoom}", ZoomLevel);
-
-        ZoomLevel = ZoomLevel switch
-        {
-            < 0.75 => 0.75,
-            < 1.0 => 1.0,
-            < 1.25 => 1.25,
-            < 1.5 => 1.5,
-            < 1.75 => 1.75,
-            < 2.0 => 2.0,
-            _ => ZoomLevel
-        };
-
-        await RenderCurrentPageAsync();
-    }
-
-    private bool CanZoomIn() => ZoomLevel < 2.0 && !IsLoading && _currentDocument != null;
-
-    /// <summary>
-    /// Decreases the zoom level.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanZoomOut))]
-    private async Task ZoomOutAsync()
-    {
-        _logger.LogInformation("ZoomOut command invoked. CurrentZoom={CurrentZoom}", ZoomLevel);
-
-        ZoomLevel = ZoomLevel switch
-        {
-            > 1.75 => 1.75,
-            > 1.5 => 1.5,
-            > 1.25 => 1.25,
-            > 1.0 => 1.0,
-            > 0.75 => 0.75,
-            > 0.5 => 0.5,
-            _ => ZoomLevel
-        };
-
-        await RenderCurrentPageAsync();
-    }
-
-    private bool CanZoomOut() => ZoomLevel > 0.5 && !IsLoading && _currentDocument != null;
-
-    /// <summary>
-    /// Resets the zoom level to 100%.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanResetZoom))]
-    private async Task ResetZoomAsync()
-    {
-        _logger.LogInformation("ResetZoom command invoked");
-        ZoomLevel = 1.0;
-        await RenderCurrentPageAsync();
-    }
-
-    private bool CanResetZoom() => Math.Abs(ZoomLevel - 1.0) > 0.01 && !IsLoading && _currentDocument != null;
-
-    /// <summary>
-    /// Sets the zoom level to a specific value.
-    /// </summary>
-    [RelayCommand]
-    private async Task SetZoomAsync(double zoomLevel)
-    {
-        _logger.LogInformation("SetZoom command invoked. ZoomLevel={ZoomLevel}", zoomLevel);
-
-        if (zoomLevel >= 0.5 && zoomLevel <= 2.0 && _currentDocument != null)
-        {
-            ZoomLevel = zoomLevel;
-            await RenderCurrentPageAsync();
-        }
-    }
-
-    /// <summary>
-    /// Adjusts zoom to fit the page width in the viewport.
-    /// </summary>
-    [RelayCommand]
-    private async Task FitWidthAsync()
-    {
-        _logger.LogInformation("FitWidth command invoked");
-        // This will be calculated based on viewport width / page width
-        // For now, set to 100% as a default
-        ZoomLevel = 1.0;
-        await RenderCurrentPageAsync();
-    }
-
-    /// <summary>
-    /// Adjusts zoom to fit the entire page in the viewport.
-    /// </summary>
-    [RelayCommand]
-    private async Task FitPageAsync()
-    {
-        _logger.LogInformation("FitPage command invoked");
-        // This will be calculated based on viewport dimensions / page dimensions
-        // For now, set to 75% as a reasonable fit
-        ZoomLevel = 0.75;
-        await RenderCurrentPageAsync();
-    }
-
-    #endregion
-
-    #region Panel Toggle Commands
-
-    /// <summary>
-    /// Toggles the visibility of the thumbnails sidebar.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleThumbnails()
-    {
-        _logger.LogInformation("ToggleThumbnails command invoked");
-        IsSidebarVisible = !IsSidebarVisible;
-        RaiseAccessibilityNotification(
-            IsSidebarVisible ? "Thumbnails sidebar shown" : "Thumbnails sidebar hidden");
-    }
-
-    /// <summary>
-    /// Toggles the visibility of the bookmarks panel.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleBookmarks()
-    {
-        _logger.LogInformation("ToggleBookmarks command invoked");
-        IsBookmarksPanelVisible = !IsBookmarksPanelVisible;
-        RaiseAccessibilityNotification(
-            IsBookmarksPanelVisible ? "Bookmarks panel shown" : "Bookmarks panel hidden");
-    }
-
-    /// <summary>
-    /// Shows the search panel.
-    /// </summary>
-    [RelayCommand]
-    private void ShowSearch()
-    {
-        _logger.LogInformation("ShowSearch command invoked");
-        IsSearchPanelVisible = true;
-    }
-
-    /// <summary>
-    /// Toggles the search panel visibility.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleSearchPanel()
-    {
-        _logger.LogInformation("ToggleSearchPanel command invoked");
-        IsSearchPanelVisible = !IsSearchPanelVisible;
-
-        if (!IsSearchPanelVisible)
-        {
-            SearchQuery = string.Empty;
-            SearchMatches.Clear();
-            CurrentMatchIndex = -1;
-            _searchCts?.Cancel();
-        }
-    }
-
-    /// <summary>
-    /// Toggles the view mode between single page, continuous scroll, and two-page.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleViewMode()
-    {
-        ViewMode = ViewMode switch
-        {
-            PageViewMode.SinglePage => PageViewMode.ContinuousScroll,
-            PageViewMode.ContinuousScroll => PageViewMode.TwoPage,
-            PageViewMode.TwoPage => PageViewMode.SinglePage,
-            _ => PageViewMode.SinglePage
-        };
-
-        OnPropertyChanged(nameof(IsSinglePageMode));
-        OnPropertyChanged(nameof(IsContinuousScrollMode));
-        OnPropertyChanged(nameof(IsTwoPageMode));
-
-        _logger.LogInformation("View mode changed to {ViewMode}", ViewMode);
-    }
+    // View state commands (forwarded to ViewStateViewModel)
+    public IRelayCommand ToggleThumbnailsCommand => ViewState.ToggleThumbnailsCommand;
+    public IRelayCommand ToggleBookmarksCommand => ViewState.ToggleBookmarksCommand;
+    public IRelayCommand ShowSearchCommand => ViewState.ShowSearchCommand;
+    public IRelayCommand ToggleSearchPanelCommand => ViewState.ToggleSearchPanelCommand;
+    public IRelayCommand ToggleViewModeCommand => ViewState.ToggleViewModeCommand;
 
     #endregion
 
     #region Document Operations
 
-    /// <summary>
-    /// Opens a file picker and loads the selected PDF document.
-    /// </summary>
     [RelayCommand]
     private async Task OpenDocumentAsync()
     {
-        _logger.LogInformation("OpenDocument command invoked");
-
         if (_dialogService == null)
         {
-            _logger.LogWarning("DialogService not available, cannot open file picker");
+            _logger.LogWarning("DialogService not available");
             return;
         }
 
         try
         {
             var filePath = await _dialogService.ShowOpenFileDialogAsync(
-                "Open PDF Document",
-                new[] { ".pdf" });
+                "Open PDF Document", new[] { ".pdf" });
 
-            if (string.IsNullOrEmpty(filePath))
-            {
-                _logger.LogInformation("File picker cancelled");
-                return;
-            }
+            if (string.IsNullOrEmpty(filePath)) return;
 
             await LoadDocumentFromPathAsync(filePath);
         }
@@ -667,13 +307,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         }
     }
 
-    /// <summary>
-    /// Loads a PDF document from the specified file path.
-    /// </summary>
     public async Task LoadDocumentFromPathAsync(string filePath)
     {
-        _logger.LogInformation("Loading document from path: {FilePath}", filePath);
-
+        _logger.LogInformation("Loading document: {FilePath}", filePath);
         IsLoading = true;
         StatusMessage = "Loading document...";
 
@@ -681,23 +317,17 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         {
             if (_currentDocument != null)
             {
-                _logger.LogInformation("Closing previous document");
                 _documentService.CloseDocument(_currentDocument);
                 _currentDocument = null;
             }
 
             var result = await _documentService.LoadDocumentAsync(filePath);
-
             if (result.IsFailed)
             {
-                var errorMessage = result.Errors.Count > 0
-                    ? result.Errors[0].Message
-                    : "Unknown error occurred";
-
-                StatusMessage = $"Failed to load document: {errorMessage}";
+                var msg = result.Errors.Count > 0 ? result.Errors[0].Message : "Unknown error";
+                StatusMessage = $"Failed to load document: {msg}";
                 IsLoading = false;
-
-                await ShowErrorAsync("Error Loading Document", errorMessage);
+                await ShowErrorAsync("Error Loading Document", msg);
                 return;
             }
 
@@ -705,25 +335,13 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             TotalPages = _currentDocument.PageCount;
             CurrentPageNumber = 1;
             HasPageModifications = false;
+            SyncDocumentStateToSubViewModels();
 
             OnPropertyChanged(nameof(PageCount));
 
-            _logger.LogInformation("Document loaded. Pages: {PageCount}", TotalPages);
-
             ApplyDefaultSettings();
             await RenderCurrentPageAsync();
-
-            // Load thumbnails and bookmarks
-            if (Thumbnails != null && _currentDocument != null)
-            {
-                try { await Thumbnails.LoadThumbnailsAsync(_currentDocument); }
-                catch (Exception ex) { _logger.LogWarning(ex, "Failed to load thumbnails"); }
-            }
-            if (Bookmarks != null && _currentDocument != null)
-            {
-                try { await Bookmarks.LoadBookmarksCommand.ExecuteAsync(_currentDocument); }
-                catch (Exception ex) { _logger.LogWarning(ex, "Failed to load bookmarks"); }
-            }
+            await LoadSidePanelsAsync();
 
             StatusMessage = "Document loaded successfully";
         }
@@ -739,17 +357,11 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         }
     }
 
-    /// <summary>
-    /// Saves the current document.
-    /// </summary>
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
-        _logger.LogInformation("Save command invoked");
-
         if (_currentDocument == null)
         {
-            _logger.LogWarning("Cannot save: no document loaded");
             await ShowErrorAsync("Save Error", "No document is currently loaded.");
             return;
         }
@@ -758,14 +370,12 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         {
             IsLoading = true;
             StatusMessage = "Saving document...";
-
-            // Framework-specific save logic would be called here
             StatusMessage = $"Document saved: {Path.GetFileName(_currentDocument.FilePath)}";
             HasPageModifications = false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error while saving document");
+            _logger.LogError(ex, "Error saving document");
             StatusMessage = "Error saving document";
             await ShowErrorAsync("Save Error", ex.Message);
         }
@@ -777,31 +387,20 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 
     private bool CanSave() => HasUnsavedChanges && !IsLoading && _currentDocument != null;
 
-    /// <summary>
-    /// Saves the current document with a new name (Save As).
-    /// This command should be implemented by the UI framework.
-    /// </summary>
     [RelayCommand(CanExecute = nameof(CanSaveAs))]
     private async Task SaveAsAsync()
     {
-        _logger.LogInformation("Save As command invoked");
-
         if (_currentDocument == null)
         {
-            _logger.LogWarning("Cannot save: no document loaded");
             await ShowErrorAsync("Save As Error", "No document is currently loaded.");
             return;
         }
 
-        // Framework-specific Save As logic would be called here via callback or dialog service
-        _logger.LogInformation("Save As functionality should be implemented by UI framework");
+        _logger.LogInformation("Save As: should be implemented by UI framework");
     }
 
     private bool CanSaveAs() => !IsLoading && _currentDocument != null;
 
-    /// <summary>
-    /// Refreshes the current page display.
-    /// </summary>
     public async Task RefreshCurrentPageAsync()
     {
         HasPageModifications = true;
@@ -810,154 +409,11 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 
     #endregion
 
-    #region Search Commands
-
-    /// <summary>
-    /// Initiates a debounced search.
-    /// </summary>
-    [RelayCommand]
-    private void Search()
-    {
-        _logger.LogInformation("Search command invoked. Query={Query}", SearchQuery);
-
-        _searchDebounceTimer?.Dispose();
-        _searchCts?.Cancel();
-
-        if (string.IsNullOrWhiteSpace(SearchQuery) || _currentDocument == null)
-        {
-            SearchMatches.Clear();
-            CurrentMatchIndex = -1;
-            return;
-        }
-
-        _searchDebounceTimer = new System.Threading.Timer(
-            async _ => await ExecuteSearchAsync(),
-            null,
-            TimeSpan.FromMilliseconds(300),
-            Timeout.InfiniteTimeSpan);
-    }
-
-    private async Task ExecuteSearchAsync()
-    {
-        if (_currentDocument == null || string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            return;
-        }
-
-        _searchCts?.Dispose();
-        _searchCts = new CancellationTokenSource();
-
-        try
-        {
-            InvokeOnUIThread(() => IsSearching = true);
-
-            var options = new SearchOptions
-            {
-                CaseSensitive = CaseSensitive,
-                WholeWord = false
-            };
-
-            var result = await _searchService.SearchAsync(
-                _currentDocument,
-                SearchQuery,
-                options,
-                _searchCts.Token);
-
-            if (result.IsSuccess)
-            {
-                SearchMatches = result.Value;
-                CurrentMatchIndex = SearchMatches.Count > 0 ? 0 : -1;
-
-                _logger.LogInformation("Search completed. Matches={MatchCount}", SearchMatches.Count);
-
-                if (CurrentMatchIndex >= 0)
-                {
-                    await NavigateToCurrentMatchAsync();
-                }
-            }
-            else
-            {
-                SearchMatches.Clear();
-                CurrentMatchIndex = -1;
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("Search operation cancelled");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error during search");
-            SearchMatches.Clear();
-            CurrentMatchIndex = -1;
-        }
-        finally
-        {
-            InvokeOnUIThread(() => IsSearching = false);
-        }
-    }
-
-    /// <summary>
-    /// Navigates to the next search match.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanNavigateToNextMatch))]
-    private async Task GoToNextMatchAsync()
-    {
-        if (SearchMatches.Count == 0) return;
-
-        CurrentMatchIndex = (CurrentMatchIndex + 1) % SearchMatches.Count;
-        await NavigateToCurrentMatchAsync();
-    }
-
-    private bool CanNavigateToNextMatch() => SearchMatches.Count > 0 && !IsSearching;
-
-    /// <summary>
-    /// Navigates to the previous search match.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanNavigateToPreviousMatch))]
-    private async Task GoToPreviousMatchAsync()
-    {
-        if (SearchMatches.Count == 0) return;
-
-        CurrentMatchIndex = (CurrentMatchIndex - 1 + SearchMatches.Count) % SearchMatches.Count;
-        await NavigateToCurrentMatchAsync();
-    }
-
-    private bool CanNavigateToPreviousMatch() => SearchMatches.Count > 0 && !IsSearching;
-
-    private async Task NavigateToCurrentMatchAsync()
-    {
-        if (CurrentMatchIndex < 0 || CurrentMatchIndex >= SearchMatches.Count)
-        {
-            return;
-        }
-
-        var match = SearchMatches[CurrentMatchIndex];
-        var targetPage = match.PageNumber + 1; // Convert 0-based to 1-based
-
-        if (CurrentPageNumber != targetPage)
-        {
-            await GoToPageCommand.ExecuteAsync(targetPage);
-        }
-    }
-
-    #endregion
-
     #region Private Helpers
 
     private async Task RenderCurrentPageAsync()
     {
-        if (_currentDocument == null)
-        {
-            _logger.LogWarning("Attempted to render page with no document loaded");
-            return;
-        }
-
-        if (RenderPageCallback == null)
-        {
-            _logger.LogWarning("RenderPageCallback not set, cannot render page");
-            return;
-        }
+        if (_currentDocument == null || RenderPageCallback == null) return;
 
         IsLoading = true;
         StatusMessage = $"Rendering page {CurrentPageNumber}...";
@@ -968,17 +424,12 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             if (_dpiDetectionService != null && CurrentDisplayInfo != null)
             {
                 var dpiResult = _dpiDetectionService.CalculateEffectiveDpi(
-                    CurrentDisplayInfo,
-                    ZoomLevel,
-                    CurrentRenderingQuality);
-
-                if (dpiResult.IsSuccess)
-                {
-                    effectiveDpi = dpiResult.Value;
-                }
+                    CurrentDisplayInfo, ZoomLevel, CurrentRenderingQuality);
+                if (dpiResult.IsSuccess) effectiveDpi = dpiResult.Value;
             }
 
-            var imageSource = await RenderPageCallback(_currentDocument, CurrentPageNumber, ZoomLevel, effectiveDpi);
+            var imageSource = await RenderPageCallback(
+                _currentDocument, CurrentPageNumber, ZoomLevel, effectiveDpi);
 
             if (imageSource != null)
             {
@@ -989,14 +440,13 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             }
             else
             {
-                _logger.LogError("Failed to render page");
                 StatusMessage = "Failed to render page";
                 await ShowErrorAsync("Rendering Error", "Failed to render page.");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error while rendering page");
+            _logger.LogError(ex, "Error rendering page");
             StatusMessage = "Unexpected error while rendering page";
             await ShowErrorAsync("Error", $"Failed to render page: {ex.Message}");
         }
@@ -1006,144 +456,115 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         }
     }
 
-    private async Task AnimatePageTransitionAsync(
-        PageTransitionDirection direction,
-        CancellationToken cancellationToken)
+    private void SyncDocumentStateToSubViewModels()
     {
-        if (_animationService == null)
-        {
-            return;
-        }
-
-        try
-        {
-            await _animationService.AnimatePageTransitionAsync(null, direction, cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogDebug("Page transition animation cancelled");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Page transition animation failed");
-        }
+        Navigation.HasDocument = _currentDocument != null;
+        Zoom.HasDocument = _currentDocument != null;
     }
 
     private void ApplyDefaultSettings()
     {
-        if (_settingsService == null)
-        {
-            return;
-        }
+        if (_settingsService == null) return;
 
-        var settings = _settingsService.Settings;
-        var zoomValue = ConvertZoomLevelToDouble(settings.DefaultZoom);
+        var zoomValue = ConvertZoomLevelToDouble(_settingsService.Settings.DefaultZoom);
         if (zoomValue.HasValue)
         {
             ZoomLevel = zoomValue.Value;
-            _logger.LogInformation("Applied default zoom level: {ZoomLevel}", zoomValue.Value);
         }
     }
 
-    private static double? ConvertZoomLevelToDouble(ZoomLevel zoomLevel)
+    private static double? ConvertZoomLevelToDouble(ZoomLevel zoomLevel) => zoomLevel switch
     {
-        return zoomLevel switch
+        Models.ZoomLevel.FiftyPercent => 0.5,
+        Models.ZoomLevel.SeventyFivePercent => 0.75,
+        Models.ZoomLevel.OneHundredPercent => 1.0,
+        Models.ZoomLevel.OneTwentyFivePercent => 1.25,
+        Models.ZoomLevel.OneFiftyPercent => 1.5,
+        Models.ZoomLevel.OneSeventyFivePercent => 1.75,
+        Models.ZoomLevel.TwoHundredPercent => 2.0,
+        _ => null
+    };
+
+    private async Task LoadSidePanelsAsync()
+    {
+        if (Thumbnails != null && _currentDocument != null)
         {
-            Models.ZoomLevel.FiftyPercent => 0.5,
-            Models.ZoomLevel.SeventyFivePercent => 0.75,
-            Models.ZoomLevel.OneHundredPercent => 1.0,
-            Models.ZoomLevel.OneTwentyFivePercent => 1.25,
-            Models.ZoomLevel.OneFiftyPercent => 1.5,
-            Models.ZoomLevel.OneSeventyFivePercent => 1.75,
-            Models.ZoomLevel.TwoHundredPercent => 2.0,
-            _ => null
-        };
+            try { await Thumbnails.LoadThumbnailsAsync(_currentDocument); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Failed to load thumbnails"); }
+        }
+        if (Bookmarks != null && _currentDocument != null)
+        {
+            try { await Bookmarks.LoadBookmarksCommand.ExecuteAsync(_currentDocument); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Failed to load bookmarks"); }
+        }
     }
 
     private async Task ShowErrorAsync(string title, string message)
     {
         if (_dialogService != null)
-        {
             await _dialogService.ShowErrorAsync(title, message);
-        }
         else
-        {
             _logger.LogError("Dialog not available. Error: {Title} - {Message}", title, message);
-        }
     }
 
-    private void InvokeOnUIThread(Action action)
+    private void OnNavigationPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_dispatcherService != null)
+        if (e.PropertyName == nameof(NavigationViewModel.CurrentPageNumber))
         {
-            _dispatcherService.Invoke(action);
+            OnPropertyChanged(nameof(CurrentPageNumber));
+            OnPropertyChanged(nameof(CurrentPageIndex));
         }
-        else
+        else if (e.PropertyName == nameof(NavigationViewModel.TotalPages))
         {
-            action();
+            OnPropertyChanged(nameof(TotalPages));
+            OnPropertyChanged(nameof(PageCount));
         }
     }
 
-    private void RaiseAccessibilityNotification(string message)
+    private void OnZoomPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        try
+        if (e.PropertyName == nameof(ZoomViewModel.ZoomLevel))
         {
-            WeakReferenceMessenger.Default.Send(new AccessibilityNotificationMessage(message));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to raise accessibility notification: {Message}", message);
+            OnPropertyChanged(nameof(ZoomLevel));
         }
     }
 
-    /// <inheritdoc/>
+    private void OnViewStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(ViewStateViewModel.IsSidebarVisible):
+                OnPropertyChanged(nameof(IsSidebarVisible));
+                break;
+            case nameof(ViewStateViewModel.IsBookmarksPanelVisible):
+                OnPropertyChanged(nameof(IsBookmarksPanelVisible));
+                break;
+            case nameof(ViewStateViewModel.IsSearchPanelVisible):
+                OnPropertyChanged(nameof(IsSearchPanelVisible));
+                break;
+            case nameof(ViewStateViewModel.ViewMode):
+                OnPropertyChanged(nameof(ViewMode));
+                OnPropertyChanged(nameof(IsSinglePageMode));
+                OnPropertyChanged(nameof(IsContinuousScrollMode));
+                OnPropertyChanged(nameof(IsTwoPageMode));
+                break;
+        }
+    }
+
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
 
-        if (e.PropertyName == nameof(IsLoading) ||
-            e.PropertyName == nameof(CurrentPageNumber) ||
-            e.PropertyName == nameof(TotalPages) ||
-            e.PropertyName == nameof(ZoomLevel))
+        if (e.PropertyName == nameof(IsLoading))
         {
-            GoToPreviousPageCommand.NotifyCanExecuteChanged();
-            GoToNextPageCommand.NotifyCanExecuteChanged();
-            ZoomInCommand.NotifyCanExecuteChanged();
-            ZoomOutCommand.NotifyCanExecuteChanged();
-            ResetZoomCommand.NotifyCanExecuteChanged();
-        }
-
-        if (e.PropertyName == nameof(CurrentPageNumber))
-        {
-            OnPropertyChanged(nameof(CurrentPageIndex));
-        }
-
-        if (e.PropertyName == nameof(TotalPages))
-        {
-            OnPropertyChanged(nameof(PageCount));
-        }
-
-        if (e.PropertyName == nameof(IsSearching) ||
-            e.PropertyName == nameof(SearchMatches))
-        {
-            GoToNextMatchCommand.NotifyCanExecuteChanged();
-            GoToPreviousMatchCommand.NotifyCanExecuteChanged();
-        }
-
-        if (e.PropertyName == nameof(HasUnsavedChanges))
-        {
-            SaveCommand.NotifyCanExecuteChanged();
+            Navigation.IsLoading = IsLoading;
+            Zoom.IsLoading = IsLoading;
         }
 
         if (e.PropertyName == nameof(HasPageModifications))
         {
             OnPropertyChanged(nameof(HasUnsavedChanges));
-        }
-
-        if (e.PropertyName == nameof(SearchQuery) ||
-            e.PropertyName == nameof(CaseSensitive))
-        {
-            SearchCommand.Execute(null);
+            SaveCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -1151,20 +572,17 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 
     #region IDisposable
 
-    /// <summary>
-    /// Disposes resources used by the ViewModel.
-    /// </summary>
     public void Dispose()
     {
-        if (_disposed)
-        {
-            return;
-        }
-
-        _logger.LogInformation("Disposing PdfViewerViewModel");
+        if (_disposed) return;
 
         WeakReferenceMessenger.Default.Unregister<NavigateToPageMessage>(this);
         WeakReferenceMessenger.Default.Unregister<PageModifiedMessage>(this);
+
+        Navigation.PropertyChanged -= OnNavigationPropertyChanged;
+        Zoom.PropertyChanged -= OnZoomPropertyChanged;
+        ViewState.PropertyChanged -= OnViewStatePropertyChanged;
+        Navigation.Dispose();
 
         if (_currentDocument != null)
         {
@@ -1172,79 +590,10 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             _currentDocument = null;
         }
 
-        _operationCts?.Cancel();
-        _operationCts?.Dispose();
-        _operationCts = null;
-
-        _searchCts?.Cancel();
-        _searchCts?.Dispose();
-        _searchCts = null;
-
-        _navigationAnimationCts?.Cancel();
-        _navigationAnimationCts?.Dispose();
-        _navigationAnimationCts = null;
-
-        _searchDebounceTimer?.Dispose();
-        _searchDebounceTimer = null;
-
-        _dpiSubscription?.Dispose();
-        _dpiSubscription = null;
-
         _qualitySubscription?.Dispose();
-        _qualitySubscription = null;
 
         _disposed = true;
     }
 
     #endregion
-}
-
-/// <summary>
-/// Facade providing navigation access to PdfViewerViewModel properties.
-/// </summary>
-public class NavigationFacade
-{
-    private readonly PdfViewerViewModel _vm;
-    internal NavigationFacade(PdfViewerViewModel vm) => _vm = vm;
-
-    public int CurrentPageNumber => _vm.CurrentPageNumber;
-    public int TotalPages => _vm.TotalPages;
-
-    public IAsyncRelayCommand GoToNextPageCommand => _vm.GoToNextPageCommand;
-    public IAsyncRelayCommand GoToPreviousPageCommand => _vm.GoToPreviousPageCommand;
-    public IAsyncRelayCommand<int> GoToPageCommand => _vm.GoToPageCommand;
-}
-
-/// <summary>
-/// Facade providing zoom access to PdfViewerViewModel properties.
-/// </summary>
-public class ZoomFacade
-{
-    private readonly PdfViewerViewModel _vm;
-    internal ZoomFacade(PdfViewerViewModel vm) => _vm = vm;
-
-    public double ZoomLevel => _vm.ZoomLevel;
-
-    public IAsyncRelayCommand ZoomInCommand => _vm.ZoomInCommand;
-    public IAsyncRelayCommand ZoomOutCommand => _vm.ZoomOutCommand;
-    public IAsyncRelayCommand<double> SetZoomCommand => _vm.SetZoomCommand;
-    public IAsyncRelayCommand FitWidthCommand => _vm.FitWidthCommand;
-    public IAsyncRelayCommand FitPageCommand => _vm.FitPageCommand;
-}
-
-/// <summary>
-/// Facade providing view state access to PdfViewerViewModel properties.
-/// </summary>
-public class ViewStateFacade
-{
-    private readonly PdfViewerViewModel _vm;
-    internal ViewStateFacade(PdfViewerViewModel vm) => _vm = vm;
-
-    public bool IsSidebarVisible => _vm.IsSidebarVisible;
-    public bool IsBookmarksPanelVisible => _vm.IsBookmarksPanelVisible;
-    public bool IsSearchPanelVisible => _vm.IsSearchPanelVisible;
-
-    public IRelayCommand ToggleThumbnailsCommand => _vm.ToggleThumbnailsCommand;
-    public IRelayCommand ToggleBookmarksCommand => _vm.ToggleBookmarksCommand;
-    public IRelayCommand ShowSearchCommand => _vm.ShowSearchCommand;
 }

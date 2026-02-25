@@ -7,8 +7,7 @@ namespace FluentPDF.Rendering.Services.Base;
 /// <remarks>
 /// <para><strong>CRITICAL THREADING REQUIREMENT:</strong></para>
 /// <para>
-/// PDFium native library calls CANNOT be executed from Task.Run threads in .NET 9.0 WinUI 3
-/// self-contained deployments. Doing so causes immediate AccessViolation crashes that terminate
+/// PDFium native library calls CANNOT be executed from Task.Run threads in .NET 9.0 self-contained deployments due to PDFium thread affinity. Doing so causes immediate AccessViolation crashes that terminate
 /// the application. All PDFium interop calls MUST execute on the calling thread.
 /// </para>
 /// <para><strong>CORRECT PATTERN - Use Task.Yield():</strong></para>
@@ -29,7 +28,7 @@ namespace FluentPDF.Rendering.Services.Base;
 /// {
 ///     return await Task.Run(() =>  // ❌ Thread switch causes crash
 ///     {
-///         var handle = PdfiumInterop.Method(...);  // ❌ Crashes in .NET 9.0 WinUI 3
+///         var handle = PdfiumInterop.Method(...);  // ❌ Crashes due to PDFium thread affinity in .NET 9.0
 ///         return Result.Ok(data);
 ///     });
 /// }
@@ -39,7 +38,7 @@ namespace FluentPDF.Rendering.Services.Base;
 /// <item><description>Task.Yield() yields control back to the scheduler without switching threads</description></item>
 /// <item><description>Provides async behavior for UI responsiveness without thread pool execution</description></item>
 /// <item><description>Keeps PDFium calls on the original calling thread, avoiding AccessViolation</description></item>
-/// <item><description>Maintains compatibility with WinUI 3 threading model and .NET 9.0</description></item>
+/// <item><description>Maintains compatibility with PDFium thread affinity constraints in .NET 9.0</description></item>
 /// </list>
 /// <para><strong>ARCHITECTURAL SAFEGUARDS:</strong></para>
 /// <list type="number">
