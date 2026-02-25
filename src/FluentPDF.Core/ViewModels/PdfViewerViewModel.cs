@@ -321,77 +321,72 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     #region Page Management Commands
 
     private bool CanExecutePageOperation() =>
-        _currentDocument != null && !IsLoading && _pageOperationsService != null;
+        _currentDocument != null && !IsLoading;
+
+    /// <summary>
+    /// Callback for page operations (rotate, delete, insert) that need native interop.
+    /// Set by the UI layer (PdfViewerPage) since Core cannot reference Rendering.
+    /// Signature: (PdfDocument doc, int pageIndex, string operation, int param) => Task&lt;bool&gt;
+    /// Operations: "rotate_cw", "rotate_ccw", "delete", "insert_blank"
+    /// </summary>
+    public Func<PdfDocument, int, string, Task<bool>>? PageOperationCallback { get; set; }
 
     [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
     private async Task RotatePageClockwiseAsync()
     {
-        var result = await _pageOperationsService!.RotatePagesAsync(
-            _currentDocument!, new[] { CurrentPageIndex }, RotationAngle.Rotate90);
-        await HandlePageOperationResult(result, "rotate");
+        if (_currentDocument == null || PageOperationCallback == null) return;
+        var success = await PageOperationCallback(_currentDocument, CurrentPageIndex, "rotate_cw");
+        if (success)
+        {
+            HasPageModifications = true;
+            await RenderCurrentPageAsync();
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
     private async Task RotatePageCounterClockwiseAsync()
     {
-        var result = await _pageOperationsService!.RotatePagesAsync(
-            _currentDocument!, new[] { CurrentPageIndex }, RotationAngle.Rotate270);
-        await HandlePageOperationResult(result, "rotate");
+        if (_currentDocument == null || PageOperationCallback == null) return;
+        var success = await PageOperationCallback(_currentDocument, CurrentPageIndex, "rotate_ccw");
+        if (success)
+        {
+            HasPageModifications = true;
+            await RenderCurrentPageAsync();
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
     private async Task DeleteCurrentPageAsync()
     {
+        if (_currentDocument == null || PageOperationCallback == null) return;
         if (TotalPages <= 1)
         {
-            await ShowErrorAsync("Delete Page", "Cannot delete the only page in the document.");
+            _logger.LogWarning("Cannot delete the only page");
             return;
         }
 
-        var result = await _pageOperationsService!.DeletePagesAsync(
-            _currentDocument!, new[] { CurrentPageIndex });
-
-        if (result.IsSuccess)
+        var success = await PageOperationCallback(_currentDocument, CurrentPageIndex, "delete");
+        if (success)
         {
+            HasPageModifications = true;
             TotalPages--;
             if (CurrentPageNumber > TotalPages)
                 CurrentPageNumber = TotalPages;
-            OnPropertyChanged(nameof(PageCount));
+            await RenderCurrentPageAsync();
         }
-
-        await HandlePageOperationResult(result, "delete page");
     }
 
     [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
     private async Task InsertBlankPageAsync()
     {
-        var insertAt = CurrentPageIndex + 1;
-        var result = await _pageOperationsService!.InsertBlankPageAsync(
-            _currentDocument!, insertAt, PageSize.SameAsCurrent);
-
-        if (result.IsSuccess)
-        {
-            TotalPages++;
-            CurrentPageNumber = insertAt + 1;
-            OnPropertyChanged(nameof(PageCount));
-        }
-
-        await HandlePageOperationResult(result, "insert blank page");
-    }
-
-    private async Task HandlePageOperationResult(FluentResults.Result result, string operation)
-    {
-        if (result.IsSuccess)
+        if (_currentDocument == null || PageOperationCallback == null) return;
+        var success = await PageOperationCallback(_currentDocument, CurrentPageIndex + 1, "insert_blank");
+        if (success)
         {
             HasPageModifications = true;
-            WeakReferenceMessenger.Default.Send(new PageModifiedMessage());
+            TotalPages++;
+            CurrentPageNumber = CurrentPageIndex + 2; // navigate to new page
             await RenderCurrentPageAsync();
-        }
-        else
-        {
-            var msg = result.Errors.Count > 0 ? result.Errors[0].Message : "Unknown error";
-            _logger.LogError("Failed to {Operation}: {Error}", operation, msg);
-            await ShowErrorAsync("Page Operation Failed", msg);
         }
     }
 

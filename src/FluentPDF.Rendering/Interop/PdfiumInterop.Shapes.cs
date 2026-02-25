@@ -240,6 +240,26 @@ public static partial class PdfiumInterop
     }
 
     /// <summary>
+    /// Gets the rotation of a page (0, 1, 2, 3 = 0°, 90°, 180°, 270°).
+    /// </summary>
+    public static int GetPageRotation(SafePdfPageHandle page)
+    {
+        if (page == null || page.IsInvalid)
+            throw new ArgumentException("Invalid page handle.", nameof(page));
+        return FPDFPage_GetRotation(page);
+    }
+
+    /// <summary>
+    /// Sets the rotation of a page (0=0°, 1=90°, 2=180°, 3=270°).
+    /// </summary>
+    public static void SetPageRotation(SafePdfPageHandle page, int rotate)
+    {
+        if (page == null || page.IsInvalid)
+            throw new ArgumentException("Invalid page handle.", nameof(page));
+        FPDFPage_SetRotation(page, rotate);
+    }
+
+    /// <summary>
     /// Deletes a page from the document.
     /// </summary>
     /// <param name="document">Handle to the PDF document.</param>
@@ -378,6 +398,12 @@ public static partial class PdfiumInterop
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     private static extern int FPDFPage_Flatten(SafePdfPageHandle page, int nFlag);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FPDFPage_GetRotation(SafePdfPageHandle page);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void FPDFPage_SetRotation(SafePdfPageHandle page, int rotate);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]

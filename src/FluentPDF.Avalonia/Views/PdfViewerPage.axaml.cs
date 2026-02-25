@@ -99,6 +99,7 @@ public partial class PdfViewerPage : UserControl
         {
             _viewModel = vm;
             vm.RenderPageCallback = RenderPageAsync;
+            vm.PageOperationCallback = ExecutePageOperationAsync;
             if (vm.Thumbnails != null)
             {
                 vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
@@ -117,6 +118,7 @@ public partial class PdfViewerPage : UserControl
         {
             _viewModel = vm;
             vm.RenderPageCallback = RenderPageAsync;
+            vm.PageOperationCallback = ExecutePageOperationAsync;
             if (vm.Thumbnails != null)
             {
                 vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
@@ -690,6 +692,71 @@ public partial class PdfViewerPage : UserControl
         }
     }
 
+    #region Page Operations
+
+    private async Task<bool> ExecutePageOperationAsync(
+        PdfDocument document, int pageIndex, string operation)
+    {
+        try
+        {
+            return await Task.Run(() =>
+            {
+                var docHandle = (SafePdfDocumentHandle)document.Handle;
+                if (docHandle.IsInvalid) return false;
+
+                switch (operation)
+                {
+                    case "rotate_cw":
+                    {
+                        using var page = PdfiumInterop.LoadPage(docHandle, pageIndex);
+                        if (page.IsInvalid) return false;
+                        var current = PdfiumInterop.GetPageRotation(page);
+                        PdfiumInterop.SetPageRotation(page, (current + 1) % 4);
+                        return true;
+                    }
+                    case "rotate_ccw":
+                    {
+                        using var page = PdfiumInterop.LoadPage(docHandle, pageIndex);
+                        if (page.IsInvalid) return false;
+                        var current = PdfiumInterop.GetPageRotation(page);
+                        PdfiumInterop.SetPageRotation(page, (current + 3) % 4);
+                        return true;
+                    }
+                    case "delete":
+                    {
+                        PdfiumInterop.DeletePage(docHandle, pageIndex);
+                        return true;
+                    }
+                    case "insert_blank":
+                    {
+                        // Get current page size for the new blank page
+                        double width = 612, height = 792; // Letter size default
+                        if (pageIndex > 0)
+                        {
+                            using var prevPage = PdfiumInterop.LoadPage(docHandle, pageIndex - 1);
+                            if (!prevPage.IsInvalid)
+                            {
+                                width = PdfiumInterop.GetPageWidth(prevPage);
+                                height = PdfiumInterop.GetPageHeight(prevPage);
+                            }
+                        }
+                        using var newPage = PdfiumInterop.CreateNewPage(docHandle, pageIndex, width, height);
+                        return !newPage.IsInvalid;
+                    }
+                    default:
+                        return false;
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Page operation {Operation} failed on page {Index}", operation, pageIndex);
+            return false;
+        }
+    }
+
+    #endregion
+
     #region Link Detection
 
     /// <summary>
@@ -973,7 +1040,7 @@ public partial class PdfViewerPage : UserControl
             var shapeService = App.GetService<IShapeService>();
             var tool = _viewModel.ActiveDrawingTool;
             var docId = _viewModel.CurrentDocument.FilePath;
-            var pageNumber = _viewModel.CurrentPageNumber;
+            var pageNumber = _viewModel.CurrentPageNumber - 1; // 0-based for PDFium
             var strokeColor = _viewModel.DrawingStrokeColor;
             var fillColor = _viewModel.DrawingFillColor;
             var strokeWidth = _viewModel.DrawingStrokeWidth;
@@ -1039,12 +1106,15 @@ public partial class PdfViewerPage : UserControl
 
             if (success)
             {
-                _logger.LogInformation("Shape {Tool} drawn on page {Page}",
-                    tool, pageNumber);
+                _logger.LogInformation("Shape {Tool} committed on page {Page}", tool, pageNumber);
                 await _viewModel.RefreshCurrentPageAsync();
+                _viewModel.ActiveDrawingTool = DrawingTool.None;
             }
-
-            _viewModel.ActiveDrawingTool = DrawingTool.None;
+            else
+            {
+                _logger.LogWarning("Shape {Tool} failed on page {Page} (docId={DocId})",
+                    tool, pageNumber, docId);
+            }
         }
         catch (Exception ex)
         {
