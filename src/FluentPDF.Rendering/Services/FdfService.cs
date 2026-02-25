@@ -89,7 +89,8 @@ public sealed class FdfService : IFdfService
             {
                 Indent = true,
                 IndentChars = "  ",
-                NewLineOnAttributes = false
+                NewLineOnAttributes = false,
+                Async = true
             };
 
             await using var writer = XmlWriter.Create(outputPath, settings);
@@ -255,14 +256,16 @@ public sealed class FdfService : IFdfService
     /// <summary>
     /// Creates an XFDF XML document from a list of annotations.
     /// </summary>
+    private static readonly XNamespace XfdfNs = "http://ns.adobe.com/xfdf/";
+
     private XDocument CreateXfdfDocument(PdfDocument document, List<Annotation> annotations)
     {
         var xfdf = new XDocument(
             new XDeclaration("1.0", "UTF-8", null),
-            new XElement("xfdf",
+            new XElement(XfdfNs + "xfdf",
                 new XAttribute("xmlns", "http://ns.adobe.com/xfdf/"),
-                new XElement("f", new XAttribute("href", Path.GetFileName(document.FilePath))),
-                new XElement("annots",
+                new XElement(XfdfNs + "f", new XAttribute("href", Path.GetFileName(document.FilePath))),
+                new XElement(XfdfNs + "annots",
                     annotations.Select(a => CreateAnnotationElement(a))
                 )
             )
@@ -278,7 +281,7 @@ public sealed class FdfService : IFdfService
     {
         var elementName = GetXfdfElementName(annotation.Type);
 
-        var element = new XElement(elementName,
+        var element = new XElement(XfdfNs + elementName,
             new XAttribute("page", annotation.PageNumber),
             new XAttribute("rect", FormatRect(annotation.Bounds)),
             new XAttribute("color", FormatColor(annotation.FillColor)),
@@ -289,8 +292,8 @@ public sealed class FdfService : IFdfService
         if (annotation.Type == AnnotationType.Ink && annotation.InkPoints.Count > 0)
         {
             element.Add(new XAttribute("width", annotation.StrokeWidth));
-            element.Add(new XElement("inklist",
-                new XElement("gesture", FormatInkPoints(annotation.InkPoints))
+            element.Add(new XElement(XfdfNs + "inklist",
+                new XElement(XfdfNs + "gesture", FormatInkPoints(annotation.InkPoints))
             ));
         }
         else if (annotation.Type == AnnotationType.Text)
@@ -301,7 +304,7 @@ public sealed class FdfService : IFdfService
         // Add contents if present
         if (!string.IsNullOrEmpty(annotation.Contents))
         {
-            element.Add(new XElement("contents", annotation.Contents));
+            element.Add(new XElement(XfdfNs + "contents", annotation.Contents));
         }
 
         // Add author if present

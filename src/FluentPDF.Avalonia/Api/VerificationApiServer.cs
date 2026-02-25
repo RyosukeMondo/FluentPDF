@@ -101,6 +101,11 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         builder.Services.AddSingleton(_appServices.GetRequiredService<IImageExportService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<IDocumentEditingService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<IPdfFormService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IWatermarkService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IStampService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IFdfService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<IImageInsertionService>());
+        builder.Services.AddSingleton(_appServices.GetRequiredService<ISecurityService>());
 
         // Configure JSON serialization
         builder.Services.ConfigureHttpJsonOptions(options =>

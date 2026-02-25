@@ -30,6 +30,11 @@ public static class PdfOperationsEndpoints
         MapExportEndpoints(app);
         MapDocumentEditingEndpoints(app);
         MapFormFieldEndpoints(app);
+        MapWatermarkEndpoints(app);
+        MapStampEndpoints(app);
+        MapFdfEndpoints(app);
+        MapImageInsertionEndpoints(app);
+        MapSecurityEndpoints(app);
     }
 
     private static void MapPageOperations(WebApplication app)
@@ -615,6 +620,333 @@ public static class PdfOperationsEndpoints
         .WithSummary("Set the checked state of a checkbox form field");
     }
 
+    private static void MapWatermarkEndpoints(WebApplication app)
+    {
+        var group = app.MapGroup("/api/watermark")
+            .WithTags("Watermark");
+
+        group.MapPost("/apply-text", async (
+            ApplyTextWatermarkRequest request,
+            IWatermarkService watermarkService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            if (string.IsNullOrWhiteSpace(request.Text))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "text is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            var position = Enum.TryParse<WatermarkPosition>(request.Position, true, out var pos) ? pos : WatermarkPosition.Center;
+            var config = new TextWatermarkConfig
+            {
+                Text = request.Text,
+                FontSize = (float)(request.FontSize ?? 48),
+                Opacity = (float)(request.Opacity ?? 0.3),
+                RotationDegrees = (float)(request.RotationDegrees ?? -45),
+                Position = position
+            };
+
+            var pageRange = string.IsNullOrWhiteSpace(request.PageRange)
+                ? WatermarkPageRange.All
+                : WatermarkPageRange.Parse(request.PageRange);
+
+            var result = await watermarkService.ApplyTextWatermarkAsync(document, config, pageRange);
+
+            return result.IsSuccess
+                ? Results.Json(new { success = true, text = request.Text, position = position.ToString() })
+                : Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Watermark failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+        })
+        .WithName("ApplyTextWatermark")
+        .WithSummary("Apply a text watermark to document pages");
+
+        group.MapPost("/preview", async (
+            WatermarkPreviewRequest request,
+            IWatermarkService watermarkService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            var textConfig = string.IsNullOrWhiteSpace(request.Text) ? null : new TextWatermarkConfig
+            {
+                Text = request.Text,
+                FontSize = (float)(request.FontSize ?? 48),
+                Opacity = (float)(request.Opacity ?? 0.3)
+            };
+
+            var result = await watermarkService.GeneratePreviewAsync(document, request.PageIndex, textConfig, null);
+
+            if (!result.IsSuccess)
+                return Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Preview failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+
+            return Results.File(result.Value, "image/png", "watermark-preview.png");
+        })
+        .WithName("WatermarkPreview")
+        .WithSummary("Generate a watermark preview as PNG");
+    }
+
+    private static void MapStampEndpoints(WebApplication app)
+    {
+        var group = app.MapGroup("/api/stamps")
+            .WithTags("Stamps");
+
+        group.MapPost("/apply", async (
+            ApplyStampRequest request,
+            IStampService stampService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            if (!Enum.TryParse<StampType>(request.Type, true, out var stampType))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "Invalid stamp type"));
+
+            var stamp = stampService.CreateStamp(stampType);
+            var position = new PointF(request.X ?? 100f, request.Y ?? 100f);
+            var result = await stampService.ApplyStampAsync(document, stamp, request.PageNumber, position);
+
+            if (!result.IsSuccess)
+                return Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Stamp failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+
+            var annotation = result.Value;
+            return Results.Json(new { success = true, annotationId = annotation.Id, type = request.Type, pageNumber = request.PageNumber });
+        })
+        .WithName("ApplyStamp")
+        .WithSummary("Apply a stamp annotation to a page");
+    }
+
+    private static void MapFdfEndpoints(WebApplication app)
+    {
+        var group = app.MapGroup("/api/fdf")
+            .WithTags("FDF/XFDF");
+
+        group.MapPost("/export-annotations", async (
+            ExportAnnotationsRequest request,
+            IFdfService fdfService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            if (string.IsNullOrWhiteSpace(request.OutputPath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "outputPath is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            var result = await fdfService.ExportAnnotationsToXfdfAsync(document, request.OutputPath, request.PageFilter);
+
+            return result.IsSuccess
+                ? Results.Json(new { success = true, outputPath = request.OutputPath })
+                : Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Export failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+        })
+        .WithName("ExportAnnotationsToXfdf")
+        .WithSummary("Export annotations to XFDF file");
+
+        group.MapPost("/import-annotations", async (
+            ImportAnnotationsRequest request,
+            IFdfService fdfService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            if (string.IsNullOrWhiteSpace(request.XfdfPath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "xfdfPath is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            if (!File.Exists(request.XfdfPath))
+                return Results.BadRequest(new ErrorResponse("FILE_NOT_FOUND", $"XFDF file not found: {request.XfdfPath}"));
+
+            var mergeBehavior = Enum.TryParse<AnnotationMergeBehavior>(request.MergeBehavior, true, out var mb)
+                ? mb : AnnotationMergeBehavior.Merge;
+
+            var result = await fdfService.ImportAnnotationsFromXfdfAsync(document, request.XfdfPath, mergeBehavior);
+
+            return result.IsSuccess
+                ? Results.Json(new { success = true, importedCount = result.Value })
+                : Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Import failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+        })
+        .WithName("ImportAnnotationsFromXfdf")
+        .WithSummary("Import annotations from XFDF file");
+
+        group.MapPost("/export-form-data", async (
+            ExportFormDataRequest request,
+            IFdfService fdfService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            if (string.IsNullOrWhiteSpace(request.OutputPath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "outputPath is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            var result = await fdfService.ExportFormDataToXfdfAsync(document, request.OutputPath);
+
+            return result.IsSuccess
+                ? Results.Json(new { success = true, outputPath = request.OutputPath })
+                : Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Export failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+        })
+        .WithName("ExportFormDataToXfdf")
+        .WithSummary("Export form data to XFDF file");
+
+        group.MapPost("/import-form-data", async (
+            ImportFormDataRequest request,
+            IFdfService fdfService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            if (string.IsNullOrWhiteSpace(request.XfdfPath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "xfdfPath is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            if (!File.Exists(request.XfdfPath))
+                return Results.BadRequest(new ErrorResponse("FILE_NOT_FOUND", $"XFDF file not found: {request.XfdfPath}"));
+
+            var result = await fdfService.ImportFormDataFromXfdfAsync(document, request.XfdfPath);
+
+            return result.IsSuccess
+                ? Results.Json(new { success = true })
+                : Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Import failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+        })
+        .WithName("ImportFormDataFromXfdf")
+        .WithSummary("Import form data from XFDF file");
+    }
+
+    private static void MapImageInsertionEndpoints(WebApplication app)
+    {
+        var group = app.MapGroup("/api/images")
+            .WithTags("Image Insertion");
+
+        group.MapPost("/insert", async (
+            InsertImageRequest request,
+            IImageInsertionService imageService,
+            IDocumentSessionManager sessions) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.DocumentId))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "documentId is required"));
+
+            if (string.IsNullOrWhiteSpace(request.ImagePath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "imagePath is required"));
+
+            var document = sessions.GetDocument(request.DocumentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {request.DocumentId}"));
+
+            if (!File.Exists(request.ImagePath))
+                return Results.BadRequest(new ErrorResponse("FILE_NOT_FOUND", $"Image file not found: {request.ImagePath}"));
+
+            var position = new PointF(request.X ?? 0f, request.Y ?? 0f);
+            var result = await imageService.InsertImageAsync(document, request.PageIndex, request.ImagePath, position);
+
+            if (!result.IsSuccess)
+                return Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Insert failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+
+            var img = result.Value;
+            return Results.Json(new { success = true, imageId = img.Id, position = new { x = img.Position.X, y = img.Position.Y }, size = new { width = img.Size.Width, height = img.Size.Height } });
+        })
+        .WithName("InsertImage")
+        .WithSummary("Insert an image into a page");
+    }
+
+    private static void MapSecurityEndpoints(WebApplication app)
+    {
+        var group = app.MapGroup("/api/security")
+            .WithTags("Security");
+
+        group.MapPost("/check-encrypted", async (
+            CheckEncryptedRequest request,
+            ISecurityService securityService) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.FilePath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "filePath is required"));
+
+            if (!File.Exists(request.FilePath))
+                return Results.BadRequest(new ErrorResponse("FILE_NOT_FOUND", $"File not found: {request.FilePath}"));
+
+            var result = await securityService.IsEncryptedAsync(request.FilePath);
+
+            return result.IsSuccess
+                ? Results.Json(new { success = true, filePath = request.FilePath, isEncrypted = result.Value })
+                : Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Check failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+        })
+        .WithName("CheckEncrypted")
+        .WithSummary("Check if a PDF file is encrypted");
+
+        group.MapPost("/encrypt", async (
+            EncryptDocumentRequest request,
+            ISecurityService securityService) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.InputPath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "inputPath is required"));
+
+            if (string.IsNullOrWhiteSpace(request.OutputPath))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "outputPath is required"));
+
+            if (string.IsNullOrWhiteSpace(request.OwnerPassword))
+                return Results.BadRequest(new ErrorResponse("INVALID_REQUEST", "ownerPassword is required"));
+
+            if (!File.Exists(request.InputPath))
+                return Results.BadRequest(new ErrorResponse("FILE_NOT_FOUND", $"File not found: {request.InputPath}"));
+
+            var permissions = Enum.TryParse<PdfPermissions>(request.Permissions, true, out var perms)
+                ? perms : PdfPermissions.None;
+            var strength = Enum.TryParse<EncryptionStrength>(request.Strength, true, out var str)
+                ? str : EncryptionStrength.Aes256;
+
+            var settings = new EncryptionSettings
+            {
+                UserPassword = request.UserPassword,
+                OwnerPassword = request.OwnerPassword,
+                Permissions = permissions,
+                Strength = strength
+            };
+
+            var result = await securityService.EncryptDocumentAsync(request.InputPath, request.OutputPath, settings);
+
+            return result.IsSuccess
+                ? Results.Json(new { success = true, outputPath = request.OutputPath, strength = strength.ToString() })
+                : Results.Json(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Encryption failed" },
+                    statusCode: StatusCodes.Status500InternalServerError);
+        })
+        .WithName("EncryptDocument")
+        .WithSummary("Encrypt a PDF document with password protection");
+    }
+
     // --- Helper methods ---
 
     private static PageSize? ParsePageSize(string? size) => size?.ToLowerInvariant() switch
@@ -684,4 +1016,19 @@ public static class PdfOperationsEndpoints
 
     private record SetFormFieldValueRequest(string DocumentId, int PageNumber, string FieldName, string? Value);
     private record SetCheckboxStateRequest(string DocumentId, int PageNumber, string FieldName, bool IsChecked);
+
+    private record ApplyTextWatermarkRequest(string DocumentId, string Text, double? FontSize, double? Opacity, double? RotationDegrees, string? Position, string? PageRange);
+    private record WatermarkPreviewRequest(string DocumentId, int PageIndex, string? Text, double? FontSize, double? Opacity);
+
+    private record ApplyStampRequest(string DocumentId, int PageNumber, string Type, float? X, float? Y);
+
+    private record ExportAnnotationsRequest(string DocumentId, string OutputPath, int[]? PageFilter);
+    private record ImportAnnotationsRequest(string DocumentId, string XfdfPath, string? MergeBehavior);
+    private record ExportFormDataRequest(string DocumentId, string OutputPath);
+    private record ImportFormDataRequest(string DocumentId, string XfdfPath);
+
+    private record InsertImageRequest(string DocumentId, int PageIndex, string ImagePath, float? X, float? Y);
+
+    private record CheckEncryptedRequest(string FilePath);
+    private record EncryptDocumentRequest(string InputPath, string OutputPath, string? UserPassword, string OwnerPassword, string? Permissions, string? Strength);
 }
