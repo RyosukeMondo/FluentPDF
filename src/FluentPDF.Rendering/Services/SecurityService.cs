@@ -330,6 +330,14 @@ public sealed class SecurityService : ISecurityService
     private async Task<string?> FindQpdfExecutableAsync()
     {
         // Check common installation paths
+        // Also search versioned install directories
+        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var versionedPaths = Directory.Exists(programFiles)
+            ? Directory.GetDirectories(programFiles, "qpdf*")
+                .Select(d => Path.Combine(d, "bin", "qpdf.exe"))
+                .ToArray()
+            : Array.Empty<string>();
+
         var commonPaths = new[]
         {
             QpdfExecutable, // In PATH
@@ -337,7 +345,7 @@ public sealed class SecurityService : ISecurityService
             @"C:\Program Files (x86)\qpdf\bin\qpdf.exe",
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "qpdf", "qpdf.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "qpdf", "qpdf.exe")
-        };
+        }.Concat(versionedPaths).ToArray();
 
         foreach (var path in commonPaths)
         {

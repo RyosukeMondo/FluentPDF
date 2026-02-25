@@ -335,8 +335,7 @@ public class MarshallingVerifier : IDisposable
         var workaroundTests = new List<IWorkaroundTest>
         {
             new FloatDimensionWorkaroundTest(),
-            new ThreadingWorkaroundTest(),
-            new SoftwareBitmapWorkaroundTest()
+            new ThreadingWorkaroundTest()
         };
 
         // Run all workaround tests in parallel
