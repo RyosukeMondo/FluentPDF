@@ -107,6 +107,14 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         builder.Services.AddSingleton(_appServices.GetRequiredService<IImageInsertionService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<ISecurityService>());
 
+        // Register ShapeService with document resolver wired to session manager
+        builder.Services.AddSingleton<IShapeService>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<FluentPDF.Rendering.Services.ShapeService>>();
+            var sessions = sp.GetRequiredService<IDocumentSessionManager>();
+            return new FluentPDF.Rendering.Services.ShapeService(logger, sessions.GetDocument);
+        });
+
         // Configure JSON serialization
         builder.Services.ConfigureHttpJsonOptions(options =>
         {
@@ -179,6 +187,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         VerifyEndpoints.Map(_webApp);
         GuiEndpoints.Map(_webApp);
         PdfOperationsEndpoints.Map(_webApp);
+        ShapeEndpoints.Map(_webApp);
 
         _baseUrl = $"http://{bindAddress}:{port}";
 
