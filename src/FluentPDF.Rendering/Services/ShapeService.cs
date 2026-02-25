@@ -238,7 +238,7 @@ public sealed class ShapeService : IShapeService
                 PdfiumInterop.SetPageObjectFillColor(textObj, cr, cg, cb, ca);
 
                 // Position using identity matrix with translation
-                PdfiumInterop.SetPageObjectMatrix(textObj, 1, 0, 0, 1, x, y);
+                PdfiumInterop.TransformPageObject(textObj, 1, 0, 0, 1, x, y);
 
                 PdfiumInterop.InsertPageObject(pageHandle, textObj);
                 PdfiumInterop.MarkPageObjectDirty(pageHandle, textObj);

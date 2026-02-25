@@ -118,7 +118,12 @@ public static partial class PdfiumInterop
             throw new ArgumentException("Invalid page object handle.", nameof(pageObject));
         }
 
-        return FPDFPageObj_SetMatrix(pageObject, a, b, c, d, e, f);
+        var matrix = new FS_MATRIX
+        {
+            a = (float)a, b = (float)b, c = (float)c,
+            d = (float)d, e = (float)e, f = (float)f
+        };
+        return FPDFPageObj_SetMatrix(pageObject, ref matrix);
     }
 
     /// <summary>
@@ -389,16 +394,17 @@ public static partial class PdfiumInterop
         double e,
         double f);
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FS_MATRIX
+    {
+        public float a, b, c, d, e, f;
+    }
+
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool FPDFPageObj_SetMatrix(
         IntPtr page_object,
-        double a,
-        double b,
-        double c,
-        double d,
-        double e,
-        double f);
+        ref FS_MATRIX matrix);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void FPDFPage_InsertObject(SafePdfPageHandle page, IntPtr page_obj);
