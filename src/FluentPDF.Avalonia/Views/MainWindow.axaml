@@ -124,6 +124,7 @@
                         Text="1"
                         TextAlignment="Center"
                         VerticalAlignment="Center"
+                        Classes="ToolbarInput"
                         AutomationProperties.AutomationId="ToolbarPageNumberBox" />
 
                 <TextBlock x:Name="ToolbarTotalPagesText"
@@ -154,6 +155,7 @@
                 <ComboBox x:Name="ToolbarZoomComboBox"
                          Width="90"
                          VerticalAlignment="Center"
+                         Classes="ToolbarInput"
                          AutomationProperties.AutomationId="ToolbarZoomComboBox">
                     <ComboBoxItem Content="50%" />
                     <ComboBoxItem Content="75%" />
@@ -215,7 +217,7 @@
                                    FontSize="13"
                                    VerticalAlignment="Center"/>
                         <Button Content="&#xD7;"
-                                FontSize="12"
+                                FontSize="10"
                                 VerticalAlignment="Center"
                                 Classes="Ghost"
                                 Command="{Binding $parent[Window].DataContext.CloseTabCommand}"

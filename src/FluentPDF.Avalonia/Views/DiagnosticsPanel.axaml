@@ -9,7 +9,7 @@
              IsVisible="{Binding IsVisible}">
 
     <!-- SIMPLIFIED: Removed GlassPanel complexity, using simple Border -->
-    <Border Background="#E0000000"
+    <Border Background="#D0202020"
             IsHitTestVisible="True"
             CornerRadius="8"
             Padding="16"
@@ -18,8 +18,9 @@
             Margin="24"
             Width="320"
             MaxHeight="600"
-            BorderBrush="#40FFFFFF"
-            BorderThickness="1">
+            BorderBrush="{DynamicResource GlassBorderBrush}"
+            BorderThickness="1"
+            BoxShadow="0 4 16 0 #40000000">
 
         <StackPanel Spacing="12">
 
@@ -34,9 +35,7 @@
                 <Button Grid.Column="1"
                        x:Name="CloseButton"
                        Content="✕"
-                       Background="#40FF0000"
-                       BorderThickness="2"
-                       BorderBrush="Red"
+                       Classes="Ghost"
                        Padding="8,4"
                        Foreground="White"
                        FontSize="16"
@@ -46,7 +45,7 @@
                        AutomationProperties.AutomationId="DiagnosticsCloseButton" />
             </Grid>
 
-            <Separator Background="#40FFFFFF" Margin="0,0,0,12" />
+            <Separator Background="{DynamicResource GlassBorderBrush}" Margin="0,0,0,12" />
 
             <!-- FPS Display -->
             <StackPanel Spacing="4">
@@ -59,7 +58,7 @@
                           Foreground="{Binding FpsColor}" />
             </StackPanel>
 
-            <Separator Background="#40FFFFFF" Margin="0,8" />
+            <Separator Background="{DynamicResource GlassBorderBrush}" Margin="0,8" />
 
             <!-- Memory Usage -->
             <StackPanel Spacing="4">
@@ -80,7 +79,7 @@
                 </Grid>
             </StackPanel>
 
-            <Separator Background="#40FFFFFF" Margin="0,8" />
+            <Separator Background="{DynamicResource GlassBorderBrush}" Margin="0,8" />
 
             <!-- Frame Timing -->
             <StackPanel Spacing="4">
@@ -101,12 +100,13 @@
                 </Grid>
             </StackPanel>
 
-            <Separator Background="#40FFFFFF" Margin="0,8" />
+            <Separator Background="{DynamicResource GlassBorderBrush}" Margin="0,8" />
 
             <!-- Actions -->
             <Button Content="Export Metrics"
                    Command="{Binding ExportMetricsCommand}"
                    HorizontalAlignment="Stretch"
+                   Classes="accent"
                    Padding="16,6" />
 
         </StackPanel>

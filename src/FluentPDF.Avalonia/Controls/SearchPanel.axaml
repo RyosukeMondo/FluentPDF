@@ -11,12 +11,12 @@
 
     <!-- SIMPLIFIED: Simple Border replaces complex GlassPanel -->
     <Border x:Name="SearchPanelContainer"
-            Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+            Background="{DynamicResource AcrylicTintToolbarBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}"
             BorderThickness="0,0,0,1"
             CornerRadius="0,0,8,8"
             Padding="12,8"
-            BoxShadow="0 4 8 0 #40000000">
+            BoxShadow="0 2 6 0 #20000000">
 
         <!-- Slide-in/out animation transitions -->
         <Border.Transitions>
@@ -30,7 +30,7 @@
             </Transitions>
         </Border.Transitions>
 
-        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+        <Border BorderBrush="{DynamicResource BorderSubtleBrush}"
                 BorderThickness="0,0,0,1">
 
         <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto">
@@ -41,6 +41,7 @@
                       Width="16"
                       Height="16"
                       Margin="0,0,8,0"
+                      Foreground="{DynamicResource ForegroundTertiaryBrush}"
                       VerticalAlignment="Center"/>
 
             <!-- Search TextBox -->
@@ -59,29 +60,29 @@
                        Margin="0,0,12,0"
                        MinWidth="80"
                        TextAlignment="Center"
-                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                       Foreground="{DynamicResource ForegroundTertiaryBrush}"/>
 
             <!-- Previous Match Button -->
             <Button Grid.Column="3"
-                    Content="◀"
                     Command="{Binding PreviousMatchCommand}"
                     IsEnabled="{Binding HasMatches}"
                     ToolTip.Tip="Previous match (Shift+F3)"
-                    Width="32"
-                    Height="32"
+                    Classes="ToolbarIcon"
                     Margin="0,0,4,0"
-                    AutomationProperties.Name="Previous match"/>
+                    AutomationProperties.Name="Previous match">
+                <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" Width="14" Height="14"/>
+            </Button>
 
             <!-- Next Match Button -->
             <Button Grid.Column="4"
-                    Content="▶"
                     Command="{Binding NextMatchCommand}"
                     IsEnabled="{Binding HasMatches}"
                     ToolTip.Tip="Next match (F3)"
-                    Width="32"
-                    Height="32"
+                    Classes="ToolbarIcon"
                     Margin="0,0,12,0"
-                    AutomationProperties.Name="Next match"/>
+                    AutomationProperties.Name="Next match">
+                <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" Width="14" Height="14"/>
+            </Button>
 
             <!-- Options Panel -->
             <StackPanel Grid.Column="5"
@@ -92,6 +93,7 @@
                 <!-- Case Sensitive Toggle -->
                 <ToggleButton IsChecked="{Binding CaseSensitive, Mode=TwoWay}"
                               ToolTip.Tip="Match case"
+                              Classes="ToolbarIcon"
                               Width="32"
                               Height="32"
                               AutomationProperties.Name="Match case">
@@ -103,6 +105,7 @@
                 <!-- Whole Word Toggle -->
                 <ToggleButton IsChecked="{Binding WholeWord, Mode=TwoWay}"
                               ToolTip.Tip="Match whole word"
+                              Classes="ToolbarIcon"
                               Width="32"
                               Height="32"
                               AutomationProperties.Name="Match whole word">
@@ -128,6 +131,7 @@
                         IsVisible="{Binding HasMatches}"
                         ToolTip.Tip="Replace current match"/>
                 <Button Content="Replace All"
+                        Classes="accent"
                         Command="{Binding ReplaceAllCommand}"
                         IsEnabled="{Binding HasMatches}"
                         IsVisible="{Binding HasMatches}"
@@ -136,12 +140,12 @@
 
             <!-- Close Button -->
             <Button Grid.Column="7"
-                    Content="✕"
                     Command="{Binding CloseSearchCommand}"
                     ToolTip.Tip="Close search (Esc)"
-                    Width="32"
-                    Height="32"
-                    AutomationProperties.Name="Close search"/>
+                    Classes="ToolbarIcon"
+                    AutomationProperties.Name="Close search">
+                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="12" Height="12"/>
+            </Button>
         </Grid>
         </Border>
     </Border>

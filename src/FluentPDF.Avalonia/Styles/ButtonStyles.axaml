@@ -92,4 +92,42 @@
         <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
     </Style>
 
+    <!-- Tab styling for compact, modern look -->
+    <Style Selector="TabControl#MainTabControl TabItem">
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundSecondaryBrush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="MinHeight" Value="32"/>
+    </Style>
+    <Style Selector="TabControl#MainTabControl TabItem:selected">
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}"/>
+    </Style>
+    <Style Selector="TabControl#MainTabControl TabItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+    </Style>
+
+    <!-- Compact toolbar TextBox -->
+    <Style Selector="TextBox.ToolbarInput">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+    </Style>
+    <Style Selector="TextBox.ToolbarInput:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
+    </Style>
+
+    <!-- Compact toolbar ComboBox -->
+    <Style Selector="ComboBox.ToolbarInput">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+    </Style>
+
 </Styles>
