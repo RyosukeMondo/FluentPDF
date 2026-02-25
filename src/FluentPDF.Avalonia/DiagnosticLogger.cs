@@ -10,8 +10,11 @@ namespace FluentPDF.Avalonia;
 /// </summary>
 public static class DiagnosticLogger
 {
+    private static readonly string LogDir = Path.Combine(
+        AppContext.BaseDirectory, "logs");
+
     private static readonly string LogFile = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+        LogDir,
         $"FluentPDF-Diagnostic-{DateTime.Now:yyyyMMdd-HHmmss}.log"
     );
 
@@ -21,6 +24,7 @@ public static class DiagnosticLogger
     {
         try
         {
+            Directory.CreateDirectory(LogDir);
             File.WriteAllText(LogFile, $"=== FluentPDF Diagnostic Log ===\n");
             File.AppendAllText(LogFile, $"Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}\n");
             File.AppendAllText(LogFile, $"Log file: {LogFile}\n");

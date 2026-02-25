@@ -62,8 +62,10 @@ public partial class App : Application
     {
 #if DEBUG
         // Create early debug log BEFORE anything else (DEBUG mode only)
+        var earlyLogDir = Path.Combine(AppContext.BaseDirectory, "logs");
+        Directory.CreateDirectory(earlyLogDir);
         var earlyLogPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            earlyLogDir,
             $"FluentPDF-Early-Debug-{DateTime.Now:yyyyMMdd-HHmmss}.txt");
 
         var earlyLog = new System.IO.StreamWriter(earlyLogPath, append: true) { AutoFlush = true };
