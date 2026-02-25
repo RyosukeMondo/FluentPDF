@@ -93,7 +93,9 @@ public static partial class PdfiumInterop
             throw new InvalidOperationException("PDFium library is not initialized. Call Initialize() first.");
         }
 
-        var handle = FPDF_LoadDocument(filePath, password);
+        var utf8Path = System.Text.Encoding.UTF8.GetBytes(filePath + '\0');
+        var utf8Password = password != null ? System.Text.Encoding.UTF8.GetBytes(password + '\0') : null;
+        var handle = FPDF_LoadDocument(utf8Path, utf8Password);
         return handle;
     }
 
@@ -112,10 +114,10 @@ public static partial class PdfiumInterop
         return FPDF_GetPageCount(document);
     }
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     private static extern SafePdfDocumentHandle FPDF_LoadDocument(
-        [MarshalAs(UnmanagedType.LPStr)] string file_path,
-        [MarshalAs(UnmanagedType.LPStr)] string? password);
+        byte[] file_path,
+        byte[]? password);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern void FPDF_CloseDocument(IntPtr document);
