@@ -432,7 +432,8 @@ public sealed class SecurityService : ISecurityService
         var output = outputBuilder.ToString();
         var error = errorBuilder.ToString();
 
-        if (process.ExitCode != 0)
+        // QPDF exit codes: 0 = success, 3 = success with warnings, others = error
+        if (process.ExitCode != 0 && process.ExitCode != 3)
         {
             _logger.LogError(
                 "QPDF execution failed. CorrelationId={CorrelationId}, ExitCode={ExitCode}, Error={Error}",
@@ -442,6 +443,13 @@ public sealed class SecurityService : ISecurityService
                 "SECURITY_QPDF_FAILED",
                 $"QPDF failed with exit code {process.ExitCode}: {error}",
                 correlationId));
+        }
+
+        if (process.ExitCode == 3)
+        {
+            _logger.LogWarning(
+                "QPDF succeeded with warnings. CorrelationId={CorrelationId}, Warnings={Warnings}",
+                correlationId, error);
         }
 
         if (!string.IsNullOrEmpty(output))
