@@ -44,7 +44,7 @@ public partial class BookmarksViewModel : ViewModelBase
     /// Gets or sets whether the bookmarks sidebar is visible.
     /// </summary>
     [ObservableProperty]
-    private bool _isVisible = true;
+    private bool _isVisible = false;
 
     /// <summary>
     /// Gets or sets the message displayed when no bookmarks are available.

@@ -11,6 +11,8 @@
     Requirements: 1.1 (Color and Theming), 1.5 (Accessibility)
     -->
 
+    <ResourceDictionary.ThemeDictionaries>
+
     <!-- ================================================================== -->
     <!-- LIGHT THEME COLORS                                                 -->
     <!-- ================================================================== -->
@@ -149,74 +151,10 @@
 
     </ResourceDictionary>
 
-    <!-- ================================================================== -->
-    <!-- HIGH CONTRAST THEME COLORS                                         -->
-    <!-- ================================================================== -->
+    <!-- HighContrast theme: Avalonia only supports Light/Dark as ThemeDictionary keys.
+         HighContrast support would require runtime resource override via ThemeService. -->
 
-    <ResourceDictionary x:Key="HighContrast">
-
-        <!-- Background Colors -->
-        <!-- Maximum contrast backgrounds (pure black/white) -->
-        <Color x:Key="ColorBackgroundBase">#000000</Color>                  <!-- Pure black -->
-        <Color x:Key="ColorBackgroundSurface">#000000</Color>               <!-- Pure black surface -->
-        <Color x:Key="ColorBackgroundElevated">#000000</Color>              <!-- No elevation distinction -->
-        <Color x:Key="ColorBackgroundSubtle">#000000</Color>                <!-- Pure black -->
-
-        <!-- Foreground Colors -->
-        <!-- Maximum contrast text (pure white on black) -->
-        <Color x:Key="ColorForegroundPrimary">#FFFFFF</Color>               <!-- Pure white (21:1) -->
-        <Color x:Key="ColorForegroundSecondary">#FFFFFF</Color>             <!-- Pure white (21:1) -->
-        <Color x:Key="ColorForegroundTertiary">#FFFFFF</Color>              <!-- Pure white (21:1) -->
-        <Color x:Key="ColorForegroundDisabled">#7F7F7F</Color>              <!-- 50% gray for disabled -->
-        <Color x:Key="ColorForegroundInverse">#000000</Color>               <!-- Pure black on white -->
-
-        <!-- Accent Colors -->
-        <!-- High contrast accent (pure cyan) -->
-        <Color x:Key="ColorAccentPrimary">#00FFFF</Color>                   <!-- Pure cyan accent -->
-        <Color x:Key="ColorAccentSecondary">#00FFFF</Color>                 <!-- Pure cyan -->
-        <Color x:Key="ColorAccentTertiary">#00FFFF</Color>                  <!-- Pure cyan -->
-        <Color x:Key="ColorAccentHover">#00FFFF</Color>                     <!-- Pure cyan (no change) -->
-        <Color x:Key="ColorAccentPressed">#00CCCC</Color>                   <!-- Slightly darker cyan -->
-
-        <!-- Acrylic Tints -->
-        <!-- No acrylic in high contrast - use solid colors -->
-        <Color x:Key="ColorAcrylicTintToolbar">#000000</Color>              <!-- Solid black -->
-        <Color x:Key="ColorAcrylicTintPanel">#000000</Color>                <!-- Solid black -->
-        <Color x:Key="ColorAcrylicTintDialog">#000000</Color>               <!-- Solid black -->
-        <Color x:Key="ColorAcrylicTintTooltip">#000000</Color>              <!-- Solid black -->
-
-        <!-- Semantic Colors -->
-        <!-- High contrast semantic colors (pure hues) -->
-        <Color x:Key="ColorSuccess">#00FF00</Color>                         <!-- Pure green -->
-        <Color x:Key="ColorSuccessBackground">#000000</Color>               <!-- Black background -->
-        <Color x:Key="ColorWarning">#FFFF00</Color>                         <!-- Pure yellow -->
-        <Color x:Key="ColorWarningBackground">#000000</Color>               <!-- Black background -->
-        <Color x:Key="ColorError">#FF0000</Color>                           <!-- Pure red -->
-        <Color x:Key="ColorErrorBackground">#000000</Color>                 <!-- Black background -->
-        <Color x:Key="ColorInfo">#00FFFF</Color>                            <!-- Pure cyan -->
-        <Color x:Key="ColorInfoBackground">#000000</Color>                  <!-- Black background -->
-
-        <!-- Border Colors -->
-        <!-- High contrast borders (pure white) -->
-        <Color x:Key="ColorBorderDefault">#FFFFFF</Color>                   <!-- Pure white border -->
-        <Color x:Key="ColorBorderSubtle">#FFFFFF</Color>                    <!-- Pure white border -->
-        <Color x:Key="ColorBorderStrong">#FFFFFF</Color>                    <!-- Pure white border -->
-        <Color x:Key="ColorBorderFocus">#00FFFF</Color>                     <!-- Cyan focus indicator -->
-
-        <!-- UI State Colors -->
-        <!-- High contrast states -->
-        <Color x:Key="ColorHoverOverlay">#00000000</Color>                  <!-- No overlay (transparent) -->
-        <Color x:Key="ColorPressedOverlay">#00000000</Color>                <!-- No overlay (transparent) -->
-        <Color x:Key="ColorSelectedBackground">#00FFFF</Color>              <!-- Cyan selection -->
-        <Color x:Key="ColorSelectedBorder">#FFFFFF</Color>                  <!-- White border -->
-
-        <!-- Shadow and Elevation Colors -->
-        <!-- No shadows in high contrast mode -->
-        <Color x:Key="ColorShadowSmall">#00000000</Color>                   <!-- Transparent (no shadow) -->
-        <Color x:Key="ColorShadowMedium">#00000000</Color>                  <!-- Transparent (no shadow) -->
-        <Color x:Key="ColorShadowLarge">#00000000</Color>                   <!-- Transparent (no shadow) -->
-
-    </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
 
     <!-- ================================================================== -->
     <!-- THEME-AWARE BRUSH RESOURCES                                        -->

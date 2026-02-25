@@ -11,7 +11,6 @@ using FluentPDF.Core.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -70,6 +69,10 @@ public partial class PdfViewerPage : UserControl
         if (_viewModel != null)
         {
             _viewModel.RenderPageCallback = RenderPageAsync;
+            if (_viewModel.Thumbnails != null)
+            {
+                _viewModel.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
+            }
         }
 
         // Wire up pointer events for text selection
@@ -88,6 +91,10 @@ public partial class PdfViewerPage : UserControl
         {
             _viewModel = vm;
             vm.RenderPageCallback = RenderPageAsync;
+            if (vm.Thumbnails != null)
+            {
+                vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
+            }
             _logger.LogDebug("RenderPageCallback wired up for PdfViewerViewModel");
         }
     }
@@ -102,6 +109,23 @@ public partial class PdfViewerPage : UserControl
         {
             _viewModel = vm;
             vm.RenderPageCallback = RenderPageAsync;
+            if (vm.Thumbnails != null)
+            {
+                vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
+            }
+        }
+
+        // Detect screen DPI and set CurrentDisplayInfo
+        if (_viewModel != null)
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel != null)
+            {
+                var scaling = topLevel.RenderScaling;
+                _viewModel.CurrentDisplayInfo = DisplayInfo.FromScale(scaling);
+                _logger.LogDebug("Display DPI detected: scale={Scale}, effectiveDpi={Dpi}",
+                    scaling, 96.0 * scaling);
+            }
         }
 
         // Wire up pointer events on the PDF image
@@ -115,14 +139,15 @@ public partial class PdfViewerPage : UserControl
         // Wire up scroll viewer mouse wheel for zoom and middle button panning
         if (PdfScrollViewer != null)
         {
-            PdfScrollViewer.PointerWheelChanged += OnScrollViewerPointerWheelChanged;
+            PdfScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
             PdfScrollViewer.PointerPressed += OnScrollViewerPointerPressed;
             PdfScrollViewer.PointerMoved += OnScrollViewerPointerMoved;
             PdfScrollViewer.PointerReleased += OnScrollViewerPointerReleased;
         }
 
-        // Wire up keyboard events for annotation shortcuts
+        // Wire up keyboard events for annotation shortcuts and text copy
         this.KeyDown += OnPageKeyDown;
+        this.KeyDown += OnPageKeyDown_CopyText;
 
         // Subscribe to ViewModel property changes
         if (_viewModel != null)
@@ -148,43 +173,75 @@ public partial class PdfViewerPage : UserControl
     {
         try
         {
-            _logger.LogDebug(
-                "Rendering page {PageNumber} at {ZoomLevel}x zoom, {Dpi} DPI",
-                pageNumber, zoomLevel, dpi);
-
-            // Get rendering service from DI
             var renderingService = App.GetService<IPdfRenderingService>();
-
-            // Render page to PNG stream
-            var result = await renderingService.RenderPageAsync(
-                document, pageNumber, zoomLevel, dpi);
+            var result = await renderingService.RenderPageToRawAsync(document, pageNumber, zoomLevel, dpi);
 
             if (!result.IsSuccess)
             {
-                _logger.LogError(
-                    "Rendering failed for page {PageNumber}: {Error}",
+                _logger.LogError("Rendering failed for page {PageNumber}: {Error}",
                     pageNumber, result.Errors.FirstOrDefault()?.Message ?? "Unknown error");
                 return null;
             }
 
-            // Convert Stream to Avalonia Bitmap
-            var stream = result.Value;
-            stream.Seek(0, SeekOrigin.Begin);
+            var raw = result.Value;
 
-            var bitmap = new global::Avalonia.Media.Imaging.Bitmap(stream);
+            // Direct blit: BGRA pixels -> Avalonia WriteableBitmap (no PNG encode/decode)
+            var writeableBitmap = new global::Avalonia.Media.Imaging.WriteableBitmap(
+                new global::Avalonia.PixelSize(raw.Width, raw.Height),
+                new global::Avalonia.Vector(96, 96),
+                global::Avalonia.Platform.PixelFormat.Bgra8888,
+                global::Avalonia.Platform.AlphaFormat.Premul);
 
-            _logger.LogDebug(
-                "Successfully rendered page {PageNumber} to bitmap ({Width}x{Height})",
-                pageNumber, bitmap.PixelSize.Width, bitmap.PixelSize.Height);
+            using (var fb = writeableBitmap.Lock())
+            {
+                System.Runtime.InteropServices.Marshal.Copy(raw.Pixels, 0, fb.Address, raw.Pixels.Length);
+            }
 
-            return bitmap;
+            _logger.LogDebug("Successfully rendered page {PageNumber} to bitmap ({Width}x{Height})",
+                pageNumber, raw.Width, raw.Height);
+
+            return writeableBitmap;
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                ex,
-                "Exception during page {PageNumber} rendering",
-                pageNumber);
+            _logger.LogError(ex, "Exception during page {PageNumber} rendering", pageNumber);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Renders a PDF page thumbnail at low DPI for the sidebar.
+    /// </summary>
+    private async Task<object?> RenderThumbnailAsync(PdfDocument document, int pageNumber)
+    {
+        try
+        {
+            var renderingService = App.GetService<IPdfRenderingService>();
+            var result = await renderingService.RenderPageToRawAsync(document, pageNumber, 1.0, 36);
+
+            if (!result.IsSuccess)
+            {
+                return null;
+            }
+
+            var raw = result.Value;
+
+            var writeableBitmap = new global::Avalonia.Media.Imaging.WriteableBitmap(
+                new global::Avalonia.PixelSize(raw.Width, raw.Height),
+                new global::Avalonia.Vector(96, 96),
+                global::Avalonia.Platform.PixelFormat.Bgra8888,
+                global::Avalonia.Platform.AlphaFormat.Premul);
+
+            using (var fb = writeableBitmap.Lock())
+            {
+                System.Runtime.InteropServices.Marshal.Copy(raw.Pixels, 0, fb.Address, raw.Pixels.Length);
+            }
+
+            return writeableBitmap;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception during thumbnail rendering for page {PageNumber}", pageNumber);
             return null;
         }
     }
@@ -298,11 +355,16 @@ public partial class PdfViewerPage : UserControl
             _logger.LogInformation(
                 "Text selection: ({X}, {Y}) - ({Width}x{Height})",
                 x, y, width, height);
+
+            // Extract text from selection area
+            _ = ExtractTextFromSelectionAsync(x, y, width, height);
         }
         else
         {
             // Click without drag - clear selection
             ClearSelectionRectangle();
+            _viewModel.SelectedText = string.Empty;
+            _viewModel.HasSelectedText = false;
         }
 
         e.Handled = true;
@@ -436,12 +498,125 @@ public partial class PdfViewerPage : UserControl
     }
 
     /// <summary>
-    /// Updates the cursor based on the active annotation tool.
-    /// TODO: Implement when AnnotationViewModel is added to Core.
+    /// Converts screen pixel coordinates to PDF page coordinates and extracts text.
     /// </summary>
-    private void UpdateCursorForActiveTool()
+    private async Task ExtractTextFromSelectionAsync(double screenX, double screenY, double screenWidth, double screenHeight)
     {
-        // TODO: Wire up cursor changes based on annotation tool when AnnotationViewModel is available
-        this.Cursor = Cursor.Default;
+        if (_viewModel?.CurrentDocument == null || PdfImage == null)
+            return;
+
+        try
+        {
+            var textService = App.GetService<ITextExtractionService>();
+
+            // Convert screen coords to PDF coords:
+            // The Image control displays the bitmap with Stretch="Uniform", so we need
+            // to account for the actual rendered size vs the bitmap size.
+            var imageSource = PdfImage.Source as global::Avalonia.Media.Imaging.Bitmap;
+            if (imageSource == null)
+                return;
+
+            var bitmapWidth = (double)imageSource.PixelSize.Width;
+            var bitmapHeight = (double)imageSource.PixelSize.Height;
+            var renderWidth = PdfImage.Bounds.Width;
+            var renderHeight = PdfImage.Bounds.Height;
+
+            if (renderWidth <= 0 || renderHeight <= 0 || bitmapWidth <= 0 || bitmapHeight <= 0)
+                return;
+
+            // Calculate the actual scale and offset (Uniform stretch centers the image)
+            var scaleX = renderWidth / bitmapWidth;
+            var scaleY = renderHeight / bitmapHeight;
+            var scale = Math.Min(scaleX, scaleY);
+
+            var offsetX = (renderWidth - bitmapWidth * scale) / 2.0;
+            var offsetY = (renderHeight - bitmapHeight * scale) / 2.0;
+
+            // Convert screen coords to bitmap pixel coords
+            var bmpX = (screenX - offsetX) / scale;
+            var bmpY = (screenY - offsetY) / scale;
+            var bmpW = screenWidth / scale;
+            var bmpH = screenHeight / scale;
+
+            // The bitmap was rendered at (zoomLevel * dpi / 72) scale from PDF points.
+            // PDF page size in points -> bitmap pixels = pagePoints * zoomLevel * dpi / 72
+            var dpi = _viewModel.CurrentDisplayInfo?.EffectiveDpi ?? 96.0;
+            var zoom = _viewModel.ZoomLevel;
+            var pdfScale = zoom * dpi / 72.0;
+
+            // Convert bitmap coords to PDF page coords (points, Y-up)
+            var pdfX = (float)(bmpX / pdfScale);
+            var pdfW = (float)(bmpW / pdfScale);
+            var pdfH = (float)(bmpH / pdfScale);
+
+            // PDF coordinate system has Y increasing upward from bottom
+            // Get page height to flip Y
+            var renderingService = App.GetService<IPdfRenderingService>();
+            var pageSizeResult = renderingService.GetPageSize(_viewModel.CurrentDocument, _viewModel.CurrentPageNumber);
+            if (pageSizeResult.IsFailed) return;
+            var pageHeight = pageSizeResult.Value.Height;
+            var pdfY = (float)(pageHeight - (bmpY / pdfScale));
+            var pdfBottom = (float)(pageHeight - ((bmpY + bmpH) / pdfScale));
+
+            var bounds = new System.Drawing.RectangleF(pdfX, pdfBottom, pdfW, pdfY - pdfBottom);
+
+            _logger.LogDebug("Selection PDF bounds: ({X},{Y}) {W}x{H}, pageHeight={PH}",
+                bounds.X, bounds.Y, bounds.Width, bounds.Height, pageHeight);
+
+            var result = await textService.ExtractTextInBoundsAsync(
+                _viewModel.CurrentDocument,
+                _viewModel.CurrentPageNumber,
+                bounds);
+
+            if (result.IsSuccess && result.Value.HasText)
+            {
+                _viewModel.SelectedText = result.Value.Text;
+                _viewModel.HasSelectedText = true;
+                _logger.LogInformation("Selected text: \"{Text}\"",
+                    result.Value.Text.Length > 100 ? result.Value.Text[..100] + "..." : result.Value.Text);
+            }
+            else
+            {
+                _viewModel.SelectedText = string.Empty;
+                _viewModel.HasSelectedText = false;
+                _logger.LogDebug("No text found in selection area");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to extract text from selection");
+        }
+    }
+
+    /// <summary>
+    /// Handles Ctrl+C to copy selected text to clipboard.
+    /// </summary>
+    private void OnPageKeyDown_CopyText(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.C && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            if (_viewModel?.HasSelectedText == true && !string.IsNullOrEmpty(_viewModel.SelectedText))
+            {
+                _ = CopyToClipboardAsync(_viewModel.SelectedText);
+                e.Handled = true;
+            }
+        }
+    }
+
+    private async Task CopyToClipboardAsync(string text)
+    {
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel?.Clipboard != null)
+            {
+                await topLevel.Clipboard.SetTextAsync(text);
+                _logger.LogInformation("Copied {Length} characters to clipboard", text.Length);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to copy text to clipboard");
+        }
     }
 }

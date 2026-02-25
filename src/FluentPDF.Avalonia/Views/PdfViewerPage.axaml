@@ -10,102 +10,26 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <!-- Toolbar -->
-            <RowDefinition Height="Auto"/>
             <!-- Search Panel -->
             <RowDefinition Height="Auto"/>
             <!-- Content with sidebars -->
             <RowDefinition Height="*"/>
+            <!-- Selection Status Bar -->
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Simple Toolbar -->
-        <Border Grid.Row="0"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="8">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <!-- Navigation -->
-                <Button Content="◀"
-                        Command="{Binding GoToPreviousPageCommand}"
-                        IsEnabled="{Binding CanGoToPreviousPage}"
-                        ToolTip.Tip="Previous Page"/>
-
-                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <TextBox Text="{Binding CurrentPageNumber, Mode=TwoWay}"
-                             Width="50"
-                             HorizontalContentAlignment="Center"/>
-                    <TextBlock Text="/" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding PageCount}" VerticalAlignment="Center"/>
-                </StackPanel>
-
-                <Button Content="▶"
-                        Command="{Binding GoToNextPageCommand}"
-                        IsEnabled="{Binding CanGoToNextPage}"
-                        ToolTip.Tip="Next Page"/>
-
-                <Separator Width="1" Height="24" Margin="8,0"/>
-
-                <!-- Zoom controls -->
-                <Button Content="−"
-                        Command="{Binding ZoomOutCommand}"
-                        ToolTip.Tip="Zoom Out (Ctrl+−)"/>
-
-                <TextBlock Text="{Binding ZoomLevel, StringFormat='{}{0:P0}'}"
-                           VerticalAlignment="Center"
-                           MinWidth="60"
-                           TextAlignment="Center"
-                           ToolTip.Tip="Zoom Level"/>
-
-                <Button Content="+"
-                        Command="{Binding ZoomInCommand}"
-                        ToolTip.Tip="Zoom In (Ctrl++/Ctrl+=)"/>
-
-                <Separator Width="1" Height="24" Margin="8,0"/>
-
-                <!-- Rotation -->
-                <Button Content="⟲"
-                        Command="{Binding RotateCounterClockwiseCommand}"
-                        ToolTip.Tip="Rotate Left (Ctrl+Shift+−)"/>
-
-                <Button Content="⟳"
-                        Command="{Binding RotateClockwiseCommand}"
-                        ToolTip.Tip="Rotate Right (Ctrl+Shift++/Ctrl+Shift+=)"/>
-
-                <Separator Width="1" Height="24" Margin="8,0"/>
-
-                <!-- View Options -->
-                <Button Content="🔍"
-                        Command="{Binding ToggleSearchCommand}"
-                        ToolTip.Tip="Search (Ctrl+F)"
-                        Width="32"
-                        Height="32"/>
-
-                <Button Content="📄"
-                        Command="{Binding ToggleThumbnailsCommand}"
-                        ToolTip.Tip="Show/Hide Thumbnails"
-                        Width="32"
-                        Height="32"/>
-
-                <Button Content="🔖"
-                        Command="{Binding ToggleBookmarksCommand}"
-                        ToolTip.Tip="Show/Hide Bookmarks"
-                        Width="32"
-                        Height="32"/>
-            </StackPanel>
-        </Border>
-
         <!-- Search Panel -->
-        <controls:SearchPanel Grid.Row="1"
-                              DataContext="{Binding SearchPanelViewModel}"
-                              IsVisible="{Binding IsSearchVisible}"/>
+        <controls:SearchPanel Grid.Row="0"
+                              DataContext="{Binding Search}"
+                              IsVisible="{Binding IsSearchPanelVisible}"/>
 
         <!-- Main Content Area with Sidebars -->
-        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto">
 
             <!-- Thumbnails Sidebar -->
             <controls:ThumbnailsSidebar Grid.Column="0"
-                                        IsVisible="{Binding IsSidebarVisible}"
+                                        DataContext="{Binding Thumbnails}"
+                                        IsVisible="{Binding $parent[UserControl].DataContext.IsSidebarVisible}"
                                         Width="180"/>
 
             <!-- PDF Content Area -->
@@ -113,9 +37,9 @@
                 <ScrollViewer x:Name="PdfScrollViewer"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto"
-                              Background="{DynamicResource ApplicationPageBackgroundBrush}">
+                              Background="{DynamicResource BackgroundBaseBrush}">
 
-                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    <Border BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1"
                             Margin="16"
                             Background="White"
@@ -154,15 +78,15 @@
                                 Spacing="16">
                         <ProgressBar IsIndeterminate="True"
                                      Width="200"/>
-                        <TextBlock Text="{Binding LoadingMessage}"
+                        <TextBlock Text="{Binding StatusMessage}"
                                    Foreground="White"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Error Display -->
-                <Border Background="{DynamicResource ApplicationPageBackgroundBrush}"
-                        IsVisible="{Binding HasError}">
+                <!-- Error Display - hidden, errors shown via dialog service -->
+                <Border Background="{DynamicResource BackgroundBaseBrush}"
+                        IsVisible="False">
                     <StackPanel HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Spacing="16"
@@ -171,7 +95,7 @@
                                   Width="48"
                                   Height="48"
                                   Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
-                        <TextBlock Text="{Binding ErrorMessage}"
+                        <TextBlock Text="An error occurred"
                                    TextWrapping="Wrap"
                                    HorizontalAlignment="Center"
                                    TextAlignment="Center"/>
@@ -184,8 +108,32 @@
 
             <!-- Bookmarks Sidebar -->
             <controls:BookmarksPanel Grid.Column="2"
-                                     IsVisible="{Binding IsBookmarksPanelVisible}"
+                                     DataContext="{Binding Bookmarks}"
+                                     IsVisible="{Binding $parent[UserControl].DataContext.IsBookmarksPanelVisible}"
                                      Width="250"/>
         </Grid>
+        <!-- Selection Status Bar -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="8,4"
+                IsVisible="{Binding HasSelectedText}">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding SelectedText}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxLines="1"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                <TextBlock Grid.Column="1"
+                           Text="Ctrl+C to copy"
+                           FontSize="11"
+                           Margin="12,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

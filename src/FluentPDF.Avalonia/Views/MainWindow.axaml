@@ -2,7 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="using:FluentPDF.Avalonia.ViewModels"
+        xmlns:vm="using:FluentPDF.Core.ViewModels"
+        xmlns:avm="using:FluentPDF.Avalonia.ViewModels"
         xmlns:converters="using:FluentPDF.Avalonia.Converters"
         xmlns:controls="using:FluentPDF.Avalonia.Controls"
         xmlns:views="using:FluentPDF.Avalonia.Views"
@@ -19,7 +20,7 @@
         <converters:LogLevelToColorConverter x:Key="LogLevelToColorConverter" />
     </Window.Resources>
 
-    <Grid x:Name="MainGrid" Background="{DynamicResource ApplicationPageBackgroundBrush}">
+    <Grid x:Name="MainGrid" Background="{DynamicResource BackgroundBaseBrush}">
         <Grid.RowDefinitions>
             <!-- Menu bar -->
             <RowDefinition Height="Auto" />
@@ -70,31 +71,34 @@
 
         <!-- Toolbar with Acrylic Background -->
         <Border Grid.Row="1"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                BorderBrush="{DynamicResource GlassBorderBrush}"
+                Background="{DynamicResource BackgroundElevatedBrush}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
                 BorderThickness="0,0,0,1"
-                Padding="16">
+                Padding="12,8"
+                CornerRadius="0">
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpacingS}">
 
                 <!-- File Operations -->
-                <Button Content="Open"
-                                      x:Name="ToolbarOpenButton"
-                                      AutomationProperties.AutomationId="ToolbarOpenButton"
-                                      ToolTip.Tip="Open PDF file (Ctrl+O)"
-                                      Padding="16,6" />
+                <Button x:Name="ToolbarOpenButton"
+                        AutomationProperties.AutomationId="ToolbarOpenButton"
+                        ToolTip.Tip="Open PDF file (Ctrl+O)"
+                        Content="Open"
+                        Padding="16,6" />
 
                 <Separator Width="1"
                           Height="24"
-                          Background="{DynamicResource GlassBorderBrush}"
+                          Background="{DynamicResource BorderSubtleBrush}"
                           Margin="12,0" />
 
                 <!-- Navigation -->
-                <Button Content="◀"
-                                      x:Name="ToolbarPreviousPageButton"
-                                      AutomationProperties.AutomationId="ToolbarPreviousPageButton"
-                                      ToolTip.Tip="Previous page"
-                                      Padding="12,6"
-                                      MinWidth="40" />
+                <Button x:Name="ToolbarPreviousPageButton"
+                        AutomationProperties.AutomationId="ToolbarPreviousPageButton"
+                        ToolTip.Tip="Previous page"
+                        Padding="8"
+                        MinWidth="36"
+                        MinHeight="36">
+                    <PathIcon Data="M15.71 4.29a1 1 0 0 0-1.42 0l-7 7a1 1 0 0 0 0 1.42l7 7a1 1 0 0 0 1.42-1.42L9.41 12l6.3-6.29a1 1 0 0 0 0-1.42z" Width="16" Height="16"/>
+                </Button>
 
                 <TextBlock Text="Page"
                           VerticalAlignment="Center"
@@ -112,25 +116,29 @@
                           VerticalAlignment="Center"
                           Margin="4,0" />
 
-                <Button Content="▶"
-                                      x:Name="ToolbarNextPageButton"
-                                      AutomationProperties.AutomationId="ToolbarNextPageButton"
-                                      ToolTip.Tip="Next page"
-                                      Padding="12,6"
-                                      MinWidth="40" />
+                <Button x:Name="ToolbarNextPageButton"
+                        AutomationProperties.AutomationId="ToolbarNextPageButton"
+                        ToolTip.Tip="Next page"
+                        Padding="8"
+                        MinWidth="36"
+                        MinHeight="36">
+                    <PathIcon Data="M8.29 4.29a1 1 0 0 1 1.42 0l7 7a1 1 0 0 1 0 1.42l-7 7a1 1 0 0 1-1.42-1.42L14.59 12 8.29 5.71a1 1 0 0 1 0-1.42z" Width="16" Height="16"/>
+                </Button>
 
                 <Separator Width="1"
                           Height="24"
-                          Background="{DynamicResource GlassBorderBrush}"
+                          Background="{DynamicResource BorderSubtleBrush}"
                           Margin="12,0" />
 
                 <!-- Zoom Controls -->
-                <Button Content="−"
-                                      x:Name="ToolbarZoomOutButton"
-                                      AutomationProperties.AutomationId="ToolbarZoomOutButton"
-                                      ToolTip.Tip="Zoom out"
-                                      Padding="12,6"
-                                      MinWidth="40" />
+                <Button x:Name="ToolbarZoomOutButton"
+                        AutomationProperties.AutomationId="ToolbarZoomOutButton"
+                        ToolTip.Tip="Zoom out"
+                        Padding="8"
+                        MinWidth="36"
+                        MinHeight="36">
+                    <PathIcon Data="M4 12a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1z" Width="16" Height="16"/>
+                </Button>
 
                 <ComboBox x:Name="ToolbarZoomComboBox"
                          Width="100"
@@ -146,39 +154,47 @@
                     <ComboBoxItem Content="Fit Page" />
                 </ComboBox>
 
-                <Button Content="+"
-                                      x:Name="ToolbarZoomInButton"
-                                      AutomationProperties.AutomationId="ToolbarZoomInButton"
-                                      ToolTip.Tip="Zoom in"
-                                      Padding="12,6"
-                                      MinWidth="40" />
+                <Button x:Name="ToolbarZoomInButton"
+                        AutomationProperties.AutomationId="ToolbarZoomInButton"
+                        ToolTip.Tip="Zoom in"
+                        Padding="8"
+                        MinWidth="36"
+                        MinHeight="36">
+                    <PathIcon Data="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1z" Width="16" Height="16"/>
+                </Button>
 
                 <Separator Width="1"
                           Height="24"
-                          Background="{DynamicResource GlassBorderBrush}"
+                          Background="{DynamicResource BorderSubtleBrush}"
                           Margin="12,0" />
 
                 <!-- View Toggles -->
                 <ToggleButton x:Name="ToolbarToggleThumbnailsButton"
-                             Content="📄"
                              AutomationProperties.AutomationId="ToolbarToggleThumbnailsButton"
                              ToolTip.Tip="Toggle thumbnails"
-                             Padding="12,6"
-                             MinWidth="40" />
+                             Padding="8"
+                             MinWidth="36"
+                             MinHeight="36">
+                    <PathIcon Data="M3 5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 0v4h4V5H5zm8-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4zm0 2h4v4h-4V5zM3 15a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4zm2 0v4h4v-4H5zm8-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-4zm0 2h4v4h-4v-4z" Width="16" Height="16"/>
+                </ToggleButton>
 
                 <ToggleButton x:Name="ToolbarToggleBookmarksButton"
-                             Content="🔖"
                              AutomationProperties.AutomationId="ToolbarToggleBookmarksButton"
                              ToolTip.Tip="Toggle bookmarks"
-                             Padding="12,6"
-                             MinWidth="40" />
+                             Padding="8"
+                             MinWidth="36"
+                             MinHeight="36">
+                    <PathIcon Data="M6 3a2 2 0 0 0-2 2v14a1 1 0 0 0 1.55.83L12 16.2l6.45 3.63A1 1 0 0 0 20 19V5a2 2 0 0 0-2-2H6zm0 2h12v12.13l-5.45-3.07a1 1 0 0 0-.98 0L6 17.13V5z" Width="16" Height="16"/>
+                </ToggleButton>
 
-                <Button Content="🔍"
-                                      x:Name="ToolbarSearchButton"
-                                      AutomationProperties.AutomationId="ToolbarSearchButton"
-                                      ToolTip.Tip="Search (Ctrl+F)"
-                                      Padding="12,6"
-                                      MinWidth="40" />
+                <Button x:Name="ToolbarSearchButton"
+                        AutomationProperties.AutomationId="ToolbarSearchButton"
+                        ToolTip.Tip="Search (Ctrl+F)"
+                        Padding="8"
+                        MinWidth="36"
+                        MinHeight="36">
+                    <PathIcon Data="M10 2a8 8 0 1 0 4.93 14.32l4.38 4.37a1 1 0 0 0 1.41-1.41l-4.37-4.38A8 8 0 0 0 10 2zm-6 8a6 6 0 1 1 12 0 6 6 0 0 1-12 0z" Width="16" Height="16"/>
+                </Button>
             </StackPanel>
         </Border>
 
@@ -191,9 +207,22 @@
 
             <TabControl.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Title}"
-                               FontSize="13"
-                               VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{Binding Title}"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"/>
+                        <Button Content="&#xD7;"
+                                FontSize="12"
+                                Padding="4,0"
+                                MinWidth="20"
+                                MinHeight="20"
+                                VerticalAlignment="Center"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding $parent[Window].DataContext.CloseTabCommand}"
+                                CommandParameter="{Binding}"
+                                ToolTip.Tip="Close tab" />
+                    </StackPanel>
                 </DataTemplate>
             </TabControl.ItemTemplate>
 
@@ -208,7 +237,7 @@
         <Grid Grid.Row="2"
               x:Name="EmptyStateOverlay"
               IsVisible="{Binding Tabs.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=0}"
-              Background="{DynamicResource ApplicationPageBackgroundBrush}">
+              Background="{DynamicResource BackgroundBaseBrush}">
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Spacing="16">
@@ -337,7 +366,6 @@
         <views:DiagnosticsPanel Grid.Row="0"
                                Grid.RowSpan="4"
                                x:Name="DiagnosticsPanelOverlay"
-                               DataContext="{Binding DiagnosticsPanelViewModel}"
                                AutomationProperties.AutomationId="DiagnosticsPanelOverlay" />
     </Grid>
 </Window>

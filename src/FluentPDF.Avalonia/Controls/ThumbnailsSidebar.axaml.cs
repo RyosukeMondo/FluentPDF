@@ -5,7 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using FluentPDF.Avalonia.Models;
-using FluentPDF.Avalonia.ViewModels;
+using FluentPDF.Core.ViewModels;
 using FluentPDF.Core.Models;
 using System;
 using System.Linq;

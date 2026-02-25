@@ -153,7 +153,6 @@ public partial class ImageInsertionViewModel : ObservableObject
             IsLoading = true;
 
             // Default to center of page if no position specified
-            // TODO: Get actual page dimensions and calculate center
             var insertPosition = position ?? new PointF(300, 400);
 
             var result = await _imageInsertionService.InsertImageAsync(

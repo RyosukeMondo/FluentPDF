@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using FluentPDF.Avalonia.Helpers;
 using FluentPDF.Core.ViewModels;
 using Microsoft.Extensions.Logging;
@@ -57,6 +58,13 @@ public partial class MainWindow : Window
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             DataContext = ViewModel;
 
+            // Set DiagnosticsPanel DataContext separately (not part of Core.MainViewModel)
+            var diagnosticsOverlay = this.FindControl<Views.DiagnosticsPanel>("DiagnosticsPanelOverlay");
+            if (diagnosticsOverlay != null)
+            {
+                diagnosticsOverlay.DataContext = DiagnosticsPanelViewModel;
+            }
+
             this.Loaded += OnWindowLoaded;
 
             _logger?.LogInformation("MainWindow constructor completed successfully");
@@ -71,30 +79,21 @@ public partial class MainWindow : Window
     /// <summary>
     /// Handles window loaded event - performs deferred initialization.
     /// </summary>
-    private void OnWindowLoaded(object? sender, RoutedEventArgs e)
+    private async void OnWindowLoaded(object? sender, RoutedEventArgs e)
     {
         _logger?.LogInformation("Window loaded - starting deferred initialization");
 
-        Task.Run(() =>
+        try
         {
-            try
-            {
-                Dispatcher.UIThread.Post(() => SetupMenuHandlers());
-                System.Threading.Thread.Sleep(100);
-
-                Dispatcher.UIThread.Post(() => SetupKeyboardShortcuts());
-                System.Threading.Thread.Sleep(100);
-
-                Dispatcher.UIThread.Post(() => SetupViewModelEventHandlers());
-                System.Threading.Thread.Sleep(100);
-
-                Dispatcher.UIThread.Post(() => SetupDebugConsole(), DispatcherPriority.Background);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Deferred initialization sequence failed");
-            }
-        });
+            await Dispatcher.UIThread.InvokeAsync(() => SetupMenuHandlers());
+            await Dispatcher.UIThread.InvokeAsync(() => SetupKeyboardShortcuts());
+            await Dispatcher.UIThread.InvokeAsync(() => SetupViewModelEventHandlers());
+            await Dispatcher.UIThread.InvokeAsync(() => SetupDebugConsole(), DispatcherPriority.Background);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Deferred initialization sequence failed");
+        }
     }
 
     private void SetupMenuHandlers()
@@ -112,7 +111,7 @@ public partial class MainWindow : Window
                 _logger);
 
             _menuManager.Initialize();
-            _toolbarManager = new ToolbarManager(this, ViewModel, _logger);
+            _toolbarManager = new ToolbarManager(this, ViewModel, _logger, onOpenFile: OnOpenFileClickAsync);
             _toolbarManager.Initialize();
 
             _logger?.LogTrace("Menu and toolbar handlers configured successfully");
@@ -182,10 +181,39 @@ public partial class MainWindow : Window
         return false;
     }
 
+    private void SetupTabMiddleClick()
+    {
+        var tabControl = this.FindControl<TabControl>("MainTabControl");
+        if (tabControl != null)
+        {
+            tabControl.AddHandler(global::Avalonia.Input.InputElement.PointerPressedEvent, (sender, e) =>
+            {
+                var point = e.GetCurrentPoint(tabControl);
+                if (point.Properties.IsMiddleButtonPressed)
+                {
+                    // Walk up visual tree from the hit element to find the TabItem
+                    var source = e.Source as Visual;
+                    while (source != null && source is not TabItem)
+                    {
+                        source = source.GetVisualParent() as Visual;
+                    }
+
+                    if (source is TabItem tabItem && tabItem.DataContext is TabViewModel tab)
+                    {
+                        ViewModel.CloseTabCommand.Execute(tab);
+                        e.Handled = true;
+                    }
+                }
+            }, global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        }
+    }
+
     private void SetupViewModelEventHandlers()
     {
         try
         {
+            SetupTabMiddleClick();
+
             ViewModel.Tabs.CollectionChanged += (s, evt) =>
             {
                 Dispatcher.UIThread.Post(UpdateEmptyStateVisibility, DispatcherPriority.Background);

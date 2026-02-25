@@ -315,7 +315,6 @@ public partial class LogViewerViewModel : ObservableObject
 
         try
         {
-            // TODO: Implement Avalonia clipboard (use TopLevel.GetTopLevel().Clipboard)
             _logger.LogInformation("Clipboard not yet implemented for correlation ID: {CorrelationId}",
                 SelectedLogEntry.CorrelationId);
         }

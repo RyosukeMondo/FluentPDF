@@ -84,7 +84,7 @@ public partial class ThumbnailsViewModel : ViewModelBase, IDisposable
     /// Gets or sets whether the thumbnails sidebar is visible.
     /// </summary>
     [ObservableProperty]
-    private bool _isVisible = true;
+    private bool _isVisible = false;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ThumbnailsViewModel"/> class.

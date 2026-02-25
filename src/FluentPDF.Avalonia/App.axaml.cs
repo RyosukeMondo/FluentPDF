@@ -195,13 +195,17 @@ public partial class App : Application
                 services.AddSingleton<RenderingCoordinator>();
 
                 // Register ViewModels (100% reusable from WinUI 3 and Core)
+                services.AddTransient<FluentPDF.Core.ViewModels.NavigationViewModel>();
+                services.AddTransient<FluentPDF.Core.ViewModels.ZoomViewModel>();
+                services.AddTransient<FluentPDF.Core.ViewModels.SearchPanelViewModel>();
+                services.AddTransient<FluentPDF.Core.ViewModels.ViewStateViewModel>();
                 services.AddTransient<FluentPDF.Core.ViewModels.PdfViewerViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.ConversionViewModel>();
                 services.AddTransient<FluentPDF.Core.ViewModels.BookmarksViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.FormFieldViewModel>();
                 services.AddTransient<FluentPDF.Core.ViewModels.AnnotationViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.SettingsViewModel>();
-                services.AddSingleton<FluentPDF.Core.ViewModels.ThumbnailsViewModel>();
+                services.AddTransient<FluentPDF.Core.ViewModels.ThumbnailsViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.ImageInsertionViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.WatermarkViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.DiagnosticsPanelViewModel>();
@@ -209,7 +213,13 @@ public partial class App : Application
 
                 // Register factory functions for ViewModels that require dynamic creation
                 services.AddSingleton<Func<FluentPDF.Core.ViewModels.PdfViewerViewModel>>(sp =>
-                    () => sp.GetRequiredService<FluentPDF.Core.ViewModels.PdfViewerViewModel>());
+                    () =>
+                    {
+                        var vm = sp.GetRequiredService<FluentPDF.Core.ViewModels.PdfViewerViewModel>();
+                        vm.Thumbnails = sp.GetRequiredService<FluentPDF.Core.ViewModels.ThumbnailsViewModel>();
+                        vm.Bookmarks = sp.GetRequiredService<FluentPDF.Core.ViewModels.BookmarksViewModel>();
+                        return vm;
+                    });
 
                 services.AddSingleton<Func<string, FluentPDF.Core.ViewModels.PdfViewerViewModel, FluentPDF.Core.ViewModels.TabViewModel>>(sp =>
                     (filePath, viewerViewModel) => new FluentPDF.Core.ViewModels.TabViewModel(
@@ -261,12 +271,32 @@ public partial class App : Application
         try
         {
             _logger.LogInformation("Initializing PDFium library (step {Step}/{Total})", 1, 5);
+            DiagnosticLogger.Log("Initializing PDFium...");
             if (!PdfiumInterop.Initialize())
             {
+                DiagnosticLogger.LogError("PDFium initialization FAILED");
                 _logger.LogCritical("PDFium initialization failed - application cannot continue");
                 Environment.Exit(1);
             }
+            DiagnosticLogger.Log("PDFium initialized OK");
             _logger.LogInformation("PDFium library initialized successfully");
+
+            // Handle --test-render CLI mode (headless, no UI)
+            var cliOptions = CommandLineOptions.Current;
+            DiagnosticLogger.Log($"CLI options: TestRender={cliOptions?.TestRender}, TestPdfPath={cliOptions?.TestPdfPath}");
+            if (cliOptions?.TestRender == true && !string.IsNullOrEmpty(cliOptions.TestPdfPath))
+            {
+                DiagnosticLogger.Log($"Running test-render for: {cliOptions.TestPdfPath}");
+                _logger.LogInformation("Running in --test-render mode for: {Path}", cliOptions.TestPdfPath);
+                // Run on thread pool to avoid deadlocking the UI thread
+                var exitCode = Task.Run(() => RunTestRender(cliOptions.TestPdfPath)).GetAwaiter().GetResult();
+                DiagnosticLogger.Log($"Test-render exit code: {exitCode}");
+                if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime dt)
+                {
+                    dt.Shutdown(exitCode);
+                }
+                return;
+            }
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
@@ -342,19 +372,82 @@ public partial class App : Application
 
             _logger.LogInformation("Framework initialization completed (step {Step}/{Total})", 5, 5);
 
-            // Keep thread alive briefly if API server is starting
-            if (cmdOptions?.ApiServer == true)
+#if DEBUG
+            // Auto-start API server in debug mode for GUI automation testing
+            if (cmdOptions?.ApiServer != true)
             {
-                _logger.LogDebug("Waiting for API server initialization to complete");
-                System.Threading.Thread.Sleep(3000);
-                _logger.LogDebug("API server initialization period completed");
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Task.Delay(1000); // Wait for UI to be ready
+                        _apiServer = GetService<IVerificationApiServer>();
+                        await _apiServer.StartAsync(5000, "localhost");
+                        _logger.LogInformation("Debug API server started on port 5000");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Debug API server failed to start (non-fatal)");
+                    }
+                });
             }
+#endif
+
+            // API server starts asynchronously in Task.Run above, no need to block UI thread
         }
         catch (Exception ex)
         {
             _logger?.LogCritical(ex, "Fatal error during framework initialization");
             Log.Fatal(ex, "Application initialization failed");
             Environment.Exit(1);
+        }
+    }
+
+    /// <summary>
+    /// Runs a headless test-render of a PDF file and returns an exit code.
+    /// 0 = success, 1 = load failed, 2 = render failed.
+    /// </summary>
+    private async Task<int> RunTestRender(string pdfPath)
+    {
+        try
+        {
+            var docService = GetService<IPdfDocumentService>();
+            var renderService = GetService<IPdfRenderingService>();
+
+            _logger!.LogInformation("Test-render: loading {Path}", pdfPath);
+            var loadResult = await docService.LoadDocumentAsync(pdfPath);
+            if (loadResult.IsFailed)
+            {
+                _logger.LogError("Test-render: load failed - {Error}", loadResult.Errors[0].Message);
+                Console.WriteLine($"LOAD FAILED: {loadResult.Errors[0].Message}");
+                return 1;
+            }
+
+            var doc = loadResult.Value;
+            _logger.LogInformation("Test-render: loaded {Pages} pages", doc.PageCount);
+
+            var renderResult = await renderService.RenderPageToRawAsync(doc, 1, 1.0, 96.0);
+            if (!renderResult.IsSuccess)
+            {
+                _logger.LogError("Test-render: render failed - {Error}", renderResult.Errors.FirstOrDefault()?.Message);
+                Console.WriteLine($"RENDER FAILED: {renderResult.Errors.FirstOrDefault()?.Message}");
+                docService.CloseDocument(doc);
+                return 2;
+            }
+
+            var raw = renderResult.Value;
+            _logger.LogInformation("Test-render: success ({Width}x{Height}, {Bytes} bytes)",
+                raw.Width, raw.Height, raw.Pixels.Length);
+            Console.WriteLine($"TEST-RENDER OK: page 1 rendered at {raw.Width}x{raw.Height}");
+
+            docService.CloseDocument(doc);
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            _logger!.LogError(ex, "Test-render: exception");
+            Console.WriteLine($"TEST-RENDER EXCEPTION: {ex.Message}");
+            return 2;
         }
     }
 

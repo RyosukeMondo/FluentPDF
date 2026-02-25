@@ -10,38 +10,6 @@ using Microsoft.Extensions.Logging;
 namespace FluentPDF.Core.ViewModels;
 
 /// <summary>
-/// Defines the page view modes for the PDF viewer.
-/// </summary>
-public enum PageViewMode
-{
-    /// <summary>Single page view - one page at a time with navigation.</summary>
-    SinglePage,
-
-    /// <summary>Continuous scroll - all pages in a vertical scrolling list.</summary>
-    ContinuousScroll,
-
-    /// <summary>Two-page view - displays two pages side-by-side like a book.</summary>
-    TwoPage
-}
-
-/// <summary>
-/// Message sent when navigating to a specific page via thumbnail click.
-/// </summary>
-/// <param name="PageNumber">The 1-based page number to navigate to.</param>
-public record NavigateToPageMessage(int PageNumber);
-
-/// <summary>
-/// Message sent to raise an accessibility notification for screen readers.
-/// </summary>
-/// <param name="Message">The message to announce to screen readers.</param>
-public record AccessibilityNotificationMessage(string Message);
-
-/// <summary>
-/// Message sent when pages have been modified (rotated, deleted, reordered, or inserted).
-/// </summary>
-public record PageModifiedMessage();
-
-/// <summary>
 /// Core ViewModel for the PDF viewer page.
 /// UI-framework agnostic implementation that can be used with WinUI 3, Avalonia, or other frameworks.
 /// Uses abstractions for all UI-specific operations.
@@ -155,6 +123,11 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
                     }
                 });
         }
+
+        // Create facade objects for sub-ViewModel access
+        Navigation = new NavigationFacade(this);
+        Zoom = new ZoomFacade(this);
+        ViewState = new ViewStateFacade(this);
 
         _logger.LogInformation("PdfViewerViewModel initialized");
     }
@@ -356,6 +329,31 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     /// This is set by the UI framework to enable annotation functionality.
     /// </summary>
     public AnnotationViewModel? AnnotationViewModel { get; set; }
+
+    /// <summary>
+    /// Navigation sub-ViewModel facade. Delegates to this ViewModel's navigation state.
+    /// </summary>
+    public NavigationFacade Navigation { get; }
+
+    /// <summary>
+    /// Zoom sub-ViewModel facade. Delegates to this ViewModel's zoom state.
+    /// </summary>
+    public ZoomFacade Zoom { get; }
+
+    /// <summary>
+    /// ViewState sub-ViewModel facade. Delegates to this ViewModel's view state.
+    /// </summary>
+    public ViewStateFacade ViewState { get; }
+
+    /// <summary>
+    /// Thumbnails ViewModel. Set by UI framework.
+    /// </summary>
+    public ThumbnailsViewModel? Thumbnails { get; set; }
+
+    /// <summary>
+    /// Bookmarks ViewModel. Set by UI framework.
+    /// </summary>
+    public BookmarksViewModel? Bookmarks { get; set; }
 
     #endregion
 
@@ -714,6 +712,18 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 
             ApplyDefaultSettings();
             await RenderCurrentPageAsync();
+
+            // Load thumbnails and bookmarks
+            if (Thumbnails != null && _currentDocument != null)
+            {
+                try { await Thumbnails.LoadThumbnailsAsync(_currentDocument); }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to load thumbnails"); }
+            }
+            if (Bookmarks != null && _currentDocument != null)
+            {
+                try { await Bookmarks.LoadBookmarksCommand.ExecuteAsync(_currentDocument); }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to load bookmarks"); }
+            }
 
             StatusMessage = "Document loaded successfully";
         }
@@ -1187,4 +1197,54 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     }
 
     #endregion
+}
+
+/// <summary>
+/// Facade providing navigation access to PdfViewerViewModel properties.
+/// </summary>
+public class NavigationFacade
+{
+    private readonly PdfViewerViewModel _vm;
+    internal NavigationFacade(PdfViewerViewModel vm) => _vm = vm;
+
+    public int CurrentPageNumber => _vm.CurrentPageNumber;
+    public int TotalPages => _vm.TotalPages;
+
+    public IAsyncRelayCommand GoToNextPageCommand => _vm.GoToNextPageCommand;
+    public IAsyncRelayCommand GoToPreviousPageCommand => _vm.GoToPreviousPageCommand;
+    public IAsyncRelayCommand<int> GoToPageCommand => _vm.GoToPageCommand;
+}
+
+/// <summary>
+/// Facade providing zoom access to PdfViewerViewModel properties.
+/// </summary>
+public class ZoomFacade
+{
+    private readonly PdfViewerViewModel _vm;
+    internal ZoomFacade(PdfViewerViewModel vm) => _vm = vm;
+
+    public double ZoomLevel => _vm.ZoomLevel;
+
+    public IAsyncRelayCommand ZoomInCommand => _vm.ZoomInCommand;
+    public IAsyncRelayCommand ZoomOutCommand => _vm.ZoomOutCommand;
+    public IAsyncRelayCommand<double> SetZoomCommand => _vm.SetZoomCommand;
+    public IAsyncRelayCommand FitWidthCommand => _vm.FitWidthCommand;
+    public IAsyncRelayCommand FitPageCommand => _vm.FitPageCommand;
+}
+
+/// <summary>
+/// Facade providing view state access to PdfViewerViewModel properties.
+/// </summary>
+public class ViewStateFacade
+{
+    private readonly PdfViewerViewModel _vm;
+    internal ViewStateFacade(PdfViewerViewModel vm) => _vm = vm;
+
+    public bool IsSidebarVisible => _vm.IsSidebarVisible;
+    public bool IsBookmarksPanelVisible => _vm.IsBookmarksPanelVisible;
+    public bool IsSearchPanelVisible => _vm.IsSearchPanelVisible;
+
+    public IRelayCommand ToggleThumbnailsCommand => _vm.ToggleThumbnailsCommand;
+    public IRelayCommand ToggleBookmarksCommand => _vm.ToggleBookmarksCommand;
+    public IRelayCommand ShowSearchCommand => _vm.ShowSearchCommand;
 }

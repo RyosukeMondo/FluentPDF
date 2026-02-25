@@ -30,7 +30,15 @@ internal sealed class Program
             DiagnosticLogger.Log("AppBuilder created successfully");
 
             DiagnosticLogger.Log("Starting classic desktop lifetime...");
-            appBuilder.StartWithClassicDesktopLifetime(args);
+            try
+            {
+                appBuilder.StartWithClassicDesktopLifetime(args);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Dispatcher shut down"))
+            {
+                // Expected when using --test-render or other headless CLI modes
+                DiagnosticLogger.Log("Dispatcher shut down (expected for CLI mode)");
+            }
 
             DiagnosticLogger.Log("Classic desktop lifetime ended normally");
         }

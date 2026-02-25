@@ -1,15 +1,18 @@
-# FluentPDF Launcher
-# Double-click this file to launch FluentPDF
+# FluentPDF Avalonia Launcher
+# Builds and launches FluentPDF with XAML warnings allowed
 
-$exePath = Join-Path $PSScriptRoot "src\FluentPDF.Avalonia\bin\Debug\net8.0\FluentPDF.Avalonia.exe"
+Write-Host "Building FluentPDF.Avalonia..." -ForegroundColor Cyan
+Push-Location "src/FluentPDF.Avalonia"
 
-if (Test-Path $exePath) {
-    Write-Host "Launching FluentPDF..." -ForegroundColor Cyan
-    Start-Process $exePath
-} else {
-    Write-Host "Error: FluentPDF.Avalonia.exe not found!" -ForegroundColor Red
-    Write-Host "Path: $exePath" -ForegroundColor Yellow
-    Write-Host "`nPlease build the application first:" -ForegroundColor Yellow
-    Write-Host "  dotnet build src\FluentPDF.Avalonia" -ForegroundColor White
-    pause
+$buildResult = dotnet build -p:TreatWarningsAsErrors=false 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Build failed!" -ForegroundColor Red
+    Write-Host $buildResult
+    Pop-Location
+    exit 1
 }
+
+Write-Host "Build succeeded. Launching app..." -ForegroundColor Green
+dotnet run --no-build -p:TreatWarningsAsErrors=false
+
+Pop-Location

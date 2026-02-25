@@ -77,7 +77,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
             return;
         }
 
-        var builder = WebApplication.CreateSlimBuilder();
+        var builder = WebApplication.CreateBuilder();
 
         // Configure Kestrel
         builder.WebHost.ConfigureKestrel(options =>
@@ -165,6 +165,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         DocumentEndpoints.Map(_webApp);
         RenderEndpoints.Map(_webApp);
         VerifyEndpoints.Map(_webApp);
+        GuiEndpoints.Map(_webApp);
 
         _baseUrl = $"http://{bindAddress}:{port}";
 
