@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -18,6 +19,7 @@ public sealed class ToolbarManager
     private readonly MainViewModel _viewModel;
     private readonly Func<Task>? _onOpenFile;
     private readonly ILogger? _logger;
+    private PdfViewerViewModel? _subscribedViewer;
 
     public ToolbarManager(Window owner, MainViewModel viewModel, ILogger? logger = null, Func<Task>? onOpenFile = null)
     {
@@ -79,6 +81,90 @@ public sealed class ToolbarManager
         var zoomComboBox = _owner.FindControl<ComboBox>("ToolbarZoomComboBox");
         if (zoomComboBox != null)
             zoomComboBox.SelectionChanged += OnZoomSelectionChanged;
+
+        // Subscribe to active tab changes to track zoom level
+        _viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.ActiveTab))
+                SubscribeToActiveViewerZoom();
+        };
+
+        // Initial subscription
+        SubscribeToActiveViewerZoom();
+
+        // Show default 100%
+        UpdateZoomDisplay(1.0);
+    }
+
+    private void SubscribeToActiveViewerZoom()
+    {
+        // Unsubscribe from previous viewer
+        if (_subscribedViewer != null)
+        {
+            _subscribedViewer.Zoom.PropertyChanged -= OnZoomLevelChanged;
+            _subscribedViewer = null;
+        }
+
+        var viewer = _viewModel.ActiveTab?.ViewerViewModel;
+        if (viewer != null)
+        {
+            _subscribedViewer = viewer;
+            viewer.Zoom.PropertyChanged += OnZoomLevelChanged;
+            UpdateZoomDisplay(viewer.ZoomLevel);
+        }
+        else
+        {
+            UpdateZoomDisplay(1.0);
+        }
+    }
+
+    private void OnZoomLevelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ZoomViewModel.ZoomLevel))
+        {
+            var zoom = _subscribedViewer?.ZoomLevel ?? 1.0;
+            UpdateZoomDisplay(zoom);
+        }
+    }
+
+    /// <summary>
+    /// Updates the zoom ComboBox display to reflect the current zoom level.
+    /// </summary>
+    public void UpdateZoomDisplay(double zoomLevel)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            var zoomComboBox = _owner.FindControl<ComboBox>("ToolbarZoomComboBox");
+            if (zoomComboBox == null) return;
+
+            var percentText = $"{(int)(zoomLevel * 100)}%";
+
+            // Try to match an existing item
+            for (int i = 0; i < zoomComboBox.ItemCount; i++)
+            {
+                if (zoomComboBox.Items[i] is ComboBoxItem item && item.Content is string text && text == percentText)
+                {
+                    zoomComboBox.SelectedIndex = i;
+                    return;
+                }
+            }
+
+            // No exact match - deselect and show via placeholder-like approach
+            // Since ComboBox isn't editable, select the closest match
+            var presets = new[] { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0 };
+            int closestIndex = 2; // default 100%
+            double minDiff = double.MaxValue;
+            for (int i = 0; i < presets.Length; i++)
+            {
+                var diff = Math.Abs(presets[i] - zoomLevel);
+                if (diff < minDiff)
+                {
+                    minDiff = diff;
+                    closestIndex = i;
+                }
+            }
+            zoomComboBox.SelectedIndex = closestIndex;
+        }, DispatcherPriority.Background);
     }
 
     private void SetupViewToggles()
@@ -199,8 +285,10 @@ public sealed class ToolbarManager
             button.Click += (s, e) =>
             {
                 var viewer = _viewModel.ActiveTab?.ViewerViewModel;
-                if (viewer?.SetDrawingToolCommand is { } cmd && cmd.CanExecute(toolName))
+                if (viewer == null) return;
+                if (viewer.SetDrawingToolCommand is { } cmd && cmd.CanExecute(toolName))
                     cmd.Execute(toolName);
+                viewer.IsDrawingToolbarVisible = true;
             };
         }
     }

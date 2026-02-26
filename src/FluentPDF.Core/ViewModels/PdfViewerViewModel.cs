@@ -241,6 +241,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     private bool _hasPageModifications;
 
     [ObservableProperty]
+    private bool _isDrawingToolbarVisible;
+
+    [ObservableProperty]
     private DrawingTool _activeDrawingTool = DrawingTool.None;
 
     [ObservableProperty]
@@ -308,12 +311,28 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     {
         if (Enum.TryParse<DrawingTool>(toolName, ignoreCase: true, out var tool))
         {
-            ActiveDrawingTool = ActiveDrawingTool == tool ? DrawingTool.None : tool;
+            if (tool == DrawingTool.None)
+            {
+                ActiveDrawingTool = DrawingTool.None;
+            }
+            else
+            {
+                ActiveDrawingTool = ActiveDrawingTool == tool ? DrawingTool.None : tool;
+                if (ActiveDrawingTool != DrawingTool.None)
+                    IsDrawingToolbarVisible = true;
+            }
         }
         else
         {
             ActiveDrawingTool = DrawingTool.None;
         }
+    }
+
+    [RelayCommand]
+    private void CloseDrawingToolbar()
+    {
+        ActiveDrawingTool = DrawingTool.None;
+        IsDrawingToolbarVisible = false;
     }
 
     #endregion

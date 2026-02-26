@@ -25,56 +25,131 @@
                               DataContext="{Binding Search}"
                               IsVisible="{Binding IsSearchPanelVisible}"/>
 
-        <!-- Drawing Toolbar (visible when a drawing tool is active) -->
+        <!-- Drawing Toolbar (PowerPoint-like, stays open until closed) -->
         <Border Grid.Row="1"
                 Background="{DynamicResource AcrylicTintToolbarBrush}"
-                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderBrush="{DynamicResource GlassBorderBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="6,4"
-                IsVisible="{Binding IsDrawingToolActive}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="Drawing:"
-                           VerticalAlignment="Center"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           Margin="4,0"/>
-                <TextBlock x:Name="ActiveToolLabel"
-                           Text="{Binding ActiveDrawingTool}"
-                           VerticalAlignment="Center"
-                           FontSize="12"
-                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                IsVisible="{Binding IsDrawingToolbarVisible}">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+
+                <!-- Tool Selection ToggleButtons -->
+                <ToggleButton x:Name="DrawToolPan"
+                              ToolTip.Tip="Pan (deselect tool)"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M10 2a2 2 0 0 1 2 2v6h6a2 2 0 1 1 0 4h-6v6a2 2 0 1 1-4 0v-6H2a2 2 0 1 1 0-4h6V4a2 2 0 0 1 2-2z" Width="14" Height="14"/>
+                </ToggleButton>
+                <ToggleButton x:Name="DrawToolRectangle"
+                              ToolTip.Tip="Rectangle"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M3 3h18v18H3V3zm2 2v14h14V5H5z" Width="14" Height="14"/>
+                </ToggleButton>
+                <ToggleButton x:Name="DrawToolCircle"
+                              ToolTip.Tip="Circle"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" Width="14" Height="14"/>
+                </ToggleButton>
+                <ToggleButton x:Name="DrawToolLine"
+                              ToolTip.Tip="Line"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M3.29 20.71a1 1 0 0 0 1.42 0l16-16a1 1 0 1 0-1.42-1.42l-16 16a1 1 0 0 0 0 1.42z" Width="14" Height="14"/>
+                </ToggleButton>
+                <ToggleButton x:Name="DrawToolFreehand"
+                              ToolTip.Tip="Freehand"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Width="14" Height="14"/>
+                </ToggleButton>
+                <ToggleButton x:Name="DrawToolText"
+                              ToolTip.Tip="Text"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M5 4v3h5.5v12h3V7H19V4H5z" Width="14" Height="14"/>
+                </ToggleButton>
+
                 <Separator Width="1" Height="20"
                            Background="{DynamicResource BorderSubtleBrush}"
                            Margin="4,0"/>
-                <TextBlock Text="Stroke:"
-                           VerticalAlignment="Center"
-                           FontSize="11"/>
-                <TextBox x:Name="StrokeColorBox"
-                         Text="{Binding DrawingStrokeColor}"
-                         Width="70"
-                         FontSize="11"
-                         VerticalAlignment="Center"/>
-                <TextBlock Text="Fill:"
-                           VerticalAlignment="Center"
-                           FontSize="11"/>
-                <TextBox x:Name="FillColorBox"
-                         Text="{Binding DrawingFillColor}"
-                         Width="70"
-                         FontSize="11"
-                         VerticalAlignment="Center"/>
-                <TextBlock Text="Width:"
-                           VerticalAlignment="Center"
-                           FontSize="11"/>
-                <TextBox x:Name="StrokeWidthBox"
-                         Text="{Binding DrawingStrokeWidth}"
-                         Width="40"
-                         FontSize="11"
-                         VerticalAlignment="Center"/>
-                <Button Content="Cancel"
-                        Command="{Binding SetDrawingToolCommand}"
-                        CommandParameter="None"
-                        Padding="8,4"
-                        FontSize="11"/>
+
+                <!-- Stroke Color -->
+                <TextBlock Text="Stroke" VerticalAlignment="Center" FontSize="11" Margin="2,0"/>
+                <Button x:Name="StrokeColorButton" Padding="2" VerticalAlignment="Center" ToolTip.Tip="Stroke color">
+                    <Border Width="20" Height="20" CornerRadius="2"
+                            Background="{Binding DrawingStrokeColor}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1"/>
+                </Button>
+                <Popup x:Name="StrokeColorPopup" PlacementTarget="{Binding #StrokeColorButton}" Placement="Bottom" IsLightDismissEnabled="True">
+                    <Border Background="{DynamicResource AcrylicTintToolbarBrush}" BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                        <WrapPanel Width="130">
+                            <Button Classes="ColorSwatch" Tag="#FF0000" Background="#FF0000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#00FF00" Background="#00FF00" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#0000FF" Background="#0000FF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#FFFF00" Background="#FFFF00" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#FF00FF" Background="#FF00FF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#00FFFF" Background="#00FFFF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#000000" Background="#000000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#FFFFFF" Background="#FFFFFF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#FF8000" Background="#FF8000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#808080" Background="#808080" Width="20" Height="20" Margin="2" Padding="0"/>
+                        </WrapPanel>
+                    </Border>
+                </Popup>
+
+                <!-- Fill Color -->
+                <TextBlock Text="Fill" VerticalAlignment="Center" FontSize="11" Margin="2,0"/>
+                <Button x:Name="FillColorButton" Padding="2" VerticalAlignment="Center" ToolTip.Tip="Fill color">
+                    <Border Width="20" Height="20" CornerRadius="2"
+                            Background="{Binding DrawingFillColor}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1"/>
+                </Button>
+                <Popup x:Name="FillColorPopup" PlacementTarget="{Binding #FillColorButton}" Placement="Bottom" IsLightDismissEnabled="True">
+                    <Border Background="{DynamicResource AcrylicTintToolbarBrush}" BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                        <WrapPanel Width="130">
+                            <Button Classes="FillColorSwatch" Tag="#FF0000" Background="#FF0000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#00FF00" Background="#00FF00" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#0000FF" Background="#0000FF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#FFFF00" Background="#FFFF00" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#FF00FF" Background="#FF00FF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#00FFFF" Background="#00FFFF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#000000" Background="#000000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#FFFFFF" Background="#FFFFFF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#FF8000" Background="#FF8000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#808080" Background="#808080" Width="20" Height="20" Margin="2" Padding="0"/>
+                        </WrapPanel>
+                    </Border>
+                </Popup>
+
+                <Separator Width="1" Height="20"
+                           Background="{DynamicResource BorderSubtleBrush}"
+                           Margin="4,0"/>
+
+                <!-- Stroke Width -->
+                <TextBlock Text="Width" VerticalAlignment="Center" FontSize="11" Margin="2,0"/>
+                <ComboBox x:Name="StrokeWidthCombo" Width="60" VerticalAlignment="Center" FontSize="11" SelectedIndex="1">
+                    <ComboBoxItem Content="1 pt" Tag="1"/>
+                    <ComboBoxItem Content="2 pt" Tag="2"/>
+                    <ComboBoxItem Content="3 pt" Tag="3"/>
+                    <ComboBoxItem Content="5 pt" Tag="5"/>
+                    <ComboBoxItem Content="8 pt" Tag="8"/>
+                </ComboBox>
+
+                <Separator Width="1" Height="20"
+                           Background="{DynamicResource BorderSubtleBrush}"
+                           Margin="4,0"/>
+
+                <!-- Close button -->
+                <Button x:Name="DrawingToolbarCloseButton"
+                        Content="&#xD7;"
+                        ToolTip.Tip="Close drawing toolbar (Esc)"
+                        Command="{Binding CloseDrawingToolbarCommand}"
+                        Padding="6,4"
+                        FontSize="14"
+                        FontWeight="Bold"/>
             </StackPanel>
         </Border>
 
@@ -121,6 +196,13 @@
                                            StrokeThickness="1"
                                            IsVisible="False"/>
                             </Canvas>
+
+                            <!-- Select All Text Highlight Overlay -->
+                            <Rectangle Fill="#200078D4"
+                                       HorizontalAlignment="Stretch"
+                                       VerticalAlignment="Stretch"
+                                       IsHitTestVisible="False"
+                                       IsVisible="{Binding HasSelectedText}"/>
 
                             <!-- Drawing Canvas Overlay -->
                             <Canvas x:Name="DrawingCanvas"

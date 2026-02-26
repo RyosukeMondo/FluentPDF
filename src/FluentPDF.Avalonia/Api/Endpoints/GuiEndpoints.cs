@@ -34,6 +34,10 @@ public static class GuiEndpoints
         MapScreenshotEndpoint(group);
         MapRefreshEndpoint(group);
         MapAnnotateEndpoint(group);
+        MapPageOpEndpoint(group);
+        MapDrawEndpoint(group);
+        MapSelectTextEndpoint(group);
+        MapWatermarkEndpoint(group);
     }
 
     private static MainWindow? GetMainWindow()
@@ -145,7 +149,15 @@ public static class GuiEndpoints
                         hasDocument = activeViewer.CurrentDocument != null,
                         sidebarVisible = activeViewer.ViewState.IsSidebarVisible,
                         bookmarksVisible = activeViewer.ViewState.IsBookmarksPanelVisible,
-                        searchVisible = activeViewer.ViewState.IsSearchPanelVisible
+                        searchVisible = activeViewer.ViewState.IsSearchPanelVisible,
+                        drawingTool = activeViewer.ActiveDrawingTool.ToString(),
+                        drawingStrokeColor = activeViewer.DrawingStrokeColor,
+                        drawingFillColor = activeViewer.DrawingFillColor,
+                        drawingStrokeWidth = activeViewer.DrawingStrokeWidth,
+                        pageOpCallbackSet = activeViewer.PageOperationCallback != null,
+                        renderCallbackSet = activeViewer.RenderPageCallback != null,
+                        hasSelectedText = activeViewer.HasSelectedText,
+                        selectedTextLength = activeViewer.SelectedText?.Length ?? 0
                     } : null
                 };
             });
@@ -481,6 +493,238 @@ public static class GuiEndpoints
         catch (Exception ex) { tcs.TrySetResult(new { success = false, error = ex.ToString() }); }
     }
 
+    private static void MapPageOpEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/page-op", async (HttpContext ctx) =>
+        {
+            try
+            {
+                var body = await ctx.Request.ReadFromJsonAsync<PageOpRequest>();
+                if (body?.Action == null)
+                    return Results.BadRequest(new { error = "action is required (rotate_cw|rotate_ccw|delete|insert_blank)" });
+
+                var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _ = PageOpOnUiThread(body.Action, tcs);
+                });
+
+                var result = await tcs.Task;
+                return Results.Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { success = false, error = ex.ToString() });
+            }
+        })
+        .WithName("PageOp")
+        .WithSummary("Execute page operation")
+        .WithDescription("Rotate, delete, or insert pages via ViewModel commands.");
+    }
+
+    private static async Task PageOpOnUiThread(string action, TaskCompletionSource<object> tcs)
+    {
+        try
+        {
+            var viewer = GetActiveViewer();
+            if (viewer == null) { tcs.TrySetResult(new { success = false, error = "No active document" }); return; }
+
+            switch (action.ToLowerInvariant())
+            {
+                case "rotate_cw":
+                    await viewer.RotatePageClockwiseCommand.ExecuteAsync(null);
+                    break;
+                case "rotate_ccw":
+                    await viewer.RotatePageCounterClockwiseCommand.ExecuteAsync(null);
+                    break;
+                case "delete":
+                    await viewer.DeleteCurrentPageCommand.ExecuteAsync(null);
+                    break;
+                case "insert_blank":
+                    await viewer.InsertBlankPageCommand.ExecuteAsync(null);
+                    break;
+                default:
+                    tcs.TrySetResult(new { success = false, error = $"Unknown action: {action}" });
+                    return;
+            }
+
+            await Task.Delay(300);
+            tcs.TrySetResult(new
+            {
+                success = true,
+                currentPage = viewer.CurrentPageNumber,
+                totalPages = viewer.TotalPages,
+                action
+            });
+        }
+        catch (Exception ex) { tcs.TrySetResult(new { success = false, error = ex.ToString() }); }
+    }
+
+    private static void MapDrawEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/draw", async (HttpContext ctx) =>
+        {
+            try
+            {
+                var body = await ctx.Request.ReadFromJsonAsync<DrawRequest>();
+                if (body?.Tool == null)
+                    return Results.BadRequest(new { error = "tool is required (Rectangle|Circle|Line|Freehand|Text|None)" });
+
+                var result = await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    var viewer = GetActiveViewer();
+                    if (viewer == null)
+                        return (object)new { success = false, error = "No active document" };
+
+                    if (!Enum.TryParse<DrawingTool>(body.Tool, ignoreCase: true, out var tool))
+                        return (object)new { success = false, error = $"Unknown tool: {body.Tool}" };
+
+                    viewer.ActiveDrawingTool = tool;
+                    if (tool != DrawingTool.None)
+                        viewer.IsDrawingToolbarVisible = true;
+
+                    if (body.StrokeColor != null)
+                        viewer.DrawingStrokeColor = body.StrokeColor;
+                    if (body.FillColor != null)
+                        viewer.DrawingFillColor = body.FillColor;
+                    if (body.StrokeWidth.HasValue)
+                        viewer.DrawingStrokeWidth = body.StrokeWidth.Value;
+
+                    return (object)new
+                    {
+                        success = true,
+                        activeTool = viewer.ActiveDrawingTool.ToString(),
+                        strokeColor = viewer.DrawingStrokeColor,
+                        fillColor = viewer.DrawingFillColor,
+                        strokeWidth = viewer.DrawingStrokeWidth
+                    };
+                });
+
+                return Results.Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { success = false, error = ex.ToString() });
+            }
+        })
+        .WithName("Draw")
+        .WithSummary("Set drawing tool and properties")
+        .WithDescription("Sets the active drawing tool, stroke color, fill color, and stroke width.");
+    }
+
+    private static void MapSelectTextEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/select-text", async (HttpContext ctx) =>
+        {
+            try
+            {
+                var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _ = SelectTextOnUiThread(tcs);
+                });
+
+                var result = await tcs.Task;
+                return Results.Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { success = false, error = ex.ToString() });
+            }
+        })
+        .WithName("SelectText")
+        .WithSummary("Select all text on current page")
+        .WithDescription("Selects all text on the current page and returns the selected text content.");
+    }
+
+    private static async Task SelectTextOnUiThread(TaskCompletionSource<object> tcs)
+    {
+        try
+        {
+            var viewer = GetActiveViewer();
+            if (viewer == null) { tcs.TrySetResult(new { success = false, error = "No active document" }); return; }
+
+            await viewer.SelectAllTextCommand.ExecuteAsync(null);
+
+            tcs.TrySetResult(new
+            {
+                success = true,
+                hasSelectedText = viewer.HasSelectedText,
+                selectedText = viewer.SelectedText ?? string.Empty,
+                charCount = viewer.SelectedText?.Length ?? 0
+            });
+        }
+        catch (Exception ex) { tcs.TrySetResult(new { success = false, error = ex.ToString() }); }
+    }
+
+    private static void MapWatermarkEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/watermark", async (HttpContext ctx, IWatermarkService watermarkService) =>
+        {
+            try
+            {
+                var body = await ctx.Request.ReadFromJsonAsync<WatermarkRequest>();
+                if (string.IsNullOrWhiteSpace(body?.Text))
+                    return Results.BadRequest(new { error = "text is required" });
+
+                var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _ = WatermarkOnUiThread(body, watermarkService, tcs);
+                });
+
+                var result = await tcs.Task;
+                return Results.Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { success = false, error = ex.ToString() });
+            }
+        })
+        .WithName("WatermarkGui")
+        .WithSummary("Apply text watermark")
+        .WithDescription("Applies a text watermark to the active document.");
+    }
+
+    private static async Task WatermarkOnUiThread(
+        WatermarkRequest body,
+        IWatermarkService watermarkService,
+        TaskCompletionSource<object> tcs)
+    {
+        try
+        {
+            var viewer = GetActiveViewer();
+            if (viewer == null) { tcs.TrySetResult(new { success = false, error = "No active document" }); return; }
+
+            var document = viewer.CurrentDocument;
+            if (document == null) { tcs.TrySetResult(new { success = false, error = "No document loaded" }); return; }
+
+            var config = new TextWatermarkConfig
+            {
+                Text = body.Text!,
+                Opacity = body.Opacity ?? 0.3f,
+                FontSize = body.FontSize ?? 48,
+                RotationDegrees = body.Rotation ?? -45f
+            };
+
+            var result = await watermarkService.ApplyTextWatermarkAsync(
+                document, config, WatermarkPageRange.All);
+
+            if (!result.IsSuccess)
+            {
+                tcs.TrySetResult(new { success = false, error = result.Errors.FirstOrDefault()?.Message ?? "Failed" });
+                return;
+            }
+
+            // Re-render to show the watermark
+            await viewer.GoToPageCommand.ExecuteAsync(viewer.CurrentPageNumber);
+            await Task.Delay(500);
+
+            tcs.TrySetResult(new { success = true, text = body.Text });
+        }
+        catch (Exception ex) { tcs.TrySetResult(new { success = false, error = ex.ToString() }); }
+    }
+
     private record OpenFileRequest(string? FilePath);
     private record NavigateRequest(int? Page, string? Action);
     private record ZoomRequest(double? Level, string? Action);
@@ -489,4 +733,7 @@ public static class GuiEndpoints
         string? Type, int? PageNumber,
         float? X, float? Y, float? Width, float? Height,
         string? Color, string? Contents, float? Opacity);
+    private record PageOpRequest(string? Action);
+    private record DrawRequest(string? Tool, string? StrokeColor, string? FillColor, float? StrokeWidth);
+    private record WatermarkRequest(string? Text, float? Opacity, int? FontSize, float? Rotation);
 }

@@ -170,7 +170,7 @@ public static class DialogHelper
     /// </summary>
     public static async Task<WatermarkDialogResult?> ShowWatermarkDialogAsync(Window owner)
     {
-        var dialog = CreateDialog("Add Text Watermark", 420, 380, owner);
+        var dialog = CreateDialog("Add Text Watermark", 420, 480, owner);
         WatermarkDialogResult? result = null;
 
         var panel = CreateDialogPanel();
@@ -353,22 +353,28 @@ public static class DialogHelper
 
     private static Window CreateDialog(string title, double width, double height, Window owner)
     {
-        return new Window
+        var window = new Window
         {
             Width = width,
-            Height = height,
+            MinHeight = height,
+            SizeToContent = SizeToContent.Height,
+            MaxHeight = 700,
             Title = title,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false
+            CanResize = false,
+            Background = new SolidColorBrush(Color.FromArgb(230, 32, 32, 32)),
+            TransparencyLevelHint = new[] { WindowTransparencyLevel.AcrylicBlur, WindowTransparencyLevel.Blur, WindowTransparencyLevel.None },
+            CornerRadius = new CornerRadius(8)
         };
+        return window;
     }
 
     private static StackPanel CreateDialogPanel()
     {
         return new StackPanel
         {
-            Margin = new Thickness(20),
-            Spacing = 16
+            Margin = new Thickness(24),
+            Spacing = 12
         };
     }
 }

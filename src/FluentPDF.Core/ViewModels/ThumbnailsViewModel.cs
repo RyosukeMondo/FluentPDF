@@ -65,6 +65,13 @@ public partial class ThumbnailsViewModel : ViewModelBase, IDisposable
     public Func<PdfDocument, int, Task<object?>>? RenderThumbnailCallback { get; set; }
 
     /// <summary>
+    /// Callback for page operations (rotate, delete) using PDFium directly.
+    /// Signature: (PdfDocument doc, int pageIndex, string operation) => Task&lt;bool&gt;
+    /// Operations: "rotate_cw", "rotate_ccw", "delete"
+    /// </summary>
+    public Func<PdfDocument, int, string, Task<bool>>? PageOperationCallback { get; set; }
+
+    /// <summary>
     /// Gets the collection of thumbnail items.
     /// </summary>
     public ObservableCollection<ThumbnailItem> Thumbnails { get; }
@@ -282,17 +289,33 @@ public partial class ThumbnailsViewModel : ViewModelBase, IDisposable
     [RelayCommand(CanExecute = nameof(HasSelectedThumbnails))]
     private async Task RotateRightAsync()
     {
-        if (_document == null || _pageOperationsService == null) return;
+        if (_document == null) return;
 
         var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
         _logger.LogInformation("Rotating {Count} pages right 90 degrees", selectedIndices.Length);
 
-        var result = await _pageOperationsService.RotatePagesAsync(_document, selectedIndices, RotationAngle.Rotate90);
-
-        if (result.IsSuccess)
+        if (PageOperationCallback != null)
         {
-            await RefreshThumbnailsAsync(selectedIndices);
-            NotifyPageModification();
+            var allSuccess = true;
+            foreach (var idx in selectedIndices)
+            {
+                if (!await PageOperationCallback(_document, idx, "rotate_cw"))
+                    allSuccess = false;
+            }
+            if (allSuccess)
+            {
+                await RefreshThumbnailsAsync(selectedIndices);
+                NotifyPageModification();
+            }
+        }
+        else if (_pageOperationsService != null)
+        {
+            var result = await _pageOperationsService.RotatePagesAsync(_document, selectedIndices, RotationAngle.Rotate90);
+            if (result.IsSuccess)
+            {
+                await RefreshThumbnailsAsync(selectedIndices);
+                NotifyPageModification();
+            }
         }
     }
 
@@ -302,17 +325,33 @@ public partial class ThumbnailsViewModel : ViewModelBase, IDisposable
     [RelayCommand(CanExecute = nameof(HasSelectedThumbnails))]
     private async Task RotateLeftAsync()
     {
-        if (_document == null || _pageOperationsService == null) return;
+        if (_document == null) return;
 
         var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
         _logger.LogInformation("Rotating {Count} pages left 90 degrees", selectedIndices.Length);
 
-        var result = await _pageOperationsService.RotatePagesAsync(_document, selectedIndices, RotationAngle.Rotate270);
-
-        if (result.IsSuccess)
+        if (PageOperationCallback != null)
         {
-            await RefreshThumbnailsAsync(selectedIndices);
-            NotifyPageModification();
+            var allSuccess = true;
+            foreach (var idx in selectedIndices)
+            {
+                if (!await PageOperationCallback(_document, idx, "rotate_ccw"))
+                    allSuccess = false;
+            }
+            if (allSuccess)
+            {
+                await RefreshThumbnailsAsync(selectedIndices);
+                NotifyPageModification();
+            }
+        }
+        else if (_pageOperationsService != null)
+        {
+            var result = await _pageOperationsService.RotatePagesAsync(_document, selectedIndices, RotationAngle.Rotate270);
+            if (result.IsSuccess)
+            {
+                await RefreshThumbnailsAsync(selectedIndices);
+                NotifyPageModification();
+            }
         }
     }
 
@@ -322,17 +361,34 @@ public partial class ThumbnailsViewModel : ViewModelBase, IDisposable
     [RelayCommand(CanExecute = nameof(HasSelectedThumbnails))]
     private async Task DeletePagesAsync()
     {
-        if (_document == null || _pageOperationsService == null) return;
+        if (_document == null) return;
 
-        var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).ToArray();
+        var selectedIndices = SelectedThumbnails.Select(t => t.PageNumber - 1).OrderByDescending(i => i).ToArray();
         _logger.LogInformation("Deleting {Count} pages", selectedIndices.Length);
 
-        var result = await _pageOperationsService.DeletePagesAsync(_document, selectedIndices);
-
-        if (result.IsSuccess)
+        if (PageOperationCallback != null)
         {
-            await ReloadAllThumbnailsAsync();
-            NotifyPageModification();
+            var allSuccess = true;
+            // Delete from highest index to lowest to avoid index shifting
+            foreach (var idx in selectedIndices)
+            {
+                if (!await PageOperationCallback(_document, idx, "delete"))
+                    allSuccess = false;
+            }
+            if (allSuccess)
+            {
+                await ReloadAllThumbnailsAsync();
+                NotifyPageModification();
+            }
+        }
+        else if (_pageOperationsService != null)
+        {
+            var result = await _pageOperationsService.DeletePagesAsync(_document, selectedIndices);
+            if (result.IsSuccess)
+            {
+                await ReloadAllThumbnailsAsync();
+                NotifyPageModification();
+            }
         }
     }
 

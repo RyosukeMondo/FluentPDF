@@ -240,9 +240,18 @@
         <!-- TabControl for multi-document interface -->
         <TabControl Grid.Row="2"
                     x:Name="MainTabControl"
+                    Padding="0"
                     ItemsSource="{Binding Tabs}"
                     SelectedItem="{Binding ActiveTab, Mode=TwoWay}"
                     AutomationProperties.AutomationId="MainTabView">
+
+            <TabControl.Styles>
+                <Style Selector="TabControl /template/ Border#PART_SelectedContentHost">
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+            </TabControl.Styles>
 
             <TabControl.ItemTemplate>
                 <DataTemplate>

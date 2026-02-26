@@ -73,13 +73,15 @@ public partial class PdfViewerPage : UserControl
         DataContext = viewModel;
         _viewModel = viewModel;
 
-        // Wire up RenderPageCallback immediately
+        // Wire up callbacks immediately
         if (_viewModel != null)
         {
             _viewModel.RenderPageCallback = RenderPageAsync;
+            _viewModel.PageOperationCallback = ExecutePageOperationAsync;
             if (_viewModel.Thumbnails != null)
             {
                 _viewModel.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
+                _viewModel.Thumbnails.PageOperationCallback = ExecutePageOperationAsync;
             }
         }
 
@@ -103,6 +105,7 @@ public partial class PdfViewerPage : UserControl
             if (vm.Thumbnails != null)
             {
                 vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
+                vm.Thumbnails.PageOperationCallback = ExecutePageOperationAsync;
             }
             _logger.LogDebug("RenderPageCallback wired up for PdfViewerViewModel");
         }
@@ -122,6 +125,7 @@ public partial class PdfViewerPage : UserControl
             if (vm.Thumbnails != null)
             {
                 vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
+                vm.Thumbnails.PageOperationCallback = ExecutePageOperationAsync;
             }
         }
 
@@ -162,6 +166,9 @@ public partial class PdfViewerPage : UserControl
             DrawingCanvas.PointerMoved += OnDrawingCanvasPointerMoved;
             DrawingCanvas.PointerReleased += OnDrawingCanvasPointerReleased;
         }
+
+        // Wire up drawing toolbar toggle buttons and color popups
+        SetupDrawingToolbar();
 
         // Wire up keyboard events for annotation shortcuts and text copy
         this.KeyDown += OnPageKeyDown;
@@ -282,6 +289,14 @@ public partial class PdfViewerPage : UserControl
     /// </summary>
     private void OnPageKeyDown(object? sender, KeyEventArgs e)
     {
+        // Escape closes drawing toolbar
+        if (e.Key == Key.Escape && _viewModel?.IsDrawingToolbarVisible == true)
+        {
+            _viewModel.CloseDrawingToolbarCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
         if (_viewModel?.HasSelectedText != true || _viewModel.LastTextSelection == null)
             return;
 
@@ -888,6 +903,141 @@ public partial class PdfViewerPage : UserControl
 
     #endregion
 
+    #region Drawing Toolbar Setup
+
+    private void SetupDrawingToolbar()
+    {
+        var toolButtons = new (string Name, DrawingTool Tool)[]
+        {
+            ("DrawToolPan", DrawingTool.None),
+            ("DrawToolRectangle", DrawingTool.Rectangle),
+            ("DrawToolCircle", DrawingTool.Circle),
+            ("DrawToolLine", DrawingTool.Line),
+            ("DrawToolFreehand", DrawingTool.Freehand),
+            ("DrawToolText", DrawingTool.Text),
+        };
+
+        foreach (var (name, tool) in toolButtons)
+        {
+            var toggle = this.FindControl<global::Avalonia.Controls.Primitives.ToggleButton>(name);
+            if (toggle == null) continue;
+
+            var capturedTool = tool;
+            toggle.Click += (s, e) =>
+            {
+                if (_viewModel == null) return;
+
+                if (capturedTool == DrawingTool.None)
+                {
+                    _viewModel.ActiveDrawingTool = DrawingTool.None;
+                }
+                else
+                {
+                    _viewModel.SetDrawingToolCommand.Execute(capturedTool.ToString());
+                }
+                UpdateDrawingToolToggleStates();
+            };
+        }
+
+        // Stroke color popup
+        var strokeBtn = this.FindControl<Button>("StrokeColorButton");
+        var strokePopup = this.FindControl<global::Avalonia.Controls.Primitives.Popup>("StrokeColorPopup");
+        if (strokeBtn != null && strokePopup != null)
+        {
+            strokeBtn.Click += (s, e) => strokePopup.IsOpen = !strokePopup.IsOpen;
+        }
+
+        // Wire stroke color swatch clicks
+        WireColorSwatches("ColorSwatch", color =>
+        {
+            if (_viewModel != null) _viewModel.DrawingStrokeColor = color;
+            if (strokePopup != null) strokePopup.IsOpen = false;
+        });
+
+        // Fill color popup
+        var fillBtn = this.FindControl<Button>("FillColorButton");
+        var fillPopup = this.FindControl<global::Avalonia.Controls.Primitives.Popup>("FillColorPopup");
+        if (fillBtn != null && fillPopup != null)
+        {
+            fillBtn.Click += (s, e) => fillPopup.IsOpen = !fillPopup.IsOpen;
+        }
+
+        WireColorSwatches("FillColorSwatch", color =>
+        {
+            if (_viewModel != null) _viewModel.DrawingFillColor = color;
+            if (fillPopup != null) fillPopup.IsOpen = false;
+        });
+
+        // Stroke width combo
+        var widthCombo = this.FindControl<ComboBox>("StrokeWidthCombo");
+        if (widthCombo != null)
+        {
+            widthCombo.SelectionChanged += (s, e) =>
+            {
+                if (_viewModel == null) return;
+                if (widthCombo.SelectedItem is ComboBoxItem item && item.Tag is string tagStr
+                    && float.TryParse(tagStr, out var w))
+                {
+                    _viewModel.DrawingStrokeWidth = w;
+                }
+            };
+        }
+
+        // Subscribe to ActiveDrawingTool changes to sync toggle states
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(PdfViewerViewModel.ActiveDrawingTool))
+                    Dispatcher.UIThread.Post(UpdateDrawingToolToggleStates);
+            };
+        }
+    }
+
+    private void WireColorSwatches(string className, Action<string> onColorSelected)
+    {
+        // Find buttons by walking the visual tree from the popups
+        var popups = new[] { "StrokeColorPopup", "FillColorPopup" };
+        foreach (var popupName in popups)
+        {
+            var popup = this.FindControl<global::Avalonia.Controls.Primitives.Popup>(popupName);
+            if (popup?.Child is not Border border) continue;
+            if (border.Child is not WrapPanel wrap) continue;
+
+            foreach (var child in wrap.Children)
+            {
+                if (child is Button btn && btn.Classes.Contains(className) && btn.Tag is string color)
+                {
+                    var capturedColor = color;
+                    btn.Click += (s, e) => onColorSelected(capturedColor);
+                }
+            }
+        }
+    }
+
+    private void UpdateDrawingToolToggleStates()
+    {
+        var activeTool = _viewModel?.ActiveDrawingTool ?? DrawingTool.None;
+        var mapping = new (string Name, DrawingTool Tool)[]
+        {
+            ("DrawToolPan", DrawingTool.None),
+            ("DrawToolRectangle", DrawingTool.Rectangle),
+            ("DrawToolCircle", DrawingTool.Circle),
+            ("DrawToolLine", DrawingTool.Line),
+            ("DrawToolFreehand", DrawingTool.Freehand),
+            ("DrawToolText", DrawingTool.Text),
+        };
+
+        foreach (var (name, tool) in mapping)
+        {
+            var toggle = this.FindControl<global::Avalonia.Controls.Primitives.ToggleButton>(name);
+            if (toggle != null)
+                toggle.IsChecked = activeTool == tool;
+        }
+    }
+
+    #endregion
+
     #region Drawing Canvas Handlers
 
     private void OnDrawingCanvasPointerPressed(
@@ -1108,7 +1258,6 @@ public partial class PdfViewerPage : UserControl
             {
                 _logger.LogInformation("Shape {Tool} committed on page {Page}", tool, pageNumber);
                 await _viewModel.RefreshCurrentPageAsync();
-                _viewModel.ActiveDrawingTool = DrawingTool.None;
             }
             else
             {
