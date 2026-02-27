@@ -255,6 +255,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private float _drawingStrokeWidth = 2f;
 
+    [ObservableProperty]
+    private bool _isOriginalObjectsLocked = true;
+
     /// <summary>Whether a drawing tool is currently active.</summary>
     public bool IsDrawingToolActive => ActiveDrawingTool != DrawingTool.None;
 
@@ -349,6 +352,18 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     /// Operations: "rotate_cw", "rotate_ccw", "delete", "insert_blank"
     /// </summary>
     public Func<PdfDocument, int, string, Task<bool>>? PageOperationCallback { get; set; }
+
+    /// <summary>
+    /// Stores the original page object count per page index (0-based) at document load time.
+    /// Used to distinguish original objects from user-added objects.
+    /// </summary>
+    public Dictionary<int, int> OriginalObjectCounts { get; } = new();
+
+    /// <summary>
+    /// Callback to save the document. Set by UI layer.
+    /// Parameters: PdfDocument, filePath (null for overwrite). Returns success.
+    /// </summary>
+    public Func<PdfDocument, string?, Task<bool>>? SaveDocumentCallback { get; set; }
 
     [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
     private async Task RotatePageClockwiseAsync()
@@ -538,8 +553,25 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         {
             IsLoading = true;
             StatusMessage = "Saving document...";
-            StatusMessage = $"Document saved: {Path.GetFileName(_currentDocument.FilePath)}";
-            HasPageModifications = false;
+
+            if (SaveDocumentCallback != null)
+            {
+                var success = await SaveDocumentCallback(_currentDocument, null);
+                if (success)
+                {
+                    HasPageModifications = false;
+                    StatusMessage = $"Document saved: {Path.GetFileName(_currentDocument.FilePath)}";
+                }
+                else
+                {
+                    StatusMessage = "Failed to save document";
+                }
+            }
+            else
+            {
+                _logger.LogWarning("SaveDocumentCallback not set");
+                StatusMessage = "Save not available";
+            }
         }
         catch (Exception ex)
         {
@@ -564,7 +596,33 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             return;
         }
 
-        _logger.LogInformation("Save As: should be implemented by UI framework");
+        try
+        {
+            IsLoading = true;
+            if (SaveDocumentCallback != null)
+            {
+                // Pass empty string to signal "save as" (UI will show file picker)
+                var success = await SaveDocumentCallback(_currentDocument, "");
+                if (success)
+                {
+                    HasPageModifications = false;
+                    StatusMessage = "Document saved";
+                }
+            }
+            else
+            {
+                _logger.LogWarning("SaveDocumentCallback not set");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in Save As");
+            await ShowErrorAsync("Save As Error", ex.Message);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private bool CanSaveAs() => !IsLoading && _currentDocument != null;

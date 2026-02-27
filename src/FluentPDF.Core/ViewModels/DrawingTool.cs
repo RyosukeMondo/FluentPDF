@@ -6,6 +6,7 @@ namespace FluentPDF.Core.ViewModels;
 public enum DrawingTool
 {
     None,
+    Select,
     Rectangle,
     Circle,
     Line,

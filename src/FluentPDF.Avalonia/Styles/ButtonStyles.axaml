@@ -94,11 +94,12 @@
 
     <!-- Tab styling for compact, modern look -->
     <Style Selector="TabControl#MainTabControl TabItem">
-        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Padding" Value="8,2"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Foreground" Value="{DynamicResource ForegroundSecondaryBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="Margin" Value="0"/>
     </Style>
     <Style Selector="TabControl#MainTabControl TabItem:selected">
         <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}"/>

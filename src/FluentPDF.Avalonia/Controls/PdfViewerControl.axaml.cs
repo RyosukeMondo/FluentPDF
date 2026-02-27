@@ -21,6 +21,11 @@ public partial class PdfViewerControl : UserControl
     private PdfViewerPage? _viewerPage;
 
     /// <summary>
+    /// Gets the active PdfViewerPage instance for API automation.
+    /// </summary>
+    public PdfViewerPage? ActiveViewerPage => _viewerPage;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerControl"/> class.
     /// </summary>
     public PdfViewerControl()

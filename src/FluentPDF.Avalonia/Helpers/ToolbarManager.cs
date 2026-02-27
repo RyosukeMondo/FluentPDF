@@ -271,10 +271,19 @@ public sealed class ToolbarManager
 
     private void SetupDrawingTools()
     {
-        WireDrawingButton("ToolbarDrawRectButton", "Rectangle");
-        WireDrawingButton("ToolbarDrawCircleButton", "Circle");
-        WireDrawingButton("ToolbarDrawLineButton", "Line");
-        WireDrawingButton("ToolbarDrawFreehandButton", "Freehand");
+        var editButton = _owner.FindControl<Button>("ToolbarEditButton");
+        if (editButton != null)
+        {
+            editButton.Click += (s, e) =>
+            {
+                var viewer = _viewModel.ActiveTab?.ViewerViewModel;
+                if (viewer == null) return;
+                // Toggle the drawing toolbar visibility
+                viewer.IsDrawingToolbarVisible = !viewer.IsDrawingToolbarVisible;
+                if (viewer.IsDrawingToolbarVisible && viewer.ActiveDrawingTool == DrawingTool.None)
+                    viewer.ActiveDrawingTool = DrawingTool.Rectangle; // default tool
+            };
+        }
     }
 
     private void WireDrawingButton(string buttonName, string toolName)

@@ -189,6 +189,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         PdfOperationsEndpoints.Map(_webApp);
         ShapeEndpoints.Map(_webApp);
         DiagnosticEndpoints.Map(_webApp);
+        InteractionEndpoints.Map(_webApp);
 
         _baseUrl = $"http://{bindAddress}:{port}";
 

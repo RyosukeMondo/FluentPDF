@@ -23,7 +23,7 @@
         <!-- Search Panel -->
         <controls:SearchPanel Grid.Row="0"
                               DataContext="{Binding Search}"
-                              IsVisible="{Binding IsSearchPanelVisible}"/>
+                              IsVisible="{Binding $parent[UserControl].DataContext.IsSearchPanelVisible}"/>
 
         <!-- Drawing Toolbar (PowerPoint-like, stays open until closed) -->
         <Border Grid.Row="1"
@@ -35,11 +35,17 @@
             <StackPanel Orientation="Horizontal" Spacing="4">
 
                 <!-- Tool Selection ToggleButtons -->
-                <ToggleButton x:Name="DrawToolPan"
-                              ToolTip.Tip="Pan (deselect tool)"
+                <ToggleButton x:Name="DrawToolSelect"
+                              ToolTip.Tip="Select / Move shapes"
                               Classes="ToolbarIcon"
                               Padding="6,4">
-                    <PathIcon Data="M10 2a2 2 0 0 1 2 2v6h6a2 2 0 1 1 0 4h-6v6a2 2 0 1 1-4 0v-6H2a2 2 0 1 1 0-4h6V4a2 2 0 0 1 2-2z" Width="14" Height="14"/>
+                    <PathIcon Data="M3 2l7.5 18 2.2-7.3L20 10.5z" Width="14" Height="14"/>
+                </ToggleButton>
+                <ToggleButton x:Name="DrawToolPan"
+                              ToolTip.Tip="Pan (no drawing)"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M10 2v8H2v4h8v8h4v-8h8v-4h-8V2h-4z" Width="14" Height="14"/>
                 </ToggleButton>
                 <ToggleButton x:Name="DrawToolRectangle"
                               ToolTip.Tip="Rectangle"
@@ -86,16 +92,21 @@
                 <Popup x:Name="StrokeColorPopup" PlacementTarget="{Binding #StrokeColorButton}" Placement="Bottom" IsLightDismissEnabled="True">
                     <Border Background="{DynamicResource AcrylicTintToolbarBrush}" BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                         <WrapPanel Width="130">
+                            <Button Classes="ColorSwatch" Tag="Transparent" Width="20" Height="20" Margin="2" Padding="0" ToolTip.Tip="None">
+                                <Border Width="18" Height="18" CornerRadius="2" BorderBrush="#CCC" BorderThickness="1">
+                                    <Line StartPoint="0,18" EndPoint="18,0" Stroke="Red" StrokeThickness="1.5"/>
+                                </Border>
+                            </Button>
+                            <Button Classes="ColorSwatch" Tag="#000000" Background="#000000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#FFFFFF" Background="#FFFFFF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#808080" Background="#808080" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="ColorSwatch" Tag="#FF0000" Background="#FF0000" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="ColorSwatch" Tag="#00FF00" Background="#00FF00" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="ColorSwatch" Tag="#0000FF" Background="#0000FF" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="ColorSwatch" Tag="#FFFF00" Background="#FFFF00" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="ColorSwatch" Tag="#FF8000" Background="#FF8000" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="ColorSwatch" Tag="#FF00FF" Background="#FF00FF" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="ColorSwatch" Tag="#00FFFF" Background="#00FFFF" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="ColorSwatch" Tag="#000000" Background="#000000" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="ColorSwatch" Tag="#FFFFFF" Background="#FFFFFF" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="ColorSwatch" Tag="#FF8000" Background="#FF8000" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="ColorSwatch" Tag="#808080" Background="#808080" Width="20" Height="20" Margin="2" Padding="0"/>
                         </WrapPanel>
                     </Border>
                 </Popup>
@@ -110,16 +121,21 @@
                 <Popup x:Name="FillColorPopup" PlacementTarget="{Binding #FillColorButton}" Placement="Bottom" IsLightDismissEnabled="True">
                     <Border Background="{DynamicResource AcrylicTintToolbarBrush}" BorderBrush="{DynamicResource GlassBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                         <WrapPanel Width="130">
+                            <Button Classes="FillColorSwatch" Tag="Transparent" Width="20" Height="20" Margin="2" Padding="0" ToolTip.Tip="None / Transparent">
+                                <Border Width="18" Height="18" CornerRadius="2" BorderBrush="#CCC" BorderThickness="1">
+                                    <Line StartPoint="0,18" EndPoint="18,0" Stroke="Red" StrokeThickness="1.5"/>
+                                </Border>
+                            </Button>
+                            <Button Classes="FillColorSwatch" Tag="#000000" Background="#000000" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#FFFFFF" Background="#FFFFFF" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#808080" Background="#808080" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="FillColorSwatch" Tag="#FF0000" Background="#FF0000" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="FillColorSwatch" Tag="#00FF00" Background="#00FF00" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="FillColorSwatch" Tag="#0000FF" Background="#0000FF" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="FillColorSwatch" Tag="#FFFF00" Background="#FFFF00" Width="20" Height="20" Margin="2" Padding="0"/>
+                            <Button Classes="FillColorSwatch" Tag="#FF8000" Background="#FF8000" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="FillColorSwatch" Tag="#FF00FF" Background="#FF00FF" Width="20" Height="20" Margin="2" Padding="0"/>
                             <Button Classes="FillColorSwatch" Tag="#00FFFF" Background="#00FFFF" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="FillColorSwatch" Tag="#000000" Background="#000000" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="FillColorSwatch" Tag="#FFFFFF" Background="#FFFFFF" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="FillColorSwatch" Tag="#FF8000" Background="#FF8000" Width="20" Height="20" Margin="2" Padding="0"/>
-                            <Button Classes="FillColorSwatch" Tag="#808080" Background="#808080" Width="20" Height="20" Margin="2" Padding="0"/>
                         </WrapPanel>
                     </Border>
                 </Popup>
@@ -141,6 +157,15 @@
                 <Separator Width="1" Height="20"
                            Background="{DynamicResource BorderSubtleBrush}"
                            Margin="4,0"/>
+
+                <!-- Lock original objects toggle -->
+                <ToggleButton x:Name="LockOriginalsToggle"
+                              ToolTip.Tip="Lock original PDF objects (prevent deletion)"
+                              IsChecked="{Binding IsOriginalObjectsLocked}"
+                              Classes="ToolbarIcon"
+                              Padding="6,4">
+                    <PathIcon Data="M12 1a5 5 0 0 0-5 5v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 7H9V6a3 3 0 1 1 6 0v2z" Width="14" Height="14"/>
+                </ToggleButton>
 
                 <!-- Close button -->
                 <Button x:Name="DrawingToolbarCloseButton"

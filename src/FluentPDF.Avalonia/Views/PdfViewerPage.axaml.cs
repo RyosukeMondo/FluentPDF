@@ -40,6 +40,12 @@ public partial class PdfViewerPage : UserControl
     private System.Collections.Generic.List<Point> _drawingPoints = new();
     private global::Avalonia.Controls.Control? _drawingPreview;
 
+    // Selection state (Select tool)
+    private PageObjectInfo? _selectedObject;
+    private Rectangle? _selectionHighlight;
+    private bool _isDraggingSelection;
+    private Point _dragStartPoint;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerPage"/> class.
     /// Default constructor for design-time.
@@ -78,6 +84,7 @@ public partial class PdfViewerPage : UserControl
         {
             _viewModel.RenderPageCallback = RenderPageAsync;
             _viewModel.PageOperationCallback = ExecutePageOperationAsync;
+            _viewModel.SaveDocumentCallback = SaveDocumentAsync;
             if (_viewModel.Thumbnails != null)
             {
                 _viewModel.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
@@ -102,6 +109,7 @@ public partial class PdfViewerPage : UserControl
             _viewModel = vm;
             vm.RenderPageCallback = RenderPageAsync;
             vm.PageOperationCallback = ExecutePageOperationAsync;
+            vm.SaveDocumentCallback = SaveDocumentAsync;
             if (vm.Thumbnails != null)
             {
                 vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
@@ -169,6 +177,8 @@ public partial class PdfViewerPage : UserControl
 
         // Wire up drawing toolbar toggle buttons and color popups
         SetupDrawingToolbar();
+
+        // Original object tracking is done lazily when Select tool is activated
 
         // Wire up keyboard events for annotation shortcuts and text copy
         this.KeyDown += OnPageKeyDown;
@@ -278,8 +288,38 @@ public partial class PdfViewerPage : UserControl
     {
         if (e.PropertyName == nameof(PdfViewerViewModel.CurrentPageNumber))
         {
-            // Clear selection when page changes
             ClearSelectionRectangle();
+            ClearSelection();
+        }
+        else if (e.PropertyName == nameof(PdfViewerViewModel.ZoomLevel))
+        {
+            // Re-draw selection highlight at new zoom
+            if (_selectedObject != null)
+                ShowSelectionHighlight(_selectedObject);
+        }
+    }
+
+    private async Task TrackOriginalObjectCountAsync()
+    {
+        if (_viewModel?.CurrentDocument == null) return;
+        var pageIndex = _viewModel.CurrentPageNumber - 1;
+        if (_viewModel.OriginalObjectCounts.ContainsKey(pageIndex)) return;
+
+        var docId = _viewModel.CurrentDocument.FilePath;
+
+        try
+        {
+            var shapeService = App.GetService<IShapeService>();
+            var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
+            if (_viewModel != null && !_viewModel.OriginalObjectCounts.ContainsKey(pageIndex))
+            {
+                _viewModel.OriginalObjectCounts[pageIndex] = objects.Count;
+                _logger.LogDebug("Tracked {Count} original objects on page {Page}", objects.Count, pageIndex);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to track original object count");
         }
     }
 
@@ -292,7 +332,16 @@ public partial class PdfViewerPage : UserControl
         // Escape closes drawing toolbar
         if (e.Key == Key.Escape && _viewModel?.IsDrawingToolbarVisible == true)
         {
+            ClearSelection();
             _viewModel.CloseDrawingToolbarCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        // Delete selected shape
+        if ((e.Key == Key.Delete || e.Key == Key.Back) && _selectedObject != null)
+        {
+            _ = DeleteSelectedObjectAsync();
             e.Handled = true;
             return;
         }
@@ -770,6 +819,60 @@ public partial class PdfViewerPage : UserControl
         }
     }
 
+    private async Task<bool> SaveDocumentAsync(PdfDocument document, string? filePath)
+    {
+        try
+        {
+            string targetPath;
+            if (string.IsNullOrEmpty(filePath))
+            {
+                // Save As - show file picker
+                var topLevel = TopLevel.GetTopLevel(this);
+                if (topLevel == null) return false;
+
+                var file = await topLevel.StorageProvider.SaveFilePickerAsync(
+                    new global::Avalonia.Platform.Storage.FilePickerSaveOptions
+                    {
+                        Title = "Save PDF As",
+                        DefaultExtension = "pdf",
+                        FileTypeChoices = new[]
+                        {
+                            new global::Avalonia.Platform.Storage.FilePickerFileType("PDF Files")
+                            {
+                                Patterns = new[] { "*.pdf" }
+                            }
+                        },
+                        SuggestedFileName = System.IO.Path.GetFileName(document.FilePath)
+                    });
+
+                if (file == null) return false;
+                targetPath = file.Path.LocalPath;
+            }
+            else
+            {
+                targetPath = document.FilePath;
+            }
+
+            return await Task.Run(() =>
+            {
+                var docHandle = (SafePdfDocumentHandle)document.Handle;
+                if (docHandle.IsInvalid) return false;
+
+                var success = PdfiumInterop.SaveDocument(docHandle, targetPath);
+                if (success)
+                    _logger.LogInformation("Document saved to {Path}", targetPath);
+                else
+                    _logger.LogError("Failed to save document to {Path}", targetPath);
+                return success;
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Save failed");
+            return false;
+        }
+    }
+
     #endregion
 
     #region Link Detection
@@ -910,6 +1013,7 @@ public partial class PdfViewerPage : UserControl
         var toolButtons = new (string Name, DrawingTool Tool)[]
         {
             ("DrawToolPan", DrawingTool.None),
+            ("DrawToolSelect", DrawingTool.Select),
             ("DrawToolRectangle", DrawingTool.Rectangle),
             ("DrawToolCircle", DrawingTool.Circle),
             ("DrawToolLine", DrawingTool.Line),
@@ -989,7 +1093,12 @@ public partial class PdfViewerPage : UserControl
             _viewModel.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(PdfViewerViewModel.ActiveDrawingTool))
+                {
                     Dispatcher.UIThread.Post(UpdateDrawingToolToggleStates);
+                    // Lazily track original object count when any drawing tool is first activated
+                    if (_viewModel?.ActiveDrawingTool != DrawingTool.None)
+                        _ = TrackOriginalObjectCountAsync();
+                }
             };
         }
     }
@@ -1021,6 +1130,7 @@ public partial class PdfViewerPage : UserControl
         var mapping = new (string Name, DrawingTool Tool)[]
         {
             ("DrawToolPan", DrawingTool.None),
+            ("DrawToolSelect", DrawingTool.Select),
             ("DrawToolRectangle", DrawingTool.Rectangle),
             ("DrawToolCircle", DrawingTool.Circle),
             ("DrawToolLine", DrawingTool.Line),
@@ -1049,10 +1159,28 @@ public partial class PdfViewerPage : UserControl
             return;
 
         var properties = e.GetCurrentPoint(DrawingCanvas).Properties;
+        var point = e.GetCurrentPoint(PdfImage).Position;
+
+        // Right-click context menu for Select tool
+        if (properties.IsRightButtonPressed && _viewModel.ActiveDrawingTool == DrawingTool.Select && _selectedObject != null)
+        {
+            ShowShapeContextMenu(point);
+            e.Handled = true;
+            return;
+        }
+
         if (!properties.IsLeftButtonPressed)
             return;
 
-        var point = e.GetCurrentPoint(PdfImage).Position;
+        // Handle Select tool (left click)
+        if (_viewModel.ActiveDrawingTool == DrawingTool.Select)
+        {
+            _isDraggingSelection = false;
+            _ = HandleSelectClickAsync(point);
+            e.Handled = true;
+            return;
+        }
+
         _drawStartPoint = point;
         _isDrawing = true;
         _drawingPoints.Clear();
@@ -1126,6 +1254,35 @@ public partial class PdfViewerPage : UserControl
     private void OnDrawingCanvasPointerMoved(
         object? sender, PointerEventArgs e)
     {
+        // Handle drag-to-move for Select tool
+        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectedObject != null && PdfImage != null)
+        {
+            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+            if (props.IsLeftButtonPressed)
+            {
+                var dragPoint = e.GetCurrentPoint(PdfImage).Position;
+                var dx = dragPoint.X - _dragStartPoint.X;
+                var dy = dragPoint.Y - _dragStartPoint.Y;
+                if (Math.Abs(dx) > 3 || Math.Abs(dy) > 3)
+                    _isDraggingSelection = true;
+
+                if (_isDraggingSelection && _selectionHighlight != null)
+                {
+                    // Move the highlight visually
+                    Canvas.SetLeft(_selectionHighlight, Canvas.GetLeft(_selectionHighlight) + dx);
+                    Canvas.SetTop(_selectionHighlight, Canvas.GetTop(_selectionHighlight) + dy);
+                    foreach (var h in _resizeHandles)
+                    {
+                        Canvas.SetLeft(h, Canvas.GetLeft(h) + dx);
+                        Canvas.SetTop(h, Canvas.GetTop(h) + dy);
+                    }
+                    _dragStartPoint = dragPoint;
+                }
+                e.Handled = true;
+                return;
+            }
+        }
+
         if (!_isDrawing || _viewModel == null || PdfImage == null)
             return;
 
@@ -1164,6 +1321,44 @@ public partial class PdfViewerPage : UserControl
     private void OnDrawingCanvasPointerReleased(
         object? sender, PointerReleasedEventArgs e)
     {
+        // Commit drag-to-move for Select tool
+        if (_isDraggingSelection && _selectedObject != null && _viewModel != null && PdfImage != null)
+        {
+            _isDraggingSelection = false;
+            var releasePoint = e.GetCurrentPoint(PdfImage).Position;
+            var pdfStart = ScreenPointToPdfCoords(_dragStartPoint);
+            var pdfEnd = ScreenPointToPdfCoords(releasePoint);
+            // Actually compute total delta from original click to final position
+            // We need the original start and final point
+            // The highlight already moved visually, now commit the PDF move
+            // Recalculate: we moved highlight incrementally, but for PDF we need total delta
+            // Since _dragStartPoint was updated each move, we stored the original click start in HandleSelectClickAsync
+            // For simplicity, compute from current highlight position back to original bounds
+            if (_selectedObject != null)
+            {
+                var currentTL = PdfCoordsToScreen(_selectedObject.Left, _selectedObject.Top);
+                if (currentTL != null && _selectionHighlight != null)
+                {
+                    var actualX = Canvas.GetLeft(_selectionHighlight);
+                    var actualY = Canvas.GetTop(_selectionHighlight);
+                    var screenDx = (float)(actualX - currentTL.Value.X);
+                    var screenDy = (float)(actualY - currentTL.Value.Y);
+
+                    // Convert screen delta to PDF delta
+                    var pdfOrigin = ScreenPointToPdfCoords(new Point(0, 0));
+                    var pdfDelta = ScreenPointToPdfCoords(new Point(screenDx, screenDy));
+                    if (pdfOrigin != null && pdfDelta != null)
+                    {
+                        var deltaPdfX = pdfDelta.Value.pdfX - pdfOrigin.Value.pdfX;
+                        var deltaPdfY = pdfDelta.Value.pdfY - pdfOrigin.Value.pdfY;
+                        _ = MoveSelectedObjectAsync(deltaPdfX, deltaPdfY);
+                    }
+                }
+            }
+            e.Handled = true;
+            return;
+        }
+
         if (!_isDrawing || _viewModel == null || PdfImage == null)
             return;
 
@@ -1315,6 +1510,543 @@ public partial class PdfViewerPage : UserControl
         }
         catch { }
         return new SolidColorBrush(Colors.Red);
+    }
+
+    #endregion
+
+    #region Select Tool
+
+    private bool IsOriginalObject(PageObjectInfo obj)
+    {
+        if (_viewModel == null) return false;
+        var pageIndex = _viewModel.CurrentPageNumber - 1;
+        if (_viewModel.OriginalObjectCounts.TryGetValue(pageIndex, out var originalCount))
+            return obj.Index < originalCount;
+        return true; // Assume original if not tracked
+    }
+
+    private async Task HandleSelectClickAsync(Point screenPoint)
+    {
+        if (_viewModel?.CurrentDocument == null || PdfImage == null)
+            return;
+
+        var pdfCoords = ScreenPointToPdfCoords(screenPoint);
+        if (pdfCoords == null)
+        {
+            ClearSelection();
+            return;
+        }
+
+        try
+        {
+            var shapeService = App.GetService<IShapeService>();
+            var docId = _viewModel.CurrentDocument.FilePath;
+            var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+            var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+
+            PageObjectInfo? hit = null;
+            for (int i = objects.Count - 1; i >= 0; i--)
+            {
+                var obj = objects[i];
+                if (pdfCoords.Value.pdfX >= obj.Left && pdfCoords.Value.pdfX <= obj.Right &&
+                    pdfCoords.Value.pdfY >= obj.Bottom && pdfCoords.Value.pdfY <= obj.Top)
+                {
+                    hit = obj;
+                    break;
+                }
+            }
+
+            if (hit != null)
+            {
+                _selectedObject = hit;
+                _dragStartPoint = screenPoint;
+                ShowSelectionHighlight(hit);
+                _logger.LogInformation("Selected page object #{Index} type={Type} isOriginal={IsOrig}",
+                    hit.Index, hit.Type, IsOriginalObject(hit));
+            }
+            else
+            {
+                ClearSelection();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to select page object");
+        }
+    }
+
+    private void ShowSelectionHighlight(PageObjectInfo obj)
+    {
+        ClearSelectionHighlight();
+        if (DrawingCanvas == null || PdfImage == null) return;
+
+        var topLeft = PdfCoordsToScreen(obj.Left, obj.Top);
+        var bottomRight = PdfCoordsToScreen(obj.Right, obj.Bottom);
+        if (topLeft == null || bottomRight == null) return;
+
+        var x = Math.Min(topLeft.Value.X, bottomRight.Value.X);
+        var y = Math.Min(topLeft.Value.Y, bottomRight.Value.Y);
+        var w = Math.Abs(bottomRight.Value.X - topLeft.Value.X);
+        var h = Math.Abs(bottomRight.Value.Y - topLeft.Value.Y);
+
+        var isOrig = IsOriginalObject(obj);
+        var strokeColor = isOrig
+            ? Color.FromArgb(200, 255, 140, 0)   // Orange for original
+            : Color.FromArgb(200, 0, 120, 215);   // Blue for user-added
+        var fillColor = isOrig
+            ? Color.FromArgb(15, 255, 140, 0)
+            : Color.FromArgb(30, 0, 120, 215);
+
+        _selectionHighlight = new Rectangle
+        {
+            Stroke = new SolidColorBrush(strokeColor),
+            StrokeThickness = 2,
+            StrokeDashArray = new global::Avalonia.Collections.AvaloniaList<double> { 4, 2 },
+            Fill = new SolidColorBrush(fillColor),
+            Width = w,
+            Height = h,
+            IsHitTestVisible = false
+        };
+        Canvas.SetLeft(_selectionHighlight, x);
+        Canvas.SetTop(_selectionHighlight, y);
+        DrawingCanvas.Children.Add(_selectionHighlight);
+
+        // Add resize handles (4 corners)
+        AddResizeHandles(x, y, w, h);
+    }
+
+    private readonly System.Collections.Generic.List<Rectangle> _resizeHandles = new();
+    private const double HandleSize = 8;
+
+    private void AddResizeHandles(double x, double y, double w, double h)
+    {
+        RemoveResizeHandles();
+        if (DrawingCanvas == null) return;
+
+        var positions = new (double px, double py)[]
+        {
+            (x - HandleSize / 2, y - HandleSize / 2),
+            (x + w - HandleSize / 2, y - HandleSize / 2),
+            (x - HandleSize / 2, y + h - HandleSize / 2),
+            (x + w - HandleSize / 2, y + h - HandleSize / 2),
+        };
+
+        foreach (var (px, py) in positions)
+        {
+            var handle = new Rectangle
+            {
+                Width = HandleSize,
+                Height = HandleSize,
+                Fill = new SolidColorBrush(Colors.White),
+                Stroke = new SolidColorBrush(Color.FromRgb(0, 120, 215)),
+                StrokeThickness = 1.5,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(handle, px);
+            Canvas.SetTop(handle, py);
+            DrawingCanvas.Children.Add(handle);
+            _resizeHandles.Add(handle);
+        }
+    }
+
+    private void RemoveResizeHandles()
+    {
+        if (DrawingCanvas == null) return;
+        foreach (var h in _resizeHandles)
+            DrawingCanvas.Children.Remove(h);
+        _resizeHandles.Clear();
+    }
+
+    public void ClearSelection()
+    {
+        _selectedObject = null;
+        ClearSelectionHighlight();
+    }
+
+    private void ClearSelectionHighlight()
+    {
+        RemoveResizeHandles();
+        if (_selectionHighlight != null && DrawingCanvas != null)
+        {
+            DrawingCanvas.Children.Remove(_selectionHighlight);
+            _selectionHighlight = null;
+        }
+    }
+
+    private async Task DeleteSelectedObjectAsync()
+    {
+        if (_selectedObject == null || _viewModel?.CurrentDocument == null)
+            return;
+
+        // Check lock
+        if (_viewModel.IsOriginalObjectsLocked && IsOriginalObject(_selectedObject))
+        {
+            _logger.LogInformation("Cannot delete locked original object #{Index}", _selectedObject.Index);
+            _viewModel.StatusMessage = "Original PDF objects are locked. Unlock to delete.";
+            return;
+        }
+
+        try
+        {
+            var shapeService = App.GetService<IShapeService>();
+            var docId = _viewModel.CurrentDocument.FilePath;
+            var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+            var success = await shapeService.RemovePageObjectAsync(docId, pageNumber, _selectedObject.Index);
+            if (success)
+            {
+                _logger.LogInformation("Deleted page object #{Index}", _selectedObject.Index);
+                ClearSelection();
+                await _viewModel.RefreshCurrentPageAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete selected object");
+        }
+    }
+
+    private async Task MoveSelectedObjectAsync(float deltaPdfX, float deltaPdfY)
+    {
+        if (_selectedObject == null || _viewModel?.CurrentDocument == null)
+            return;
+
+        if (_viewModel.IsOriginalObjectsLocked && IsOriginalObject(_selectedObject))
+        {
+            _viewModel.StatusMessage = "Original PDF objects are locked. Unlock to move.";
+            return;
+        }
+
+        try
+        {
+            var shapeService = App.GetService<IShapeService>();
+            var docId = _viewModel.CurrentDocument.FilePath;
+            var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+            var success = await shapeService.MovePageObjectAsync(
+                docId, pageNumber, _selectedObject.Index, deltaPdfX, deltaPdfY);
+            if (success)
+            {
+                // Update selected object bounds
+                _selectedObject = _selectedObject with
+                {
+                    Left = _selectedObject.Left + deltaPdfX,
+                    Right = _selectedObject.Right + deltaPdfX,
+                    Bottom = _selectedObject.Bottom + deltaPdfY,
+                    Top = _selectedObject.Top + deltaPdfY
+                };
+                ShowSelectionHighlight(_selectedObject);
+                await _viewModel.RefreshCurrentPageAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to move selected object");
+        }
+    }
+
+    private void ShowShapeContextMenu(Point screenPoint)
+    {
+        if (_selectedObject == null || _viewModel == null || DrawingCanvas == null) return;
+
+        var isOrig = IsOriginalObject(_selectedObject);
+        var isLocked = _viewModel.IsOriginalObjectsLocked && isOrig;
+
+        var menu = new global::Avalonia.Controls.ContextMenu();
+
+        var deleteItem = new global::Avalonia.Controls.MenuItem { Header = "Delete" };
+        deleteItem.IsEnabled = !isLocked;
+        deleteItem.Click += (s, e) => _ = DeleteSelectedObjectAsync();
+        menu.Items.Add(deleteItem);
+
+        menu.Items.Add(new global::Avalonia.Controls.Separator());
+
+        var strokeRedItem = new global::Avalonia.Controls.MenuItem { Header = "Stroke: Red" };
+        strokeRedItem.IsEnabled = !isLocked;
+        strokeRedItem.Click += (s, e) => _ = ChangeSelectedPropertyAsync("stroke", "#FF0000");
+        menu.Items.Add(strokeRedItem);
+
+        var strokeBlueItem = new global::Avalonia.Controls.MenuItem { Header = "Stroke: Blue" };
+        strokeBlueItem.IsEnabled = !isLocked;
+        strokeBlueItem.Click += (s, e) => _ = ChangeSelectedPropertyAsync("stroke", "#0000FF");
+        menu.Items.Add(strokeBlueItem);
+
+        var strokeBlackItem = new global::Avalonia.Controls.MenuItem { Header = "Stroke: Black" };
+        strokeBlackItem.IsEnabled = !isLocked;
+        strokeBlackItem.Click += (s, e) => _ = ChangeSelectedPropertyAsync("stroke", "#000000");
+        menu.Items.Add(strokeBlackItem);
+
+        menu.Items.Add(new global::Avalonia.Controls.Separator());
+
+        var fillRedItem = new global::Avalonia.Controls.MenuItem { Header = "Fill: Red" };
+        fillRedItem.IsEnabled = !isLocked;
+        fillRedItem.Click += (s, e) => _ = ChangeSelectedPropertyAsync("fill", "#FF000080");
+        menu.Items.Add(fillRedItem);
+
+        var fillTransparent = new global::Avalonia.Controls.MenuItem { Header = "Fill: Transparent" };
+        fillTransparent.IsEnabled = !isLocked;
+        fillTransparent.Click += (s, e) => _ = ChangeSelectedPropertyAsync("fill", "#00000000");
+        menu.Items.Add(fillTransparent);
+
+        menu.Items.Add(new global::Avalonia.Controls.Separator());
+
+        var propsItem = new global::Avalonia.Controls.MenuItem { Header = "Properties..." };
+        propsItem.Click += (s, e) => _ = ShowPropertiesAsync();
+        menu.Items.Add(propsItem);
+
+        menu.Open(DrawingCanvas);
+    }
+
+    private async Task ChangeSelectedPropertyAsync(string property, string value)
+    {
+        if (_selectedObject == null || _viewModel?.CurrentDocument == null) return;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+        bool success = property switch
+        {
+            "stroke" => await shapeService.SetPageObjectStrokeColorAsync(docId, pageNumber, _selectedObject.Index, value),
+            "fill" => await shapeService.SetPageObjectFillColorAsync(docId, pageNumber, _selectedObject.Index, value),
+            _ => false
+        };
+
+        if (success)
+            await _viewModel.RefreshCurrentPageAsync();
+    }
+
+    private async Task ShowPropertiesAsync()
+    {
+        if (_selectedObject == null || _viewModel?.CurrentDocument == null) return;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var props = await shapeService.GetPageObjectPropertiesAsync(docId, pageNumber, _selectedObject.Index);
+
+        if (props != null)
+        {
+            _viewModel.StatusMessage = $"Object #{_selectedObject.Index}: " +
+                $"Type={_selectedObject.Type}, Stroke={props.StrokeColor}, Fill={props.FillColor}, Width={props.StrokeWidth:F1}";
+        }
+    }
+
+    /// <summary>
+    /// Converts PDF coordinates (points, origin bottom-left) to screen coordinates relative to PdfImage.
+    /// </summary>
+    private Point? PdfCoordsToScreen(float pdfX, float pdfY)
+    {
+        if (_viewModel?.CurrentDocument == null || PdfImage == null)
+            return null;
+
+        var imageSource = PdfImage.Source as global::Avalonia.Media.Imaging.Bitmap;
+        if (imageSource == null) return null;
+
+        var bitmapWidth = (double)imageSource.PixelSize.Width;
+        var bitmapHeight = (double)imageSource.PixelSize.Height;
+        var renderWidth = PdfImage.Bounds.Width;
+        var renderHeight = PdfImage.Bounds.Height;
+
+        if (renderWidth <= 0 || renderHeight <= 0 || bitmapWidth <= 0 || bitmapHeight <= 0)
+            return null;
+
+        var scaleX = renderWidth / bitmapWidth;
+        var scaleY = renderHeight / bitmapHeight;
+        var scale = Math.Min(scaleX, scaleY);
+
+        var offsetX = (renderWidth - bitmapWidth * scale) / 2.0;
+        var offsetY = (renderHeight - bitmapHeight * scale) / 2.0;
+
+        var dpi = _viewModel.CurrentDisplayInfo?.EffectiveDpi ?? 96.0;
+        var zoom = _viewModel.ZoomLevel;
+        var pdfScale = zoom * dpi / 72.0;
+
+        var renderingService = App.GetService<IPdfRenderingService>();
+        var pageSizeResult = renderingService.GetPageSize(
+            _viewModel.CurrentDocument, _viewModel.CurrentPageNumber);
+        if (pageSizeResult.IsFailed) return null;
+
+        var pageHeight = pageSizeResult.Value.Height;
+
+        // Reverse of ScreenPointToPdfCoords:
+        // pdfX = bmpX / pdfScale  =>  bmpX = pdfX * pdfScale
+        // pdfY = pageHeight - (bmpY / pdfScale)  =>  bmpY = (pageHeight - pdfY) * pdfScale
+        var bmpX = pdfX * pdfScale;
+        var bmpY = (pageHeight - pdfY) * pdfScale;
+
+        // bmpX = (screenX - offsetX) / scale  =>  screenX = bmpX * scale + offsetX
+        var screenX = bmpX * scale + offsetX;
+        var screenY = bmpY * scale + offsetY;
+
+        return new Point(screenX, screenY);
+    }
+
+    #endregion
+
+    #region Public Automation API
+
+    /// <summary>Gets the currently selected page object, or null.</summary>
+    public PageObjectInfo? GetSelectedObject() => _selectedObject;
+
+    /// <summary>Whether a selection highlight is visible.</summary>
+    public bool HasSelectionHighlight => _selectionHighlight != null;
+
+    /// <summary>Select a page object at PDF coordinates. Returns the hit object or null.</summary>
+    public async Task<PageObjectInfo?> SelectObjectAtPdfCoordsAsync(float pdfX, float pdfY)
+    {
+        if (_viewModel?.CurrentDocument == null) return null;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+
+        PageObjectInfo? hit = null;
+        for (int i = objects.Count - 1; i >= 0; i--)
+        {
+            var obj = objects[i];
+            if (pdfX >= obj.Left && pdfX <= obj.Right &&
+                pdfY >= obj.Bottom && pdfY <= obj.Top)
+            {
+                hit = obj;
+                break;
+            }
+        }
+
+        if (hit != null)
+        {
+            _selectedObject = hit;
+            ShowSelectionHighlight(hit);
+        }
+        else
+        {
+            ClearSelection();
+        }
+
+        return hit;
+    }
+
+    /// <summary>Delete the currently selected object. Returns true if deleted.</summary>
+    public async Task<bool> DeleteSelectedAsync()
+    {
+        if (_selectedObject == null || _viewModel?.CurrentDocument == null)
+            return false;
+
+        if (_viewModel.IsOriginalObjectsLocked && IsOriginalObject(_selectedObject))
+            return false;
+
+        // Capture state on UI thread
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var objIndex = _selectedObject.Index;
+
+        try
+        {
+            var success = await shapeService.RemovePageObjectAsync(docId, pageNumber, objIndex);
+            if (success)
+            {
+                ClearSelection();
+                await _viewModel.RefreshCurrentPageAsync();
+            }
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeleteSelectedAsync failed for object {Index}", objIndex);
+            return false;
+        }
+    }
+
+    /// <summary>Draw a shape at PDF coordinates using the current tool and colors.</summary>
+    public async Task<bool> DrawShapeAtPdfCoordsAsync(float startX, float startY, float endX, float endY)
+    {
+        if (_viewModel?.CurrentDocument == null) return false;
+
+        var shapeService = App.GetService<IShapeService>();
+        var tool = _viewModel.ActiveDrawingTool;
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var strokeColor = _viewModel.DrawingStrokeColor;
+        var fillColor = _viewModel.DrawingFillColor;
+        var strokeWidth = _viewModel.DrawingStrokeWidth;
+
+        bool success = false;
+        switch (tool)
+        {
+            case DrawingTool.Rectangle:
+                var rx = Math.Min(startX, endX);
+                var ry = Math.Min(startY, endY);
+                var rw = Math.Abs(endX - startX);
+                var rh = Math.Abs(endY - startY);
+                if (rw > 1 && rh > 1)
+                    success = await shapeService.AddRectangleAsync(docId, pageNumber, rx, ry, rw, rh, fillColor, strokeColor, strokeWidth);
+                break;
+            case DrawingTool.Circle:
+                var cx = (startX + endX) / 2;
+                var cy = (startY + endY) / 2;
+                var radius = Math.Max(Math.Abs(endX - startX), Math.Abs(endY - startY)) / 2;
+                if (radius > 1)
+                    success = await shapeService.AddCircleAsync(docId, pageNumber, cx, cy, radius, fillColor, strokeColor, strokeWidth);
+                break;
+            case DrawingTool.Line:
+                success = await shapeService.AddLineAsync(docId, pageNumber, startX, startY, endX, endY, strokeColor, strokeWidth);
+                break;
+        }
+
+        if (success)
+            await _viewModel.RefreshCurrentPageAsync();
+        return success;
+    }
+
+    /// <summary>Add text at PDF coordinates with custom string.</summary>
+    public async Task<bool> AddTextAtPdfCoordsAsync(float pdfX, float pdfY, string text, float fontSize = 12f, string fontName = "Helvetica")
+    {
+        if (_viewModel?.CurrentDocument == null) return false;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var color = _viewModel.DrawingStrokeColor;
+
+        var success = await shapeService.AddTextAsync(docId, pageNumber, pdfX, pdfY, text, fontSize, fontName, color);
+        if (success)
+            await _viewModel.RefreshCurrentPageAsync();
+        return success;
+    }
+
+    /// <summary>List all page objects on the current page.</summary>
+    public async Task<List<PageObjectInfo>> GetCurrentPageObjectsAsync()
+    {
+        if (_viewModel?.CurrentDocument == null) return new List<PageObjectInfo>();
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        return await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+    }
+
+    /// <summary>Hit-test at PDF coordinates without selecting.</summary>
+    public async Task<PageObjectInfo?> HitTestAtPdfCoordsAsync(float pdfX, float pdfY)
+    {
+        if (_viewModel?.CurrentDocument == null) return null;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+        for (int i = objects.Count - 1; i >= 0; i--)
+        {
+            var obj = objects[i];
+            if (pdfX >= obj.Left && pdfX <= obj.Right &&
+                pdfY >= obj.Bottom && pdfY <= obj.Top)
+                return obj;
+        }
+        return null;
     }
 
     #endregion

@@ -327,6 +327,16 @@ public static partial class PdfiumInterop
     }
 
     /// <summary>
+    /// Regenerates the content stream for a page after modifications.
+    /// </summary>
+    public static bool GenerateContent(SafePdfPageHandle page)
+    {
+        if (page == null || page.IsInvalid)
+            throw new ArgumentException("Invalid page handle.", nameof(page));
+        return FPDFPage_GenerateContent(page);
+    }
+
+    /// <summary>
     /// Gets the number of page objects on a page.
     /// </summary>
     /// <param name="page">Handle to the page.</param>
@@ -441,6 +451,44 @@ public static partial class PdfiumInterop
     private static extern bool FPDFText_SetText(
         IntPtr text_object,
         [MarshalAs(UnmanagedType.LPWStr)] string text);
+
+    /// <summary>
+    /// Gets the fill color of a page object.
+    /// </summary>
+    public static bool GetPageObjectFillColor(IntPtr pageObject, out uint r, out uint g, out uint b, out uint a)
+    {
+        r = g = b = a = 0;
+        if (pageObject == IntPtr.Zero) return false;
+        return FPDFPageObj_GetFillColor(pageObject, out r, out g, out b, out a);
+    }
+
+    /// <summary>
+    /// Gets the stroke color of a page object.
+    /// </summary>
+    public static bool GetPageObjectStrokeColor(IntPtr pageObject, out uint r, out uint g, out uint b, out uint a)
+    {
+        r = g = b = a = 0;
+        if (pageObject == IntPtr.Zero) return false;
+        return FPDFPageObj_GetStrokeColor(pageObject, out r, out g, out b, out a);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool FPDFPageObj_GetFillColor(
+        IntPtr page_object,
+        out uint R,
+        out uint G,
+        out uint B,
+        out uint A);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool FPDFPageObj_GetStrokeColor(
+        IntPtr page_object,
+        out uint R,
+        out uint G,
+        out uint B,
+        out uint A);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]
