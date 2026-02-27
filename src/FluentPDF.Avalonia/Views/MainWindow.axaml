@@ -158,12 +158,15 @@
                          VerticalAlignment="Center"
                          Classes="ToolbarInput"
                          AutomationProperties.AutomationId="ToolbarZoomComboBox">
+                    <ComboBoxItem Content="25%" />
                     <ComboBoxItem Content="50%" />
                     <ComboBoxItem Content="75%" />
                     <ComboBoxItem Content="100%" IsSelected="True" />
                     <ComboBoxItem Content="125%" />
                     <ComboBoxItem Content="150%" />
                     <ComboBoxItem Content="200%" />
+                    <ComboBoxItem Content="300%" />
+                    <ComboBoxItem Content="400%" />
                     <ComboBoxItem Content="Fit Width" />
                     <ComboBoxItem Content="Fit Page" />
                 </ComboBox>

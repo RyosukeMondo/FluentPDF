@@ -48,26 +48,19 @@ public partial class ZoomViewModel : ViewModelBase
     /// <summary>
     /// Increases the zoom level.
     /// </summary>
+    private const double ZoomStep = 0.1;
+    private const double MinZoom = 0.25;
+    private const double MaxZoom = 4.0;
+
     [RelayCommand(CanExecute = nameof(CanZoomIn))]
     private async Task ZoomInAsync()
     {
         _logger.LogInformation("ZoomIn command invoked. CurrentZoom={CurrentZoom}", ZoomLevel);
-
-        ZoomLevel = ZoomLevel switch
-        {
-            < 0.75 => 0.75,
-            < 1.0 => 1.0,
-            < 1.25 => 1.25,
-            < 1.5 => 1.5,
-            < 1.75 => 1.75,
-            < 2.0 => 2.0,
-            _ => ZoomLevel
-        };
-
+        ZoomLevel = Math.Min(MaxZoom, Math.Round((ZoomLevel + ZoomStep) * 10) / 10);
         await NotifyZoomChangedAsync();
     }
 
-    private bool CanZoomIn() => ZoomLevel < 2.0 && !IsLoading && HasDocument;
+    private bool CanZoomIn() => ZoomLevel < MaxZoom && HasDocument;
 
     /// <summary>
     /// Decreases the zoom level.
@@ -76,22 +69,11 @@ public partial class ZoomViewModel : ViewModelBase
     private async Task ZoomOutAsync()
     {
         _logger.LogInformation("ZoomOut command invoked. CurrentZoom={CurrentZoom}", ZoomLevel);
-
-        ZoomLevel = ZoomLevel switch
-        {
-            > 1.75 => 1.75,
-            > 1.5 => 1.5,
-            > 1.25 => 1.25,
-            > 1.0 => 1.0,
-            > 0.75 => 0.75,
-            > 0.5 => 0.5,
-            _ => ZoomLevel
-        };
-
+        ZoomLevel = Math.Max(MinZoom, Math.Round((ZoomLevel - ZoomStep) * 10) / 10);
         await NotifyZoomChangedAsync();
     }
 
-    private bool CanZoomOut() => ZoomLevel > 0.5 && !IsLoading && HasDocument;
+    private bool CanZoomOut() => ZoomLevel > MinZoom && HasDocument;
 
     /// <summary>
     /// Resets the zoom level to 100%.
@@ -114,7 +96,7 @@ public partial class ZoomViewModel : ViewModelBase
     {
         _logger.LogInformation("SetZoom command invoked. ZoomLevel={ZoomLevel}", zoomLevel);
 
-        if (zoomLevel >= 0.5 && zoomLevel <= 2.0 && HasDocument)
+        if (zoomLevel >= MinZoom && zoomLevel <= MaxZoom && HasDocument)
         {
             ZoomLevel = zoomLevel;
             await NotifyZoomChangedAsync();

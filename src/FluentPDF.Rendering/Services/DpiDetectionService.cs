@@ -97,7 +97,9 @@ public sealed class DpiDetectionService : IDpiDetectionService, IDisposable
             }
 
             var qualityMultiplier = DisplayInfo.GetQualityMultiplier(quality);
-            var effectiveDpi = BaseDpi * displayInfo.RasterizationScale * zoomLevel * qualityMultiplier;
+            // Note: Do NOT include zoomLevel here. The renderer already multiplies by zoom
+            // in scaleFactor = (dpi/72) * zoom. Including zoom in DPI would double-count it.
+            var effectiveDpi = BaseDpi * displayInfo.RasterizationScale * qualityMultiplier;
             effectiveDpi = Math.Clamp(effectiveDpi, MinDpi, MaxDpi);
 
             _logger.LogInformation(

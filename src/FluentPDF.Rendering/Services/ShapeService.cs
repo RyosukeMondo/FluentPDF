@@ -332,6 +332,13 @@ public sealed class ShapeService : IShapeService
 
         try
         {
+            var count = PdfiumInterop.GetPageObjectCount(pageHandle);
+            if (objectIndex < 0 || objectIndex >= count)
+            {
+                _logger.LogWarning("Object index {Index} out of range (count={Count}) on page {Page}", objectIndex, count, pageNumber);
+                return Task.FromResult(false);
+            }
+
             var obj = PdfiumInterop.GetPageObject(pageHandle, objectIndex);
             if (obj == IntPtr.Zero)
             {
@@ -343,6 +350,11 @@ public sealed class ShapeService : IShapeService
             PdfiumInterop.GenerateContent(pageHandle);
             _logger.LogInformation("Moved page object {Index} on page {Page} by ({DeltaX}, {DeltaY})", objectIndex, pageNumber, deltaX, deltaY);
             return Task.FromResult(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to move page object {Index} on page {Page}", objectIndex, pageNumber);
+            return Task.FromResult(false);
         }
         finally
         {

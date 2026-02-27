@@ -170,6 +170,7 @@ public partial class App : Application
                 services.AddSingleton<IFdfService, FdfService>();
                 services.AddSingleton<Core.Services.IMetricsCollectionService, MetricsCollectionService>();
                 services.AddSingleton<Core.Services.ILogExportService, LogExportService>();
+                services.AddSingleton<IUndoRedoService, UndoRedoService>();
 
                 // Register shape drawing service with document resolver
                 services.AddSingleton<IShapeService>(sp =>

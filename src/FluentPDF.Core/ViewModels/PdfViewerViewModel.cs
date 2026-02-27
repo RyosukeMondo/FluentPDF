@@ -89,7 +89,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         ViewState = viewState ?? throw new ArgumentNullException(nameof(viewState));
 
         Navigation.OnPageChanged = async _ => await RenderCurrentPageAsync();
-        Zoom.OnZoomChanged = async _ => await RenderCurrentPageAsync();
+        Zoom.OnZoomChanged = async _ => await RenderCurrentPageSilentAsync();
 
         // Sync navigation state changes back to this VM's properties
         Navigation.PropertyChanged += OnNavigationPropertyChanged;
@@ -247,10 +247,10 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     private DrawingTool _activeDrawingTool = DrawingTool.None;
 
     [ObservableProperty]
-    private string _drawingStrokeColor = "#FF0000";
+    private string _drawingStrokeColor = "#000000";
 
     [ObservableProperty]
-    private string _drawingFillColor = "#0000FF";
+    private string _drawingFillColor = "#00000000";
 
     [ObservableProperty]
     private float _drawingStrokeWidth = 2f;
@@ -633,6 +633,16 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         await RenderCurrentPageAsync();
     }
 
+    /// <summary>
+    /// Refreshes the current page without showing the loading overlay.
+    /// Used after drawing operations to avoid flicker.
+    /// </summary>
+    public async Task RefreshCurrentPageSilentAsync()
+    {
+        HasPageModifications = true;
+        await RenderCurrentPageSilentAsync();
+    }
+
     #endregion
 
     #region Private Helpers
@@ -679,6 +689,39 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Renders the current page without showing IsLoading overlay (no flicker).
+    /// </summary>
+    private async Task RenderCurrentPageSilentAsync()
+    {
+        if (_currentDocument == null || RenderPageCallback == null) return;
+
+        try
+        {
+            double effectiveDpi = 96.0;
+            if (_dpiDetectionService != null && CurrentDisplayInfo != null)
+            {
+                var dpiResult = _dpiDetectionService.CalculateEffectiveDpi(
+                    CurrentDisplayInfo, ZoomLevel, CurrentRenderingQuality);
+                if (dpiResult.IsSuccess) effectiveDpi = dpiResult.Value;
+            }
+
+            var imageSource = await RenderPageCallback(
+                _currentDocument, CurrentPageNumber, ZoomLevel, effectiveDpi);
+
+            if (imageSource != null)
+            {
+                CurrentPageImage = imageSource;
+                StatusMessage = $"Page {CurrentPageNumber} of {TotalPages} - {ZoomLevel:P0}";
+                _lastRenderedDpi = effectiveDpi;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during silent page render");
         }
     }
 

@@ -18,6 +18,7 @@ public sealed class ToolbarManager
     private readonly Window _owner;
     private readonly MainViewModel _viewModel;
     private readonly Func<Task>? _onOpenFile;
+    private bool _suppressZoomSelectionChanged;
     private readonly ILogger? _logger;
     private PdfViewerViewModel? _subscribedViewer;
 
@@ -137,33 +138,28 @@ public sealed class ToolbarManager
             var zoomComboBox = _owner.FindControl<ComboBox>("ToolbarZoomComboBox");
             if (zoomComboBox == null) return;
 
-            var percentText = $"{(int)(zoomLevel * 100)}%";
-
-            // Try to match an existing item
-            for (int i = 0; i < zoomComboBox.ItemCount; i++)
+            _suppressZoomSelectionChanged = true;
+            try
             {
-                if (zoomComboBox.Items[i] is ComboBoxItem item && item.Content is string text && text == percentText)
-                {
-                    zoomComboBox.SelectedIndex = i;
-                    return;
-                }
-            }
+                var percentText = $"{(int)(zoomLevel * 100)}%";
 
-            // No exact match - deselect and show via placeholder-like approach
-            // Since ComboBox isn't editable, select the closest match
-            var presets = new[] { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0 };
-            int closestIndex = 2; // default 100%
-            double minDiff = double.MaxValue;
-            for (int i = 0; i < presets.Length; i++)
-            {
-                var diff = Math.Abs(presets[i] - zoomLevel);
-                if (diff < minDiff)
+                // Try to match an existing item
+                for (int i = 0; i < zoomComboBox.ItemCount; i++)
                 {
-                    minDiff = diff;
-                    closestIndex = i;
+                    if (zoomComboBox.Items[i] is ComboBoxItem item && item.Content is string text && text == percentText)
+                    {
+                        zoomComboBox.SelectedIndex = i;
+                        return;
+                    }
                 }
+
+                // No exact match - deselect so the combobox shows empty (no feedback loop)
+                zoomComboBox.SelectedIndex = -1;
             }
-            zoomComboBox.SelectedIndex = closestIndex;
+            finally
+            {
+                _suppressZoomSelectionChanged = false;
+            }
         }, DispatcherPriority.Background);
     }
 
@@ -229,6 +225,8 @@ public sealed class ToolbarManager
 
     private void OnZoomSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        if (_suppressZoomSelectionChanged) return;
+
         var comboBox = sender as ComboBox;
         if (comboBox?.SelectedItem is not ComboBoxItem item || item.Content is not string zoomText) return;
 

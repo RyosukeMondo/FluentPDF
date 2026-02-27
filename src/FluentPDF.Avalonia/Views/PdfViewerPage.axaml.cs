@@ -42,6 +42,8 @@ public partial class PdfViewerPage : UserControl
 
     // Selection state (Select tool)
     private PageObjectInfo? _selectedObject;
+    private readonly System.Collections.Generic.List<PageObjectInfo> _selectedObjects = new();
+    private readonly System.Collections.Generic.List<Rectangle> _multiSelectionHighlights = new();
     private Rectangle? _selectionHighlight;
     private bool _isDraggingSelection;
     private Point _dragStartPoint;
@@ -338,10 +340,35 @@ public partial class PdfViewerPage : UserControl
             return;
         }
 
-        // Delete selected shape
-        if ((e.Key == Key.Delete || e.Key == Key.Back) && _selectedObject != null)
+        // Ctrl+Z undo
+        if (e.Key == Key.Z && e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
-            _ = DeleteSelectedObjectAsync();
+            _ = UndoAsync();
+            e.Handled = true;
+            return;
+        }
+
+        // Ctrl+Y redo
+        if (e.Key == Key.Y && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            _ = RedoAsync();
+            e.Handled = true;
+            return;
+        }
+
+        // Ctrl+A select all objects on page
+        if (e.Key == Key.A && e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
+            _viewModel?.ActiveDrawingTool == DrawingTool.Select)
+        {
+            _ = SelectAllObjectsAsync();
+            e.Handled = true;
+            return;
+        }
+
+        // Delete selected shape(s)
+        if ((e.Key == Key.Delete || e.Key == Key.Back) && (_selectedObject != null || _selectedObjects.Count > 0))
+        {
+            _ = DeleteSelectedObjectsAsync();
             e.Handled = true;
             return;
         }
@@ -672,25 +699,20 @@ public partial class PdfViewerPage : UserControl
             var bmpW = screenWidth / scale;
             var bmpH = screenHeight / scale;
 
-            // The bitmap was rendered at (zoomLevel * dpi / 72) scale from PDF points.
-            // PDF page size in points -> bitmap pixels = pagePoints * zoomLevel * dpi / 72
-            var dpi = _viewModel.CurrentDisplayInfo?.EffectiveDpi ?? 96.0;
-            var zoom = _viewModel.ZoomLevel;
-            var pdfScale = zoom * dpi / 72.0;
-
-            // Convert bitmap coords to PDF page coords (points, Y-up)
-            var pdfX = (float)(bmpX / pdfScale);
-            var pdfW = (float)(bmpW / pdfScale);
-            var pdfH = (float)(bmpH / pdfScale);
-
-            // PDF coordinate system has Y increasing upward from bottom
-            // Get page height to flip Y
+            // Use ratio-based conversion: bitmap represents full page
             var renderingService = App.GetService<IPdfRenderingService>();
             var pageSizeResult = renderingService.GetPageSize(_viewModel.CurrentDocument, _viewModel.CurrentPageNumber);
             if (pageSizeResult.IsFailed) return;
+            var pageWidth = pageSizeResult.Value.Width;
             var pageHeight = pageSizeResult.Value.Height;
-            var pdfY = (float)(pageHeight - (bmpY / pdfScale));
-            var pdfBottom = (float)(pageHeight - ((bmpY + bmpH) / pdfScale));
+
+            var pdfX = (float)(bmpX / bitmapWidth * pageWidth);
+            var pdfW = (float)(bmpW / bitmapWidth * pageWidth);
+            var pdfH = (float)(bmpH / bitmapHeight * pageHeight);
+
+            // PDF coordinate system has Y increasing upward from bottom
+            var pdfY = (float)(pageHeight - (bmpY / bitmapHeight * pageHeight));
+            var pdfBottom = (float)(pageHeight - ((bmpY + bmpH) / bitmapHeight * pageHeight));
 
             var bounds = new System.Drawing.RectangleF(pdfX, pdfBottom, pdfW, pdfY - pdfBottom);
 
@@ -908,19 +930,19 @@ public partial class PdfViewerPage : UserControl
         var bmpX = (screenPoint.X - offsetX) / scale;
         var bmpY = (screenPoint.Y - offsetY) / scale;
 
-        var dpi = _viewModel.CurrentDisplayInfo?.EffectiveDpi ?? 96.0;
-        var zoom = _viewModel.ZoomLevel;
-        var pdfScale = zoom * dpi / 72.0;
-
-        var pdfX = (float)(bmpX / pdfScale);
-
+        // Use ratio-based conversion: bitmap represents the full page, so
+        // pdfX = (bmpX / bitmapWidth) * pageWidth. This is independent of DPI/zoom.
         var renderingService = App.GetService<IPdfRenderingService>();
         var pageSizeResult = renderingService.GetPageSize(
             _viewModel.CurrentDocument, _viewModel.CurrentPageNumber);
         if (pageSizeResult.IsFailed) return null;
 
+        var pageWidth = pageSizeResult.Value.Width;
         var pageHeight = pageSizeResult.Value.Height;
-        var pdfY = (float)(pageHeight - (bmpY / pdfScale));
+
+        var pdfX = (float)(bmpX / bitmapWidth * pageWidth);
+        // PDF Y-axis is bottom-up, bitmap Y-axis is top-down
+        var pdfY = (float)(pageHeight - (bmpY / bitmapHeight * pageHeight));
 
         return ((float)pdfX, (float)pdfY);
     }
@@ -1176,7 +1198,8 @@ public partial class PdfViewerPage : UserControl
         if (_viewModel.ActiveDrawingTool == DrawingTool.Select)
         {
             _isDraggingSelection = false;
-            _ = HandleSelectClickAsync(point);
+            var ctrlHeld = e.KeyModifiers.HasFlag(KeyModifiers.Control);
+            _ = HandleSelectClickAsync(point, ctrlHeld);
             e.Handled = true;
             return;
         }
@@ -1365,12 +1388,7 @@ public partial class PdfViewerPage : UserControl
         var point = e.GetCurrentPoint(PdfImage).Position;
         _isDrawing = false;
 
-        if (_drawingPreview != null && DrawingCanvas != null)
-        {
-            DrawingCanvas.Children.Remove(_drawingPreview);
-            _drawingPreview = null;
-        }
-
+        // Keep preview visible until re-render completes to avoid flicker
         _ = CommitDrawingAsync(point);
         e.Handled = true;
     }
@@ -1452,7 +1470,38 @@ public partial class PdfViewerPage : UserControl
             if (success)
             {
                 _logger.LogInformation("Shape {Tool} committed on page {Page}", tool, pageNumber);
-                await _viewModel.RefreshCurrentPageAsync();
+
+                // Record undo action
+                var undoService = App.GetService<IUndoRedoService>();
+                var creationData = new ShapeCreationData
+                {
+                    ShapeType = tool switch
+                    {
+                        DrawingTool.Rectangle => DrawingShapeType.Rectangle,
+                        DrawingTool.Circle => DrawingShapeType.Circle,
+                        DrawingTool.Line => DrawingShapeType.Line,
+                        DrawingTool.Freehand => DrawingShapeType.Freehand,
+                        DrawingTool.Text => DrawingShapeType.Text,
+                        _ => DrawingShapeType.Rectangle
+                    },
+                    X = pdfStart.Value.X,
+                    Y = pdfStart.Value.Y,
+                    X2 = pdfEnd.Value.X,
+                    Y2 = pdfEnd.Value.Y,
+                    Width = Math.Abs(pdfEnd.Value.X - pdfStart.Value.X),
+                    Height = Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y),
+                    Radius = Math.Max(Math.Abs(pdfEnd.Value.X - pdfStart.Value.X),
+                                      Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y)) / 2,
+                    FillColor = fillColor,
+                    StrokeColor = strokeColor,
+                    StrokeWidth = strokeWidth,
+                    Points = tool == DrawingTool.Freehand ? ConvertPointsToPdfArray(_drawingPoints) : null,
+                    Text = tool == DrawingTool.Text ? "Text" : null,
+                };
+                undoService.Push(new AddShapeAction(docId, pageNumber, creationData));
+
+                // Silent refresh: re-render without showing loading overlay to avoid flicker
+                await _viewModel.RefreshCurrentPageSilentAsync();
             }
             else
             {
@@ -1463,6 +1512,15 @@ public partial class PdfViewerPage : UserControl
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to commit drawing shape");
+        }
+        finally
+        {
+            // Remove drawing preview now that re-render is complete
+            if (_drawingPreview != null && DrawingCanvas != null)
+            {
+                DrawingCanvas.Children.Remove(_drawingPreview);
+                _drawingPreview = null;
+            }
         }
     }
 
@@ -1525,7 +1583,7 @@ public partial class PdfViewerPage : UserControl
         return true; // Assume original if not tracked
     }
 
-    private async Task HandleSelectClickAsync(Point screenPoint)
+    private async Task HandleSelectClickAsync(Point screenPoint, bool ctrlHeld = false)
     {
         if (_viewModel?.CurrentDocument == null || PdfImage == null)
             return;
@@ -1559,11 +1617,35 @@ public partial class PdfViewerPage : UserControl
 
             if (hit != null)
             {
-                _selectedObject = hit;
-                _dragStartPoint = screenPoint;
-                ShowSelectionHighlight(hit);
-                _logger.LogInformation("Selected page object #{Index} type={Type} isOriginal={IsOrig}",
-                    hit.Index, hit.Type, IsOriginalObject(hit));
+                if (ctrlHeld)
+                {
+                    // Toggle in multi-selection
+                    var existing = _selectedObjects.FindIndex(o => o.Index == hit.Index);
+                    if (existing >= 0)
+                    {
+                        _selectedObjects.RemoveAt(existing);
+                    }
+                    else
+                    {
+                        _selectedObjects.Add(hit);
+                    }
+                    // Primary selection = last added
+                    _selectedObject = _selectedObjects.Count > 0 ? _selectedObjects[^1] : null;
+                    _dragStartPoint = screenPoint;
+                    ShowMultiSelectionHighlights();
+                    _logger.LogInformation("Multi-select: {Count} objects selected", _selectedObjects.Count);
+                }
+                else
+                {
+                    // Single select - clear multi-selection
+                    _selectedObjects.Clear();
+                    _selectedObjects.Add(hit);
+                    _selectedObject = hit;
+                    _dragStartPoint = screenPoint;
+                    ShowSelectionHighlight(hit);
+                    _logger.LogInformation("Selected page object #{Index} type={Type} isOriginal={IsOrig}",
+                        hit.Index, hit.Type, IsOriginalObject(hit));
+                }
             }
             else
             {
@@ -1661,7 +1743,59 @@ public partial class PdfViewerPage : UserControl
     public void ClearSelection()
     {
         _selectedObject = null;
+        _selectedObjects.Clear();
         ClearSelectionHighlight();
+        ClearMultiSelectionHighlights();
+    }
+
+    private void ShowMultiSelectionHighlights()
+    {
+        ClearSelectionHighlight();
+        ClearMultiSelectionHighlights();
+        if (DrawingCanvas == null || PdfImage == null) return;
+
+        foreach (var obj in _selectedObjects)
+        {
+            var topLeft = PdfCoordsToScreen(obj.Left, obj.Top);
+            var bottomRight = PdfCoordsToScreen(obj.Right, obj.Bottom);
+            if (topLeft == null || bottomRight == null) continue;
+
+            var x = Math.Min(topLeft.Value.X, bottomRight.Value.X);
+            var y = Math.Min(topLeft.Value.Y, bottomRight.Value.Y);
+            var w = Math.Abs(bottomRight.Value.X - topLeft.Value.X);
+            var h = Math.Abs(bottomRight.Value.Y - topLeft.Value.Y);
+
+            var isOrig = IsOriginalObject(obj);
+            var strokeColor = isOrig
+                ? Color.FromArgb(200, 255, 140, 0)
+                : Color.FromArgb(200, 0, 120, 215);
+            var fillColor = isOrig
+                ? Color.FromArgb(15, 255, 140, 0)
+                : Color.FromArgb(30, 0, 120, 215);
+
+            var rect = new Rectangle
+            {
+                Stroke = new SolidColorBrush(strokeColor),
+                StrokeThickness = 2,
+                StrokeDashArray = new global::Avalonia.Collections.AvaloniaList<double> { 4, 2 },
+                Fill = new SolidColorBrush(fillColor),
+                Width = w,
+                Height = h,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(rect, x);
+            Canvas.SetTop(rect, y);
+            DrawingCanvas.Children.Add(rect);
+            _multiSelectionHighlights.Add(rect);
+        }
+    }
+
+    private void ClearMultiSelectionHighlights()
+    {
+        if (DrawingCanvas == null) return;
+        foreach (var h in _multiSelectionHighlights)
+            DrawingCanvas.Children.Remove(h);
+        _multiSelectionHighlights.Clear();
     }
 
     private void ClearSelectionHighlight()
@@ -1674,37 +1808,80 @@ public partial class PdfViewerPage : UserControl
         }
     }
 
-    private async Task DeleteSelectedObjectAsync()
+    private async Task DeleteSelectedObjectsAsync()
     {
-        if (_selectedObject == null || _viewModel?.CurrentDocument == null)
-            return;
+        if (_viewModel?.CurrentDocument == null) return;
 
-        // Check lock
-        if (_viewModel.IsOriginalObjectsLocked && IsOriginalObject(_selectedObject))
+        var toDelete = _selectedObjects.Count > 0
+            ? _selectedObjects.ToList()
+            : (_selectedObject != null ? new List<PageObjectInfo> { _selectedObject } : new List<PageObjectInfo>());
+
+        if (toDelete.Count == 0) return;
+
+        // Check lock for all
+        foreach (var obj in toDelete)
         {
-            _logger.LogInformation("Cannot delete locked original object #{Index}", _selectedObject.Index);
-            _viewModel.StatusMessage = "Original PDF objects are locked. Unlock to delete.";
-            return;
+            if (_viewModel.IsOriginalObjectsLocked && IsOriginalObject(obj))
+            {
+                _logger.LogInformation("Cannot delete locked original object #{Index}", obj.Index);
+                _viewModel.StatusMessage = "Some original PDF objects are locked. Unlock to delete.";
+                return;
+            }
         }
 
         try
         {
             var shapeService = App.GetService<IShapeService>();
+            var undoService = App.GetService<IUndoRedoService>();
             var docId = _viewModel.CurrentDocument.FilePath;
             var pageNumber = _viewModel.CurrentPageNumber - 1;
 
-            var success = await shapeService.RemovePageObjectAsync(docId, pageNumber, _selectedObject.Index);
-            if (success)
+            // Delete in reverse index order to avoid index shifting
+            var sorted = toDelete.OrderByDescending(o => o.Index).ToList();
+            int deletedCount = 0;
+
+            foreach (var obj in sorted)
             {
-                _logger.LogInformation("Deleted page object #{Index}", _selectedObject.Index);
+                // Get properties before deletion for undo
+                var props = await shapeService.GetPageObjectPropertiesAsync(docId, pageNumber, obj.Index);
+
+                var success = await shapeService.RemovePageObjectAsync(docId, pageNumber, obj.Index);
+                if (success)
+                {
+                    deletedCount++;
+
+                    // Push undo action with shape data for recreation
+                    undoService.Push(new DeleteShapeAction(docId, pageNumber,
+                        new ShapeCreationData
+                        {
+                            ShapeType = DrawingShapeType.Rectangle, // Generic - we store bounds
+                            X = obj.Left,
+                            Y = obj.Bottom,
+                            Width = obj.Right - obj.Left,
+                            Height = obj.Top - obj.Bottom,
+                            StrokeColor = props?.StrokeColor ?? "#000000",
+                            FillColor = props?.FillColor ?? "#00000000",
+                            StrokeWidth = props?.StrokeWidth ?? 2f
+                        }));
+                }
+            }
+
+            if (deletedCount > 0)
+            {
+                _logger.LogInformation("Deleted {Count} page objects", deletedCount);
                 ClearSelection();
                 await _viewModel.RefreshCurrentPageAsync();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete selected object");
+            _logger.LogError(ex, "Failed to delete selected objects");
         }
+    }
+
+    private async Task DeleteSelectedObjectAsync()
+    {
+        await DeleteSelectedObjectsAsync();
     }
 
     private async Task MoveSelectedObjectAsync(float deltaPdfX, float deltaPdfY)
@@ -1728,6 +1905,10 @@ public partial class PdfViewerPage : UserControl
                 docId, pageNumber, _selectedObject.Index, deltaPdfX, deltaPdfY);
             if (success)
             {
+                // Record undo
+                var undoService = App.GetService<IUndoRedoService>();
+                undoService.Push(new MoveShapeAction(docId, pageNumber, _selectedObject.Index, deltaPdfX, deltaPdfY));
+
                 // Update selected object bounds
                 _selectedObject = _selectedObject with
                 {
@@ -1737,7 +1918,13 @@ public partial class PdfViewerPage : UserControl
                     Top = _selectedObject.Top + deltaPdfY
                 };
                 ShowSelectionHighlight(_selectedObject);
-                await _viewModel.RefreshCurrentPageAsync();
+                await _viewModel.RefreshCurrentPageSilentAsync();
+            }
+            else
+            {
+                _viewModel.StatusMessage = "Failed to move object. It may have been invalidated.";
+                ClearSelectionHighlight();
+                _selectedObject = null;
             }
         }
         catch (Exception ex)
@@ -1757,7 +1944,7 @@ public partial class PdfViewerPage : UserControl
 
         var deleteItem = new global::Avalonia.Controls.MenuItem { Header = "Delete" };
         deleteItem.IsEnabled = !isLocked;
-        deleteItem.Click += (s, e) => _ = DeleteSelectedObjectAsync();
+        deleteItem.Click += (s, e) => _ = DeleteSelectedObjectsAsync();
         menu.Items.Add(deleteItem);
 
         menu.Items.Add(new global::Avalonia.Controls.Separator());
@@ -1833,6 +2020,143 @@ public partial class PdfViewerPage : UserControl
         }
     }
 
+    #region Undo/Redo
+
+    private async Task UndoAsync()
+    {
+        if (_viewModel?.CurrentDocument == null) return;
+
+        var undoService = App.GetService<IUndoRedoService>();
+        var action = undoService.Undo();
+        if (action == null) return;
+
+        var shapeService = App.GetService<IShapeService>();
+
+        switch (action)
+        {
+            case AddShapeAction addAction:
+                // Undo add = remove last object on the page
+                var objects = await shapeService.GetPageObjectsAsync(addAction.DocumentId, addAction.PageNumber);
+                if (objects.Count > 0)
+                {
+                    await shapeService.RemovePageObjectAsync(addAction.DocumentId, addAction.PageNumber, objects[^1].Index);
+                }
+                break;
+
+            case DeleteShapeAction deleteAction:
+                // Undo delete = re-create the shape
+                var d = deleteAction.CreationData;
+                await shapeService.AddRectangleAsync(
+                    deleteAction.DocumentId, deleteAction.PageNumber,
+                    d.X, d.Y, d.Width, d.Height,
+                    d.FillColor, d.StrokeColor, d.StrokeWidth);
+                break;
+
+            case MoveShapeAction moveAction:
+                // Undo move = move back
+                await shapeService.MovePageObjectAsync(
+                    moveAction.DocumentId, moveAction.PageNumber,
+                    moveAction.ObjectIndex, -moveAction.DeltaX, -moveAction.DeltaY);
+                break;
+        }
+
+        ClearSelection();
+        await _viewModel.RefreshCurrentPageAsync();
+        _logger.LogInformation("Undo: {ActionType}", action.ActionType);
+    }
+
+    private async Task RedoAsync()
+    {
+        if (_viewModel?.CurrentDocument == null) return;
+
+        var undoService = App.GetService<IUndoRedoService>();
+        var action = undoService.Redo();
+        if (action == null) return;
+
+        var shapeService = App.GetService<IShapeService>();
+
+        switch (action)
+        {
+            case AddShapeAction addAction:
+                // Redo add = re-create the shape
+                var d = addAction.CreationData;
+                switch (d.ShapeType)
+                {
+                    case DrawingShapeType.Rectangle:
+                        var rx = Math.Min(d.X, d.X2);
+                        var ry = Math.Min(d.Y, d.Y2);
+                        await shapeService.AddRectangleAsync(
+                            addAction.DocumentId, addAction.PageNumber,
+                            rx, ry, d.Width, d.Height,
+                            d.FillColor, d.StrokeColor, d.StrokeWidth);
+                        break;
+                    case DrawingShapeType.Circle:
+                        var cx = (d.X + d.X2) / 2;
+                        var cy = (d.Y + d.Y2) / 2;
+                        await shapeService.AddCircleAsync(
+                            addAction.DocumentId, addAction.PageNumber,
+                            cx, cy, d.Radius,
+                            d.FillColor, d.StrokeColor, d.StrokeWidth);
+                        break;
+                    case DrawingShapeType.Line:
+                        await shapeService.AddLineAsync(
+                            addAction.DocumentId, addAction.PageNumber,
+                            d.X, d.Y, d.X2, d.Y2,
+                            d.StrokeColor, d.StrokeWidth);
+                        break;
+                    case DrawingShapeType.Freehand when d.Points != null:
+                        await shapeService.AddFreehandPathAsync(
+                            addAction.DocumentId, addAction.PageNumber,
+                            d.Points, d.StrokeColor, d.StrokeWidth);
+                        break;
+                    case DrawingShapeType.Text:
+                        await shapeService.AddTextAsync(
+                            addAction.DocumentId, addAction.PageNumber,
+                            d.X, d.Y, d.Text ?? "Text",
+                            d.FontSize, d.FontName, d.StrokeColor);
+                        break;
+                }
+                break;
+
+            case DeleteShapeAction deleteAction:
+                // Redo delete = remove again (find by bounds)
+                var objs = await shapeService.GetPageObjectsAsync(deleteAction.DocumentId, deleteAction.PageNumber);
+                if (objs.Count > 0)
+                    await shapeService.RemovePageObjectAsync(deleteAction.DocumentId, deleteAction.PageNumber, objs[^1].Index);
+                break;
+
+            case MoveShapeAction moveAction:
+                // Redo move = move forward again
+                await shapeService.MovePageObjectAsync(
+                    moveAction.DocumentId, moveAction.PageNumber,
+                    moveAction.ObjectIndex, moveAction.DeltaX, moveAction.DeltaY);
+                break;
+        }
+
+        ClearSelection();
+        await _viewModel.RefreshCurrentPageAsync();
+        _logger.LogInformation("Redo: {ActionType}", action.ActionType);
+    }
+
+    private async Task SelectAllObjectsAsync()
+    {
+        if (_viewModel?.CurrentDocument == null) return;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+
+        _selectedObjects.Clear();
+        _selectedObjects.AddRange(objects);
+        _selectedObject = _selectedObjects.Count > 0 ? _selectedObjects[^1] : null;
+        ShowMultiSelectionHighlights();
+        _logger.LogInformation("Selected all {Count} objects on page", objects.Count);
+    }
+
+    #endregion
+
     /// <summary>
     /// Converts PDF coordinates (points, origin bottom-left) to screen coordinates relative to PdfImage.
     /// </summary>
@@ -1859,22 +2183,19 @@ public partial class PdfViewerPage : UserControl
         var offsetX = (renderWidth - bitmapWidth * scale) / 2.0;
         var offsetY = (renderHeight - bitmapHeight * scale) / 2.0;
 
-        var dpi = _viewModel.CurrentDisplayInfo?.EffectiveDpi ?? 96.0;
-        var zoom = _viewModel.ZoomLevel;
-        var pdfScale = zoom * dpi / 72.0;
-
         var renderingService = App.GetService<IPdfRenderingService>();
         var pageSizeResult = renderingService.GetPageSize(
             _viewModel.CurrentDocument, _viewModel.CurrentPageNumber);
         if (pageSizeResult.IsFailed) return null;
 
+        var pageWidth = pageSizeResult.Value.Width;
         var pageHeight = pageSizeResult.Value.Height;
 
-        // Reverse of ScreenPointToPdfCoords:
-        // pdfX = bmpX / pdfScale  =>  bmpX = pdfX * pdfScale
-        // pdfY = pageHeight - (bmpY / pdfScale)  =>  bmpY = (pageHeight - pdfY) * pdfScale
-        var bmpX = pdfX * pdfScale;
-        var bmpY = (pageHeight - pdfY) * pdfScale;
+        // Reverse of ScreenPointToPdfCoords (ratio-based):
+        // pdfX = (bmpX / bitmapWidth) * pageWidth  =>  bmpX = (pdfX / pageWidth) * bitmapWidth
+        // pdfY = pageHeight - (bmpY / bitmapHeight) * pageHeight  =>  bmpY = ((pageHeight - pdfY) / pageHeight) * bitmapHeight
+        var bmpX = (pdfX / pageWidth) * bitmapWidth;
+        var bmpY = ((pageHeight - pdfY) / pageHeight) * bitmapHeight;
 
         // bmpX = (screenX - offsetX) / scale  =>  screenX = bmpX * scale + offsetX
         var screenX = bmpX * scale + offsetX;
