@@ -434,7 +434,7 @@ internal static class QpdfNative
     /// <param name="job">QPDF job handle.</param>
     /// <param name="pageNumber">1-based page number.</param>
     /// <returns>Page object handle, or 0 on error.</returns>
-    public static ulong GetPageHandle(SafeQpdfJobHandle job, int pageNumber)
+    public static uint GetPageHandle(SafeQpdfJobHandle job, int pageNumber)
     {
         if (job == null || job.IsInvalid)
         {
@@ -445,7 +445,7 @@ internal static class QpdfNative
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern ulong qpdf_get_page_n(SafeQpdfJobHandle job, int page_num);
+    private static extern uint qpdf_get_page_n(SafeQpdfJobHandle job, int page_num);
 
     /// <summary>
     /// Rotates a page by the specified angle (must be 0, 90, 180, or 270).
@@ -456,172 +456,156 @@ internal static class QpdfNative
     /// <param name="angle">Rotation angle (0, 90, 180, or 270 degrees).</param>
     /// <param name="relative">If true, rotation is relative to current; if false, absolute.</param>
     /// <returns>QPDF_SUCCESS (0) on success, or an error code.</returns>
-    public static int RotatePage(SafeQpdfJobHandle job, ulong pageHandle, int angle, bool relative)
+    public static int RotatePage(SafeQpdfJobHandle job, uint pageHandle, int angle, bool relative)
     {
         if (job == null || job.IsInvalid)
-        {
             throw new ArgumentException("Invalid job handle.", nameof(job));
-        }
-
         return qpdf_oh_rotate_page(job, pageHandle, angle, relative ? 1 : 0);
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int qpdf_oh_rotate_page(SafeQpdfJobHandle job, ulong page_oh, int angle, int relative);
+    private static extern int qpdf_oh_rotate_page(SafeQpdfJobHandle job, uint page_oh, int angle, int relative);
 
-    /// <summary>
-    /// Gets the media box for a page (returns array: [llx, lly, urx, ury]).
-    /// See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
-    /// </summary>
-    /// <param name="job">QPDF job handle.</param>
-    /// <param name="pageHandle">Page object handle from GetPageHandle.</param>
-    /// <returns>Array of 4 doubles [llx, lly, urx, ury] or null on error.</returns>
-    public static double[]? GetPageMediaBox(SafeQpdfJobHandle job, ulong pageHandle)
+    public static double[]? GetPageMediaBox(SafeQpdfJobHandle job, uint pageHandle)
     {
-        if (job == null || job.IsInvalid)
-        {
-            return null;
-        }
-
+        if (job == null || job.IsInvalid) return null;
         var box = new double[4];
         var result = qpdf_oh_get_media_box(job, pageHandle, box);
-
         return result == ErrorCodes.Success ? box : null;
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int qpdf_oh_get_media_box(SafeQpdfJobHandle job, ulong page_oh, [Out] double[] box);
+    private static extern int qpdf_oh_get_media_box(SafeQpdfJobHandle job, uint page_oh, [Out] double[] box);
 
-    /// <summary>
-    /// Adds a new blank page to the document.
-    /// See: https://qpdf.readthedocs.io/en/stable/c-api.html#page-operations
-    /// </summary>
-    /// <param name="job">QPDF job handle.</param>
-    /// <param name="mediaBox">Media box array [llx, lly, urx, ury].</param>
-    /// <param name="position">Position to insert (1-based), or 0 to append.</param>
-    /// <returns>Page object handle for the new page, or 0 on error.</returns>
-    public static ulong AddBlankPage(SafeQpdfJobHandle job, double[] mediaBox, int position)
+    public static uint AddBlankPage(SafeQpdfJobHandle job, double[] mediaBox, int position)
     {
         if (job == null || job.IsInvalid)
-        {
             throw new ArgumentException("Invalid job handle.", nameof(job));
-        }
-
         if (mediaBox == null || mediaBox.Length != 4)
-        {
             throw new ArgumentException("Media box must be an array of 4 doubles.", nameof(mediaBox));
-        }
-
         return qpdf_add_blank_page(job, mediaBox[0], mediaBox[1], mediaBox[2], mediaBox[3], position);
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern ulong qpdf_add_blank_page(
+    private static extern uint qpdf_add_blank_page(
         SafeQpdfJobHandle job,
         double llx, double lly, double urx, double ury,
         int position);
 
     #endregion
 
-    #region Object Handle - Stream Operations
+    #region Object Handle - Stream Operations (uint = QPDF object handle)
 
-    /// <summary>
-    /// Gets a dictionary key from an object handle.
-    /// </summary>
-    public static ulong GetObjectKey(SafeQpdfJobHandle job, ulong oh, string key)
-    {
-        return qpdf_oh_get_key(job, oh, key);
-    }
+    public static uint GetObjectKey(SafeQpdfJobHandle job, uint oh, string key)
+        => qpdf_oh_get_key(job, oh, key);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    private static extern ulong qpdf_oh_get_key(
-        SafeQpdfJobHandle qpdf, ulong oh,
+    private static extern uint qpdf_oh_get_key(
+        SafeQpdfJobHandle qpdf, uint oh,
         [MarshalAs(UnmanagedType.LPStr)] string key);
 
-    /// <summary>Checks if an object handle refers to a stream.</summary>
-    public static bool IsStream(SafeQpdfJobHandle job, ulong oh) => qpdf_oh_is_stream(job, oh) != 0;
+    public static bool IsStream(SafeQpdfJobHandle job, uint oh) => qpdf_oh_is_stream(job, oh) != 0;
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int qpdf_oh_is_stream(SafeQpdfJobHandle qpdf, ulong oh);
+    private static extern int qpdf_oh_is_stream(SafeQpdfJobHandle qpdf, uint oh);
 
-    /// <summary>Checks if an object handle refers to an array.</summary>
-    public static bool IsArray(SafeQpdfJobHandle job, ulong oh) => qpdf_oh_is_array(job, oh) != 0;
-
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int qpdf_oh_is_array(SafeQpdfJobHandle qpdf, ulong oh);
-
-    /// <summary>Gets number of items in an array object.</summary>
-    public static int GetArrayNItems(SafeQpdfJobHandle job, ulong oh) => qpdf_oh_get_array_n_items(job, oh);
+    public static bool IsArray(SafeQpdfJobHandle job, uint oh) => qpdf_oh_is_array(job, oh) != 0;
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int qpdf_oh_get_array_n_items(SafeQpdfJobHandle qpdf, ulong oh);
+    private static extern int qpdf_oh_is_array(SafeQpdfJobHandle qpdf, uint oh);
 
-    /// <summary>Gets an item from an array object.</summary>
-    public static ulong GetArrayItem(SafeQpdfJobHandle job, ulong oh, int n) => qpdf_oh_get_array_item(job, oh, n);
+    public static int GetArrayNItems(SafeQpdfJobHandle job, uint oh) => qpdf_oh_get_array_n_items(job, oh);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern ulong qpdf_oh_get_array_item(SafeQpdfJobHandle qpdf, ulong oh, int n);
+    private static extern int qpdf_oh_get_array_n_items(SafeQpdfJobHandle qpdf, uint oh);
+
+    public static uint GetArrayItem(SafeQpdfJobHandle job, uint oh, int n) => qpdf_oh_get_array_item(job, oh, n);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint qpdf_oh_get_array_item(SafeQpdfJobHandle qpdf, uint oh, int n);
 
     /// <summary>
-    /// Gets decoded (decompressed) stream data. Returns buffer pointer and length.
-    /// Buffer is valid until next QPDF oh call.
-    /// decode_level: 0=none, 1=generalized, 2=specialized, 3=all
+    /// Gets decoded stream data. decode_level: 0=none, 1=generalized, 2=specialized, 3=all.
+    /// QPDF C API: qpdf_oh_get_stream_data(qpdf, oh, decode_level, filtered, buf, len)
+    /// Returns int (success/failure). Buffer valid until next oh call or qpdf_oh_free_buffer.
     /// </summary>
     public static (IntPtr buffer, int length, bool filtered) GetStreamData(
-        SafeQpdfJobHandle job, ulong oh, int decodeLevel = 3)
+        SafeQpdfJobHandle job, uint oh, int decodeLevel = 3)
     {
         int filtered = 0;
         IntPtr bufp = IntPtr.Zero;
-        IntPtr len = IntPtr.Zero;
-        qpdf_oh_get_binary_stream_data(job, oh, decodeLevel, ref filtered, ref bufp, ref len);
-        return (bufp, (int)len, filtered != 0);
+        UIntPtr len = UIntPtr.Zero;
+        var result = qpdf_oh_get_stream_data(job, oh, decodeLevel, ref filtered, ref bufp, ref len);
+        return (bufp, (int)(uint)len, filtered != 0);
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void qpdf_oh_get_binary_stream_data(
-        SafeQpdfJobHandle qpdf, ulong stream_oh,
+    private static extern int qpdf_oh_get_stream_data(
+        SafeQpdfJobHandle qpdf, uint stream_oh,
         int decode_level,
         ref int filtered,
         ref IntPtr bufp,
-        ref IntPtr len);
+        ref UIntPtr len);
 
     /// <summary>
     /// Replaces stream data. Pass filter=0 and decode_parms=0 for no compression.
+    /// QPDF C API: qpdf_oh_replace_stream_data(qpdf, oh, data, len, filter_oh, decode_parms_oh)
     /// </summary>
     public static void ReplaceStreamData(
-        SafeQpdfJobHandle job, ulong oh, byte[] data, ulong filter, ulong decodeParms)
+        SafeQpdfJobHandle job, uint oh, byte[] data, uint filter, uint decodeParms)
     {
-        qpdf_oh_replace_stream_data(job, oh, data, (IntPtr)data.Length, filter, decodeParms);
+        qpdf_oh_replace_stream_data(job, oh, data, (UIntPtr)data.Length, filter, decodeParms);
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void qpdf_oh_replace_stream_data(
-        SafeQpdfJobHandle qpdf, ulong stream_oh,
-        byte[] data, IntPtr length,
-        ulong filter, ulong decode_parms);
+        SafeQpdfJobHandle qpdf, uint stream_oh,
+        byte[] data, UIntPtr length,
+        uint filter, uint decode_parms);
 
-    /// <summary>Creates a null object handle (for optional parameters).</summary>
-    public static ulong NewNull(SafeQpdfJobHandle job) => qpdf_oh_new_null(job);
+    public static uint NewNull(SafeQpdfJobHandle job) => qpdf_oh_new_null(job);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern ulong qpdf_oh_new_null(SafeQpdfJobHandle qpdf);
+    private static extern uint qpdf_oh_new_null(SafeQpdfJobHandle qpdf);
 
-    /// <summary>Appends an item to an array object handle.</summary>
-    public static void AppendArrayItem(SafeQpdfJobHandle job, ulong arrayOh, ulong itemOh) =>
+    public static void AppendArrayItem(SafeQpdfJobHandle job, uint arrayOh, uint itemOh) =>
         qpdf_oh_append_item(job, arrayOh, itemOh);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void qpdf_oh_append_item(SafeQpdfJobHandle qpdf, ulong array_oh, ulong item);
+    private static extern void qpdf_oh_append_item(SafeQpdfJobHandle qpdf, uint array_oh, uint item);
 
-    /// <summary>Creates a new stream with given data and no filter.</summary>
-    public static ulong NewStream(SafeQpdfJobHandle job, byte[] data)
+    /// <summary>
+    /// Creates a new empty stream, then replaces its data.
+    /// QPDF C API: qpdf_oh_new_stream(qpdf) returns uint oh.
+    /// </summary>
+    public static uint NewStream(SafeQpdfJobHandle job, byte[] data)
     {
-        return qpdf_oh_new_binary_stream(job, data, (IntPtr)data.Length);
+        var streamOh = qpdf_oh_new_stream(job);
+        if (streamOh != 0 && data.Length > 0)
+        {
+            var nullOh = NewNull(job);
+            ReplaceStreamData(job, streamOh, data, nullOh, nullOh);
+        }
+        return streamOh;
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-    private static extern ulong qpdf_oh_new_binary_stream(
-        SafeQpdfJobHandle qpdf, byte[] data, IntPtr length);
+    private static extern uint qpdf_oh_new_stream(SafeQpdfJobHandle qpdf);
+
+    /// <summary>Frees buffer returned by GetStreamData.</summary>
+    public static void FreeBuffer(SafeQpdfJobHandle job) => qpdf_oh_free_buffer(job);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void qpdf_oh_free_buffer(SafeQpdfJobHandle qpdf);
+
+    /// <summary>Replaces a key in a dictionary object.</summary>
+    public static void ReplaceKey(SafeQpdfJobHandle job, uint dictOh, string key, uint valueOh)
+        => qpdf_oh_replace_key(job, dictOh, key, valueOh);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    private static extern void qpdf_oh_replace_key(
+        SafeQpdfJobHandle qpdf, uint dict_oh,
+        [MarshalAs(UnmanagedType.LPStr)] string key, uint value_oh);
 
     #endregion
 

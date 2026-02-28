@@ -133,7 +133,7 @@ public sealed class ContentStreamPatcher
 
         // Get existing content stream bytes
         byte[] originalStreamBytes;
-        ulong streamOhToReplace;
+        uint streamOhToReplace;
 
         if (QpdfNative.IsStream(job, contentsOh))
         {
@@ -192,30 +192,9 @@ public sealed class ContentStreamPatcher
         }
         else if (QpdfNative.IsArray(job, contentsOh))
         {
-            // Create a new single stream and replace the first item
-            // Actually, simpler: replace first stream, clear rest
-            // But QPDF arrays are tricky. Just create a new stream and
-            // replace the /Contents key with it.
+            // Replace /Contents array with a single stream
             var newStreamOh = QpdfNative.NewStream(job, patchedBytes);
-            // We can't easily replace the /Contents key in QPDF C API,
-            // so replace first stream's data and hope it covers everything.
-            int n = QpdfNative.GetArrayNItems(job, contentsOh);
-            if (n > 0)
-            {
-                var firstOh = QpdfNative.GetArrayItem(job, contentsOh, 0);
-                if (QpdfNative.IsStream(job, firstOh))
-                {
-                    var nullOh = QpdfNative.NewNull(job);
-                    QpdfNative.ReplaceStreamData(job, firstOh, patchedBytes, nullOh, nullOh);
-                    // Clear remaining streams
-                    for (int i = 1; i < n; i++)
-                    {
-                        var itemOh = QpdfNative.GetArrayItem(job, contentsOh, i);
-                        if (QpdfNative.IsStream(job, itemOh))
-                            QpdfNative.ReplaceStreamData(job, itemOh, Array.Empty<byte>(), nullOh, nullOh);
-                    }
-                }
-            }
+            QpdfNative.ReplaceKey(job, pageOh, "/Contents", newStreamOh);
         }
 
         _logger.LogInformation("Patched page {Index}: {OrigLen} → {NewLen} bytes, {PatchCount} matrix patches, {NewObjCount} new objects",
@@ -223,7 +202,7 @@ public sealed class ContentStreamPatcher
             patches?.Count ?? 0, newOps?.Count ?? 0);
     }
 
-    private static byte[] ReadStreamData(SafeQpdfJobHandle job, ulong streamOh)
+    private static byte[] ReadStreamData(SafeQpdfJobHandle job, uint streamOh)
     {
         var (bufp, length, _) = QpdfNative.GetStreamData(job, streamOh, 3); // decode_level=all
         if (bufp == IntPtr.Zero || length == 0)
