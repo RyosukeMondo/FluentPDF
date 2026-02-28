@@ -38,6 +38,8 @@ public static class GuiEndpoints
         MapDrawEndpoint(group);
         MapSelectTextEndpoint(group);
         MapWatermarkEndpoint(group);
+        MapDrawShapeEndpoint(group);
+        MapSaveEndpoint(group);
     }
 
     private static MainWindow? GetMainWindow()
@@ -736,4 +738,138 @@ public static class GuiEndpoints
     private record PageOpRequest(string? Action);
     private record DrawRequest(string? Tool, string? StrokeColor, string? FillColor, float? StrokeWidth);
     private record WatermarkRequest(string? Text, float? Opacity, int? FontSize, float? Rotation);
+    private record DrawShapeRequest(
+        string? Shape, int? PageNumber,
+        float? X, float? Y, float? Width, float? Height,
+        float? X2, float? Y2,
+        string? FillColor, string? StrokeColor, float? StrokeWidth);
+    private record SaveRequest(string? OutputPath);
+
+    /// <summary>
+    /// Draws a shape directly on the PDF page via ShapeService (for autonomous testing).
+    /// POST /api/gui/draw-shape { shape, pageNumber, x, y, width, height, ... }
+    /// </summary>
+    private static void MapDrawShapeEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/draw-shape", async (HttpContext ctx) =>
+        {
+            try
+            {
+                var body = await ctx.Request.ReadFromJsonAsync<DrawShapeRequest>();
+                if (body?.Shape == null)
+                    return Results.BadRequest(new { error = "shape is required (Rectangle|Circle|Line)" });
+
+                var result = await Dispatcher.UIThread.InvokeAsync(async () =>
+                {
+                    var viewer = GetActiveViewer();
+                    if (viewer?.CurrentDocument == null)
+                        return (object)new { success = false, error = "No active document" };
+
+                    var shapeService = App.GetService<IShapeService>();
+                    var docId = viewer.CurrentDocument.FilePath;
+                    var page = (body.PageNumber ?? 1) - 1;
+                    var fill = body.FillColor ?? "#FF000080";
+                    var stroke = body.StrokeColor ?? "#000000";
+                    var sw = body.StrokeWidth ?? 2f;
+                    bool ok = false;
+
+                    switch (body.Shape.ToLowerInvariant())
+                    {
+                        case "rectangle":
+                            ok = await shapeService.AddRectangleAsync(docId, page,
+                                body.X ?? 100, body.Y ?? 100, body.Width ?? 50, body.Height ?? 30,
+                                fill, stroke, sw);
+                            break;
+                        case "circle":
+                            ok = await shapeService.AddCircleAsync(docId, page,
+                                body.X ?? 150, body.Y ?? 150, body.Width ?? 25,
+                                fill, stroke, sw);
+                            break;
+                        case "line":
+                            ok = await shapeService.AddLineAsync(docId, page,
+                                body.X ?? 100, body.Y ?? 100, body.X2 ?? 200, body.Y2 ?? 200,
+                                stroke, sw);
+                            break;
+                        default:
+                            return (object)new { success = false, error = $"Unknown shape: {body.Shape}" };
+                    }
+
+                    if (ok)
+                        await viewer.RefreshCurrentPageAsync();
+
+                    return (object)new { success = ok, shape = body.Shape, page = page + 1 };
+                });
+
+                return Results.Json(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { success = false, error = ex.ToString() });
+            }
+        })
+        .WithName("DrawShape")
+        .WithSummary("Draw a shape on the current PDF page");
+    }
+
+    /// <summary>
+    /// Saves the current document. Triggers QPDF content stream patching if shapes were added.
+    /// POST /api/gui/save { outputPath? }
+    /// </summary>
+    private static void MapSaveEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/save", async (HttpContext ctx) =>
+        {
+            try
+            {
+                var body = await ctx.Request.ReadFromJsonAsync<SaveRequest>();
+
+                var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Dispatcher.UIThread.Post(async () =>
+                {
+                    try
+                    {
+                        var viewer = GetActiveViewer();
+                        if (viewer?.CurrentDocument == null)
+                        {
+                            tcs.SetResult(new { success = false, error = "No active document" });
+                            return;
+                        }
+
+                        // Trigger save via ViewModel command
+                        if (viewer.SaveCommand.CanExecute(null))
+                        {
+                            viewer.SaveCommand.Execute(null);
+                            // Wait a bit for save to complete
+                            await Task.Delay(2000);
+                            tcs.SetResult(new
+                            {
+                                success = true,
+                                filePath = viewer.CurrentDocument.FilePath,
+                                hasUnsavedChanges = viewer.HasUnsavedChanges
+                            });
+                        }
+                        else
+                        {
+                            tcs.SetResult(new { success = false, error = "Save command not available (no unsaved changes?)" });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        tcs.SetResult(new { success = false, error = ex.ToString() });
+                    }
+                });
+
+                var result = await Task.WhenAny(tcs.Task, Task.Delay(10000));
+                if (result == tcs.Task)
+                    return Results.Json(await tcs.Task);
+                return Results.Json(new { success = false, error = "Save timed out after 10 seconds" });
+            }
+            catch (Exception ex)
+            {
+                return Results.Json(new { success = false, error = ex.ToString() });
+            }
+        })
+        .WithName("Save")
+        .WithSummary("Save the current document");
+    }
 }
