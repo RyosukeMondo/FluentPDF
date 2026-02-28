@@ -14,14 +14,50 @@ public sealed class ShapeService : IShapeService
 {
     private readonly ILogger<ShapeService> _logger;
     private readonly Func<string, PdfDocument?> _documentResolver;
+    private readonly ContentStreamPatcher _patcher;
+
+    /// <summary>
+    /// Maps documentId to original file path (at load time) so we can patch from the original.
+    /// </summary>
+    private readonly Dictionary<string, string> _originalPaths = new();
 
     public ShapeService(
         ILogger<ShapeService> logger,
-        Func<string, PdfDocument?> documentResolver)
+        Func<string, PdfDocument?> documentResolver,
+        ContentStreamPatcher patcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _documentResolver = documentResolver ?? throw new ArgumentNullException(nameof(documentResolver));
+        _patcher = patcher ?? throw new ArgumentNullException(nameof(patcher));
     }
+
+    /// <summary>
+    /// Saves the document by patching content streams via QPDF (bypasses GenerateContent).
+    /// Returns true if save succeeded.
+    /// </summary>
+    public void FlushDirtyPages(string documentId)
+    {
+        // No-op: we no longer call GenerateContent.
+        // All changes are tracked in ContentStreamPatcher and applied at save time.
+        _logger.LogInformation("FlushDirtyPages called for {DocId} - using content stream patching (no GenerateContent)", documentId);
+    }
+
+    /// <summary>
+    /// Saves via QPDF content stream patching. Call this instead of FPDF_SaveAsCopy.
+    /// </summary>
+    public bool SaveWithContentStreamPatching(string documentId, string outputPath)
+    {
+        if (!_patcher.HasPendingChanges)
+        {
+            _logger.LogInformation("No content stream changes to patch for {DocId}", documentId);
+            return false; // Caller should fall back to normal save
+        }
+
+        var inputPath = documentId; // documentId is the file path
+        return _patcher.SaveWithPatches(inputPath, outputPath);
+    }
+
+    public ContentStreamPatcher Patcher => _patcher;
 
     public Task<bool> AddRectangleAsync(
         string documentId, int pageNumber,
@@ -50,8 +86,10 @@ public sealed class ShapeService : IShapeService
             PdfiumInterop.SetPathDrawMode(rect, fillMode: 1, stroke: true);
 
             PdfiumInterop.InsertPageObject(pageHandle, rect);
-            PdfiumInterop.MarkPageObjectDirty(pageHandle, rect);
-            PdfiumInterop.GenerateContent(pageHandle);
+            // Record operators for QPDF save (no GenerateContent — corrupts CIDFont)
+            _patcher.RecordNewObjectOperators(pageNumber,
+                PdfOperatorWriter.Rectangle((float)x, (float)y, (float)width, (float)height,
+                    fr, fg, fb, fa, sr, sg, sb, sa, strokeWidth));
 
             _logger.LogInformation("Added rectangle to document {DocumentId}, page {Page}", documentId, pageNumber);
             return Task.FromResult(true);
@@ -107,8 +145,8 @@ public sealed class ShapeService : IShapeService
             PdfiumInterop.SetPathDrawMode(path, fillMode: 1, stroke: true);
 
             PdfiumInterop.InsertPageObject(pageHandle, path);
-            PdfiumInterop.MarkPageObjectDirty(pageHandle, path);
-            PdfiumInterop.GenerateContent(pageHandle);
+            _patcher.RecordNewObjectOperators(pageNumber,
+                PdfOperatorWriter.Circle(cx, cy, r, fr, fg, fb, fa, sr, sg, sb, sa, strokeWidth));
 
             _logger.LogInformation("Added circle to document {DocumentId}, page {Page}", documentId, pageNumber);
             return Task.FromResult(true);
@@ -145,8 +183,8 @@ public sealed class ShapeService : IShapeService
             PdfiumInterop.SetPathDrawMode(path, fillMode: 0, stroke: true);
 
             PdfiumInterop.InsertPageObject(pageHandle, path);
-            PdfiumInterop.MarkPageObjectDirty(pageHandle, path);
-            PdfiumInterop.GenerateContent(pageHandle);
+            _patcher.RecordNewObjectOperators(pageNumber,
+                PdfOperatorWriter.Line((float)x1, (float)y1, (float)x2, (float)y2, sr, sg, sb, sa, strokeWidth));
 
             _logger.LogInformation("Added line to document {DocumentId}, page {Page}", documentId, pageNumber);
             return Task.FromResult(true);
@@ -191,8 +229,8 @@ public sealed class ShapeService : IShapeService
             PdfiumInterop.SetPathDrawMode(path, fillMode: 0, stroke: true);
 
             PdfiumInterop.InsertPageObject(pageHandle, path);
-            PdfiumInterop.MarkPageObjectDirty(pageHandle, path);
-            PdfiumInterop.GenerateContent(pageHandle);
+            _patcher.RecordNewObjectOperators(pageNumber,
+                PdfOperatorWriter.FreehandPath(points, sr, sg, sb, sa, strokeWidth));
 
             _logger.LogInformation("Added freehand path ({PointCount} points) to document {DocumentId}, page {Page}",
                 points.Length / 2, documentId, pageNumber);
@@ -248,8 +286,16 @@ public sealed class ShapeService : IShapeService
             PdfiumInterop.TransformPageObject(textObj, 1, 0, 0, 1, x, y);
 
             PdfiumInterop.InsertPageObject(pageHandle, textObj);
-            PdfiumInterop.MarkPageObjectDirty(pageHandle, textObj);
-            PdfiumInterop.GenerateContent(pageHandle);
+            // Map PDFium font name to PDF resource name
+            var fontResourceName = fontName switch
+            {
+                "Helvetica" => "Helv",
+                "Times-Roman" or "Times New Roman" => "TiRo",
+                "Courier" => "Cour",
+                _ => "Helv"
+            };
+            _patcher.RecordNewObjectOperators(pageNumber,
+                PdfOperatorWriter.Text((float)x, (float)y, text, fontSize, fontResourceName, cr, cg, cb, ca));
 
             _logger.LogInformation("Added text to document {DocumentId}, page {Page}", documentId, pageNumber);
             return Task.FromResult(true);
@@ -346,14 +392,121 @@ public sealed class ShapeService : IShapeService
                 return Task.FromResult(false);
             }
 
-            PdfiumInterop.TransformPageObject(obj, 1, 0, 0, 1, deltaX, deltaY);
-            PdfiumInterop.GenerateContent(pageHandle);
+            // Use GetMatrix/SetMatrix to preserve text encoding (Transform corrupts CIDFont Japanese text)
+            if (PdfiumInterop.GetPageObjectMatrix(obj, out var ma, out var mb, out var mc, out var md, out var me, out var mf))
+            {
+                PdfiumInterop.SetPageObjectMatrix(obj, ma, mb, mc, md, me + deltaX, mf + deltaY);
+                RecordMatrixChange(pageNumber, ma, mb, mc, md, me, mf, ma, mb, mc, md, me + deltaX, mf + deltaY);
+            }
+            else
+            {
+                // Fallback for objects that don't support GetMatrix
+                PdfiumInterop.TransformPageObject(obj, 1, 0, 0, 1, deltaX, deltaY);
+            }
+            MarkPageDirty(documentId, pageNumber);
             _logger.LogInformation("Moved page object {Index} on page {Page} by ({DeltaX}, {DeltaY})", objectIndex, pageNumber, deltaX, deltaY);
             return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to move page object {Index} on page {Page}", objectIndex, pageNumber);
+            return Task.FromResult(false);
+        }
+        finally
+        {
+            pageHandle.Dispose();
+        }
+    }
+
+    public Task<int> MovePageObjectsBatchAsync(string documentId, int pageNumber, int[] objectIndices, float deltaX, float deltaY)
+    {
+        var (doc, docHandle, pageHandle) = ResolvePage(documentId, pageNumber);
+        if (pageHandle == null) return Task.FromResult(0);
+
+        try
+        {
+            var count = PdfiumInterop.GetPageObjectCount(pageHandle);
+            int moved = 0;
+
+            foreach (var idx in objectIndices)
+            {
+                if (idx < 0 || idx >= count) continue;
+                var obj = PdfiumInterop.GetPageObject(pageHandle, idx);
+                if (obj == IntPtr.Zero) continue;
+
+                if (PdfiumInterop.GetPageObjectMatrix(obj, out var ma, out var mb, out var mc, out var md, out var me, out var mf))
+                {
+                    PdfiumInterop.SetPageObjectMatrix(obj, ma, mb, mc, md, me + deltaX, mf + deltaY);
+                    RecordMatrixChange(pageNumber, ma, mb, mc, md, me, mf, ma, mb, mc, md, me + deltaX, mf + deltaY);
+                }
+                else
+                {
+                    PdfiumInterop.TransformPageObject(obj, 1, 0, 0, 1, deltaX, deltaY);
+                }
+                moved++;
+            }
+
+            if (moved > 0)
+                MarkPageDirty(documentId, pageNumber);
+
+            _logger.LogInformation("Batch moved {Count} objects on page {Page} by ({DeltaX}, {DeltaY})", moved, pageNumber, deltaX, deltaY);
+            return Task.FromResult(moved);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to batch move objects on page {Page}", pageNumber);
+            return Task.FromResult(0);
+        }
+        finally
+        {
+            pageHandle.Dispose();
+        }
+    }
+
+    public Task<bool> ResizePageObjectAsync(string documentId, int pageNumber, int objectIndex,
+        float scaleX, float scaleY, float anchorPdfX, float anchorPdfY)
+    {
+        var (doc, docHandle, pageHandle) = ResolvePage(documentId, pageNumber);
+        if (pageHandle == null) return Task.FromResult(false);
+
+        try
+        {
+            var count = PdfiumInterop.GetPageObjectCount(pageHandle);
+            if (objectIndex < 0 || objectIndex >= count)
+                return Task.FromResult(false);
+
+            var obj = PdfiumInterop.GetPageObject(pageHandle, objectIndex);
+            if (obj == IntPtr.Zero) return Task.FromResult(false);
+
+            // Clamp to prevent zero/negative scale
+            scaleX = Math.Max(scaleX, 0.05f);
+            scaleY = Math.Max(scaleY, 0.05f);
+
+            if (PdfiumInterop.GetPageObjectMatrix(obj, out var a, out var b, out var c, out var d, out var e, out var f))
+            {
+                var newA = a * scaleX;
+                var newB = b * scaleX;
+                var newC = c * scaleY;
+                var newD = d * scaleY;
+                var newE = anchorPdfX + scaleX * (e - anchorPdfX);
+                var newF = anchorPdfY + scaleY * (f - anchorPdfY);
+                PdfiumInterop.SetPageObjectMatrix(obj, newA, newB, newC, newD, newE, newF);
+                RecordMatrixChange(pageNumber, a, b, c, d, e, f, newA, newB, newC, newD, newE, newF);
+            }
+            else
+            {
+                PdfiumInterop.TransformPageObject(obj, scaleX, 0, 0, scaleY,
+                    anchorPdfX * (1 - scaleX), anchorPdfY * (1 - scaleY));
+            }
+
+            MarkPageDirty(documentId, pageNumber);
+            _logger.LogInformation("Resized object {Index} on page {Page} by ({ScaleX}, {ScaleY}) anchored at ({AnchorX}, {AnchorY})",
+                objectIndex, pageNumber, scaleX, scaleY, anchorPdfX, anchorPdfY);
+            return Task.FromResult(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to resize object {Index} on page {Page}", objectIndex, pageNumber);
             return Task.FromResult(false);
         }
         finally
@@ -407,7 +560,7 @@ public sealed class ShapeService : IShapeService
 
             var (r, g, b, a) = ParseColor(color);
             PdfiumInterop.SetPageObjectStrokeColor(obj, r, g, b, a);
-            PdfiumInterop.GenerateContent(pageHandle);
+            MarkPageDirty(documentId, pageNumber);
             return Task.FromResult(true);
         }
         finally
@@ -432,7 +585,7 @@ public sealed class ShapeService : IShapeService
 
             var (r, g, b, a) = ParseColor(color);
             PdfiumInterop.SetPageObjectFillColor(obj, r, g, b, a);
-            PdfiumInterop.GenerateContent(pageHandle);
+            MarkPageDirty(documentId, pageNumber);
             return Task.FromResult(true);
         }
         finally
@@ -456,7 +609,7 @@ public sealed class ShapeService : IShapeService
             }
 
             PdfiumInterop.SetStrokeWidth(obj, width);
-            PdfiumInterop.GenerateContent(pageHandle);
+            MarkPageDirty(documentId, pageNumber);
             return Task.FromResult(true);
         }
         finally
@@ -491,6 +644,29 @@ public sealed class ShapeService : IShapeService
         }
 
         return (doc, docHandle, pageHandle);
+    }
+
+    /// <summary>
+    /// Records that a page has been modified so content stream patching picks it up at save time.
+    /// For move/resize, records matrix patches so QPDF can update the content stream.
+    /// </summary>
+    private void MarkPageDirty(string documentId, int pageNumber)
+    {
+        // Currently a no-op marker — matrix patches are recorded individually in Move/Resize.
+        // This exists to signal that the page needs content stream patching at save time.
+        _logger.LogDebug("Page {Page} marked dirty for document {DocId}", pageNumber, documentId);
+    }
+
+    /// <summary>
+    /// Records a matrix patch for a moved/resized object so QPDF can update the content stream at save time.
+    /// </summary>
+    private void RecordMatrixChange(int pageNumber,
+        float origA, float origB, float origC, float origD, float origE, float origF,
+        float newA, float newB, float newC, float newD, float newE, float newF)
+    {
+        _patcher.RecordMatrixPatch(pageNumber, new MatrixPatch(
+            origA, origB, origC, origD, origE, origF,
+            newA, newB, newC, newD, newE, newF));
     }
 
     private static (uint r, uint g, uint b, uint a) ParseColor(string hex, float opacity = 1f)

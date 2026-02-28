@@ -523,6 +523,108 @@ internal static class QpdfNative
 
     #endregion
 
+    #region Object Handle - Stream Operations
+
+    /// <summary>
+    /// Gets a dictionary key from an object handle.
+    /// </summary>
+    public static ulong GetObjectKey(SafeQpdfJobHandle job, ulong oh, string key)
+    {
+        return qpdf_oh_get_key(job, oh, key);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    private static extern ulong qpdf_oh_get_key(
+        SafeQpdfJobHandle qpdf, ulong oh,
+        [MarshalAs(UnmanagedType.LPStr)] string key);
+
+    /// <summary>Checks if an object handle refers to a stream.</summary>
+    public static bool IsStream(SafeQpdfJobHandle job, ulong oh) => qpdf_oh_is_stream(job, oh) != 0;
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int qpdf_oh_is_stream(SafeQpdfJobHandle qpdf, ulong oh);
+
+    /// <summary>Checks if an object handle refers to an array.</summary>
+    public static bool IsArray(SafeQpdfJobHandle job, ulong oh) => qpdf_oh_is_array(job, oh) != 0;
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int qpdf_oh_is_array(SafeQpdfJobHandle qpdf, ulong oh);
+
+    /// <summary>Gets number of items in an array object.</summary>
+    public static int GetArrayNItems(SafeQpdfJobHandle job, ulong oh) => qpdf_oh_get_array_n_items(job, oh);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int qpdf_oh_get_array_n_items(SafeQpdfJobHandle qpdf, ulong oh);
+
+    /// <summary>Gets an item from an array object.</summary>
+    public static ulong GetArrayItem(SafeQpdfJobHandle job, ulong oh, int n) => qpdf_oh_get_array_item(job, oh, n);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ulong qpdf_oh_get_array_item(SafeQpdfJobHandle qpdf, ulong oh, int n);
+
+    /// <summary>
+    /// Gets decoded (decompressed) stream data. Returns buffer pointer and length.
+    /// Buffer is valid until next QPDF oh call.
+    /// decode_level: 0=none, 1=generalized, 2=specialized, 3=all
+    /// </summary>
+    public static (IntPtr buffer, int length, bool filtered) GetStreamData(
+        SafeQpdfJobHandle job, ulong oh, int decodeLevel = 3)
+    {
+        int filtered = 0;
+        IntPtr bufp = IntPtr.Zero;
+        IntPtr len = IntPtr.Zero;
+        qpdf_oh_get_binary_stream_data(job, oh, decodeLevel, ref filtered, ref bufp, ref len);
+        return (bufp, (int)len, filtered != 0);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void qpdf_oh_get_binary_stream_data(
+        SafeQpdfJobHandle qpdf, ulong stream_oh,
+        int decode_level,
+        ref int filtered,
+        ref IntPtr bufp,
+        ref IntPtr len);
+
+    /// <summary>
+    /// Replaces stream data. Pass filter=0 and decode_parms=0 for no compression.
+    /// </summary>
+    public static void ReplaceStreamData(
+        SafeQpdfJobHandle job, ulong oh, byte[] data, ulong filter, ulong decodeParms)
+    {
+        qpdf_oh_replace_stream_data(job, oh, data, (IntPtr)data.Length, filter, decodeParms);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void qpdf_oh_replace_stream_data(
+        SafeQpdfJobHandle qpdf, ulong stream_oh,
+        byte[] data, IntPtr length,
+        ulong filter, ulong decode_parms);
+
+    /// <summary>Creates a null object handle (for optional parameters).</summary>
+    public static ulong NewNull(SafeQpdfJobHandle job) => qpdf_oh_new_null(job);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ulong qpdf_oh_new_null(SafeQpdfJobHandle qpdf);
+
+    /// <summary>Appends an item to an array object handle.</summary>
+    public static void AppendArrayItem(SafeQpdfJobHandle job, ulong arrayOh, ulong itemOh) =>
+        qpdf_oh_append_item(job, arrayOh, itemOh);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void qpdf_oh_append_item(SafeQpdfJobHandle qpdf, ulong array_oh, ulong item);
+
+    /// <summary>Creates a new stream with given data and no filter.</summary>
+    public static ulong NewStream(SafeQpdfJobHandle job, byte[] data)
+    {
+        return qpdf_oh_new_binary_stream(job, data, (IntPtr)data.Length);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern ulong qpdf_oh_new_binary_stream(
+        SafeQpdfJobHandle qpdf, byte[] data, IntPtr length);
+
+    #endregion
+
     #region Object Stream Modes
 
     /// <summary>

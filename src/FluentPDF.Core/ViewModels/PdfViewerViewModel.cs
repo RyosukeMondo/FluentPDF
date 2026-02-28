@@ -365,6 +365,12 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     /// </summary>
     public Func<PdfDocument, string?, Task<bool>>? SaveDocumentCallback { get; set; }
 
+    /// <summary>
+    /// Called before save to flush deferred page modifications (e.g., GenerateContent).
+    /// Parameter: documentId (file path).
+    /// </summary>
+    public Action<string>? PreSaveAction { get; set; }
+
     [RelayCommand(CanExecute = nameof(CanExecutePageOperation))]
     private async Task RotatePageClockwiseAsync()
     {
@@ -554,6 +560,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             IsLoading = true;
             StatusMessage = "Saving document...";
 
+            // Flush deferred GenerateContent before saving (avoids CIDFont text corruption during editing)
+            PreSaveAction?.Invoke(_currentDocument.FilePath);
+
             if (SaveDocumentCallback != null)
             {
                 var success = await SaveDocumentCallback(_currentDocument, null);
@@ -599,6 +608,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         try
         {
             IsLoading = true;
+            // Flush deferred GenerateContent before saving
+            PreSaveAction?.Invoke(_currentDocument.FilePath);
+
             if (SaveDocumentCallback != null)
             {
                 // Pass empty string to signal "save as" (UI will show file picker)

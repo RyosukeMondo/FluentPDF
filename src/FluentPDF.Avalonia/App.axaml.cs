@@ -172,10 +172,14 @@ public partial class App : Application
                 services.AddSingleton<Core.Services.ILogExportService, LogExportService>();
                 services.AddSingleton<IUndoRedoService, UndoRedoService>();
 
+                // Register content stream patcher (QPDF-based save that preserves CIDFont text)
+                services.AddSingleton<FluentPDF.Rendering.Services.ContentStreamPatcher>();
+
                 // Register shape drawing service with document resolver
                 services.AddSingleton<IShapeService>(sp =>
                 {
                     var shapeLogger = sp.GetRequiredService<ILogger<FluentPDF.Rendering.Services.ShapeService>>();
+                    var patcher = sp.GetRequiredService<FluentPDF.Rendering.Services.ContentStreamPatcher>();
                     Func<string, FluentPDF.Core.Models.PdfDocument?> docResolver = filePath =>
                     {
                         var mainVm = sp.GetRequiredService<FluentPDF.Core.ViewModels.MainViewModel>();
@@ -190,7 +194,7 @@ public partial class App : Application
                         }
                         return null;
                     };
-                    return new FluentPDF.Rendering.Services.ShapeService(shapeLogger, docResolver);
+                    return new FluentPDF.Rendering.Services.ShapeService(shapeLogger, docResolver, patcher);
                 });
 
                 // Register HiDPI and rendering services

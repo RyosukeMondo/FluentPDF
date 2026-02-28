@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentPDF.Rendering.Interop;
+using FluentPDF.Avalonia.Helpers;
 
 namespace FluentPDF.Avalonia.Views;
 
@@ -47,6 +48,15 @@ public partial class PdfViewerPage : UserControl
     private Rectangle? _selectionHighlight;
     private bool _isDraggingSelection;
     private Point _dragStartPoint;
+    private Point _originalDragStart; // Preserved across incremental updates
+    private SelectionManager? _selectionManager;
+
+    // Resize handle state
+    private enum HandlePosition { TopLeft, TopRight, BottomLeft, BottomRight, MiddleLeft, MiddleRight, TopMiddle, BottomMiddle }
+    private bool _isResizing;
+    private HandlePosition _activeHandle;
+    private Point _resizeStartPoint;
+    private Rect _resizeOriginalRect; // Screen rect of selection at resize start
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PdfViewerPage"/> class.
@@ -87,6 +97,7 @@ public partial class PdfViewerPage : UserControl
             _viewModel.RenderPageCallback = RenderPageAsync;
             _viewModel.PageOperationCallback = ExecutePageOperationAsync;
             _viewModel.SaveDocumentCallback = SaveDocumentAsync;
+            _viewModel.PreSaveAction = docId => App.GetService<IShapeService>().FlushDirtyPages(docId);
             if (_viewModel.Thumbnails != null)
             {
                 _viewModel.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
@@ -112,6 +123,7 @@ public partial class PdfViewerPage : UserControl
             vm.RenderPageCallback = RenderPageAsync;
             vm.PageOperationCallback = ExecutePageOperationAsync;
             vm.SaveDocumentCallback = SaveDocumentAsync;
+            vm.PreSaveAction = docId => App.GetService<IShapeService>().FlushDirtyPages(docId);
             if (vm.Thumbnails != null)
             {
                 vm.Thumbnails.RenderThumbnailCallback = RenderThumbnailAsync;
@@ -175,6 +187,11 @@ public partial class PdfViewerPage : UserControl
             DrawingCanvas.PointerPressed += OnDrawingCanvasPointerPressed;
             DrawingCanvas.PointerMoved += OnDrawingCanvasPointerMoved;
             DrawingCanvas.PointerReleased += OnDrawingCanvasPointerReleased;
+
+            _selectionManager = new SelectionManager(
+                DrawingCanvas,
+                screenToPdf: pt => ScreenPointToPdfCoords(pt),
+                pdfToScreen: (px, py) => PdfCoordsToScreen(px, py));
         }
 
         // Wire up drawing toolbar toggle buttons and color popups
@@ -880,6 +897,50 @@ public partial class PdfViewerPage : UserControl
                 var docHandle = (SafePdfDocumentHandle)document.Handle;
                 if (docHandle.IsInvalid) return false;
 
+                // Check if we have content stream patches (move/resize/new shapes)
+                // If so, use QPDF to patch the original file instead of PDFium's GenerateContent
+                var shapeService = App.GetService<IShapeService>();
+                if (shapeService is FluentPDF.Rendering.Services.ShapeService ss && ss.Patcher.HasPendingChanges)
+                {
+                    _logger.LogInformation("Using QPDF content stream patching to preserve CIDFont text");
+                    // First save PDFium's in-memory state to a temp file (this includes new objects)
+                    var tempPath = targetPath + ".tmp";
+                    var pdfiumSaved = PdfiumInterop.SaveDocument(docHandle, tempPath);
+                    if (!pdfiumSaved)
+                    {
+                        _logger.LogError("PDFium save to temp file failed");
+                        return false;
+                    }
+
+                    // Now patch the ORIGINAL file's content streams (preserving CIDFont encoding)
+                    // and append new object operators
+                    var patched = ss.Patcher.SaveWithPatches(document.FilePath, targetPath);
+                    // Clean up temp file
+                    try { System.IO.File.Delete(tempPath); } catch { }
+
+                    if (patched)
+                    {
+                        ss.Patcher.Clear();
+                        _logger.LogInformation("Document saved with QPDF patches to {Path}", targetPath);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("QPDF patching failed, falling back to PDFium save");
+                        // Fall back: rename temp to target
+                        try
+                        {
+                            if (System.IO.File.Exists(targetPath)) System.IO.File.Delete(targetPath);
+                            System.IO.File.Move(tempPath, targetPath);
+                        }
+                        catch (Exception ex2)
+                        {
+                            _logger.LogError(ex2, "Fallback save also failed");
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
                 var success = PdfiumInterop.SaveDocument(docHandle, targetPath);
                 if (success)
                     _logger.LogInformation("Document saved to {Path}", targetPath);
@@ -1036,6 +1097,7 @@ public partial class PdfViewerPage : UserControl
         {
             ("DrawToolPan", DrawingTool.None),
             ("DrawToolSelect", DrawingTool.Select),
+            ("DrawToolLasso", DrawingTool.Lasso),
             ("DrawToolRectangle", DrawingTool.Rectangle),
             ("DrawToolCircle", DrawingTool.Circle),
             ("DrawToolLine", DrawingTool.Line),
@@ -1062,6 +1124,22 @@ public partial class PdfViewerPage : UserControl
                     _viewModel.SetDrawingToolCommand.Execute(capturedTool.ToString());
                 }
                 UpdateDrawingToolToggleStates();
+            };
+        }
+
+        // Containment mode toggle (intersect vs fully contained)
+        var containmentToggle = this.FindControl<global::Avalonia.Controls.Primitives.ToggleButton>("ContainmentModeToggle");
+        if (containmentToggle != null)
+        {
+            containmentToggle.Click += (s, e) =>
+            {
+                if (_selectionManager == null) return;
+                _selectionManager.ContainmentMode = containmentToggle.IsChecked == true
+                    ? SelectionContainment.FullyContained
+                    : SelectionContainment.Intersect;
+                if (_viewModel != null)
+                    _viewModel.StatusMessage = _selectionManager.ContainmentMode == SelectionContainment.FullyContained
+                        ? "Selection: Fully Contained" : "Selection: Intersect";
             };
         }
 
@@ -1153,6 +1231,7 @@ public partial class PdfViewerPage : UserControl
         {
             ("DrawToolPan", DrawingTool.None),
             ("DrawToolSelect", DrawingTool.Select),
+            ("DrawToolLasso", DrawingTool.Lasso),
             ("DrawToolRectangle", DrawingTool.Rectangle),
             ("DrawToolCircle", DrawingTool.Circle),
             ("DrawToolLine", DrawingTool.Line),
@@ -1194,12 +1273,24 @@ public partial class PdfViewerPage : UserControl
         if (!properties.IsLeftButtonPressed)
             return;
 
+        // Handle Lasso tool
+        if (_viewModel.ActiveDrawingTool == DrawingTool.Lasso && _selectionManager != null)
+        {
+            var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+            var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+            var modifier = SelectionManager.GetModifier(shiftHeld, altHeld);
+            _selectionManager.StartLasso(point, modifier);
+            e.Handled = true;
+            return;
+        }
+
         // Handle Select tool (left click)
         if (_viewModel.ActiveDrawingTool == DrawingTool.Select)
         {
             _isDraggingSelection = false;
-            var ctrlHeld = e.KeyModifiers.HasFlag(KeyModifiers.Control);
-            _ = HandleSelectClickAsync(point, ctrlHeld);
+            var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+            var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+            _ = HandleSelectClickAsync(point, shiftHeld, altHeld);
             e.Handled = true;
             return;
         }
@@ -1277,8 +1368,71 @@ public partial class PdfViewerPage : UserControl
     private void OnDrawingCanvasPointerMoved(
         object? sender, PointerEventArgs e)
     {
-        // Handle drag-to-move for Select tool
-        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectedObject != null && PdfImage != null)
+        // Handle lasso tool drag
+        if (_viewModel?.ActiveDrawingTool == DrawingTool.Lasso && _selectionManager?.IsLassoActive == true && PdfImage != null)
+        {
+            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+            if (props.IsLeftButtonPressed)
+            {
+                var pt = e.GetCurrentPoint(PdfImage).Position;
+                _selectionManager.UpdateLasso(pt);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Handle marquee selection drag (Select tool, started on empty space)
+        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectionManager?.IsMarqueeActive == true && PdfImage != null)
+        {
+            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+            if (props.IsLeftButtonPressed)
+            {
+                var pt = e.GetCurrentPoint(PdfImage).Position;
+                _selectionManager.UpdateMarquee(pt);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Handle multi-object move (Select tool, dragging selected objects)
+        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectionManager?.IsMultiMoving == true && PdfImage != null)
+        {
+            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+            if (props.IsLeftButtonPressed)
+            {
+                var pt = e.GetCurrentPoint(PdfImage).Position;
+                _selectionManager.UpdateMultiMove(pt);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Handle resize drag
+        if (_isResizing && _selectionHighlight != null && PdfImage != null)
+        {
+            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+            if (props.IsLeftButtonPressed)
+            {
+                var pt = e.GetCurrentPoint(PdfImage).Position;
+                var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+                var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+                var newRect = ComputeResizedRect(pt, shiftHeld, altHeld);
+
+                // Update visual preview
+                Canvas.SetLeft(_selectionHighlight, newRect.X);
+                Canvas.SetTop(_selectionHighlight, newRect.Y);
+                _selectionHighlight.Width = newRect.Width;
+                _selectionHighlight.Height = newRect.Height;
+
+                // Update handle positions to match new rect
+                UpdateResizeHandlePositions(newRect.X, newRect.Y, newRect.Width, newRect.Height);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        // Handle single-object drag-to-move for Select tool (legacy single select path)
+        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectedObject != null && _selectedObjects.Count <= 1 && PdfImage != null)
         {
             var props = e.GetCurrentPoint(DrawingCanvas).Properties;
             if (props.IsLeftButtonPressed)
@@ -1291,10 +1445,9 @@ public partial class PdfViewerPage : UserControl
 
                 if (_isDraggingSelection && _selectionHighlight != null)
                 {
-                    // Move the highlight visually
                     Canvas.SetLeft(_selectionHighlight, Canvas.GetLeft(_selectionHighlight) + dx);
                     Canvas.SetTop(_selectionHighlight, Canvas.GetTop(_selectionHighlight) + dy);
-                    foreach (var h in _resizeHandles)
+                    foreach (var (h, _) in _resizeHandles)
                     {
                         Canvas.SetLeft(h, Canvas.GetLeft(h) + dx);
                         Canvas.SetTop(h, Canvas.GetTop(h) + dy);
@@ -1344,19 +1497,87 @@ public partial class PdfViewerPage : UserControl
     private void OnDrawingCanvasPointerReleased(
         object? sender, PointerReleasedEventArgs e)
     {
-        // Commit drag-to-move for Select tool
-        if (_isDraggingSelection && _selectedObject != null && _viewModel != null && PdfImage != null)
+        if (PdfImage == null) { _isDrawing = false; return; }
+
+        var releasePoint = e.GetCurrentPoint(PdfImage).Position;
+
+        // Finish lasso selection
+        if (_selectionManager?.IsLassoActive == true && _viewModel != null)
+        {
+            _ = FinishLassoSelectionAsync();
+            e.Handled = true;
+            return;
+        }
+
+        // Finish marquee selection
+        if (_selectionManager?.IsMarqueeActive == true && _viewModel != null)
+        {
+            _ = FinishMarqueeSelectionAsync(releasePoint);
+            e.Handled = true;
+            return;
+        }
+
+        // Finish multi-object move
+        if (_selectionManager?.IsMultiMoving == true && _viewModel != null)
+        {
+            var delta = _selectionManager.FinishMultiMove(releasePoint);
+            if (delta != null)
+                _ = MoveSelectedObjectsAsync(delta.Value.deltaPdfX, delta.Value.deltaPdfY);
+            e.Handled = true;
+            return;
+        }
+
+        // Commit resize
+        if (_isResizing && _selectedObject != null && _viewModel != null && _selectionHighlight != null)
+        {
+            _isResizing = false;
+            var origW = _resizeOriginalRect.Width;
+            var origH = _resizeOriginalRect.Height;
+            var newW = _selectionHighlight.Width;
+            var newH = _selectionHighlight.Height;
+
+            if (origW > 0 && origH > 0 && (Math.Abs(newW - origW) > 1 || Math.Abs(newH - origH) > 1))
+            {
+                var scaleX = (float)(newW / origW);
+                var scaleY = (float)(newH / origH);
+
+                // Determine anchor in PDF coords (opposite corner of dragged handle)
+                var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+                float anchorPdfX, anchorPdfY;
+
+                if (altHeld)
+                {
+                    // Alt: anchor at center
+                    anchorPdfX = (_selectedObject.Left + _selectedObject.Right) / 2;
+                    anchorPdfY = (_selectedObject.Bottom + _selectedObject.Top) / 2;
+                }
+                else
+                {
+                    // Anchor at opposite corner
+                    (anchorPdfX, anchorPdfY) = _activeHandle switch
+                    {
+                        HandlePosition.TopLeft => (_selectedObject.Right, _selectedObject.Bottom),
+                        HandlePosition.TopRight => (_selectedObject.Left, _selectedObject.Bottom),
+                        HandlePosition.BottomLeft => (_selectedObject.Right, _selectedObject.Top),
+                        HandlePosition.BottomRight => (_selectedObject.Left, _selectedObject.Top),
+                        HandlePosition.MiddleLeft => (_selectedObject.Right, (_selectedObject.Bottom + _selectedObject.Top) / 2),
+                        HandlePosition.MiddleRight => (_selectedObject.Left, (_selectedObject.Bottom + _selectedObject.Top) / 2),
+                        HandlePosition.TopMiddle => ((_selectedObject.Left + _selectedObject.Right) / 2, _selectedObject.Bottom),
+                        HandlePosition.BottomMiddle => ((_selectedObject.Left + _selectedObject.Right) / 2, _selectedObject.Top),
+                        _ => (_selectedObject.Left, _selectedObject.Bottom)
+                    };
+                }
+
+                _ = CommitResizeAsync(scaleX, scaleY, anchorPdfX, anchorPdfY);
+            }
+            e.Handled = true;
+            return;
+        }
+
+        // Commit single-object drag-to-move for Select tool
+        if (_isDraggingSelection && _selectedObject != null && _viewModel != null)
         {
             _isDraggingSelection = false;
-            var releasePoint = e.GetCurrentPoint(PdfImage).Position;
-            var pdfStart = ScreenPointToPdfCoords(_dragStartPoint);
-            var pdfEnd = ScreenPointToPdfCoords(releasePoint);
-            // Actually compute total delta from original click to final position
-            // We need the original start and final point
-            // The highlight already moved visually, now commit the PDF move
-            // Recalculate: we moved highlight incrementally, but for PDF we need total delta
-            // Since _dragStartPoint was updated each move, we stored the original click start in HandleSelectClickAsync
-            // For simplicity, compute from current highlight position back to original bounds
             if (_selectedObject != null)
             {
                 var currentTL = PdfCoordsToScreen(_selectedObject.Left, _selectedObject.Top);
@@ -1367,7 +1588,6 @@ public partial class PdfViewerPage : UserControl
                     var screenDx = (float)(actualX - currentTL.Value.X);
                     var screenDy = (float)(actualY - currentTL.Value.Y);
 
-                    // Convert screen delta to PDF delta
                     var pdfOrigin = ScreenPointToPdfCoords(new Point(0, 0));
                     var pdfDelta = ScreenPointToPdfCoords(new Point(screenDx, screenDy));
                     if (pdfOrigin != null && pdfDelta != null)
@@ -1583,7 +1803,7 @@ public partial class PdfViewerPage : UserControl
         return true; // Assume original if not tracked
     }
 
-    private async Task HandleSelectClickAsync(Point screenPoint, bool ctrlHeld = false)
+    private async Task HandleSelectClickAsync(Point screenPoint, bool shiftHeld = false, bool altHeld = false)
     {
         if (_viewModel?.CurrentDocument == null || PdfImage == null)
             return;
@@ -1594,6 +1814,8 @@ public partial class PdfViewerPage : UserControl
             ClearSelection();
             return;
         }
+
+        var modifier = SelectionManager.GetModifier(shiftHeld, altHeld);
 
         try
         {
@@ -1610,6 +1832,9 @@ public partial class PdfViewerPage : UserControl
                 if (pdfCoords.Value.pdfX >= obj.Left && pdfCoords.Value.pdfX <= obj.Right &&
                     pdfCoords.Value.pdfY >= obj.Bottom && pdfCoords.Value.pdfY <= obj.Top)
                 {
+                    // Skip locked original objects entirely
+                    if (_viewModel.IsOriginalObjectsLocked && IsOriginalObject(obj))
+                        continue;
                     hit = obj;
                     break;
                 }
@@ -1617,39 +1842,63 @@ public partial class PdfViewerPage : UserControl
 
             if (hit != null)
             {
-                if (ctrlHeld)
+                // Check if clicked on already-selected object → prepare multi-move
+                var alreadySelected = _selectedObjects.Any(o => o.Index == hit.Index);
+
+                if (modifier == SelectionModifier.Add || modifier == SelectionModifier.Subtract)
                 {
-                    // Toggle in multi-selection
-                    var existing = _selectedObjects.FindIndex(o => o.Index == hit.Index);
-                    if (existing >= 0)
+                    if (modifier == SelectionModifier.Subtract)
                     {
-                        _selectedObjects.RemoveAt(existing);
+                        // Alt+click: remove from selection
+                        _selectedObjects.RemoveAll(o => o.Index == hit.Index);
                     }
                     else
                     {
-                        _selectedObjects.Add(hit);
+                        // Shift+click: toggle in selection
+                        var existing = _selectedObjects.FindIndex(o => o.Index == hit.Index);
+                        if (existing >= 0)
+                            _selectedObjects.RemoveAt(existing);
+                        else
+                            _selectedObjects.Add(hit);
                     }
-                    // Primary selection = last added
                     _selectedObject = _selectedObjects.Count > 0 ? _selectedObjects[^1] : null;
                     _dragStartPoint = screenPoint;
+                    _originalDragStart = screenPoint;
                     ShowMultiSelectionHighlights();
                     _logger.LogInformation("Multi-select: {Count} objects selected", _selectedObjects.Count);
                 }
+                else if (alreadySelected && _selectedObjects.Count > 1)
+                {
+                    // Click on already-selected object with multiple selected → prepare multi-move
+                    _dragStartPoint = screenPoint;
+                    _originalDragStart = screenPoint;
+                    if (_selectionManager != null)
+                    {
+                        _selectionManager.StartMultiMove(screenPoint, _selectedObjects);
+                        foreach (var h in _multiSelectionHighlights)
+                            _selectionManager.RegisterMoveHighlight(h);
+                    }
+                }
                 else
                 {
-                    // Single select - clear multi-selection
+                    // Plain click: single select
                     _selectedObjects.Clear();
                     _selectedObjects.Add(hit);
                     _selectedObject = hit;
                     _dragStartPoint = screenPoint;
+                    _originalDragStart = screenPoint;
                     ShowSelectionHighlight(hit);
-                    _logger.LogInformation("Selected page object #{Index} type={Type} isOriginal={IsOrig}",
-                        hit.Index, hit.Type, IsOriginalObject(hit));
+                    _logger.LogInformation("Selected object #{Index} type={Type}", hit.Index, hit.Type);
                 }
             }
             else
             {
-                ClearSelection();
+                // No hit - start marquee selection on empty space
+                if (modifier == SelectionModifier.Replace)
+                    ClearSelection();
+
+                if (_selectionManager != null)
+                    _selectionManager.StartMarquee(screenPoint, modifier);
             }
         }
         catch (Exception ex)
@@ -1698,23 +1947,36 @@ public partial class PdfViewerPage : UserControl
         AddResizeHandles(x, y, w, h);
     }
 
-    private readonly System.Collections.Generic.List<Rectangle> _resizeHandles = new();
+    private readonly System.Collections.Generic.List<(Rectangle rect, HandlePosition position)> _resizeHandles = new();
     private const double HandleSize = 8;
+
+    private static StandardCursorType GetCursorForHandle(HandlePosition pos) => pos switch
+    {
+        HandlePosition.TopLeft or HandlePosition.BottomRight => StandardCursorType.TopLeftCorner,
+        HandlePosition.TopRight or HandlePosition.BottomLeft => StandardCursorType.TopRightCorner,
+        HandlePosition.MiddleLeft or HandlePosition.MiddleRight => StandardCursorType.SizeWestEast,
+        HandlePosition.TopMiddle or HandlePosition.BottomMiddle => StandardCursorType.SizeNorthSouth,
+        _ => StandardCursorType.Arrow
+    };
 
     private void AddResizeHandles(double x, double y, double w, double h)
     {
         RemoveResizeHandles();
         if (DrawingCanvas == null) return;
 
-        var positions = new (double px, double py)[]
+        var positions = new (double px, double py, HandlePosition pos)[]
         {
-            (x - HandleSize / 2, y - HandleSize / 2),
-            (x + w - HandleSize / 2, y - HandleSize / 2),
-            (x - HandleSize / 2, y + h - HandleSize / 2),
-            (x + w - HandleSize / 2, y + h - HandleSize / 2),
+            (x, y, HandlePosition.TopLeft),
+            (x + w, y, HandlePosition.TopRight),
+            (x, y + h, HandlePosition.BottomLeft),
+            (x + w, y + h, HandlePosition.BottomRight),
+            (x, y + h / 2, HandlePosition.MiddleLeft),
+            (x + w, y + h / 2, HandlePosition.MiddleRight),
+            (x + w / 2, y, HandlePosition.TopMiddle),
+            (x + w / 2, y + h, HandlePosition.BottomMiddle),
         };
 
-        foreach (var (px, py) in positions)
+        foreach (var (px, py, pos) in positions)
         {
             var handle = new Rectangle
             {
@@ -1723,21 +1985,177 @@ public partial class PdfViewerPage : UserControl
                 Fill = new SolidColorBrush(Colors.White),
                 Stroke = new SolidColorBrush(Color.FromRgb(0, 120, 215)),
                 StrokeThickness = 1.5,
-                IsHitTestVisible = false
+                IsHitTestVisible = true,
+                Cursor = new Cursor(GetCursorForHandle(pos)),
+                Tag = pos
             };
-            Canvas.SetLeft(handle, px);
-            Canvas.SetTop(handle, py);
+            Canvas.SetLeft(handle, px - HandleSize / 2);
+            Canvas.SetTop(handle, py - HandleSize / 2);
+            handle.PointerPressed += OnResizeHandlePressed;
             DrawingCanvas.Children.Add(handle);
-            _resizeHandles.Add(handle);
+            _resizeHandles.Add((handle, pos));
         }
     }
 
     private void RemoveResizeHandles()
     {
         if (DrawingCanvas == null) return;
-        foreach (var h in _resizeHandles)
+        foreach (var (h, _) in _resizeHandles)
+        {
+            h.PointerPressed -= OnResizeHandlePressed;
             DrawingCanvas.Children.Remove(h);
+        }
         _resizeHandles.Clear();
+    }
+
+    private void OnResizeHandlePressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Rectangle rect || rect.Tag is not HandlePosition pos) return;
+        if (_selectedObject == null || _selectionHighlight == null || PdfImage == null) return;
+
+        _isResizing = true;
+        _activeHandle = pos;
+        _resizeStartPoint = e.GetCurrentPoint(PdfImage).Position;
+        _resizeOriginalRect = new Rect(
+            Canvas.GetLeft(_selectionHighlight),
+            Canvas.GetTop(_selectionHighlight),
+            _selectionHighlight.Width,
+            _selectionHighlight.Height);
+        e.Handled = true;
+    }
+
+    private Rect ComputeResizedRect(Point currentPoint, bool shift, bool alt)
+    {
+        var dx = currentPoint.X - _resizeStartPoint.X;
+        var dy = currentPoint.Y - _resizeStartPoint.Y;
+        var r = _resizeOriginalRect;
+
+        double newX = r.X, newY = r.Y, newW = r.Width, newH = r.Height;
+
+        // Adjust based on which handle is being dragged
+        switch (_activeHandle)
+        {
+            case HandlePosition.TopLeft:
+                newX = r.X + dx; newY = r.Y + dy; newW = r.Width - dx; newH = r.Height - dy; break;
+            case HandlePosition.TopRight:
+                newY = r.Y + dy; newW = r.Width + dx; newH = r.Height - dy; break;
+            case HandlePosition.BottomLeft:
+                newX = r.X + dx; newW = r.Width - dx; newH = r.Height + dy; break;
+            case HandlePosition.BottomRight:
+                newW = r.Width + dx; newH = r.Height + dy; break;
+            case HandlePosition.MiddleLeft:
+                newX = r.X + dx; newW = r.Width - dx; break;
+            case HandlePosition.MiddleRight:
+                newW = r.Width + dx; break;
+            case HandlePosition.TopMiddle:
+                newY = r.Y + dy; newH = r.Height - dy; break;
+            case HandlePosition.BottomMiddle:
+                newH = r.Height + dy; break;
+        }
+
+        // Shift = proportional (maintain aspect ratio)
+        if (shift && r.Width > 0 && r.Height > 0)
+        {
+            var aspect = r.Width / r.Height;
+            var isEdge = _activeHandle is HandlePosition.MiddleLeft or HandlePosition.MiddleRight
+                or HandlePosition.TopMiddle or HandlePosition.BottomMiddle;
+            if (!isEdge)
+            {
+                // Use the dominant axis
+                if (Math.Abs(newW / r.Width - 1) > Math.Abs(newH / r.Height - 1))
+                    newH = newW / aspect;
+                else
+                    newW = newH * aspect;
+
+                // Recalculate position for top-left anchored handles
+                if (_activeHandle is HandlePosition.TopLeft)
+                { newX = r.X + r.Width - newW; newY = r.Y + r.Height - newH; }
+                else if (_activeHandle is HandlePosition.TopRight)
+                { newY = r.Y + r.Height - newH; }
+                else if (_activeHandle is HandlePosition.BottomLeft)
+                { newX = r.X + r.Width - newW; }
+            }
+        }
+
+        // Alt = resize from center (symmetric)
+        if (alt)
+        {
+            var cx = r.X + r.Width / 2;
+            var cy = r.Y + r.Height / 2;
+            newX = cx - newW / 2;
+            newY = cy - newH / 2;
+        }
+
+        // Clamp minimum size
+        newW = Math.Max(newW, 5);
+        newH = Math.Max(newH, 5);
+
+        return new Rect(newX, newY, newW, newH);
+    }
+
+    /// <summary>Resize the selected object via REST API.</summary>
+    public async Task<bool> ResizeSelectedObjectAsync(float scaleX, float scaleY, float anchorPdfX, float anchorPdfY)
+    {
+        if (_selectedObject == null || _viewModel?.CurrentDocument == null) return false;
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var result = await shapeService.ResizePageObjectAsync(docId, pageNumber, _selectedObject.Index, scaleX, scaleY, anchorPdfX, anchorPdfY);
+        if (result) await _viewModel.RefreshCurrentPageSilentAsync();
+        return result;
+    }
+
+    private async Task CommitResizeAsync(float scaleX, float scaleY, float anchorPdfX, float anchorPdfY)
+    {
+        if (_selectedObject == null || _viewModel?.CurrentDocument == null) return;
+        try
+        {
+            var shapeService = App.GetService<IShapeService>();
+            var docId = _viewModel.CurrentDocument.FilePath;
+            var pageNumber = _viewModel.CurrentPageNumber - 1;
+            var success = await shapeService.ResizePageObjectAsync(
+                docId, pageNumber, _selectedObject.Index, scaleX, scaleY, anchorPdfX, anchorPdfY);
+            if (success)
+            {
+                // Refresh and re-select the resized object
+                await _viewModel.RefreshCurrentPageSilentAsync();
+                var objects = await shapeService.GetPageObjectsAsync(docId, pageNumber);
+                var updated = objects.FirstOrDefault(o => o.Index == _selectedObject.Index);
+                if (updated != null)
+                {
+                    _selectedObject = updated;
+                    _selectedObjects.Clear();
+                    _selectedObjects.Add(updated);
+                    ShowSelectionHighlight(updated);
+                }
+                _logger.LogInformation("Resized object {Index} by ({ScaleX:F2}, {ScaleY:F2})", _selectedObject?.Index, scaleX, scaleY);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to commit resize");
+        }
+    }
+
+    private void UpdateResizeHandlePositions(double x, double y, double w, double h)
+    {
+        foreach (var (handle, pos) in _resizeHandles)
+        {
+            var (px, py) = pos switch
+            {
+                HandlePosition.TopLeft => (x, y),
+                HandlePosition.TopRight => (x + w, y),
+                HandlePosition.BottomLeft => (x, y + h),
+                HandlePosition.BottomRight => (x + w, y + h),
+                HandlePosition.MiddleLeft => (x, y + h / 2),
+                HandlePosition.MiddleRight => (x + w, y + h / 2),
+                HandlePosition.TopMiddle => (x + w / 2, y),
+                HandlePosition.BottomMiddle => (x + w / 2, y + h),
+                _ => (x, y)
+            };
+            Canvas.SetLeft(handle, px - HandleSize / 2);
+            Canvas.SetTop(handle, py - HandleSize / 2);
+        }
     }
 
     public void ClearSelection()
@@ -1931,6 +2349,118 @@ public partial class PdfViewerPage : UserControl
         {
             _logger.LogError(ex, "Failed to move selected object");
         }
+    }
+
+    private async Task MoveSelectedObjectsAsync(float deltaPdfX, float deltaPdfY)
+    {
+        if (_selectedObjects.Count == 0 || _viewModel?.CurrentDocument == null)
+            return;
+
+        foreach (var obj in _selectedObjects)
+        {
+            if (_viewModel.IsOriginalObjectsLocked && IsOriginalObject(obj))
+            {
+                _viewModel.StatusMessage = "Some original objects are locked. Unlock to move.";
+                return;
+            }
+        }
+
+        try
+        {
+            var shapeService = App.GetService<IShapeService>();
+            var undoService = App.GetService<IUndoRedoService>();
+            var docId = _viewModel.CurrentDocument.FilePath;
+            var pageNumber = _viewModel.CurrentPageNumber - 1;
+
+            // Batch move: single GenerateContent call to prevent index shifting and text corruption
+            var indices = _selectedObjects.Select(o => o.Index).ToArray();
+            int movedCount = await shapeService.MovePageObjectsBatchAsync(
+                docId, pageNumber, indices, deltaPdfX, deltaPdfY);
+
+            if (movedCount > 0)
+            {
+                for (int i = 0; i < _selectedObjects.Count; i++)
+                {
+                    var obj = _selectedObjects[i];
+                    undoService.Push(new MoveShapeAction(docId, pageNumber, obj.Index, deltaPdfX, deltaPdfY));
+                    _selectedObjects[i] = obj with
+                    {
+                        Left = obj.Left + deltaPdfX,
+                        Right = obj.Right + deltaPdfX,
+                        Bottom = obj.Bottom + deltaPdfY,
+                        Top = obj.Top + deltaPdfY
+                    };
+                }
+            }
+
+            _selectedObject = _selectedObjects.Count > 0 ? _selectedObjects[^1] : null;
+
+            if (movedCount > 0)
+            {
+                ShowMultiSelectionHighlights();
+                await _viewModel.RefreshCurrentPageSilentAsync();
+                _logger.LogInformation("Moved {Count} objects", movedCount);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to move selected objects");
+        }
+    }
+
+    private async Task FinishMarqueeSelectionAsync(Point endPoint)
+    {
+        if (_selectionManager == null || _viewModel?.CurrentDocument == null) return;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+
+        var result = _selectionManager.FinishMarquee(endPoint, objects, _selectedObjects.ToList());
+        ApplySelectionResult(result);
+    }
+
+    private async Task FinishLassoSelectionAsync()
+    {
+        if (_selectionManager == null || _viewModel?.CurrentDocument == null) return;
+
+        var shapeService = App.GetService<IShapeService>();
+        var docId = _viewModel.CurrentDocument.FilePath;
+        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+
+        var result = _selectionManager.FinishLasso(objects, _selectedObjects.ToList());
+        ApplySelectionResult(result);
+    }
+
+    private void ApplySelectionResult(MarqueeResult result)
+    {
+        _selectedObjects.Clear();
+        var filtered = _viewModel?.IsOriginalObjectsLocked == true
+            ? result.SelectedObjects.Where(o => !IsOriginalObject(o)).ToList()
+            : result.SelectedObjects;
+        _selectedObjects.AddRange(filtered);
+        _selectedObject = _selectedObjects.Count > 0 ? _selectedObjects[^1] : null;
+
+        if (_selectedObjects.Count == 1)
+            ShowSelectionHighlight(_selectedObjects[0]);
+        else if (_selectedObjects.Count > 1)
+            ShowMultiSelectionHighlights();
+        else
+            ClearSelection();
+
+        _logger.LogInformation("Selection: {Count} objects", _selectedObjects.Count);
+    }
+
+    /// <summary>Gets the list of currently selected objects.</summary>
+    public List<PageObjectInfo> GetSelectedObjects() => _selectedObjects.ToList();
+
+    /// <summary>Gets/sets the selection containment mode.</summary>
+    public SelectionContainment ContainmentMode
+    {
+        get => _selectionManager?.ContainmentMode ?? SelectionContainment.Intersect;
+        set { if (_selectionManager != null) _selectionManager.ContainmentMode = value; }
     }
 
     private void ShowShapeContextMenu(Point screenPoint)
@@ -2149,10 +2679,14 @@ public partial class PdfViewerPage : UserControl
         var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
 
         _selectedObjects.Clear();
-        _selectedObjects.AddRange(objects);
+        var selectable = _viewModel.IsOriginalObjectsLocked
+            ? objects.Where(o => !IsOriginalObject(o)).ToList()
+            : objects;
+        _selectedObjects.AddRange(selectable);
         _selectedObject = _selectedObjects.Count > 0 ? _selectedObjects[^1] : null;
         ShowMultiSelectionHighlights();
-        _logger.LogInformation("Selected all {Count} objects on page", objects.Count);
+        _logger.LogInformation("Selected all {Count} objects on page (filtered from {Total})",
+            _selectedObjects.Count, objects.Count);
     }
 
     #endregion

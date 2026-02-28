@@ -34,6 +34,19 @@ public interface IShapeService
     /// <summary>Moves a page object by delta in PDF coordinates.</summary>
     Task<bool> MovePageObjectAsync(string documentId, int pageNumber, int objectIndex, float deltaX, float deltaY);
 
+    /// <summary>Moves multiple page objects by delta, calling GenerateContent only once at the end.</summary>
+    Task<int> MovePageObjectsBatchAsync(string documentId, int pageNumber, int[] objectIndices, float deltaX, float deltaY);
+
+    /// <summary>Resizes a page object by scale factors relative to an anchor point in PDF coordinates.</summary>
+    Task<bool> ResizePageObjectAsync(string documentId, int pageNumber, int objectIndex,
+        float scaleX, float scaleY, float anchorPdfX, float anchorPdfY);
+
+    /// <summary>
+    /// Flushes deferred GenerateContent for all dirty pages of a document.
+    /// Must be called before saving to persist in-memory object modifications.
+    /// </summary>
+    void FlushDirtyPages(string documentId);
+
     /// <summary>Gets stroke/fill colors and stroke width of a page object.</summary>
     Task<PageObjectProperties?> GetPageObjectPropertiesAsync(string documentId, int pageNumber, int objectIndex);
 

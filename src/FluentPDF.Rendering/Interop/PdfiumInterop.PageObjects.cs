@@ -101,6 +101,19 @@ public static partial class PdfiumInterop
     }
 
     /// <summary>
+    /// Gets the current transformation matrix for a page object.
+    /// </summary>
+    public static bool GetPageObjectMatrix(IntPtr pageObject, out float a, out float b, out float c, out float d, out float e, out float f)
+    {
+        a = b = c = d = e = f = 0;
+        if (pageObject == IntPtr.Zero) return false;
+        if (!FPDFPageObj_GetMatrix(pageObject, out var matrix)) return false;
+        a = matrix.a; b = matrix.b; c = matrix.c;
+        d = matrix.d; e = matrix.e; f = matrix.f;
+        return true;
+    }
+
+    /// <summary>
     /// Sets the transformation matrix for a page object.
     /// </summary>
     /// <param name="pageObject">Handle to the page object.</param>
@@ -415,6 +428,12 @@ public static partial class PdfiumInterop
     private static extern bool FPDFPageObj_SetMatrix(
         IntPtr page_object,
         ref FS_MATRIX matrix);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool FPDFPageObj_GetMatrix(
+        IntPtr page_object,
+        out FS_MATRIX matrix);
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     private static extern void FPDFPage_InsertObject(SafePdfPageHandle page, IntPtr page_obj);

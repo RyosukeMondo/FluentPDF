@@ -7,6 +7,7 @@ public enum DrawingTool
 {
     None,
     Select,
+    Lasso,
     Rectangle,
     Circle,
     Line,
