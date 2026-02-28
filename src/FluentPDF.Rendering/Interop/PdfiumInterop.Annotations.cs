@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace FluentPDF.Rendering.Interop;
@@ -292,11 +293,70 @@ public static partial class PdfiumInterop
     public static bool SaveDocument(SafePdfDocumentHandle document, string filePath, int flags = 0)
     {
         if (document == null || document.IsInvalid)
+            return false;
+
+        // PDFium's FPDF_SaveAsCopy requires an FPDF_FILEWRITE struct with a callback.
+        // We implement it by opening a FileStream and writing via the callback.
+        FileStream? fs = null;
+        try
+        {
+            fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            var capturedFs = fs;
+
+            WriteBlockDelegate writeBlock = (pThis, pData, size) =>
+            {
+                try
+                {
+                    var buffer = new byte[(int)size];
+                    System.Runtime.InteropServices.Marshal.Copy(pData, buffer, 0, (int)size);
+                    capturedFs.Write(buffer, 0, (int)size);
+                    return 1;
+                }
+                catch
+                {
+                    return 0;
+                }
+            };
+
+            // FPDF_FILEWRITE struct: first field is version (int), second is WriteBlock function pointer
+            var fileWrite = new FPDF_FILEWRITE
+            {
+                version = 1,
+                WriteBlock = System.Runtime.InteropServices.Marshal.GetFunctionPointerForDelegate(writeBlock)
+            };
+
+            // Pin the struct and call FPDF_SaveAsCopy
+            var handle = GCHandle.Alloc(fileWrite, GCHandleType.Pinned);
+            try
+            {
+                var result = FPDF_SaveAsCopy(document, handle.AddrOfPinnedObject(), flags);
+                // Keep delegate alive until after the call
+                GC.KeepAlive(writeBlock);
+                return result;
+            }
+            finally
+            {
+                handle.Free();
+            }
+        }
+        catch
         {
             return false;
         }
+        finally
+        {
+            fs?.Dispose();
+        }
+    }
 
-        return FPDF_SaveAsCopy(document, filePath, flags);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int WriteBlockDelegate(IntPtr pThis, IntPtr pData, uint size);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FPDF_FILEWRITE
+    {
+        public int version;
+        public IntPtr WriteBlock;
     }
 
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
@@ -367,11 +427,11 @@ public static partial class PdfiumInterop
         int quad_index,
         FS_QUADPOINTSF quad_points);
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool FPDF_SaveAsCopy(
         SafePdfDocumentHandle document,
-        [MarshalAs(UnmanagedType.LPStr)] string file_path,
+        IntPtr pFileWrite,
         int flags);
 
     #endregion

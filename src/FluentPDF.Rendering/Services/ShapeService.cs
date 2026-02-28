@@ -31,7 +31,11 @@ public sealed class ShapeService : IShapeService
 
     public void FlushDirtyPages(string documentId)
     {
-        _logger.LogInformation("FlushDirtyPages: using content stream patching (no GenerateContent)");
+        var doc = _documentResolver(documentId);
+        if (doc == null) return;
+        var docHandle = (SafePdfDocumentHandle)doc.Handle;
+        var flushed = _pageCache.FlushGenerateContent(docHandle);
+        _logger.LogInformation("FlushDirtyPages: called GenerateContent on {Count} cached pages", flushed);
     }
 
     public bool SaveWithContentStreamPatching(string documentId, string outputPath)

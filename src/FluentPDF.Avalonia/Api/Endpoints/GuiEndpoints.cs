@@ -795,7 +795,10 @@ public static class GuiEndpoints
                     }
 
                     if (ok)
+                    {
+                        viewer.HasPageModifications = true;
                         await viewer.RefreshCurrentPageAsync();
+                    }
 
                     return (object)new { success = ok, shape = body.Shape, page = page + 1 };
                 });
@@ -835,22 +838,23 @@ public static class GuiEndpoints
                             return;
                         }
 
-                        // Trigger save via ViewModel command
-                        if (viewer.SaveCommand.CanExecute(null))
+                        // Invoke save callback directly (awaitable, unlike fire-and-forget command)
+                        if (viewer.SaveDocumentCallback != null)
                         {
-                            viewer.SaveCommand.Execute(null);
-                            // Wait a bit for save to complete
-                            await Task.Delay(2000);
+                            viewer.PreSaveAction?.Invoke(viewer.CurrentDocument.FilePath);
+                            var outputPath = body?.OutputPath ?? viewer.CurrentDocument.FilePath;
+                            var saved = await viewer.SaveDocumentCallback(viewer.CurrentDocument, outputPath);
+                            if (saved) viewer.HasPageModifications = false;
                             tcs.SetResult(new
                             {
-                                success = true,
+                                success = saved,
                                 filePath = viewer.CurrentDocument.FilePath,
                                 hasUnsavedChanges = viewer.HasUnsavedChanges
                             });
                         }
                         else
                         {
-                            tcs.SetResult(new { success = false, error = "Save command not available (no unsaved changes?)" });
+                            tcs.SetResult(new { success = false, error = "Save callback not configured" });
                         }
                     }
                     catch (Exception ex)
@@ -859,10 +863,10 @@ public static class GuiEndpoints
                     }
                 });
 
-                var result = await Task.WhenAny(tcs.Task, Task.Delay(10000));
+                var result = await Task.WhenAny(tcs.Task, Task.Delay(30000));
                 if (result == tcs.Task)
                     return Results.Json(await tcs.Task);
-                return Results.Json(new { success = false, error = "Save timed out after 10 seconds" });
+                return Results.Json(new { success = false, error = "Save timed out after 30 seconds" });
             }
             catch (Exception ex)
             {

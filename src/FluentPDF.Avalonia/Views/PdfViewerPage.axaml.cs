@@ -897,53 +897,37 @@ public partial class PdfViewerPage : UserControl
                 var docHandle = (SafePdfDocumentHandle)document.Handle;
                 if (docHandle.IsInvalid) return false;
 
-                // Check if we have content stream patches (move/resize/new shapes)
-                // If so, use QPDF to patch the original file instead of PDFium's GenerateContent
+                // Generate content for all modified pages so PDFium serializes in-memory objects
                 var shapeService = App.GetService<IShapeService>();
-                if (shapeService is FluentPDF.Rendering.Services.ShapeService ss && ss.Patcher.HasPendingChanges)
-                {
-                    _logger.LogInformation("Using QPDF content stream patching to preserve CIDFont text");
-                    var tempPath = targetPath + ".tmp";
-                    var pdfiumSaved = PdfiumInterop.SaveDocument(docHandle, tempPath);
-                    if (!pdfiumSaved)
-                    {
-                        _logger.LogError("PDFium save to temp file failed");
-                        return false;
-                    }
+                shapeService.FlushDirtyPages(document.FilePath);
+                if (shapeService is FluentPDF.Rendering.Services.ShapeService ss)
+                    ss.PageCache.EvictAll(docHandle);
 
-                    var patched = ss.Patcher.SaveWithPatches(document.FilePath, targetPath);
-                    try { System.IO.File.Delete(tempPath); } catch { }
-
-                    if (patched)
-                    {
-                        ss.Patcher.Clear();
-                        // Evict cached page handles — page will be re-rendered from saved file
-                        ss.PageCache.EvictAll(docHandle);
-                        _logger.LogInformation("Saved with QPDF patches to {Path}", targetPath);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("QPDF patching failed, falling back to PDFium save");
-                        try
-                        {
-                            if (System.IO.File.Exists(targetPath)) System.IO.File.Delete(targetPath);
-                            System.IO.File.Move(tempPath, targetPath);
-                        }
-                        catch (Exception ex2)
-                        {
-                            _logger.LogError(ex2, "Fallback save also failed");
-                            return false;
-                        }
-                        ss.PageCache.EvictAll(docHandle);
-                    }
-                    return true;
-                }
-
-                var success = PdfiumInterop.SaveDocument(docHandle, targetPath);
+                // Save to temp file first, then replace original (avoids file lock conflicts)
+                var tempSavePath = targetPath + ".saving.tmp";
+                var success = PdfiumInterop.SaveDocument(docHandle, tempSavePath);
                 if (success)
-                    _logger.LogInformation("Document saved to {Path}", targetPath);
+                {
+                    try
+                    {
+                        System.IO.File.Copy(tempSavePath, targetPath, overwrite: true);
+                        _logger.LogInformation("Document saved to {Path}", targetPath);
+                    }
+                    catch (Exception exCopy)
+                    {
+                        _logger.LogError(exCopy, "Failed to replace original with saved file");
+                        success = false;
+                    }
+                    finally
+                    {
+                        try { System.IO.File.Delete(tempSavePath); } catch { }
+                    }
+                }
                 else
-                    _logger.LogError("Failed to save document to {Path}", targetPath);
+                {
+                    _logger.LogError("PDFium SaveDocument failed for {Path}", targetPath);
+                    try { System.IO.File.Delete(tempSavePath); } catch { }
+                }
                 return success;
             });
         }

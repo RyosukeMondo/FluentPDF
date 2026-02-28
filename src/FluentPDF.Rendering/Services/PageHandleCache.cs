@@ -106,5 +106,25 @@ public sealed class PageHandleCache : IDisposable
         _logger.LogDebug("Evicted {Count} cached pages for document", toRemove.Count);
     }
 
+    /// <summary>
+    /// Calls FPDFPage_GenerateContent on all cached pages for the given document.
+    /// Required before PDFium SaveDocument to serialize in-memory objects.
+    /// Returns the number of pages flushed.
+    /// </summary>
+    public int FlushGenerateContent(SafePdfDocumentHandle doc)
+    {
+        var docPtr = doc.DangerousGetHandle();
+        int count = 0;
+        foreach (var (key, handle) in _cache)
+        {
+            if (key.docHandle == docPtr && !handle.IsInvalid)
+            {
+                PdfiumInterop.GenerateContent(handle);
+                count++;
+            }
+        }
+        return count;
+    }
+
     public void Dispose() => EvictAll();
 }
