@@ -903,7 +903,6 @@ public partial class PdfViewerPage : UserControl
                 if (shapeService is FluentPDF.Rendering.Services.ShapeService ss && ss.Patcher.HasPendingChanges)
                 {
                     _logger.LogInformation("Using QPDF content stream patching to preserve CIDFont text");
-                    // First save PDFium's in-memory state to a temp file (this includes new objects)
                     var tempPath = targetPath + ".tmp";
                     var pdfiumSaved = PdfiumInterop.SaveDocument(docHandle, tempPath);
                     if (!pdfiumSaved)
@@ -912,21 +911,19 @@ public partial class PdfViewerPage : UserControl
                         return false;
                     }
 
-                    // Now patch the ORIGINAL file's content streams (preserving CIDFont encoding)
-                    // and append new object operators
                     var patched = ss.Patcher.SaveWithPatches(document.FilePath, targetPath);
-                    // Clean up temp file
                     try { System.IO.File.Delete(tempPath); } catch { }
 
                     if (patched)
                     {
                         ss.Patcher.Clear();
-                        _logger.LogInformation("Document saved with QPDF patches to {Path}", targetPath);
+                        // Evict cached page handles — page will be re-rendered from saved file
+                        ss.PageCache.EvictAll(docHandle);
+                        _logger.LogInformation("Saved with QPDF patches to {Path}", targetPath);
                     }
                     else
                     {
                         _logger.LogWarning("QPDF patching failed, falling back to PDFium save");
-                        // Fall back: rename temp to target
                         try
                         {
                             if (System.IO.File.Exists(targetPath)) System.IO.File.Delete(targetPath);
@@ -937,6 +934,7 @@ public partial class PdfViewerPage : UserControl
                             _logger.LogError(ex2, "Fallback save also failed");
                             return false;
                         }
+                        ss.PageCache.EvictAll(docHandle);
                     }
                     return true;
                 }

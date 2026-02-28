@@ -21,19 +21,17 @@ namespace FluentPDF.Rendering.Services;
 public sealed class PdfRenderingService : IPdfRenderingService
 {
     private readonly ILogger<PdfRenderingService> _logger;
+    private readonly PageHandleCache? _pageCache;
     private static readonly ActivitySource _activitySource = new("FluentPDF.Rendering");
     private static readonly SemaphoreSlim _pdfiumSemaphore = new(1, 1); // PDFium is not thread-safe
     private const int SlowRenderThresholdMs = 2000;
     private const double StandardDpi = 96.0;
     private const double HighDpiThreshold = 144.0; // 1.5x scaling
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PdfRenderingService"/> class.
-    /// </summary>
-    /// <param name="logger">Logger for structured logging and performance monitoring.</param>
-    public PdfRenderingService(ILogger<PdfRenderingService> logger)
+    public PdfRenderingService(ILogger<PdfRenderingService> logger, PageHandleCache? pageCache = null)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _pageCache = pageCache;
     }
 
     /// <inheritdoc />
@@ -87,6 +85,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
         {
             SafePdfPageHandle? pageHandle = null;
             IntPtr bitmap = IntPtr.Zero;
+            bool pageFromCache = false;
 
             // PDFium is not thread-safe - serialize all operations
             await _pdfiumSemaphore.WaitAsync();
@@ -94,15 +93,23 @@ public sealed class PdfRenderingService : IPdfRenderingService
             {
                 try
                 {
-                    // Load page (0-based index)
+                    // Load page (0-based index) — use cached handle if page was modified
                     using (var loadPageActivity = _activitySource.StartActivity("LoadPage"))
                     {
                         loadPageActivity?.SetTag("page.number", pageNumber);
 
-                        // Cast handle to SafePdfDocumentHandle
                         var documentHandle = (SafePdfDocumentHandle)document.Handle;
 
-                        pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
+                        if (_pageCache != null)
+                        {
+                            var (h, cached) = _pageCache.GetOrLoad(documentHandle, pageNumber - 1);
+                            pageHandle = h;
+                            pageFromCache = cached;
+                        }
+                        else
+                        {
+                            pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
+                        }
 
                     if (pageHandle.IsInvalid)
                     {
@@ -310,7 +317,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                         PdfiumInterop.DestroyBitmap(bitmap);
                     }
 
-                    pageHandle?.Dispose();
+                    if (!pageFromCache) pageHandle?.Dispose();
                 }
             }
             finally
@@ -369,6 +376,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
         {
             SafePdfPageHandle? pageHandle = null;
             IntPtr bitmap = IntPtr.Zero;
+            bool pageFromCache = false;
 
             await _pdfiumSemaphore.WaitAsync();
             try
@@ -379,7 +387,17 @@ public sealed class PdfRenderingService : IPdfRenderingService
                     {
                         loadPageActivity?.SetTag("page.number", pageNumber);
                         var documentHandle = (SafePdfDocumentHandle)document.Handle;
-                        pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
+
+                        if (_pageCache != null)
+                        {
+                            var (h, cached) = _pageCache.GetOrLoad(documentHandle, pageNumber - 1);
+                            pageHandle = h;
+                            pageFromCache = cached;
+                        }
+                        else
+                        {
+                            pageHandle = PdfiumInterop.LoadPage(documentHandle, pageNumber - 1);
+                        }
 
                     if (pageHandle.IsInvalid)
                     {
@@ -536,7 +554,7 @@ public sealed class PdfRenderingService : IPdfRenderingService
                         PdfiumInterop.DestroyBitmap(bitmap);
                     }
 
-                    pageHandle?.Dispose();
+                    if (!pageFromCache) pageHandle?.Dispose();
                 }
             }
             finally

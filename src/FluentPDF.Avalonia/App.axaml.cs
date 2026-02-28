@@ -150,7 +150,10 @@ public partial class App : Application
 
                 // Register PDF services
                 services.AddSingleton<IPdfDocumentService, PdfDocumentService>();
-                services.AddSingleton<IPdfRenderingService, PdfRenderingService>();
+                services.AddSingleton<IPdfRenderingService>(sp =>
+                    new PdfRenderingService(
+                        sp.GetRequiredService<ILogger<PdfRenderingService>>(),
+                        sp.GetRequiredService<FluentPDF.Rendering.Services.PageHandleCache>()));
                 services.AddSingleton<IDocumentEditingService, DocumentEditingService>();
                 services.AddSingleton<IPageOperationsService, PageOperationsService>();
                 services.AddSingleton<IBookmarkService, BookmarkService>();
@@ -172,7 +175,8 @@ public partial class App : Application
                 services.AddSingleton<Core.Services.ILogExportService, LogExportService>();
                 services.AddSingleton<IUndoRedoService, UndoRedoService>();
 
-                // Register content stream patcher (QPDF-based save that preserves CIDFont text)
+                // Register page handle cache and content stream patcher
+                services.AddSingleton<FluentPDF.Rendering.Services.PageHandleCache>();
                 services.AddSingleton<FluentPDF.Rendering.Services.ContentStreamPatcher>();
 
                 // Register shape drawing service with document resolver
@@ -180,6 +184,7 @@ public partial class App : Application
                 {
                     var shapeLogger = sp.GetRequiredService<ILogger<FluentPDF.Rendering.Services.ShapeService>>();
                     var patcher = sp.GetRequiredService<FluentPDF.Rendering.Services.ContentStreamPatcher>();
+                    var pageCache = sp.GetRequiredService<FluentPDF.Rendering.Services.PageHandleCache>();
                     Func<string, FluentPDF.Core.Models.PdfDocument?> docResolver = filePath =>
                     {
                         var mainVm = sp.GetRequiredService<FluentPDF.Core.ViewModels.MainViewModel>();
@@ -194,7 +199,7 @@ public partial class App : Application
                         }
                         return null;
                     };
-                    return new FluentPDF.Rendering.Services.ShapeService(shapeLogger, docResolver, patcher);
+                    return new FluentPDF.Rendering.Services.ShapeService(shapeLogger, docResolver, patcher, pageCache);
                 });
 
                 // Register HiDPI and rendering services

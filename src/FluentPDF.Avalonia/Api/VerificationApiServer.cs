@@ -108,13 +108,15 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         builder.Services.AddSingleton(_appServices.GetRequiredService<ISecurityService>());
 
         // Register ShapeService with document resolver wired to session manager
+        builder.Services.AddSingleton<FluentPDF.Rendering.Services.PageHandleCache>();
         builder.Services.AddSingleton<FluentPDF.Rendering.Services.ContentStreamPatcher>();
         builder.Services.AddSingleton<IShapeService>(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<FluentPDF.Rendering.Services.ShapeService>>();
             var sessions = sp.GetRequiredService<IDocumentSessionManager>();
             var patcher = sp.GetRequiredService<FluentPDF.Rendering.Services.ContentStreamPatcher>();
-            return new FluentPDF.Rendering.Services.ShapeService(logger, sessions.GetDocument, patcher);
+            var pageCache = sp.GetRequiredService<FluentPDF.Rendering.Services.PageHandleCache>();
+            return new FluentPDF.Rendering.Services.ShapeService(logger, sessions.GetDocument, patcher, pageCache);
         });
 
         // Configure JSON serialization
