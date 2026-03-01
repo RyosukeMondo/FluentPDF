@@ -208,3 +208,7 @@ prototype/src/styles/tokens.css
 # Node.js (root level - for claude-flow)
 node_modules/
 package-lock.json
+
+screenshot*.png
+uat_*.png
+.claude/settings.local.json
