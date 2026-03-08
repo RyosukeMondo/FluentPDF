@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentPDF.Core.Models;
@@ -5,6 +6,11 @@ using FluentPDF.Core.Services;
 using Microsoft.Extensions.Logging;
 
 namespace FluentPDF.Core.ViewModels;
+
+/// <summary>
+/// Represents a single item in the search results list panel.
+/// </summary>
+public record SearchResultItem(int PageNumber, string Snippet, int MatchIndex, string MatchText);
 
 /// <summary>
 /// View model for the search panel.
@@ -19,98 +25,93 @@ public partial class SearchPanelViewModel : ViewModelBase
     private PdfDocument? _currentDocument;
     private Func<int, Task>? _navigateToPageAction;
 
-    /// <summary>
-    /// Gets or sets the search query.
-    /// </summary>
     [ObservableProperty]
     private string _searchQuery = string.Empty;
 
-    /// <summary>
-    /// Gets or sets the list of search matches.
-    /// </summary>
+    /// <summary>Alias for SearchQuery used by the SearchPanel XAML.</summary>
+    public string SearchText
+    {
+        get => SearchQuery;
+        set => SearchQuery = value;
+    }
+
     [ObservableProperty]
     private List<SearchMatch> _searchMatches = new();
 
-    /// <summary>
-    /// Gets or sets the current match index (0-based).
-    /// </summary>
     [ObservableProperty]
     private int _currentMatchIndex = -1;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether a search is in progress.
-    /// </summary>
     [ObservableProperty]
     private bool _isSearching;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether the search is case-sensitive.
-    /// </summary>
     [ObservableProperty]
     private bool _caseSensitive;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to search for whole words only.
-    /// </summary>
     [ObservableProperty]
     private bool _wholeWordOnly;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether the search panel is visible.
-    /// </summary>
+    /// <summary>Alias for WholeWordOnly used by the SearchPanel XAML.</summary>
+    public bool WholeWord
+    {
+        get => WholeWordOnly;
+        set => WholeWordOnly = value;
+    }
+
     [ObservableProperty]
     private bool _isVisible;
 
-    /// <summary>
-    /// Gets the search result summary text.
-    /// </summary>
+    [ObservableProperty]
+    private string _replaceText = string.Empty;
+
+    /// <summary>Search results formatted for display in the results list.</summary>
+    public ObservableCollection<SearchResultItem> SearchResultItems { get; } = new();
+
+    /// <summary>Summary text like "5 matches across 3 pages".</summary>
+    public string SearchResultsSummary
+    {
+        get
+        {
+            if (SearchMatches.Count == 0) return string.Empty;
+            var pageCount = SearchMatches.Select(m => m.PageNumber).Distinct().Count();
+            return $"{SearchMatches.Count} match{(SearchMatches.Count == 1 ? "" : "es")} across {pageCount} page{(pageCount == 1 ? "" : "s")}";
+        }
+    }
+
+    /// <summary>Gets the search result summary text (e.g. "1 of 5").</summary>
     public string SearchResultSummary => SearchMatches.Count > 0
         ? $"{CurrentMatchIndex + 1} of {SearchMatches.Count}"
         : "No results";
 
-    /// <summary>
-    /// Gets a value indicating whether there are any search results.
-    /// </summary>
+    /// <summary>Alias for SearchResultSummary used by the SearchPanel XAML.</summary>
+    public string SearchResultsText => SearchResultSummary;
+
     public bool HasResults => SearchMatches.Count > 0;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SearchPanelViewModel"/> class.
-    /// </summary>
+    /// <summary>Alias for HasResults used by the SearchPanel XAML.</summary>
+    public bool HasMatches => HasResults;
+
     public SearchPanelViewModel(
         ITextSearchService searchService,
         ILogger<SearchPanelViewModel> logger)
     {
         _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        _logger.LogInformation("SearchPanelViewModel initialized");
     }
 
-    /// <summary>
-    /// Sets the current document for searching.
-    /// </summary>
     public void SetDocument(PdfDocument? document)
     {
         _currentDocument = document;
         ClearSearch();
     }
 
-    /// <summary>
-    /// Sets the navigation action callback.
-    /// </summary>
     public void SetNavigateToPageAction(Func<int, Task> navigateToPageAction)
     {
         _navigateToPageAction = navigateToPageAction ?? throw new ArgumentNullException(nameof(navigateToPageAction));
     }
 
-    /// <summary>
-    /// Initiates a debounced search.
-    /// </summary>
     [RelayCommand]
     private void Search()
     {
-        _logger.LogInformation("Search command invoked. Query={Query}", SearchQuery);
-
         _searchDebounceTimer?.Dispose();
         _searchCts?.Cancel();
 
@@ -158,8 +159,8 @@ public partial class SearchPanelViewModel : ViewModelBase
                 SearchMatches = result.Value;
                 CurrentMatchIndex = SearchMatches.Count > 0 ? 0 : -1;
 
-                OnPropertyChanged(nameof(HasResults));
-                OnPropertyChanged(nameof(SearchResultSummary));
+                NotifyAllProperties();
+                BuildSearchResultItems();
 
                 _logger.LogInformation("Search completed. Matches={MatchCount}", SearchMatches.Count);
 
@@ -189,30 +190,85 @@ public partial class SearchPanelViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Navigates to the next search match.
-    /// </summary>
+    private void BuildSearchResultItems()
+    {
+        SearchResultItems.Clear();
+        for (int i = 0; i < SearchMatches.Count; i++)
+        {
+            var match = SearchMatches[i];
+            var snippet = BuildSnippet(match.Text, SearchQuery);
+            SearchResultItems.Add(new SearchResultItem(
+                PageNumber: match.PageNumber + 1,
+                Snippet: snippet,
+                MatchIndex: i,
+                MatchText: match.Text));
+        }
+    }
+
+    private static string BuildSnippet(string matchText, string query)
+    {
+        // The match text from PDFium is typically just the matched text itself.
+        // Show it with ellipsis context markers.
+        const int contextChars = 30;
+        if (matchText.Length <= contextChars * 2)
+            return matchText;
+        return matchText[..contextChars] + "..." + matchText[^contextChars..];
+    }
+
     [RelayCommand(CanExecute = nameof(CanNavigateMatches))]
     private async Task NextMatchAsync()
     {
         if (SearchMatches.Count == 0) return;
 
         CurrentMatchIndex = (CurrentMatchIndex + 1) % SearchMatches.Count;
-        OnPropertyChanged(nameof(SearchResultSummary));
+        NotifyAllProperties();
         await NavigateToCurrentMatchAsync();
     }
 
-    /// <summary>
-    /// Navigates to the previous search match.
-    /// </summary>
     [RelayCommand(CanExecute = nameof(CanNavigateMatches))]
     private async Task PreviousMatchAsync()
     {
         if (SearchMatches.Count == 0) return;
 
         CurrentMatchIndex = (CurrentMatchIndex - 1 + SearchMatches.Count) % SearchMatches.Count;
-        OnPropertyChanged(nameof(SearchResultSummary));
+        NotifyAllProperties();
         await NavigateToCurrentMatchAsync();
+    }
+
+    /// <summary>
+    /// Navigates to a specific match by index.
+    /// </summary>
+    [RelayCommand]
+    private async Task NavigateToMatchAsync(int matchIndex)
+    {
+        if (matchIndex < 0 || matchIndex >= SearchMatches.Count) return;
+
+        CurrentMatchIndex = matchIndex;
+        NotifyAllProperties();
+        await NavigateToCurrentMatchAsync();
+    }
+
+    [RelayCommand]
+    private void Replace()
+    {
+        // Placeholder — replace functionality not yet implemented
+        _logger.LogInformation("Replace requested (not implemented)");
+    }
+
+    [RelayCommand]
+    private void ReplaceAll()
+    {
+        // Placeholder — replace all functionality not yet implemented
+        _logger.LogInformation("ReplaceAll requested (not implemented)");
+    }
+
+    [RelayCommand]
+    private void CloseSearch()
+    {
+        IsVisible = false;
+        ClearSearch();
+        SearchQuery = string.Empty;
+        _searchCts?.Cancel();
     }
 
     private bool CanNavigateMatches() => SearchMatches.Count > 0 && !IsSearching;
@@ -233,48 +289,40 @@ public partial class SearchPanelViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Clears the current search.
-    /// </summary>
     [RelayCommand]
     private void ClearSearch()
     {
-        SearchMatches.Clear();
+        SearchMatches = new List<SearchMatch>();
         CurrentMatchIndex = -1;
-        OnPropertyChanged(nameof(HasResults));
-        OnPropertyChanged(nameof(SearchResultSummary));
+        SearchResultItems.Clear();
+        NotifyAllProperties();
     }
 
-    /// <summary>
-    /// Closes the search panel.
-    /// </summary>
-    [RelayCommand]
-    private void Close()
+    private void NotifyAllProperties()
     {
-        IsVisible = false;
-        ClearSearch();
-        SearchQuery = string.Empty;
-        _searchCts?.Cancel();
+        OnPropertyChanged(nameof(HasResults));
+        OnPropertyChanged(nameof(HasMatches));
+        OnPropertyChanged(nameof(SearchResultSummary));
+        OnPropertyChanged(nameof(SearchResultsText));
+        OnPropertyChanged(nameof(SearchResultsSummary));
     }
 
     partial void OnSearchQueryChanged(string value)
     {
+        OnPropertyChanged(nameof(SearchText));
         Search();
     }
 
     partial void OnCaseSensitiveChanged(bool value)
     {
         if (!string.IsNullOrWhiteSpace(SearchQuery))
-        {
             Search();
-        }
     }
 
     partial void OnWholeWordOnlyChanged(bool value)
     {
+        OnPropertyChanged(nameof(WholeWord));
         if (!string.IsNullOrWhiteSpace(SearchQuery))
-        {
             Search();
-        }
     }
 }

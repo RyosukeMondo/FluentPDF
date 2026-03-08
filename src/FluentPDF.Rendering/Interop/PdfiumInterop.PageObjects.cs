@@ -527,6 +527,54 @@ public static partial class PdfiumInterop
         uint B,
         uint A);
 
+    /// <summary>
+    /// Gets the font size of a text page object.
+    /// </summary>
+    public static bool GetTextObjectFontSize(IntPtr textObject, out float fontSize)
+    {
+        fontSize = 0;
+        if (textObject == IntPtr.Zero) return false;
+        return FPDFTextObj_GetFontSize(textObject, out fontSize);
+    }
+
+    /// <summary>
+    /// Gets the font name of a text page object.
+    /// </summary>
+    public static string GetTextObjectFontName(IntPtr textObject)
+    {
+        if (textObject == IntPtr.Zero) return string.Empty;
+        var needed = FPDFTextObj_GetFontName(textObject, null, 0);
+        if (needed <= 0) return string.Empty;
+        var buffer = new byte[needed];
+        FPDFTextObj_GetFontName(textObject, buffer, (uint)needed);
+        // Result is UTF-8 null-terminated
+        var len = Array.IndexOf(buffer, (byte)0);
+        if (len < 0) len = buffer.Length;
+        return System.Text.Encoding.UTF8.GetString(buffer, 0, len);
+    }
+
+    /// <summary>
+    /// Gets the font size of a character via the text page API.
+    /// </summary>
+    public static double GetTextPageCharFontSize(SafePdfTextPageHandle textPage, int charIndex)
+    {
+        if (textPage == null || textPage.IsInvalid) return 0;
+        return FPDFText_GetFontSize(textPage, charIndex);
+    }
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool FPDFTextObj_GetFontSize(IntPtr text_object, out float font_size);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FPDFTextObj_GetFontName(
+        IntPtr text_object,
+        [Out] byte[]? buffer,
+        uint length);
+
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    private static extern double FPDFText_GetFontSize(SafePdfTextPageHandle text_page, int index);
+
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool FPDFPage_GenerateContent(SafePdfPageHandle page);

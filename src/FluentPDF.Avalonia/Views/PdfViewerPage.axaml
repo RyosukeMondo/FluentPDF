@@ -243,6 +243,16 @@
                                        IsHitTestVisible="False"
                                        IsVisible="{Binding HasSelectedText}"/>
 
+                            <!-- Search Highlight Overlay -->
+                            <controls:SearchHighlightOverlay
+                                IsHitTestVisible="False"
+                                SearchMatches="{Binding Search.SearchMatches}"
+                                CurrentMatchIndex="{Binding Search.CurrentMatchIndex}"
+                                CurrentPageIndex="{Binding CurrentPageIndex}"
+                                ZoomLevel="{Binding ZoomLevel}"
+                                PageWidth="{Binding CurrentPageWidth}"
+                                PageHeight="{Binding CurrentPageHeight}"/>
+
                             <!-- Drawing Canvas Overlay -->
                             <Canvas x:Name="DrawingCanvas"
                                     HorizontalAlignment="Stretch"
@@ -289,11 +299,15 @@
                 </Border>
             </Grid>
 
-            <!-- Bookmarks Sidebar -->
-            <controls:BookmarksPanel Grid.Column="2"
-                                     DataContext="{Binding Bookmarks}"
-                                     IsVisible="{Binding $parent[UserControl].DataContext.IsBookmarksPanelVisible}"
-                                     Width="250"/>
+            <!-- Right Sidebar (Bookmarks + Annotations) -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <controls:BookmarksPanel DataContext="{Binding Bookmarks}"
+                                         IsVisible="{Binding $parent[UserControl].DataContext.IsBookmarksPanelVisible}"
+                                         Width="250"/>
+                <controls:AnnotationsPanel DataContext="{Binding AnnotationsList}"
+                                            IsVisible="{Binding $parent[UserControl].DataContext.IsAnnotationsPanelVisible}"
+                                            Width="280"/>
+            </StackPanel>
         </Grid>
         <!-- Selection Status Bar -->
         <Border Grid.Row="3"

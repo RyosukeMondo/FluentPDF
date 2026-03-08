@@ -1,3 +1,5 @@
+using FluentPDF.Core.Models;
+
 namespace FluentPDF.Core.Services;
 
 /// <summary>
@@ -20,7 +22,7 @@ public interface IUndoRedoService
 public interface IUndoableAction
 {
     string DocumentId { get; }
-    int PageNumber { get; }
+    PageIndex PageIndex { get; }
     UndoActionType ActionType { get; }
 }
 
@@ -34,7 +36,7 @@ public enum UndoActionType
 /// <summary>Records an add-shape action. Undo = remove the last object on the page.</summary>
 public record AddShapeAction(
     string DocumentId,
-    int PageNumber,
+    PageIndex PageIndex,
     ShapeCreationData CreationData) : IUndoableAction
 {
     public UndoActionType ActionType => UndoActionType.AddShape;
@@ -43,7 +45,7 @@ public record AddShapeAction(
 /// <summary>Records a delete-shape action. Undo = re-create the shape.</summary>
 public record DeleteShapeAction(
     string DocumentId,
-    int PageNumber,
+    PageIndex PageIndex,
     ShapeCreationData CreationData) : IUndoableAction
 {
     public UndoActionType ActionType => UndoActionType.DeleteShape;
@@ -52,7 +54,7 @@ public record DeleteShapeAction(
 /// <summary>Records a move action. Undo = move by negative delta.</summary>
 public record MoveShapeAction(
     string DocumentId,
-    int PageNumber,
+    PageIndex PageIndex,
     int ObjectIndex,
     float DeltaX,
     float DeltaY) : IUndoableAction

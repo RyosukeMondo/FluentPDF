@@ -397,7 +397,7 @@ public partial class ThumbnailsViewModel : ViewModelBase, IDisposable
         return SelectedThumbnails.Any();
     }
 
-    private async Task RefreshThumbnailsAsync(int[] pageIndices)
+    public async Task RefreshThumbnailsAsync(int[] pageIndices)
     {
         if (_document == null || RenderThumbnailCallback == null) return;
 

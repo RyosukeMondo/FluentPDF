@@ -17,6 +17,10 @@
         "CLAUDE_FLOW_MEMORY_BACKEND": "hybrid"
       },
       "autoStart": false
+    },
+    "fluentpdf": {
+      "command": "dotnet",
+      "args": ["run", "--project", "src/FluentPDF.Mcp"]
     }
   }
 }

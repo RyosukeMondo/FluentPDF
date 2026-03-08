@@ -201,6 +201,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     }
 
     [ObservableProperty]
+    private double _currentPageWidth;
+
+    [ObservableProperty]
     private double _currentPageHeight;
 
     [ObservableProperty]
@@ -278,6 +281,17 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
 
     public ThumbnailsViewModel? Thumbnails { get; set; }
     public BookmarksViewModel? Bookmarks { get; set; }
+    public SearchPanelViewModel? Search { get; set; }
+    public AnnotationsListViewModel? AnnotationsList { get; set; }
+
+    /// <summary>Gets or sets whether the annotations list panel is visible. Delegates to ViewStateViewModel.</summary>
+    public bool IsAnnotationsPanelVisible
+    {
+        get => ViewState.IsAnnotationsPanelVisible;
+        set => ViewState.IsAnnotationsPanelVisible = value;
+    }
+
+    public IRelayCommand ToggleAnnotationsCommand => ViewState.ToggleAnnotationsCommand;
 
     #endregion
 
@@ -643,6 +657,8 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     {
         HasPageModifications = true;
         await RenderCurrentPageAsync();
+        if (Thumbnails?.RenderThumbnailCallback != null && _currentDocument != null)
+            await Thumbnails.RefreshThumbnailsAsync(new[] { CurrentPageNumber - 1 });
     }
 
     /// <summary>
@@ -653,6 +669,8 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     {
         HasPageModifications = true;
         await RenderCurrentPageSilentAsync();
+        if (Thumbnails?.RenderThumbnailCallback != null && _currentDocument != null)
+            await Thumbnails.RefreshThumbnailsAsync(new[] { CurrentPageNumber - 1 });
     }
 
     #endregion
@@ -685,6 +703,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
                 StatusMessage = $"Page {CurrentPageNumber} of {TotalPages} - {ZoomLevel:P0}";
                 _lastRenderedDpi = effectiveDpi;
                 _metricsService?.RecordRenderTime(CurrentPageNumber, 0);
+                UpdatePageDimensions();
             }
             else
             {
@@ -729,6 +748,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
                 CurrentPageImage = imageSource;
                 StatusMessage = $"Page {CurrentPageNumber} of {TotalPages} - {ZoomLevel:P0}";
                 _lastRenderedDpi = effectiveDpi;
+                UpdatePageDimensions();
             }
         }
         catch (Exception ex)
@@ -737,10 +757,36 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private void UpdatePageDimensions()
+    {
+        if (_currentDocument == null) return;
+        var pageSizeResult = _renderingService.GetPageSize(_currentDocument, CurrentPageNumber);
+        if (pageSizeResult.IsSuccess)
+        {
+            CurrentPageWidth = pageSizeResult.Value.Width;
+            CurrentPageHeight = pageSizeResult.Value.Height;
+        }
+    }
+
     private void SyncDocumentStateToSubViewModels()
     {
         Navigation.HasDocument = _currentDocument != null;
         Zoom.HasDocument = _currentDocument != null;
+        Search?.SetDocument(_currentDocument);
+        Search?.SetNavigateToPageAction(async pageNumber =>
+        {
+            if (pageNumber != CurrentPageNumber)
+            {
+                await Navigation.GoToPageCommand.ExecuteAsync(pageNumber);
+            }
+        });
+        AnnotationsList?.SetNavigateToPageAction(async pageNumber =>
+        {
+            if (pageNumber != CurrentPageNumber)
+            {
+                await Navigation.GoToPageCommand.ExecuteAsync(pageNumber);
+            }
+        });
     }
 
     private void ApplyDefaultSettings()
@@ -777,6 +823,11 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         {
             try { await Bookmarks.LoadBookmarksCommand.ExecuteAsync(_currentDocument); }
             catch (Exception ex) { _logger.LogWarning(ex, "Failed to load bookmarks"); }
+        }
+        if (AnnotationsList != null && _currentDocument != null)
+        {
+            try { await AnnotationsList.LoadAnnotationsCommand.ExecuteAsync(_currentDocument); }
+            catch (Exception ex) { _logger.LogWarning(ex, "Failed to load annotations list"); }
         }
     }
 
@@ -827,6 +878,9 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
                 break;
             case nameof(ViewStateViewModel.IsBookmarksPanelVisible):
                 OnPropertyChanged(nameof(IsBookmarksPanelVisible));
+                break;
+            case nameof(ViewStateViewModel.IsAnnotationsPanelVisible):
+                OnPropertyChanged(nameof(IsAnnotationsPanelVisible));
                 break;
             case nameof(ViewStateViewModel.IsSearchPanelVisible):
                 OnPropertyChanged(nameof(IsSearchPanelVisible));

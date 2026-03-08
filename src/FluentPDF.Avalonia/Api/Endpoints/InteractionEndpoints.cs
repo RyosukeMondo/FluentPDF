@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentPDF.Avalonia.Controls;
 using FluentPDF.Avalonia.Views;
+using FluentPDF.Core.Models;
 using FluentPDF.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -34,6 +35,7 @@ public static class InteractionEndpoints
         MapContainmentModeEndpoint(group);
         MapResizeSelectionEndpoint(group);
         MapSelectionHandlesEndpoint(group);
+        MapLockToggleEndpoint(group);
     }
 
     private static PdfViewerPage? GetActiveViewerPage()
@@ -170,14 +172,14 @@ public static class InteractionEndpoints
             var info = await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 var page = GetActiveViewerPage();
-                if (page == null) return (error: "No active viewer", obj: (PageObjectInfo?)null, docId: (string?)null, pageNum: 0, isLocked: false, isOriginal: false, page: (PdfViewerPage?)null);
+                if (page == null) return (error: "No active viewer", obj: (PageObjectInfo?)null, docId: (string?)null, pageIndex: default(PageIndex), isLocked: false, isOriginal: false, page: (PdfViewerPage?)null);
                 var selected = page.GetSelectedObject();
-                if (selected == null) return (error: "Nothing selected", obj: (PageObjectInfo?)null, docId: (string?)null, pageNum: 0, isLocked: false, isOriginal: false, page: (PdfViewerPage?)null);
+                if (selected == null) return (error: "Nothing selected", obj: (PageObjectInfo?)null, docId: (string?)null, pageIndex: default(PageIndex), isLocked: false, isOriginal: false, page: (PdfViewerPage?)null);
                 var vm = page.DataContext as FluentPDF.Core.ViewModels.PdfViewerViewModel;
-                if (vm?.CurrentDocument == null) return (error: "No document", obj: (PageObjectInfo?)null, docId: (string?)null, pageNum: 0, isLocked: false, isOriginal: false, page: (PdfViewerPage?)null);
-                var pageIdx = vm.CurrentPageNumber - 1;
-                var isOriginal = vm.OriginalObjectCounts.TryGetValue(pageIdx, out var origCount) ? selected.Index < origCount : true;
-                return (error: (string?)null, obj: selected, docId: vm.CurrentDocument.FilePath, pageNum: pageIdx, isLocked: vm.IsOriginalObjectsLocked, isOriginal, page);
+                if (vm?.CurrentDocument == null) return (error: "No document", obj: (PageObjectInfo?)null, docId: (string?)null, pageIndex: default(PageIndex), isLocked: false, isOriginal: false, page: (PdfViewerPage?)null);
+                var pi = new PageIndex(vm.CurrentPageNumber - 1);
+                var isOriginal = vm.OriginalObjectCounts.TryGetValue(pi.Value, out var origCount) ? selected.Index < origCount : true;
+                return (error: (string?)null, obj: selected, docId: vm.CurrentDocument.FilePath, pageIndex: pi, isLocked: vm.IsOriginalObjectsLocked, isOriginal, page);
             });
 
             if (info.error != null)
@@ -191,7 +193,7 @@ public static class InteractionEndpoints
             try
             {
                 var shapeService = App.GetService<IShapeService>();
-                var deleted = await shapeService.RemovePageObjectAsync(info.docId!, info.pageNum, info.obj!.Index);
+                var deleted = await shapeService.RemovePageObjectAsync(info.docId!, info.pageIndex, info.obj!.Index);
 
                 if (deleted)
                 {
@@ -320,12 +322,12 @@ public static class InteractionEndpoints
 
                     var shapeService = App.GetService<IShapeService>();
                     var docId = vm.CurrentDocument.FilePath;
-                    var pageNumber = vm.CurrentPageNumber - 1;
+                    var pageIndex = new PageIndex(vm.CurrentPageNumber - 1);
                     int moved = 0;
 
                     foreach (var obj in selected)
                     {
-                        if (await shapeService.MovePageObjectAsync(docId, pageNumber, obj.Index, body.DeltaPdfX, body.DeltaPdfY))
+                        if (await shapeService.MovePageObjectAsync(docId, pageIndex, obj.Index, body.DeltaPdfX, body.DeltaPdfY))
                             moved++;
                     }
 
@@ -361,8 +363,8 @@ public static class InteractionEndpoints
 
                     var shapeService = App.GetService<IShapeService>();
                     var docId = vm.CurrentDocument.FilePath;
-                    var pageNumber = vm.CurrentPageNumber - 1;
-                    var objects = await shapeService.GetPageObjectsAsync(docId, pageNumber);
+                    var pageIndex = new PageIndex(vm.CurrentPageNumber - 1);
+                    var objects = await shapeService.GetPageObjectsAsync(docId, pageIndex);
 
                     var left = Math.Min(body.PdfX1, body.PdfX2);
                     var right = Math.Max(body.PdfX1, body.PdfX2);
@@ -420,6 +422,22 @@ public static class InteractionEndpoints
 
             return Results.Json(result);
         }).WithName("InteractContainmentMode");
+    }
+
+    private static void MapLockToggleEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/lock-toggle", async (HttpContext _) =>
+        {
+            var result = await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                var page = GetActiveViewerPage();
+                var vm = page?.DataContext as FluentPDF.Core.ViewModels.PdfViewerViewModel;
+                if (vm == null) return (object)new { success = false, error = "No active viewer" };
+                vm.IsOriginalObjectsLocked = !vm.IsOriginalObjectsLocked;
+                return (object)new { success = true, locked = vm.IsOriginalObjectsLocked };
+            });
+            return Results.Json(result);
+        }).WithName("InteractLockToggle");
     }
 
     private static async Task RunOnUiThread(Func<Task<object>> action, TaskCompletionSource<object> tcs)

@@ -1,63 +1,67 @@
+using FluentPDF.Core.Models;
+
 namespace FluentPDF.Core.Services;
+
+/// <summary>Metadata for a tracked shape added via ShapeService.</summary>
+public record ShapeMetadata(
+    string Id,
+    string ShapeType,
+    PageIndex PageIndex,
+    float Left, float Bottom, float Right, float Top,
+    string FillColor,
+    string StrokeColor,
+    float StrokeWidth,
+    string Source,
+    DateTime CreatedAt);
 
 /// <summary>
 /// Service contract for drawing shapes on PDF pages.
-/// Supports rectangles, circles, lines, freehand paths, and text objects.
+/// All page parameters use <see cref="PageIndex"/> (0-based) to prevent off-by-one bugs.
+/// All Add* methods return a GUID string on success, null on failure.
 /// </summary>
 public interface IShapeService
 {
-    Task<bool> AddRectangleAsync(string documentId, int pageNumber, double x, double y, double width, double height,
-        string fillColor = "#FF0000", string strokeColor = "#000000", float strokeWidth = 1f, float opacity = 1f);
+    Task<string?> AddRectangleAsync(string documentId, PageIndex pageIndex, double x, double y, double width, double height,
+        string fillColor = "#FF0000", string strokeColor = "#000000", float strokeWidth = 1f, float opacity = 1f, string source = "user");
 
-    Task<bool> AddCircleAsync(string documentId, int pageNumber, double centerX, double centerY, double radius,
-        string fillColor = "#0000FF", string strokeColor = "#000000", float strokeWidth = 1f, float opacity = 1f);
+    Task<string?> AddCircleAsync(string documentId, PageIndex pageIndex, double centerX, double centerY, double radius,
+        string fillColor = "#0000FF", string strokeColor = "#000000", float strokeWidth = 1f, float opacity = 1f, string source = "user");
 
-    Task<bool> AddLineAsync(string documentId, int pageNumber, double x1, double y1, double x2, double y2,
-        string strokeColor = "#000000", float strokeWidth = 2f);
+    Task<string?> AddLineAsync(string documentId, PageIndex pageIndex, double x1, double y1, double x2, double y2,
+        string strokeColor = "#000000", float strokeWidth = 2f, string source = "user");
 
-    Task<bool> AddFreehandPathAsync(string documentId, int pageNumber, double[] points,
-        string strokeColor = "#000000", float strokeWidth = 2f);
+    Task<string?> AddFreehandPathAsync(string documentId, PageIndex pageIndex, double[] points,
+        string strokeColor = "#000000", float strokeWidth = 2f, string source = "user");
 
-    Task<bool> AddTextAsync(string documentId, int pageNumber, double x, double y, string text,
-        float fontSize = 12f, string fontName = "Helvetica", string color = "#000000");
+    Task<string?> AddTextAsync(string documentId, PageIndex pageIndex, double x, double y, string text,
+        float fontSize = 12f, string fontName = "Helvetica", string color = "#000000", string source = "user");
 
-    /// <summary>
-    /// Lists page objects with their bounds (type, index, left, bottom, right, top in PDF coords).
-    /// </summary>
-    Task<List<PageObjectInfo>> GetPageObjectsAsync(string documentId, int pageNumber);
+    /// <summary>Lists tracked shapes, optionally filtered by page index and/or source.</summary>
+    List<ShapeMetadata> GetTrackedShapes(PageIndex? pageIndex = null, string? source = null);
 
-    /// <summary>
-    /// Removes a page object by index, regenerates content, and returns success.
-    /// </summary>
-    Task<bool> RemovePageObjectAsync(string documentId, int pageNumber, int objectIndex);
+    /// <summary>Removes a tracked shape by its ID.</summary>
+    Task<bool> RemoveTrackedShapeAsync(string documentId, string shapeId);
 
-    /// <summary>Moves a page object by delta in PDF coordinates.</summary>
-    Task<bool> MovePageObjectAsync(string documentId, int pageNumber, int objectIndex, float deltaX, float deltaY);
+    Task<List<PageObjectInfo>> GetPageObjectsAsync(string documentId, PageIndex pageIndex);
 
-    /// <summary>Moves multiple page objects by delta, calling GenerateContent only once at the end.</summary>
-    Task<int> MovePageObjectsBatchAsync(string documentId, int pageNumber, int[] objectIndices, float deltaX, float deltaY);
+    Task<bool> RemovePageObjectAsync(string documentId, PageIndex pageIndex, int objectIndex);
 
-    /// <summary>Resizes a page object by scale factors relative to an anchor point in PDF coordinates.</summary>
-    Task<bool> ResizePageObjectAsync(string documentId, int pageNumber, int objectIndex,
+    Task<bool> MovePageObjectAsync(string documentId, PageIndex pageIndex, int objectIndex, float deltaX, float deltaY);
+
+    Task<int> MovePageObjectsBatchAsync(string documentId, PageIndex pageIndex, int[] objectIndices, float deltaX, float deltaY);
+
+    Task<bool> ResizePageObjectAsync(string documentId, PageIndex pageIndex, int objectIndex,
         float scaleX, float scaleY, float anchorPdfX, float anchorPdfY);
 
-    /// <summary>
-    /// Flushes deferred GenerateContent for all dirty pages of a document.
-    /// Must be called before saving to persist in-memory object modifications.
-    /// </summary>
     void FlushDirtyPages(string documentId);
 
-    /// <summary>Gets stroke/fill colors and stroke width of a page object.</summary>
-    Task<PageObjectProperties?> GetPageObjectPropertiesAsync(string documentId, int pageNumber, int objectIndex);
+    Task<PageObjectProperties?> GetPageObjectPropertiesAsync(string documentId, PageIndex pageIndex, int objectIndex);
 
-    /// <summary>Sets stroke color of a page object.</summary>
-    Task<bool> SetPageObjectStrokeColorAsync(string documentId, int pageNumber, int objectIndex, string color);
+    Task<bool> SetPageObjectStrokeColorAsync(string documentId, PageIndex pageIndex, int objectIndex, string color);
 
-    /// <summary>Sets fill color of a page object.</summary>
-    Task<bool> SetPageObjectFillColorAsync(string documentId, int pageNumber, int objectIndex, string color);
+    Task<bool> SetPageObjectFillColorAsync(string documentId, PageIndex pageIndex, int objectIndex, string color);
 
-    /// <summary>Sets stroke width of a page object.</summary>
-    Task<bool> SetPageObjectStrokeWidthAsync(string documentId, int pageNumber, int objectIndex, float width);
+    Task<bool> SetPageObjectStrokeWidthAsync(string documentId, PageIndex pageIndex, int objectIndex, float width);
 }
 
 /// <summary>

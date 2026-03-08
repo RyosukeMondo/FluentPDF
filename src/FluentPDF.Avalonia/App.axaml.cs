@@ -235,6 +235,7 @@ public partial class App : Application
                 services.AddTransient<FluentPDF.Core.ViewModels.PdfViewerViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.ConversionViewModel>();
                 services.AddTransient<FluentPDF.Core.ViewModels.BookmarksViewModel>();
+                services.AddTransient<FluentPDF.Core.ViewModels.AnnotationsListViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.FormFieldViewModel>();
                 services.AddTransient<FluentPDF.Core.ViewModels.AnnotationViewModel>();
                 services.AddTransient<FluentPDF.Avalonia.ViewModels.SettingsViewModel>();
@@ -251,6 +252,8 @@ public partial class App : Application
                         var vm = sp.GetRequiredService<FluentPDF.Core.ViewModels.PdfViewerViewModel>();
                         vm.Thumbnails = sp.GetRequiredService<FluentPDF.Core.ViewModels.ThumbnailsViewModel>();
                         vm.Bookmarks = sp.GetRequiredService<FluentPDF.Core.ViewModels.BookmarksViewModel>();
+                        vm.AnnotationsList = sp.GetRequiredService<FluentPDF.Core.ViewModels.AnnotationsListViewModel>();
+                        vm.Search = sp.GetRequiredService<FluentPDF.Core.ViewModels.SearchPanelViewModel>();
                         return vm;
                     });
 

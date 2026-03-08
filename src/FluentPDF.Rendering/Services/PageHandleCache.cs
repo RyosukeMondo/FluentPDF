@@ -33,9 +33,16 @@ public sealed class PageHandleCache : IDisposable
     public (SafePdfPageHandle handle, bool isCached) GetOrLoad(SafePdfDocumentHandle doc, int pageIndex)
     {
         var key = (doc.DangerousGetHandle(), pageIndex);
+        _logger.LogDebug("PageHandleCache.GetOrLoad: docHandle=0x{Handle:X}, pageIndex={Page}, cacheCount={Count}, cacheKeys=[{Keys}]",
+            key.Item1, pageIndex, _cache.Count,
+            string.Join(", ", _cache.Keys.Select(k => $"0x{k.docHandle:X}:{k.pageIndex}")));
         if (_cache.TryGetValue(key, out var cached) && !cached.IsInvalid)
+        {
+            _logger.LogDebug("PageHandleCache.GetOrLoad: HIT for page {Page}", pageIndex);
             return (cached, true);
+        }
 
+        _logger.LogDebug("PageHandleCache.GetOrLoad: MISS for page {Page}", pageIndex);
         var handle = PdfiumInterop.LoadPage(doc, pageIndex);
         return (handle, false);
     }

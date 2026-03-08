@@ -36,6 +36,12 @@ public partial class ViewStateViewModel : ViewModelBase
     private bool _isBookmarksPanelVisible = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether the annotations list panel is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isAnnotationsPanelVisible;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the search panel is visible.
     /// </summary>
     [ObservableProperty]
@@ -80,6 +86,19 @@ public partial class ViewStateViewModel : ViewModelBase
         _logger.LogInformation("Bookmarks visibility toggled to: {IsVisible}", IsBookmarksPanelVisible);
         RaiseAccessibilityNotification(
             IsBookmarksPanelVisible ? "Bookmarks panel shown" : "Bookmarks panel hidden");
+    }
+
+    /// <summary>
+    /// Toggles the visibility of the annotations list panel.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleAnnotations()
+    {
+        _logger.LogInformation("ToggleAnnotations command invoked");
+        IsAnnotationsPanelVisible = !IsAnnotationsPanelVisible;
+        _logger.LogInformation("Annotations visibility toggled to: {IsVisible}", IsAnnotationsPanelVisible);
+        RaiseAccessibilityNotification(
+            IsAnnotationsPanelVisible ? "Annotations panel shown" : "Annotations panel hidden");
     }
 
     /// <summary>

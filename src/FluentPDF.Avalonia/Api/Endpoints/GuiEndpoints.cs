@@ -767,40 +767,40 @@ public static class GuiEndpoints
 
                     var shapeService = App.GetService<IShapeService>();
                     var docId = viewer.CurrentDocument.FilePath;
-                    var page = (body.PageNumber ?? 1) - 1;
+                    var pageIndex = Core.Models.PageIndex.FromPageNumber(body.PageNumber ?? 1);
                     var fill = body.FillColor ?? "#FF000080";
                     var stroke = body.StrokeColor ?? "#000000";
                     var sw = body.StrokeWidth ?? 2f;
-                    bool ok = false;
+                    string? shapeId = null;
 
                     switch (body.Shape.ToLowerInvariant())
                     {
                         case "rectangle":
-                            ok = await shapeService.AddRectangleAsync(docId, page,
+                            shapeId = await shapeService.AddRectangleAsync(docId, pageIndex,
                                 body.X ?? 100, body.Y ?? 100, body.Width ?? 50, body.Height ?? 30,
-                                fill, stroke, sw);
+                                fill, stroke, sw, source: "ai");
                             break;
                         case "circle":
-                            ok = await shapeService.AddCircleAsync(docId, page,
+                            shapeId = await shapeService.AddCircleAsync(docId, pageIndex,
                                 body.X ?? 150, body.Y ?? 150, body.Width ?? 25,
-                                fill, stroke, sw);
+                                fill, stroke, sw, source: "ai");
                             break;
                         case "line":
-                            ok = await shapeService.AddLineAsync(docId, page,
+                            shapeId = await shapeService.AddLineAsync(docId, pageIndex,
                                 body.X ?? 100, body.Y ?? 100, body.X2 ?? 200, body.Y2 ?? 200,
-                                stroke, sw);
+                                stroke, sw, source: "ai");
                             break;
                         default:
                             return (object)new { success = false, error = $"Unknown shape: {body.Shape}" };
                     }
 
-                    if (ok)
+                    if (shapeId != null)
                     {
                         viewer.HasPageModifications = true;
                         await viewer.RefreshCurrentPageAsync();
                     }
 
-                    return (object)new { success = ok, shape = body.Shape, page = page + 1 };
+                    return (object)new { success = shapeId != null, id = shapeId, shape = body.Shape, page = pageIndex.ToPageNumber() };
                 });
 
                 return Results.Json(result);

@@ -3,6 +3,7 @@
 using FluentPDF.Avalonia.Api.Models;
 using FluentPDF.Avalonia.Api.Services;
 using FluentPDF.Core.Services;
+using FluentPDF.Rendering.Interop;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -142,6 +143,59 @@ public static class DocumentEndpoints
         .WithSummary("Close a document session")
         .WithDescription("Closes a document session and releases associated resources.")
         .Produces<CloseDocumentResponse>(StatusCodes.Status200OK, "application/json")
+        .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json");
+
+        // Get document metadata
+        app.MapGet("/api/document/{documentId}/metadata", (
+            string documentId,
+            IDocumentSessionManager sessionManager) =>
+        {
+            var document = sessionManager.GetDocument(documentId);
+            if (document is null)
+            {
+                return Results.NotFound(new ErrorResponse(
+                    "DOCUMENT_NOT_FOUND",
+                    $"No document with ID: {documentId}"));
+            }
+
+            var docHandle = (SafePdfDocumentHandle)document.Handle;
+
+            var title = PdfiumInterop.GetMetaText(docHandle, "Title");
+            var author = PdfiumInterop.GetMetaText(docHandle, "Author");
+            var subject = PdfiumInterop.GetMetaText(docHandle, "Subject");
+            var keywords = PdfiumInterop.GetMetaText(docHandle, "Keywords");
+            var creator = PdfiumInterop.GetMetaText(docHandle, "Creator");
+            var producer = PdfiumInterop.GetMetaText(docHandle, "Producer");
+            var creationDate = PdfiumInterop.GetMetaText(docHandle, "CreationDate");
+            var modDate = PdfiumInterop.GetMetaText(docHandle, "ModDate");
+
+            long fileSizeBytes = 0;
+            try
+            {
+                if (File.Exists(document.FilePath))
+                    fileSizeBytes = new FileInfo(document.FilePath).Length;
+            }
+            catch { /* ignore */ }
+
+            return Results.Ok(new
+            {
+                title,
+                author,
+                subject,
+                keywords,
+                creator,
+                producer,
+                pageCount = document.PageCount,
+                fileSizeBytes,
+                creationDate,
+                modificationDate = modDate
+            });
+        })
+        .WithName("GetDocumentMetadata")
+        .WithTags("Document")
+        .WithSummary("Get document metadata")
+        .WithDescription("Retrieves PDF metadata (Title, Author, Subject, Keywords, Creator, Producer, dates) via PDFium.")
+        .Produces(StatusCodes.Status200OK, contentType: "application/json")
         .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json");
     }
 }

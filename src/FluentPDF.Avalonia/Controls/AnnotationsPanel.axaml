@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FluentPDF.Core.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="600"
+             x:Class="FluentPDF.Avalonia.Controls.AnnotationsPanel"
+             x:DataType="vm:AnnotationsListViewModel">
+
+    <Border Background="{DynamicResource AcrylicTintPanelBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}"
+            BorderThickness="1,0,0,0">
+
+        <Grid RowDefinitions="Auto,Auto,*">
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource AcrylicTintPanelBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="Annotations"
+                                   FontWeight="SemiBold"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding AnnotationCount, StringFormat='({0})'}"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                                   IsVisible="{Binding HasAnnotations}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Filter Row -->
+            <Border Grid.Row="1"
+                    Padding="8,6"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="0,0,0,1"
+                    IsVisible="{Binding HasAnnotations}">
+                <ComboBox x:Name="FilterComboBox"
+                          HorizontalAlignment="Stretch"
+                          FontSize="12"
+                          SelectedIndex="0">
+                    <ComboBoxItem Content="All Types" Tag="{x:Null}"/>
+                    <ComboBoxItem Content="Highlight" Tag="Highlight"/>
+                    <ComboBoxItem Content="Underline" Tag="Underline"/>
+                    <ComboBoxItem Content="StrikeOut" Tag="StrikeOut"/>
+                    <ComboBoxItem Content="Text" Tag="Text"/>
+                    <ComboBoxItem Content="FreeText" Tag="FreeText"/>
+                    <ComboBoxItem Content="Ink" Tag="Ink"/>
+                    <ComboBoxItem Content="Square" Tag="Square"/>
+                    <ComboBoxItem Content="Circle" Tag="Circle"/>
+                    <ComboBoxItem Content="Line" Tag="Line"/>
+                    <ComboBoxItem Content="Stamp" Tag="Stamp"/>
+                </ComboBox>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Row="2">
+
+                <!-- Loading Indicator -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12"
+                            IsVisible="{Binding IsLoading}">
+                    <ProgressBar IsIndeterminate="True" Width="150"/>
+                    <TextBlock Text="Loading annotations..."
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource ForegroundTertiaryBrush}"/>
+                </StackPanel>
+
+                <!-- Empty State -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12"
+                            IsVisible="{Binding !HasAnnotations}"
+                            Margin="16">
+                    <PathIcon Data="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zM11 5h2v6h-2V5zm0 8h2v2h-2v-2z"
+                              Width="40"
+                              Height="40"
+                              Foreground="{DynamicResource ForegroundTertiaryBrush}"/>
+                    <TextBlock Text="{Binding EmptyMessage}"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               MaxWidth="200"
+                               Foreground="{DynamicResource ForegroundTertiaryBrush}"/>
+                </StackPanel>
+
+                <!-- Annotations List -->
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto"
+                              IsVisible="{Binding HasAnnotations}">
+                    <ListBox ItemsSource="{Binding Annotations}"
+                             SelectedItem="{Binding SelectedAnnotation, Mode=TwoWay}"
+                             AutomationProperties.Name="Document annotations"
+                             Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="vm:AnnotationListItem">
+                                <Button Command="{Binding $parent[ListBox].DataContext.NavigateToAnnotationCommand}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="8,6"
+                                        CornerRadius="4"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch">
+                                    <Button.Styles>
+                                        <Style Selector="Button:pointerover">
+                                            <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+                                        </Style>
+                                    </Button.Styles>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                                        <!-- Type Badge -->
+                                        <Border Grid.Row="0" Grid.Column="0"
+                                                Grid.RowSpan="2"
+                                                Background="{DynamicResource AccentSubtleBrush}"
+                                                CornerRadius="4"
+                                                Padding="4,2"
+                                                Margin="0,0,8,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Type}"
+                                                       FontSize="10"
+                                                       Foreground="{DynamicResource AccentForegroundBrush}"/>
+                                        </Border>
+
+                                        <!-- Content Preview -->
+                                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                                   Text="{Binding DisplayText}"
+                                                   FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxLines="2"
+                                                   TextWrapping="Wrap"/>
+
+                                        <!-- Delete Button -->
+                                        <Button Grid.Row="0" Grid.Column="2"
+                                                Grid.RowSpan="2"
+                                                Command="{Binding $parent[ListBox].DataContext.DeleteAnnotationCommand}"
+                                                CommandParameter="{Binding}"
+                                                Content="&#xD7;"
+                                                FontSize="14"
+                                                FontWeight="Bold"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="4,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Delete annotation"
+                                                Opacity="0.5">
+                                            <Button.Styles>
+                                                <Style Selector="Button:pointerover">
+                                                    <Setter Property="Opacity" Value="1.0"/>
+                                                </Style>
+                                            </Button.Styles>
+                                        </Button>
+
+                                        <!-- Page and metadata -->
+                                        <StackPanel Grid.Row="1" Grid.Column="1"
+                                                    Orientation="Horizontal"
+                                                    Spacing="8"
+                                                    Margin="0,2,0,0">
+                                            <TextBlock Text="{Binding PageLabel}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource ForegroundTertiaryBrush}"/>
+                                            <TextBlock Text="{Binding Author}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                                                       IsVisible="{Binding Author, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                            <TextBlock Text="{Binding DateLabel}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                                                       IsVisible="{Binding DateLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

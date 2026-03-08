@@ -30,6 +30,7 @@
             </Transitions>
         </Border.Transitions>
 
+        <StackPanel>
         <Border BorderBrush="{DynamicResource BorderSubtleBrush}"
                 BorderThickness="0,0,0,1">
 
@@ -148,5 +149,52 @@
             </Button>
         </Grid>
         </Border>
+
+        <!-- Search Results List -->
+        <Border IsVisible="{Binding HasMatches}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="0,1,0,0"
+                Margin="0,4,0,0">
+            <StackPanel>
+                <!-- Summary header -->
+                <TextBlock Text="{Binding SearchResultsSummary}"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                           Margin="4,4,4,2"/>
+
+                <!-- Scrollable results list -->
+                <ScrollViewer MaxHeight="300"
+                              VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding SearchResultItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding $parent[UserControl].DataContext.NavigateToMatchCommand}"
+                                        CommandParameter="{Binding MatchIndex}"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Left"
+                                        Padding="8,4"
+                                        Background="Transparent"
+                                        Cursor="Hand">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding PageNumber, StringFormat='Page {0}:'}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding MatchText}"
+                                                   FontSize="11"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxWidth="400"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+        </StackPanel>
     </Border>
 </UserControl>

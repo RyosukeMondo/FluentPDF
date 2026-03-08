@@ -4,6 +4,7 @@ using System.Reflection;
 using FluentPDF.Avalonia.Api.Endpoints;
 using FluentPDF.Avalonia.Api.Services;
 using FluentPDF.Core.Services;
+using FluentPDF.Rendering.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -93,7 +94,6 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
 
         // Re-use existing services from the main app's DI container
         builder.Services.AddSingleton(_appServices.GetRequiredService<IPdfDocumentService>());
-        builder.Services.AddSingleton(_appServices.GetRequiredService<IPdfRenderingService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<IPageOperationsService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<IAnnotationService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<ITextExtractionService>());
@@ -107,9 +107,14 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         builder.Services.AddSingleton(_appServices.GetRequiredService<IImageInsertionService>());
         builder.Services.AddSingleton(_appServices.GetRequiredService<ISecurityService>());
 
-        // Register ShapeService with document resolver wired to session manager
+        // Shared PageHandleCache for both ShapeService and RenderingService
+        // so shapes drawn via API are visible in API renders
         builder.Services.AddSingleton<FluentPDF.Rendering.Services.PageHandleCache>();
         builder.Services.AddSingleton<FluentPDF.Rendering.Services.ContentStreamPatcher>();
+        builder.Services.AddSingleton<IPdfRenderingService>(sp =>
+            new PdfRenderingService(
+                sp.GetRequiredService<ILogger<PdfRenderingService>>(),
+                sp.GetRequiredService<FluentPDF.Rendering.Services.PageHandleCache>()));
         builder.Services.AddSingleton<IShapeService>(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<FluentPDF.Rendering.Services.ShapeService>>();
@@ -194,6 +199,8 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         ShapeEndpoints.Map(_webApp);
         DiagnosticEndpoints.Map(_webApp);
         InteractionEndpoints.Map(_webApp);
+        SearchEndpoints.Map(_webApp);
+        HighlightEndpoints.Map(_webApp);
 
         _baseUrl = $"http://{bindAddress}:{port}";
 

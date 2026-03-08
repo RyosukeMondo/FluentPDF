@@ -321,19 +321,19 @@ public partial class PdfViewerPage : UserControl
     private async Task TrackOriginalObjectCountAsync()
     {
         if (_viewModel?.CurrentDocument == null) return;
-        var pageIndex = _viewModel.CurrentPageNumber - 1;
-        if (_viewModel.OriginalObjectCounts.ContainsKey(pageIndex)) return;
+        var pi = new PageIndex(_viewModel.CurrentPageNumber - 1);
+        if (_viewModel.OriginalObjectCounts.ContainsKey(pi.Value)) return;
 
         var docId = _viewModel.CurrentDocument.FilePath;
 
         try
         {
             var shapeService = App.GetService<IShapeService>();
-            var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
-            if (_viewModel != null && !_viewModel.OriginalObjectCounts.ContainsKey(pageIndex))
+            var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pi));
+            if (_viewModel != null && !_viewModel.OriginalObjectCounts.ContainsKey(pi.Value))
             {
-                _viewModel.OriginalObjectCounts[pageIndex] = objects.Count;
-                _logger.LogDebug("Tracked {Count} original objects on page {Page}", objects.Count, pageIndex);
+                _viewModel.OriginalObjectCounts[pi.Value] = objects.Count;
+                _logger.LogDebug("Tracked {Count} original objects on page {Page}", objects.Count, pi);
             }
         }
         catch (Exception ex)
@@ -1605,7 +1605,7 @@ public partial class PdfViewerPage : UserControl
             var shapeService = App.GetService<IShapeService>();
             var tool = _viewModel.ActiveDrawingTool;
             var docId = _viewModel.CurrentDocument.FilePath;
-            var pageNumber = _viewModel.CurrentPageNumber - 1; // 0-based for PDFium
+            var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
             var strokeColor = _viewModel.DrawingStrokeColor;
             var fillColor = _viewModel.DrawingFillColor;
             var strokeWidth = _viewModel.DrawingStrokeWidth;
@@ -1626,8 +1626,8 @@ public partial class PdfViewerPage : UserControl
                     var rh = Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y);
                     if (rw > 1 && rh > 1)
                         success = await shapeService.AddRectangleAsync(
-                            docId, pageNumber, rx, ry, rw, rh,
-                            fillColor, strokeColor, strokeWidth);
+                            docId, pageIndex, rx, ry, rw, rh,
+                            fillColor, strokeColor, strokeWidth) != null;
                     break;
 
                 case DrawingTool.Circle:
@@ -1638,16 +1638,16 @@ public partial class PdfViewerPage : UserControl
                     var radius = Math.Max(radX, radY);
                     if (radius > 1)
                         success = await shapeService.AddCircleAsync(
-                            docId, pageNumber, cx, cy, radius,
-                            fillColor, strokeColor, strokeWidth);
+                            docId, pageIndex, cx, cy, radius,
+                            fillColor, strokeColor, strokeWidth) != null;
                     break;
 
                 case DrawingTool.Line:
                     success = await shapeService.AddLineAsync(
-                        docId, pageNumber,
+                        docId, pageIndex,
                         pdfStart.Value.X, pdfStart.Value.Y,
                         pdfEnd.Value.X, pdfEnd.Value.Y,
-                        strokeColor, strokeWidth);
+                        strokeColor, strokeWidth) != null;
                     break;
 
                 case DrawingTool.Freehand:
@@ -1656,22 +1656,22 @@ public partial class PdfViewerPage : UserControl
                         var pdfPts = ConvertPointsToPdfArray(_drawingPoints);
                         if (pdfPts != null && pdfPts.Length >= 4)
                             success = await shapeService.AddFreehandPathAsync(
-                                docId, pageNumber, pdfPts,
-                                strokeColor, strokeWidth);
+                                docId, pageIndex, pdfPts,
+                                strokeColor, strokeWidth) != null;
                     }
                     break;
 
                 case DrawingTool.Text:
                     success = await shapeService.AddTextAsync(
-                        docId, pageNumber,
+                        docId, pageIndex,
                         pdfStart.Value.X, pdfStart.Value.Y,
-                        "Text", 12f, "Helvetica", strokeColor);
+                        "Text", 12f, "Helvetica", strokeColor) != null;
                     break;
             }
 
             if (success)
             {
-                _logger.LogInformation("Shape {Tool} committed on page {Page}", tool, pageNumber);
+                _logger.LogInformation("Shape {Tool} committed on page {Page}", tool, pageIndex);
 
                 // Record undo action
                 var undoService = App.GetService<IUndoRedoService>();
@@ -1700,7 +1700,7 @@ public partial class PdfViewerPage : UserControl
                     Points = tool == DrawingTool.Freehand ? ConvertPointsToPdfArray(_drawingPoints) : null,
                     Text = tool == DrawingTool.Text ? "Text" : null,
                 };
-                undoService.Push(new AddShapeAction(docId, pageNumber, creationData));
+                undoService.Push(new AddShapeAction(docId, pageIndex, creationData));
 
                 // Silent refresh: re-render without showing loading overlay to avoid flicker
                 await _viewModel.RefreshCurrentPageSilentAsync();
@@ -1708,7 +1708,7 @@ public partial class PdfViewerPage : UserControl
             else
             {
                 _logger.LogWarning("Shape {Tool} failed on page {Page} (docId={DocId})",
-                    tool, pageNumber, docId);
+                    tool, pageIndex, docId);
             }
         }
         catch (Exception ex)
@@ -1803,9 +1803,9 @@ public partial class PdfViewerPage : UserControl
         {
             var shapeService = App.GetService<IShapeService>();
             var docId = _viewModel.CurrentDocument.FilePath;
-            var pageNumber = _viewModel.CurrentPageNumber - 1;
+            var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
-            var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+            var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
 
             PageObjectInfo? hit = null;
             for (int i = objects.Count - 1; i >= 0; i--)
@@ -2081,8 +2081,8 @@ public partial class PdfViewerPage : UserControl
         if (_selectedObject == null || _viewModel?.CurrentDocument == null) return false;
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
-        var result = await shapeService.ResizePageObjectAsync(docId, pageNumber, _selectedObject.Index, scaleX, scaleY, anchorPdfX, anchorPdfY);
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
+        var result = await shapeService.ResizePageObjectAsync(docId, pageIndex, _selectedObject.Index, scaleX, scaleY, anchorPdfX, anchorPdfY);
         if (result) await _viewModel.RefreshCurrentPageSilentAsync();
         return result;
     }
@@ -2094,14 +2094,14 @@ public partial class PdfViewerPage : UserControl
         {
             var shapeService = App.GetService<IShapeService>();
             var docId = _viewModel.CurrentDocument.FilePath;
-            var pageNumber = _viewModel.CurrentPageNumber - 1;
+            var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
             var success = await shapeService.ResizePageObjectAsync(
-                docId, pageNumber, _selectedObject.Index, scaleX, scaleY, anchorPdfX, anchorPdfY);
+                docId, pageIndex, _selectedObject.Index, scaleX, scaleY, anchorPdfX, anchorPdfY);
             if (success)
             {
                 // Refresh and re-select the resized object
                 await _viewModel.RefreshCurrentPageSilentAsync();
-                var objects = await shapeService.GetPageObjectsAsync(docId, pageNumber);
+                var objects = await shapeService.GetPageObjectsAsync(docId, pageIndex);
                 var updated = objects.FirstOrDefault(o => o.Index == _selectedObject.Index);
                 if (updated != null)
                 {
@@ -2234,7 +2234,7 @@ public partial class PdfViewerPage : UserControl
             var shapeService = App.GetService<IShapeService>();
             var undoService = App.GetService<IUndoRedoService>();
             var docId = _viewModel.CurrentDocument.FilePath;
-            var pageNumber = _viewModel.CurrentPageNumber - 1;
+            var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
             // Delete in reverse index order to avoid index shifting
             var sorted = toDelete.OrderByDescending(o => o.Index).ToList();
@@ -2243,15 +2243,15 @@ public partial class PdfViewerPage : UserControl
             foreach (var obj in sorted)
             {
                 // Get properties before deletion for undo
-                var props = await shapeService.GetPageObjectPropertiesAsync(docId, pageNumber, obj.Index);
+                var props = await shapeService.GetPageObjectPropertiesAsync(docId, pageIndex, obj.Index);
 
-                var success = await shapeService.RemovePageObjectAsync(docId, pageNumber, obj.Index);
+                var success = await shapeService.RemovePageObjectAsync(docId, pageIndex, obj.Index);
                 if (success)
                 {
                     deletedCount++;
 
                     // Push undo action with shape data for recreation
-                    undoService.Push(new DeleteShapeAction(docId, pageNumber,
+                    undoService.Push(new DeleteShapeAction(docId, pageIndex,
                         new ShapeCreationData
                         {
                             ShapeType = DrawingShapeType.Rectangle, // Generic - we store bounds
@@ -2299,15 +2299,15 @@ public partial class PdfViewerPage : UserControl
         {
             var shapeService = App.GetService<IShapeService>();
             var docId = _viewModel.CurrentDocument.FilePath;
-            var pageNumber = _viewModel.CurrentPageNumber - 1;
+            var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
             var success = await shapeService.MovePageObjectAsync(
-                docId, pageNumber, _selectedObject.Index, deltaPdfX, deltaPdfY);
+                docId, pageIndex, _selectedObject.Index, deltaPdfX, deltaPdfY);
             if (success)
             {
                 // Record undo
                 var undoService = App.GetService<IUndoRedoService>();
-                undoService.Push(new MoveShapeAction(docId, pageNumber, _selectedObject.Index, deltaPdfX, deltaPdfY));
+                undoService.Push(new MoveShapeAction(docId, pageIndex, _selectedObject.Index, deltaPdfX, deltaPdfY));
 
                 // Update selected object bounds
                 _selectedObject = _selectedObject with
@@ -2352,19 +2352,19 @@ public partial class PdfViewerPage : UserControl
             var shapeService = App.GetService<IShapeService>();
             var undoService = App.GetService<IUndoRedoService>();
             var docId = _viewModel.CurrentDocument.FilePath;
-            var pageNumber = _viewModel.CurrentPageNumber - 1;
+            var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
             // Batch move: single GenerateContent call to prevent index shifting and text corruption
             var indices = _selectedObjects.Select(o => o.Index).ToArray();
             int movedCount = await shapeService.MovePageObjectsBatchAsync(
-                docId, pageNumber, indices, deltaPdfX, deltaPdfY);
+                docId, pageIndex, indices, deltaPdfX, deltaPdfY);
 
             if (movedCount > 0)
             {
                 for (int i = 0; i < _selectedObjects.Count; i++)
                 {
                     var obj = _selectedObjects[i];
-                    undoService.Push(new MoveShapeAction(docId, pageNumber, obj.Index, deltaPdfX, deltaPdfY));
+                    undoService.Push(new MoveShapeAction(docId, pageIndex, obj.Index, deltaPdfX, deltaPdfY));
                     _selectedObjects[i] = obj with
                     {
                         Left = obj.Left + deltaPdfX,
@@ -2396,8 +2396,8 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
-        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
 
         var result = _selectionManager.FinishMarquee(endPoint, objects, _selectedObjects.ToList());
         ApplySelectionResult(result);
@@ -2409,8 +2409,8 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
-        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
 
         var result = _selectionManager.FinishLasso(objects, _selectedObjects.ToList());
         ApplySelectionResult(result);
@@ -2503,12 +2503,12 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
         bool success = property switch
         {
-            "stroke" => await shapeService.SetPageObjectStrokeColorAsync(docId, pageNumber, _selectedObject.Index, value),
-            "fill" => await shapeService.SetPageObjectFillColorAsync(docId, pageNumber, _selectedObject.Index, value),
+            "stroke" => await shapeService.SetPageObjectStrokeColorAsync(docId, pageIndex, _selectedObject.Index, value),
+            "fill" => await shapeService.SetPageObjectFillColorAsync(docId, pageIndex, _selectedObject.Index, value),
             _ => false
         };
 
@@ -2522,8 +2522,8 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
-        var props = await shapeService.GetPageObjectPropertiesAsync(docId, pageNumber, _selectedObject.Index);
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
+        var props = await shapeService.GetPageObjectPropertiesAsync(docId, pageIndex, _selectedObject.Index);
 
         if (props != null)
         {
@@ -2548,10 +2548,10 @@ public partial class PdfViewerPage : UserControl
         {
             case AddShapeAction addAction:
                 // Undo add = remove last object on the page
-                var objects = await shapeService.GetPageObjectsAsync(addAction.DocumentId, addAction.PageNumber);
+                var objects = await shapeService.GetPageObjectsAsync(addAction.DocumentId, addAction.PageIndex);
                 if (objects.Count > 0)
                 {
-                    await shapeService.RemovePageObjectAsync(addAction.DocumentId, addAction.PageNumber, objects[^1].Index);
+                    await shapeService.RemovePageObjectAsync(addAction.DocumentId, addAction.PageIndex, objects[^1].Index);
                 }
                 break;
 
@@ -2559,7 +2559,7 @@ public partial class PdfViewerPage : UserControl
                 // Undo delete = re-create the shape
                 var d = deleteAction.CreationData;
                 await shapeService.AddRectangleAsync(
-                    deleteAction.DocumentId, deleteAction.PageNumber,
+                    deleteAction.DocumentId, deleteAction.PageIndex,
                     d.X, d.Y, d.Width, d.Height,
                     d.FillColor, d.StrokeColor, d.StrokeWidth);
                 break;
@@ -2567,7 +2567,7 @@ public partial class PdfViewerPage : UserControl
             case MoveShapeAction moveAction:
                 // Undo move = move back
                 await shapeService.MovePageObjectAsync(
-                    moveAction.DocumentId, moveAction.PageNumber,
+                    moveAction.DocumentId, moveAction.PageIndex,
                     moveAction.ObjectIndex, -moveAction.DeltaX, -moveAction.DeltaY);
                 break;
         }
@@ -2598,7 +2598,7 @@ public partial class PdfViewerPage : UserControl
                         var rx = Math.Min(d.X, d.X2);
                         var ry = Math.Min(d.Y, d.Y2);
                         await shapeService.AddRectangleAsync(
-                            addAction.DocumentId, addAction.PageNumber,
+                            addAction.DocumentId, addAction.PageIndex,
                             rx, ry, d.Width, d.Height,
                             d.FillColor, d.StrokeColor, d.StrokeWidth);
                         break;
@@ -2606,24 +2606,24 @@ public partial class PdfViewerPage : UserControl
                         var cx = (d.X + d.X2) / 2;
                         var cy = (d.Y + d.Y2) / 2;
                         await shapeService.AddCircleAsync(
-                            addAction.DocumentId, addAction.PageNumber,
+                            addAction.DocumentId, addAction.PageIndex,
                             cx, cy, d.Radius,
                             d.FillColor, d.StrokeColor, d.StrokeWidth);
                         break;
                     case DrawingShapeType.Line:
                         await shapeService.AddLineAsync(
-                            addAction.DocumentId, addAction.PageNumber,
+                            addAction.DocumentId, addAction.PageIndex,
                             d.X, d.Y, d.X2, d.Y2,
                             d.StrokeColor, d.StrokeWidth);
                         break;
                     case DrawingShapeType.Freehand when d.Points != null:
                         await shapeService.AddFreehandPathAsync(
-                            addAction.DocumentId, addAction.PageNumber,
+                            addAction.DocumentId, addAction.PageIndex,
                             d.Points, d.StrokeColor, d.StrokeWidth);
                         break;
                     case DrawingShapeType.Text:
                         await shapeService.AddTextAsync(
-                            addAction.DocumentId, addAction.PageNumber,
+                            addAction.DocumentId, addAction.PageIndex,
                             d.X, d.Y, d.Text ?? "Text",
                             d.FontSize, d.FontName, d.StrokeColor);
                         break;
@@ -2632,15 +2632,15 @@ public partial class PdfViewerPage : UserControl
 
             case DeleteShapeAction deleteAction:
                 // Redo delete = remove again (find by bounds)
-                var objs = await shapeService.GetPageObjectsAsync(deleteAction.DocumentId, deleteAction.PageNumber);
+                var objs = await shapeService.GetPageObjectsAsync(deleteAction.DocumentId, deleteAction.PageIndex);
                 if (objs.Count > 0)
-                    await shapeService.RemovePageObjectAsync(deleteAction.DocumentId, deleteAction.PageNumber, objs[^1].Index);
+                    await shapeService.RemovePageObjectAsync(deleteAction.DocumentId, deleteAction.PageIndex, objs[^1].Index);
                 break;
 
             case MoveShapeAction moveAction:
                 // Redo move = move forward again
                 await shapeService.MovePageObjectAsync(
-                    moveAction.DocumentId, moveAction.PageNumber,
+                    moveAction.DocumentId, moveAction.PageIndex,
                     moveAction.ObjectIndex, moveAction.DeltaX, moveAction.DeltaY);
                 break;
         }
@@ -2656,9 +2656,9 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
-        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
 
         _selectedObjects.Clear();
         var selectable = _viewModel.IsOriginalObjectsLocked
@@ -2737,9 +2737,9 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
-        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
 
         PageObjectInfo? hit = null;
         for (int i = objects.Count - 1; i >= 0; i--)
@@ -2755,6 +2755,8 @@ public partial class PdfViewerPage : UserControl
 
         if (hit != null)
         {
+            _selectedObjects.Clear();
+            _selectedObjects.Add(hit);
             _selectedObject = hit;
             ShowSelectionHighlight(hit);
         }
@@ -2778,12 +2780,12 @@ public partial class PdfViewerPage : UserControl
         // Capture state on UI thread
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
         var objIndex = _selectedObject.Index;
 
         try
         {
-            var success = await shapeService.RemovePageObjectAsync(docId, pageNumber, objIndex);
+            var success = await shapeService.RemovePageObjectAsync(docId, pageIndex, objIndex);
             if (success)
             {
                 ClearSelection();
@@ -2806,7 +2808,7 @@ public partial class PdfViewerPage : UserControl
         var shapeService = App.GetService<IShapeService>();
         var tool = _viewModel.ActiveDrawingTool;
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
         var strokeColor = _viewModel.DrawingStrokeColor;
         var fillColor = _viewModel.DrawingFillColor;
         var strokeWidth = _viewModel.DrawingStrokeWidth;
@@ -2820,17 +2822,17 @@ public partial class PdfViewerPage : UserControl
                 var rw = Math.Abs(endX - startX);
                 var rh = Math.Abs(endY - startY);
                 if (rw > 1 && rh > 1)
-                    success = await shapeService.AddRectangleAsync(docId, pageNumber, rx, ry, rw, rh, fillColor, strokeColor, strokeWidth);
+                    success = await shapeService.AddRectangleAsync(docId, pageIndex, rx, ry, rw, rh, fillColor, strokeColor, strokeWidth) != null;
                 break;
             case DrawingTool.Circle:
                 var cx = (startX + endX) / 2;
                 var cy = (startY + endY) / 2;
                 var radius = Math.Max(Math.Abs(endX - startX), Math.Abs(endY - startY)) / 2;
                 if (radius > 1)
-                    success = await shapeService.AddCircleAsync(docId, pageNumber, cx, cy, radius, fillColor, strokeColor, strokeWidth);
+                    success = await shapeService.AddCircleAsync(docId, pageIndex, cx, cy, radius, fillColor, strokeColor, strokeWidth) != null;
                 break;
             case DrawingTool.Line:
-                success = await shapeService.AddLineAsync(docId, pageNumber, startX, startY, endX, endY, strokeColor, strokeWidth);
+                success = await shapeService.AddLineAsync(docId, pageIndex, startX, startY, endX, endY, strokeColor, strokeWidth) != null;
                 break;
         }
 
@@ -2846,13 +2848,13 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
         var color = _viewModel.DrawingStrokeColor;
 
-        var success = await shapeService.AddTextAsync(docId, pageNumber, pdfX, pdfY, text, fontSize, fontName, color);
-        if (success)
+        var id = await shapeService.AddTextAsync(docId, pageIndex, pdfX, pdfY, text, fontSize, fontName, color);
+        if (id != null)
             await _viewModel.RefreshCurrentPageAsync();
-        return success;
+        return id != null;
     }
 
     /// <summary>List all page objects on the current page.</summary>
@@ -2862,8 +2864,8 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
-        return await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
+        return await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
     }
 
     /// <summary>Hit-test at PDF coordinates without selecting.</summary>
@@ -2873,9 +2875,9 @@ public partial class PdfViewerPage : UserControl
 
         var shapeService = App.GetService<IShapeService>();
         var docId = _viewModel.CurrentDocument.FilePath;
-        var pageNumber = _viewModel.CurrentPageNumber - 1;
+        var pageIndex = new PageIndex(_viewModel.CurrentPageNumber - 1);
 
-        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageNumber));
+        var objects = await Task.Run(async () => await shapeService.GetPageObjectsAsync(docId, pageIndex));
         for (int i = objects.Count - 1; i >= 0; i--)
         {
             var obj = objects[i];
