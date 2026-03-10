@@ -21,7 +21,8 @@ public sealed class SearchTools
         [Description("Match exact letter casing (default: false)")] bool caseSensitive = false,
         [Description("Match whole words only, not partial matches (default: false)")] bool wholeWord = false)
     {
-        return await client.SearchAsync(query, caseSensitive, wholeWord);
+        var json = await client.SearchAsync(query, caseSensitive, wholeWord);
+        return ResponseFormatter.FormatSearch(json);
     }
 
     [McpServerTool(Name = "pdf_find_pages"),
@@ -44,7 +45,7 @@ public sealed class SearchTools
             results.Append($"{{\"page\":{i},\"text\":{JsonSerializer.Serialize(text)}}}");
         }
         results.Append("]}");
-        return results.ToString();
+        return ResponseFormatter.FormatFindPages(results.ToString());
     }
 
     [McpServerTool(Name = "pdf_summarize_page"),
@@ -57,7 +58,8 @@ public sealed class SearchTools
         [Description("Document/session ID")] string documentId,
         [Description("Page number (starting from 1)")] int pageNumber)
     {
-        return await client.ExtractTextAsync(documentId, pageNumber);
+        var json = await client.ExtractTextAsync(documentId, pageNumber);
+        return ResponseFormatter.FormatSummarizePage(json, pageNumber);
     }
 
     [McpServerTool(Name = "pdf_highlight_relevant"),
@@ -74,7 +76,8 @@ public sealed class SearchTools
         [Description("Top edge of the highlight area (PDF points)")] double top,
         [Description("Highlight color as hex code (default: yellow #FFFF00)")] string color = "#FFFF00")
     {
-        return await client.HighlightAsync(pageNumber, left, bottom, right, top, color);
+        var json = await client.HighlightAsync(pageNumber, left, bottom, right, top, color);
+        return ResponseFormatter.FormatHighlight(json);
     }
 
     [McpServerTool(Name = "pdf_get_metadata"),
@@ -86,7 +89,8 @@ public sealed class SearchTools
         FluentPdfClient client,
         [Description("Document/session ID")] string documentId)
     {
-        return await client.GetMetadataAsync(documentId);
+        var json = await client.GetMetadataAsync(documentId);
+        return ResponseFormatter.FormatMetadata(json);
     }
 
     [McpServerTool(Name = "pdf_list_annotations"),
@@ -100,8 +104,11 @@ public sealed class SearchTools
         [Description("Document/session ID")] string documentId,
         [Description("Page number to filter (omit for all pages, or 0-based index for a single page)")] int? pageNumber = null)
     {
+        string json;
         if (pageNumber.HasValue)
-            return await client.ListAnnotationsAsync(documentId, pageNumber.Value);
-        return await client.ListAllAnnotationsAsync(documentId);
+            json = await client.ListAnnotationsAsync(documentId, pageNumber.Value);
+        else
+            json = await client.ListAllAnnotationsAsync(documentId);
+        return ResponseFormatter.FormatAnnotations(json);
     }
 }

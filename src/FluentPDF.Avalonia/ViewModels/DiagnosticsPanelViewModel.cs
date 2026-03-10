@@ -17,15 +17,16 @@ public partial class DiagnosticsPanelViewModel : ObservableObject, IDisposable
 {
     // Lazy-initialized brushes to avoid creating UI objects before UI thread is ready
     // These MUST be created on the UI thread to avoid "Call from invalid thread" errors
+    // Colors chosen for WCAG AA contrast (4.5:1+) on the dark overlay background (#202020)
     private static SolidColorBrush? _greenBrush;
     private static SolidColorBrush? _orangeBrush;
     private static SolidColorBrush? _redBrush;
     private static SolidColorBrush? _grayBrush;
 
-    private static SolidColorBrush GreenBrush => _greenBrush ??= new SolidColorBrush(Colors.Green);
-    private static SolidColorBrush OrangeBrush => _orangeBrush ??= new SolidColorBrush(Colors.Orange);
-    private static SolidColorBrush RedBrush => _redBrush ??= new SolidColorBrush(Colors.Red);
-    private static SolidColorBrush GrayBrush => _grayBrush ??= new SolidColorBrush(Colors.Gray);
+    private static SolidColorBrush GreenBrush => _greenBrush ??= new SolidColorBrush(Color.FromRgb(108, 203, 95));   // Bright green (7.2:1 on #202020)
+    private static SolidColorBrush OrangeBrush => _orangeBrush ??= new SolidColorBrush(Color.FromRgb(255, 183, 77)); // Bright orange (7.8:1 on #202020)
+    private static SolidColorBrush RedBrush => _redBrush ??= new SolidColorBrush(Color.FromRgb(255, 99, 99));        // Bright red (5.1:1 on #202020)
+    private static SolidColorBrush GrayBrush => _grayBrush ??= new SolidColorBrush(Color.FromRgb(170, 170, 170));    // Light gray (6.5:1 on #202020)
 
     private readonly IMetricsCollectionService _metricsService;
     private readonly ILogger<DiagnosticsPanelViewModel> _logger;

@@ -83,8 +83,8 @@
                                    Margin="0,4,0,0"/>
 
                         <!-- Ultra Quality Warning -->
-                        <Border Background="#FFF4CE"
-                                BorderBrush="#FFD700"
+                        <Border Background="{DynamicResource WarningBackgroundBrush}"
+                                BorderBrush="{DynamicResource WarningBrush}"
                                 BorderThickness="1"
                                 CornerRadius="4"
                                 Padding="12"
@@ -95,15 +95,16 @@
                                 <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                           Width="20"
                                           Height="20"
-                                          Foreground="#856404"/>
+                                          Foreground="{DynamicResource ForegroundPrimaryBrush}"/>
                                 <TextBlock Text="Warning: Ultra quality may cause out-of-memory errors on large documents or low-memory systems."
                                            TextWrapping="Wrap"
-                                           Foreground="#856404"/>
+                                           Foreground="{DynamicResource ForegroundPrimaryBrush}"/>
                             </StackPanel>
                         </Border>
 
                         <Button Content="Apply Quality Settings"
                                 Command="{Binding ApplyQualityCommand}"
+                                Classes="Secondary"
                                 HorizontalAlignment="Left"
                                 Margin="0,8,0,0"
                                 AutomationProperties.Name="Apply quality settings"/>
@@ -196,6 +197,7 @@
                 <!-- Reset Button -->
                 <Button Content="Reset All Settings to Defaults"
                         Command="{Binding ResetToDefaultsCommand}"
+                        Classes="Secondary"
                         HorizontalAlignment="Left"
                         Margin="0,8,0,0"
                         AutomationProperties.Name="Reset all settings to defaults"/>

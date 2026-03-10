@@ -29,6 +29,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
     private readonly IRenderingSettingsService? _renderingSettingsService;
     private readonly ISettingsService? _settingsService;
     private readonly IPageOperationsService? _pageOperationsService;
+    private readonly INotificationService? _notificationService;
 
     private PdfDocument? _currentDocument;
     private bool _disposed;
@@ -63,7 +64,8 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         IDpiDetectionService? dpiDetectionService = null,
         IRenderingSettingsService? renderingSettingsService = null,
         ISettingsService? settingsService = null,
-        IPageOperationsService? pageOperationsService = null)
+        IPageOperationsService? pageOperationsService = null,
+        INotificationService? notificationService = null)
     {
         _documentService = documentService ?? throw new ArgumentNullException(nameof(documentService));
         _renderingService = renderingService ?? throw new ArgumentNullException(nameof(renderingService));
@@ -80,6 +82,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         _renderingSettingsService = renderingSettingsService;
         _settingsService = settingsService;
         _pageOperationsService = pageOperationsService;
+        _notificationService = notificationService;
 
         // Wire sub-ViewModels
         Navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
@@ -236,6 +239,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
             await LoadSidePanelsAsync();
 
             StatusMessage = "Document loaded successfully";
+            ShowDocumentSuggestionAsync(_currentDocument);
         }
         catch (Exception ex)
         {
@@ -393,6 +397,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
                 _lastRenderedDpi = effectiveDpi;
                 _metricsService?.RecordRenderTime(CurrentPageNumber, 0);
                 UpdatePageDimensions();
+                ExtractPageSummaryAsync(_currentDocument, CurrentPageNumber);
             }
             else
             {
@@ -564,6 +569,7 @@ public partial class PdfViewerViewModel : ViewModelBase, IDisposable
         }
 
         _qualitySubscription?.Dispose();
+        _longOperationCts?.Dispose();
 
         _disposed = true;
     }

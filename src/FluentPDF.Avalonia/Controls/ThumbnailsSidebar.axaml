@@ -79,7 +79,26 @@
                                     CornerRadius="6"
                                     HorizontalContentAlignment="Stretch"
                                     VerticalContentAlignment="Stretch"
+                                    RenderTransformOrigin="0.5,0.5"
                                     AutomationProperties.Name="{Binding PageNumber, StringFormat='Page {0}'}">
+                                <Button.Styles>
+                                    <Style Selector="Button">
+                                        <Setter Property="RenderTransform" Value="none" />
+                                        <Setter Property="Transitions">
+                                            <Transitions>
+                                                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                                                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                                            </Transitions>
+                                        </Setter>
+                                    </Style>
+                                    <Style Selector="Button:pointerover">
+                                        <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+                                    </Style>
+                                    <Style Selector="Button:pressed">
+                                        <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}"/>
+                                        <Setter Property="RenderTransform" Value="scale(0.97)" />
+                                    </Style>
+                                </Button.Styles>
 
                                 <Grid RowDefinitions="*,Auto">
                                     <!-- Thumbnail Image -->

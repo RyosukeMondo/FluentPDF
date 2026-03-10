@@ -27,11 +27,11 @@
     <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="{DynamicResource SystemBaseHighColor}" />
     <SolidColorBrush x:Key="StatusBarBorderBrush" Color="{DynamicResource SystemBaseMediumLowColor}" />
 
-    <!-- Document State Indicators -->
-    <SolidColorBrush x:Key="ModifiedIndicatorBrush" Color="#FFE81123" />
-    <SolidColorBrush x:Key="SecureIndicatorBrush" Color="#FF107C10" />
-    <SolidColorBrush x:Key="ErrorIndicatorBrush" Color="#FFE81123" />
-    <SolidColorBrush x:Key="WarningIndicatorBrush" Color="#FFFFA500" />
+    <!-- Document State Indicators (WCAG compliant on both light/dark backgrounds) -->
+    <SolidColorBrush x:Key="ModifiedIndicatorBrush" Color="{DynamicResource ColorError}" />
+    <SolidColorBrush x:Key="SecureIndicatorBrush" Color="{DynamicResource ColorSuccess}" />
+    <SolidColorBrush x:Key="ErrorIndicatorBrush" Color="{DynamicResource ColorError}" />
+    <SolidColorBrush x:Key="WarningIndicatorBrush" Color="{DynamicResource ColorWarning}" />
 
     <!-- Annotation Colors (Semantic names) -->
     <SolidColorBrush x:Key="AnnotationHighlightBrush" Color="#66FFFF00" />

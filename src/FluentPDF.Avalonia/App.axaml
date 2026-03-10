@@ -18,7 +18,8 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <!-- Liquid Glass UI Theme Foundation (Phase 1) -->
-                <!-- Task 1.1: Color palette with Light/Dark/HighContrast variants -->
+                <!-- Task 1.1: Color palette with Light/Dark variants (WCAG AA compliant) -->
+                <!-- HighContrast: Styles/Theme/HighContrast.axaml loaded at runtime by ThemeService -->
                 <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/Theme/Colors.axaml"/>
                 <!-- Task 1.2: Acrylic brushes and materials (GPU-accelerated) -->
                 <ResourceInclude Source="avares://FluentPDF.Avalonia/Styles/Theme/Brushes.axaml"/>

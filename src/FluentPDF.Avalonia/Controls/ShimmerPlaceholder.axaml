@@ -5,25 +5,31 @@
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="200"
              x:Class="FluentPDF.Avalonia.Controls.ShimmerPlaceholder">
 
-    <!-- Shimmer container -->
-    <Grid ClipToBounds="True">
-        <!-- Base placeholder background -->
-        <Rectangle Fill="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+    <!-- Shimmer container with clip for rounded corners -->
+    <Border x:Name="OuterBorder" ClipToBounds="True"
+            CornerRadius="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType=UserControl}}">
+        <Grid>
+            <!-- Base placeholder background -->
+            <Rectangle Fill="{DynamicResource LoadingSkeletonBrush}"
+                       RadiusX="0" RadiusY="0"/>
 
-        <!-- Shimmer gradient overlay with animation -->
-        <Rectangle x:Name="ShimmerRectangle"
-                   Width="200"
-                   HorizontalAlignment="Left">
-            <Rectangle.Fill>
-                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                    <GradientStop Color="Transparent" Offset="0"/>
-                    <GradientStop Color="#30FFFFFF" Offset="0.5"/>
-                    <GradientStop Color="Transparent" Offset="1"/>
-                </LinearGradientBrush>
-            </Rectangle.Fill>
-            <Rectangle.RenderTransform>
-                <TranslateTransform X="-200"/>
-            </Rectangle.RenderTransform>
-        </Rectangle>
-    </Grid>
+            <!-- Shimmer gradient overlay with animation -->
+            <Rectangle x:Name="ShimmerRectangle"
+                       Width="200"
+                       HorizontalAlignment="Left">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                        <GradientStop Color="Transparent" Offset="0"/>
+                        <GradientStop Color="#20FFFFFF" Offset="0.4"/>
+                        <GradientStop Color="#38FFFFFF" Offset="0.5"/>
+                        <GradientStop Color="#20FFFFFF" Offset="0.6"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+                <Rectangle.RenderTransform>
+                    <TranslateTransform X="-200"/>
+                </Rectangle.RenderTransform>
+            </Rectangle>
+        </Grid>
+    </Border>
 </UserControl>

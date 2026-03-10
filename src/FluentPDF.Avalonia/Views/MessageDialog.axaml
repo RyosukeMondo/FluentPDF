@@ -48,6 +48,7 @@
                 Padding="16">
             <Button x:Name="OkButton"
                     Content="OK"
+                    Classes="accent"
                     HorizontalAlignment="Center"
                     MinWidth="100"
                     Click="OnOkClick"

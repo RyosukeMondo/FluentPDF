@@ -80,8 +80,18 @@
                                         ToolTip.Tip="{Binding PageNumber, StringFormat='Page {0}'}"
                                         AutomationProperties.Name="{Binding Title}">
                                     <Button.Styles>
+                                        <Style Selector="Button">
+                                            <Setter Property="Transitions">
+                                                <Transitions>
+                                                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                                                </Transitions>
+                                            </Setter>
+                                        </Style>
                                         <Style Selector="Button:pointerover">
                                             <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+                                        </Style>
+                                        <Style Selector="Button:pressed">
+                                            <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}"/>
                                         </Style>
                                     </Button.Styles>
                                 </Button>

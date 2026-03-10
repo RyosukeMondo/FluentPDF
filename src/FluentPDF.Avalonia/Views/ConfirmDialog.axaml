@@ -58,6 +58,7 @@
                         AutomationProperties.Name="Yes"/>
                 <Button x:Name="NoButton"
                         Content="No"
+                        Classes="Secondary"
                         MinWidth="100"
                         Click="OnNoClick"
                         AutomationProperties.Name="No"/>

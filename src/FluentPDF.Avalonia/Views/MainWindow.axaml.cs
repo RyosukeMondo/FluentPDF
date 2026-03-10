@@ -96,10 +96,42 @@ public partial class MainWindow : Window
             await Dispatcher.UIThread.InvokeAsync(() => SetupKeyboardShortcuts());
             await Dispatcher.UIThread.InvokeAsync(() => SetupViewModelEventHandlers());
             await Dispatcher.UIThread.InvokeAsync(() => SetupDebugConsole(), DispatcherPriority.Background);
+
+            // Show welcome dialog for first-time users
+            await ShowWelcomeIfFirstLaunchAsync();
+
+            // Load recent file cards for empty state
+            if (ViewModel.Tabs.Count == 0)
+            {
+                _ = ViewModel.RefreshRecentFileCardsCommand.ExecuteAsync(null);
+            }
         }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Deferred initialization sequence failed");
+        }
+    }
+
+    private async Task ShowWelcomeIfFirstLaunchAsync()
+    {
+        try
+        {
+            var settingsService = App.GetService<Core.Services.ISettingsService>();
+            if (settingsService == null || settingsService.Settings.HasCompletedOnboarding) return;
+
+            var wantsOpenFile = await DialogHelper.ShowWelcomeDialogAsync(this);
+
+            settingsService.Settings.HasCompletedOnboarding = true;
+            await settingsService.SaveAsync();
+
+            if (wantsOpenFile)
+            {
+                await OnOpenFileClickAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "Welcome dialog failed (non-fatal)");
         }
     }
 
@@ -359,6 +391,12 @@ public partial class MainWindow : Window
     private void UpdateEmptyStateVisibility()
     {
         _logger?.LogDebug("Updating empty state visibility. Tab count: {Count}", ViewModel.Tabs.Count);
+
+        // Refresh recent file cards when empty state becomes visible
+        if (ViewModel.Tabs.Count == 0)
+        {
+            _ = ViewModel.RefreshRecentFileCardsCommand.ExecuteAsync(null);
+        }
     }
 
     private void SubscribeToActiveTabChanges()

@@ -1,3 +1,4 @@
+using System.Threading;
 using CommunityToolkit.Mvvm.Input;
 using FluentPDF.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ namespace FluentPDF.Core.ViewModels;
 /// </summary>
 public partial class PdfViewerViewModel
 {
+    private CancellationTokenSource? _longOperationCts;
     #region Command Forwarding Properties
 
     // Navigation commands (forwarded to NavigationViewModel)
@@ -166,6 +168,64 @@ public partial class PdfViewerViewModel
         {
             _logger.LogError(ex, "Failed to select all text on page {Page}", CurrentPageNumber);
         }
+    }
+
+    #endregion
+
+    #region Long Operation Commands
+
+    /// <summary>
+    /// Starts a long-running operation with progress overlay.
+    /// Call <see cref="EndLongOperation"/> when complete.
+    /// </summary>
+    /// <param name="description">Human-readable description of the operation.</param>
+    /// <returns>A CancellationToken that is cancelled if the user clicks Cancel.</returns>
+    public CancellationToken BeginLongOperation(string description)
+    {
+        _longOperationCts?.Cancel();
+        _longOperationCts?.Dispose();
+        _longOperationCts = new CancellationTokenSource();
+
+        OperationDescription = description;
+        OperationProgress = -1.0;
+        IsOperationInProgress = true;
+
+        _logger.LogInformation("Long operation started: {Description}", description);
+        return _longOperationCts.Token;
+    }
+
+    /// <summary>
+    /// Updates the progress of the current long operation (0-100).
+    /// A negative value keeps the bar indeterminate.
+    /// </summary>
+    public void UpdateLongOperationProgress(double progress, string? description = null)
+    {
+        OperationProgress = progress;
+        if (description != null)
+            OperationDescription = description;
+    }
+
+    /// <summary>
+    /// Ends the current long-running operation and hides the progress overlay.
+    /// </summary>
+    public void EndLongOperation()
+    {
+        IsOperationInProgress = false;
+        OperationProgress = -1.0;
+        OperationDescription = string.Empty;
+
+        _longOperationCts?.Dispose();
+        _longOperationCts = null;
+
+        _logger.LogInformation("Long operation ended");
+    }
+
+    [RelayCommand]
+    private void CancelLongOperation()
+    {
+        _logger.LogInformation("Long operation cancelled by user");
+        _longOperationCts?.Cancel();
+        EndLongOperation();
     }
 
     #endregion

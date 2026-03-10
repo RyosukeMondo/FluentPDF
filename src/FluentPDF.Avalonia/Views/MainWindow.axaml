@@ -198,7 +198,7 @@
                           Background="{DynamicResource BorderSubtleBrush}"
                           Margin="8,0" />
 
-                <!-- View Toggles -->
+                <!-- View Toggles (primary) -->
                 <ToggleButton x:Name="ToolbarToggleThumbnailsButton"
                              TabIndex="7"
                              AutomationProperties.AutomationId="ToolbarToggleThumbnailsButton"
@@ -208,44 +208,68 @@
                     <PathIcon Data="M3 5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 0v4h4V5H5zm8-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4zm0 2h4v4h-4V5zM3 15a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4zm2 0v4h4v-4H5zm8-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-4zm0 2h4v4h-4v-4z" Width="14" Height="14"/>
                 </ToggleButton>
 
-                <ToggleButton x:Name="ToolbarToggleBookmarksButton"
-                             TabIndex="8"
-                             AutomationProperties.AutomationId="ToolbarToggleBookmarksButton"
-                             AutomationProperties.Name="Toggle bookmarks"
-                             ToolTip.Tip="Toggle bookmarks"
-                             Classes="ToolbarIcon">
-                    <PathIcon Data="M6 3a2 2 0 0 0-2 2v14a1 1 0 0 0 1.55.83L12 16.2l6.45 3.63A1 1 0 0 0 20 19V5a2 2 0 0 0-2-2H6zm0 2h12v12.13l-5.45-3.07a1 1 0 0 0-.98 0L6 17.13V5z" Width="14" Height="14"/>
-                </ToggleButton>
-
-                <ToggleButton x:Name="ToolbarToggleMetadataButton"
-                             TabIndex="9"
-                             AutomationProperties.AutomationId="ToolbarToggleMetadataButton"
-                             AutomationProperties.Name="Toggle document properties"
-                             ToolTip.Tip="Document properties"
-                             Classes="ToolbarIcon">
-                    <PathIcon Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6zm2-8h8v2H8v-2zm0 4h5v2H8v-2z" Width="14" Height="14"/>
-                </ToggleButton>
-
-                <Button x:Name="ToolbarSearchButton"
-                        TabIndex="10"
-                        AutomationProperties.AutomationId="ToolbarSearchButton"
-                        AutomationProperties.Name="Search"
-                        ToolTip.Tip="Search (Ctrl+F)"
-                        Classes="ToolbarIcon">
-                    <PathIcon Data="M10 2a8 8 0 1 0 4.93 14.32l4.38 4.37a1 1 0 0 0 1.41-1.41l-4.37-4.38A8 8 0 0 0 10 2zm-6 8a6 6 0 1 1 12 0 6 6 0 0 1-12 0z" Width="14" Height="14"/>
-                </Button>
-
-                <!-- Edit button opens drawing toolbar -->
                 <Separator Width="1" Height="24"
                           Background="{DynamicResource BorderSubtleBrush}"
                           Margin="8,0" />
-                <Button x:Name="ToolbarEditButton"
-                        TabIndex="11"
-                        AutomationProperties.AutomationId="ToolbarEditButton"
-                        AutomationProperties.Name="Edit and draw shapes"
-                        ToolTip.Tip="Edit / Draw shapes"
+
+                <!-- Overflow menu for secondary actions -->
+                <Button x:Name="ToolbarOverflowButton"
+                        TabIndex="8"
+                        AutomationProperties.AutomationId="ToolbarOverflowButton"
+                        AutomationProperties.Name="More actions"
+                        ToolTip.Tip="More actions"
                         Classes="ToolbarIcon">
-                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Width="14" Height="14"/>
+                    <!-- Horizontal ellipsis icon -->
+                    <PathIcon Data="M6 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" Width="14" Height="14"/>
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight" ShowMode="TransientWithDismissOnPointerMoveAway">
+                            <StackPanel Spacing="2" MinWidth="200">
+                                <!-- Bookmarks toggle -->
+                                <Button x:Name="OverflowToggleBookmarksButton"
+                                        AutomationProperties.AutomationId="OverflowToggleBookmarksButton"
+                                        AutomationProperties.Name="Toggle bookmarks"
+                                        Classes="MenuAction">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M6 3a2 2 0 0 0-2 2v14a1 1 0 0 0 1.55.83L12 16.2l6.45 3.63A1 1 0 0 0 20 19V5a2 2 0 0 0-2-2H6zm0 2h12v12.13l-5.45-3.07a1 1 0 0 0-.98 0L6 17.13V5z" Width="14" Height="14"/>
+                                        <TextBlock Text="Bookmarks" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Ctrl+B" VerticalAlignment="Center" Opacity="0.5" FontSize="11" Margin="16,0,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                                <!-- Metadata toggle -->
+                                <Button x:Name="OverflowToggleMetadataButton"
+                                        AutomationProperties.AutomationId="OverflowToggleMetadataButton"
+                                        AutomationProperties.Name="Document properties"
+                                        Classes="MenuAction">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6zm2-8h8v2H8v-2zm0 4h5v2H8v-2z" Width="14" Height="14"/>
+                                        <TextBlock Text="Properties" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <!-- Search -->
+                                <Button x:Name="OverflowSearchButton"
+                                        AutomationProperties.AutomationId="OverflowSearchButton"
+                                        AutomationProperties.Name="Search"
+                                        Classes="MenuAction">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M10 2a8 8 0 1 0 4.93 14.32l4.38 4.37a1 1 0 0 0 1.41-1.41l-4.37-4.38A8 8 0 0 0 10 2zm-6 8a6 6 0 1 1 12 0 6 6 0 0 1-12 0z" Width="14" Height="14"/>
+                                        <TextBlock Text="Search" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Ctrl+F" VerticalAlignment="Center" Opacity="0.5" FontSize="11" Margin="16,0,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                                <Separator Margin="4,2"/>
+                                <!-- Edit / Draw shapes -->
+                                <Button x:Name="OverflowEditButton"
+                                        AutomationProperties.AutomationId="OverflowEditButton"
+                                        AutomationProperties.Name="Edit and draw shapes"
+                                        Classes="MenuAction">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Width="14" Height="14"/>
+                                        <TextBlock Text="Edit / Draw" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
                 </Button>
             </StackPanel>
         </Border>
@@ -312,26 +336,104 @@
               x:Name="EmptyStateOverlay"
               IsVisible="{Binding Tabs.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=0}"
               Background="{DynamicResource BackgroundBaseBrush}">
-            <StackPanel HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="16">
-                <!-- Document icon (scaled 3x) -->
-                <Viewbox Width="96" Height="96">
-                    <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-                </Viewbox>
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="24"
+                            Margin="40">
+                    <!-- Hero section -->
+                    <StackPanel Spacing="12" HorizontalAlignment="Center">
+                        <Viewbox Width="72" Height="72">
+                            <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                        </Viewbox>
 
-                <TextBlock Text="No PDFs open"
-                           FontSize="20"
-                           FontWeight="SemiBold"
-                           HorizontalAlignment="Center" />
+                        <TextBlock Text="FluentPDF"
+                                   FontSize="24"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Open a PDF to get started, or pick a recent file below."
+                                   FontSize="14"
+                                   Opacity="0.7"
+                                   HorizontalAlignment="Center" />
 
-                <Button Content="Open File"
-                        x:Name="EmptyStateOpenButton"
-                        AutomationProperties.AutomationId="EmptyStateOpenButton"
-                        AutomationProperties.Name="Open file"
-                        Classes="accent"
-                        HorizontalAlignment="Center" />
-            </StackPanel>
+                        <Button Content="Open File"
+                                x:Name="EmptyStateOpenButton"
+                                AutomationProperties.AutomationId="EmptyStateOpenButton"
+                                AutomationProperties.Name="Open file"
+                                Classes="accent"
+                                HorizontalAlignment="Center"
+                                Margin="0,8,0,0" />
+                    </StackPanel>
+
+                    <!-- Recent files section -->
+                    <StackPanel Spacing="12"
+                                IsVisible="{Binding HasRecentFiles}">
+                        <TextBlock Text="Recent Files"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Opacity="0.8" />
+
+                        <ItemsControl ItemsSource="{Binding RecentFileCards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:RecentFileCardViewModel">
+                                    <Button Classes="Ghost"
+                                            Command="{Binding $parent[Window].DataContext.OpenRecentFileCommand}"
+                                            CommandParameter="{Binding FilePath}"
+                                            Margin="0,0,12,12"
+                                            Padding="0"
+                                            CornerRadius="8"
+                                            AutomationProperties.Name="{Binding FileName}">
+                                        <Border CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                BorderThickness="1"
+                                                Width="180"
+                                                ClipToBounds="True">
+                                            <StackPanel Spacing="0">
+                                                <!-- Thumbnail area -->
+                                                <Panel Height="140"
+                                                       Background="{DynamicResource BackgroundElevatedBrush}">
+                                                    <!-- Placeholder when no thumbnail -->
+                                                    <Viewbox Width="40" Height="40"
+                                                             IsVisible="{Binding !ThumbnailPath}"
+                                                             Opacity="0.3">
+                                                        <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                                                    </Viewbox>
+                                                    <!-- Loading indicator -->
+                                                    <ProgressBar IsIndeterminate="True"
+                                                                 IsVisible="{Binding IsThumbnailLoading}"
+                                                                 Height="2"
+                                                                 VerticalAlignment="Bottom" />
+                                                    <!-- Actual thumbnail -->
+                                                    <Image Source="{Binding ThumbnailPath}"
+                                                           Stretch="Uniform"
+                                                           IsVisible="{Binding ThumbnailPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                </Panel>
+                                                <!-- File info -->
+                                                <StackPanel Spacing="2" Margin="10,8">
+                                                    <TextBlock Text="{Binding FileName}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxLines="1" />
+                                                    <TextBlock Text="{Binding LastAccessedText}"
+                                                               FontSize="11"
+                                                               Opacity="0.6" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
 
         <!-- Debug Console Panel -->
@@ -369,17 +471,17 @@
                                     x:Name="CopyLogsButton"
                                     AutomationProperties.AutomationId="CopyLogsButton"
                                     AutomationProperties.Name="Copy last 50 log entries"
-                                    Padding="12,6" />
+                                    Classes="Secondary" />
                             <Button Content="Download Log"
                                     x:Name="DownloadLogButton"
                                     AutomationProperties.AutomationId="DownloadLogButton"
                                     AutomationProperties.Name="Download log"
-                                    Padding="12,6" />
+                                    Classes="Secondary" />
                             <Button Content="Clear"
                                     x:Name="ClearLogsButton"
                                     AutomationProperties.AutomationId="ClearLogsButton"
                                     AutomationProperties.Name="Clear log entries"
-                                    Padding="12,6" />
+                                    Classes="Secondary" />
                             <ToggleButton x:Name="ToggleConsoleButton"
                                           Content="&#x25BC;"
                                           IsChecked="False"

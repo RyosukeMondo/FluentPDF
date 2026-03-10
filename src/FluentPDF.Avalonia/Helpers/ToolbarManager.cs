@@ -165,21 +165,36 @@ public sealed class ToolbarManager
 
     private void SetupViewToggles()
     {
+        // Primary toolbar: Thumbnails toggle
         var thumbnailsButton = _owner.FindControl<ToggleButton>("ToolbarToggleThumbnailsButton");
         if (thumbnailsButton != null)
             thumbnailsButton.Click += OnToggleThumbnailsClick;
 
-        var bookmarksButton = _owner.FindControl<ToggleButton>("ToolbarToggleBookmarksButton");
-        if (bookmarksButton != null)
-            bookmarksButton.Click += OnToggleBookmarksClick;
+        // Overflow flyout: Bookmarks, Metadata, Search, Edit
+        var overflowBookmarks = _owner.FindControl<Button>("OverflowToggleBookmarksButton");
+        if (overflowBookmarks != null)
+            overflowBookmarks.Click += OnToggleBookmarksClick;
 
-        var metadataButton = _owner.FindControl<ToggleButton>("ToolbarToggleMetadataButton");
-        if (metadataButton != null)
-            metadataButton.Click += OnToggleMetadataClick;
+        var overflowMetadata = _owner.FindControl<Button>("OverflowToggleMetadataButton");
+        if (overflowMetadata != null)
+            overflowMetadata.Click += OnToggleMetadataClick;
 
-        var searchButton = _owner.FindControl<Button>("ToolbarSearchButton");
-        if (searchButton != null)
-            searchButton.Click += OnSearchClick;
+        var overflowSearch = _owner.FindControl<Button>("OverflowSearchButton");
+        if (overflowSearch != null)
+            overflowSearch.Click += OnSearchClick;
+
+        var overflowEdit = _owner.FindControl<Button>("OverflowEditButton");
+        if (overflowEdit != null)
+        {
+            overflowEdit.Click += (s, e) =>
+            {
+                var viewer = _viewModel.ActiveTab?.ViewerViewModel;
+                if (viewer == null) return;
+                viewer.IsDrawingToolbarVisible = !viewer.IsDrawingToolbarVisible;
+                if (viewer.IsDrawingToolbarVisible && viewer.ActiveDrawingTool == DrawingTool.None)
+                    viewer.ActiveDrawingTool = DrawingTool.Rectangle;
+            };
+        }
     }
 
     private void OnPreviousPageClick(object? sender, RoutedEventArgs e)
@@ -279,19 +294,7 @@ public sealed class ToolbarManager
 
     private void SetupDrawingTools()
     {
-        var editButton = _owner.FindControl<Button>("ToolbarEditButton");
-        if (editButton != null)
-        {
-            editButton.Click += (s, e) =>
-            {
-                var viewer = _viewModel.ActiveTab?.ViewerViewModel;
-                if (viewer == null) return;
-                // Toggle the drawing toolbar visibility
-                viewer.IsDrawingToolbarVisible = !viewer.IsDrawingToolbarVisible;
-                if (viewer.IsDrawingToolbarVisible && viewer.ActiveDrawingTool == DrawingTool.None)
-                    viewer.ActiveDrawingTool = DrawingTool.Rectangle; // default tool
-            };
-        }
+        // Edit/Draw button is now in the overflow flyout, wired in SetupViewToggles
     }
 
     private void WireDrawingButton(string buttonName, string toolName)

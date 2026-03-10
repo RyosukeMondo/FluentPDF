@@ -52,7 +52,7 @@
             <StackPanel Spacing="4">
                 <TextBlock Text="Frames Per Second"
                           FontSize="12"
-                          Foreground="#AAAAAA" />
+                          Foreground="#CCCCCC" />
                 <TextBlock Text="{Binding CurrentFPS, StringFormat='{}{0:F1} FPS'}"
                           FontSize="24"
                           FontWeight="Bold"
@@ -65,7 +65,7 @@
             <StackPanel Spacing="4">
                 <TextBlock Text="Memory Usage"
                           FontSize="12"
-                          Foreground="#AAAAAA" />
+                          Foreground="#CCCCCC" />
 
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
@@ -86,7 +86,7 @@
             <StackPanel Spacing="4">
                 <TextBlock Text="Frame Timing"
                           FontSize="12"
-                          Foreground="#AAAAAA" />
+                          Foreground="#CCCCCC" />
 
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"

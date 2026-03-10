@@ -136,6 +136,7 @@
                          AutomationProperties.Name="Replace text input"/>
                 <Button TabIndex="6"
                         Content="Replace"
+                        Classes="Secondary"
                         Command="{Binding ReplaceCommand}"
                         IsEnabled="{Binding HasMatches}"
                         IsVisible="{Binding HasMatches}"
@@ -188,8 +189,24 @@
                                         HorizontalContentAlignment="Left"
                                         Padding="8,4"
                                         Background="Transparent"
+                                        CornerRadius="4"
                                         Cursor="Hand"
                                         AutomationProperties.Name="{Binding PageNumber, StringFormat='Go to match on page {0}'}">
+                                    <Button.Styles>
+                                        <Style Selector="Button">
+                                            <Setter Property="Transitions">
+                                                <Transitions>
+                                                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                                                </Transitions>
+                                            </Setter>
+                                        </Style>
+                                        <Style Selector="Button:pointerover">
+                                            <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+                                        </Style>
+                                        <Style Selector="Button:pressed">
+                                            <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}"/>
+                                        </Style>
+                                    </Button.Styles>
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <TextBlock Text="{Binding PageNumber, StringFormat='Page {0}:'}"
                                                    FontSize="11"

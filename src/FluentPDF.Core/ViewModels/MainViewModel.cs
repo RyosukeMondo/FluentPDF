@@ -14,6 +14,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 {
     private readonly ILogger<MainViewModel> _logger;
     private readonly IRecentFilesService _recentFilesService;
+    private readonly IThumbnailCacheService? _thumbnailCacheService;
     private readonly IDialogService? _dialogService;
     private readonly Func<PdfViewerViewModel> _viewerViewModelFactory;
     private readonly Func<string, PdfViewerViewModel, TabViewModel> _tabViewModelFactory;
@@ -23,6 +24,17 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     /// Gets the collection of open tabs.
     /// </summary>
     public ObservableCollection<TabViewModel> Tabs { get; }
+
+    /// <summary>
+    /// Gets the recent file cards for the empty state screen.
+    /// </summary>
+    public ObservableCollection<RecentFileCardViewModel> RecentFileCards { get; } = new();
+
+    /// <summary>
+    /// Gets whether there are recent files to display.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasRecentFiles;
 
     /// <summary>
     /// Gets or sets the currently active tab.
@@ -38,13 +50,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         IRecentFilesService recentFilesService,
         Func<PdfViewerViewModel> viewerViewModelFactory,
         Func<string, PdfViewerViewModel, TabViewModel> tabViewModelFactory,
-        IDialogService? dialogService = null)
+        IDialogService? dialogService = null,
+        IThumbnailCacheService? thumbnailCacheService = null)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _recentFilesService = recentFilesService ?? throw new ArgumentNullException(nameof(recentFilesService));
         _viewerViewModelFactory = viewerViewModelFactory ?? throw new ArgumentNullException(nameof(viewerViewModelFactory));
         _tabViewModelFactory = tabViewModelFactory ?? throw new ArgumentNullException(nameof(tabViewModelFactory));
         _dialogService = dialogService;
+        _thumbnailCacheService = thumbnailCacheService;
 
         Tabs = new ObservableCollection<TabViewModel>();
 
@@ -238,6 +252,61 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     {
         _logger.LogInformation("ClearRecentFiles command invoked");
         _recentFilesService.ClearRecentFiles();
+        RecentFileCards.Clear();
+        HasRecentFiles = false;
+    }
+
+    /// <summary>
+    /// Refreshes the recent file cards with thumbnails for the empty state.
+    /// </summary>
+    [RelayCommand]
+    public async Task RefreshRecentFileCardsAsync()
+    {
+        var recentFiles = _recentFilesService.GetRecentFiles();
+
+        RecentFileCards.Clear();
+
+        foreach (var entry in recentFiles)
+        {
+            if (!File.Exists(entry.FilePath)) continue;
+            var card = new RecentFileCardViewModel(entry.FilePath, entry.LastAccessed);
+
+            // Set cached thumbnail immediately if available
+            var cached = _thumbnailCacheService?.GetCachedThumbnailPath(entry.FilePath);
+            if (cached != null)
+            {
+                card.ThumbnailPath = cached;
+                card.IsThumbnailLoading = false;
+            }
+
+            RecentFileCards.Add(card);
+        }
+
+        HasRecentFiles = RecentFileCards.Count > 0;
+
+        // Generate missing thumbnails in the background
+        foreach (var card in RecentFileCards.ToList())
+        {
+            if (card.ThumbnailPath != null) continue;
+            try
+            {
+                var path = await (_thumbnailCacheService?.GenerateThumbnailAsync(card.FilePath)
+                    ?? Task.FromResult<string?>(null));
+                card.ThumbnailPath = path;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Failed to generate thumbnail for {Path}", card.FilePath);
+            }
+            finally
+            {
+                card.IsThumbnailLoading = false;
+            }
+        }
+
+        // Prune stale thumbnails
+        _thumbnailCacheService?.PruneStaleThumbnails(
+            RecentFileCards.Select(c => c.FilePath));
     }
 
     /// <summary>

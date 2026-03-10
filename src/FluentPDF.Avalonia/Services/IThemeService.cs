@@ -41,4 +41,20 @@ public interface IThemeService
     /// </summary>
     /// <returns>Success with color value, or failure if not supported.</returns>
     Result<System.Drawing.Color> GetSystemAccentColor();
+
+    /// <summary>
+    /// Gets whether the system is currently in high contrast mode.
+    /// </summary>
+    bool IsHighContrastActive { get; }
+
+    /// <summary>
+    /// Applies high contrast overrides (merges HighContrast.axaml resources).
+    /// Call this when the system enters high contrast mode.
+    /// </summary>
+    Result ApplyHighContrast();
+
+    /// <summary>
+    /// Removes high contrast overrides, restoring normal theme resources.
+    /// </summary>
+    Result RemoveHighContrast();
 }

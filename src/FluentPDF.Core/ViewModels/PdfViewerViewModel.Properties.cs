@@ -60,10 +60,13 @@ public partial class PdfViewerViewModel
     private string _errorMessage = string.Empty;
 
     [ObservableProperty]
-    private double _operationProgress;
+    private double _operationProgress = -1.0;
 
     [ObservableProperty]
     private bool _isOperationInProgress;
+
+    [ObservableProperty]
+    private string _operationDescription = string.Empty;
 
     /// <summary>Gets or sets the current page view mode. Delegates to ViewStateViewModel.</summary>
     public PageViewMode ViewMode
@@ -143,6 +146,12 @@ public partial class PdfViewerViewModel
 
     [ObservableProperty]
     private bool _isOriginalObjectsLocked = true;
+
+    [ObservableProperty]
+    private string? _pageSummary;
+
+    [ObservableProperty]
+    private bool _isPageSummaryExpanded;
 
     /// <summary>Whether a drawing tool is currently active.</summary>
     public bool IsDrawingToolActive => ActiveDrawingTool != DrawingTool.None;

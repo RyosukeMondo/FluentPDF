@@ -1,7 +1,11 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Button.ToolbarIcon - Compact 32x32 icon-only button with liquid glass hover -->
+    <!-- ================================================================== -->
+    <!-- Button.ToolbarIcon                                                 -->
+    <!-- Compact 32x32 icon-only button with liquid glass hover             -->
+    <!-- States: normal, hover, pressed (scale-down), disabled, focus       -->
+    <!-- ================================================================== -->
     <Style Selector="Button.ToolbarIcon">
         <Setter Property="Width" Value="32" />
         <Setter Property="Height" Value="32" />
@@ -14,6 +18,16 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="Button.ToolbarIcon:pointerover">
         <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
@@ -22,20 +36,24 @@
     </Style>
     <Style Selector="Button.ToolbarIcon:pressed">
         <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}" />
-        <Setter Property="RenderTransform">
-            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-        </Setter>
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.92)" />
     </Style>
     <Style Selector="Button.ToolbarIcon:disabled">
         <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundDisabledBrush}" />
     </Style>
-    <!-- Focus indicator: 2px accent border for keyboard navigation (WCAG 2.4.7) -->
     <Style Selector="Button.ToolbarIcon:focus-visible">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
         <Setter Property="BorderThickness" Value="2" />
     </Style>
 
-    <!-- ToggleButton.ToolbarIcon - Same as Button.ToolbarIcon with checked state -->
+    <!-- ================================================================== -->
+    <!-- ToggleButton.ToolbarIcon                                           -->
+    <!-- Same as Button.ToolbarIcon with checked/unchecked distinction      -->
+    <!-- States: normal, hover, pressed, disabled, focus, checked,          -->
+    <!--         checked+hover, checked+pressed                             -->
+    <!-- ================================================================== -->
     <Style Selector="ToggleButton.ToolbarIcon">
         <Setter Property="Width" Value="32" />
         <Setter Property="Height" Value="32" />
@@ -48,6 +66,16 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="ToggleButton.ToolbarIcon:pointerover">
         <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
@@ -56,54 +84,106 @@
     </Style>
     <Style Selector="ToggleButton.ToolbarIcon:pressed">
         <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}" />
-        <Setter Property="RenderTransform">
-            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-        </Setter>
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.92)" />
     </Style>
     <Style Selector="ToggleButton.ToolbarIcon:disabled">
         <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundDisabledBrush}" />
     </Style>
-    <!-- Focus indicator for keyboard navigation -->
     <Style Selector="ToggleButton.ToolbarIcon:focus-visible">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
         <Setter Property="BorderThickness" Value="2" />
     </Style>
+    <!-- Checked: accent tint background with accent border for clear active state -->
     <Style Selector="ToggleButton.ToolbarIcon:checked">
         <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}" />
     </Style>
+    <!-- Checked + hover: slightly stronger background -->
+    <Style Selector="ToggleButton.ToolbarIcon:checked:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentHoverBrush}" />
+    </Style>
+    <!-- Checked + pressed: deepest accent for tactile feedback -->
+    <Style Selector="ToggleButton.ToolbarIcon:checked:pressed">
+        <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.92)" />
+    </Style>
 
-    <!-- Button.accent - Primary action button with accent color -->
+    <!-- ================================================================== -->
+    <!-- Button.accent                                                      -->
+    <!-- Primary action button with accent color fill                       -->
+    <!-- States: normal, hover, pressed (scale-down), disabled, focus       -->
+    <!-- ================================================================== -->
     <Style Selector="Button.accent">
         <Setter Property="Background" Value="{DynamicResource AccentPrimaryBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource ForegroundInverseBrush}" />
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="16,8" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="Button.accent:pointerover">
         <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
     </Style>
     <Style Selector="Button.accent:pressed">
         <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.97)" />
+    </Style>
+    <Style Selector="Button.accent:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="Background" Value="{DynamicResource ForegroundDisabledBrush}" />
     </Style>
     <Style Selector="Button.accent:focus-visible">
         <Setter Property="BorderThickness" Value="2" />
         <Setter Property="BorderBrush" Value="{DynamicResource ForegroundPrimaryBrush}" />
     </Style>
 
-    <!-- Button.Ghost - Minimal transparent button -->
+    <!-- ================================================================== -->
+    <!-- Button.Ghost                                                       -->
+    <!-- Minimal transparent button (close tabs, dismiss actions)           -->
+    <!-- States: normal, hover, pressed, disabled, focus                    -->
+    <!-- ================================================================== -->
     <Style Selector="Button.Ghost">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="4" />
         <Setter Property="Opacity" Value="0.6" />
         <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="Button.Ghost:pointerover">
         <Setter Property="Opacity" Value="1" />
         <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+    </Style>
+    <Style Selector="Button.Ghost:pressed">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.92)" />
+    </Style>
+    <Style Selector="Button.Ghost:disabled">
+        <Setter Property="Opacity" Value="0.25" />
     </Style>
     <Style Selector="Button.Ghost:focus-visible">
         <Setter Property="Opacity" Value="1" />
@@ -111,7 +191,144 @@
         <Setter Property="BorderThickness" Value="2" />
     </Style>
 
-    <!-- Global focus-visible style for all Buttons and ToggleButtons not covered above -->
+    <!-- ================================================================== -->
+    <!-- Button.ColorSwatch / Button.FillColorSwatch                        -->
+    <!-- Small color picker buttons in drawing toolbar                      -->
+    <!-- States: normal, hover (ring), pressed (scale-down), disabled       -->
+    <!-- ================================================================== -->
+    <Style Selector="Button.ColorSwatch">
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.ColorSwatch:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <Style Selector="Button.ColorSwatch:pressed">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="RenderTransform" Value="scale(0.88)" />
+    </Style>
+    <Style Selector="Button.ColorSwatch:disabled">
+        <Setter Property="Opacity" Value="0.35" />
+    </Style>
+
+    <Style Selector="Button.FillColorSwatch">
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.FillColorSwatch:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <Style Selector="Button.FillColorSwatch:pressed">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="RenderTransform" Value="scale(0.88)" />
+    </Style>
+    <Style Selector="Button.FillColorSwatch:disabled">
+        <Setter Property="Opacity" Value="0.35" />
+    </Style>
+
+    <!-- ================================================================== -->
+    <!-- Button.Secondary                                                   -->
+    <!-- Standard text button for dialogs, console, settings                -->
+    <!-- States: normal, hover, pressed (scale-down), disabled, focus       -->
+    <!-- ================================================================== -->
+    <Style Selector="Button.Secondary">
+        <Setter Property="Background" Value="{DynamicResource BackgroundSubtleBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.Secondary:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+    </Style>
+    <Style Selector="Button.Secondary:pressed">
+        <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.97)" />
+    </Style>
+    <Style Selector="Button.Secondary:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundDisabledBrush}" />
+    </Style>
+    <Style Selector="Button.Secondary:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+    <!-- ================================================================== -->
+    <!-- Button.MenuAction                                                  -->
+    <!-- Full-width transparent button for flyout/overflow menus            -->
+    <!-- States: normal, hover, pressed, disabled, focus                    -->
+    <!-- ================================================================== -->
+    <Style Selector="Button.MenuAction">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.MenuAction:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+    </Style>
+    <Style Selector="Button.MenuAction:pressed">
+        <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}" />
+    </Style>
+    <Style Selector="Button.MenuAction:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+    <Style Selector="Button.MenuAction:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+    <!-- ================================================================== -->
+    <!-- Global focus-visible styles                                        -->
+    <!-- Fallback focus indicator for any Button/ToggleButton not           -->
+    <!-- covered by a specific class style                                  -->
+    <!-- ================================================================== -->
     <Style Selector="Button:focus-visible">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
     </Style>
@@ -119,7 +336,10 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
     </Style>
 
-    <!-- Tab styling for compact, modern look -->
+    <!-- ================================================================== -->
+    <!-- TabItem interaction states                                         -->
+    <!-- Compact tabs with hover, pressed, and selected states              -->
+    <!-- ================================================================== -->
     <Style Selector="TabControl#MainTabControl TabItem">
         <Setter Property="Padding" Value="8,2"/>
         <Setter Property="FontSize" Value="12"/>
@@ -127,6 +347,12 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="MinHeight" Value="24"/>
         <Setter Property="Margin" Value="0"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="TabControl#MainTabControl TabItem:selected">
         <Setter Property="Foreground" Value="{DynamicResource ForegroundPrimaryBrush}"/>
@@ -134,8 +360,14 @@
     <Style Selector="TabControl#MainTabControl TabItem:pointerover">
         <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
     </Style>
+    <Style Selector="TabControl#MainTabControl TabItem:pressed">
+        <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}"/>
+    </Style>
 
-    <!-- Compact toolbar TextBox -->
+    <!-- ================================================================== -->
+    <!-- TextBox.ToolbarInput                                               -->
+    <!-- Compact toolbar text input with focus and disabled states          -->
+    <!-- ================================================================== -->
     <Style Selector="TextBox.ToolbarInput">
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="4,2"/>
@@ -143,12 +375,23 @@
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
         <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="TextBox.ToolbarInput:focus">
         <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
     </Style>
+    <Style Selector="TextBox.ToolbarInput:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
 
-    <!-- Compact toolbar ComboBox -->
+    <!-- ================================================================== -->
+    <!-- ComboBox.ToolbarInput                                              -->
+    <!-- Compact toolbar dropdown with disabled state                       -->
+    <!-- ================================================================== -->
     <Style Selector="ComboBox.ToolbarInput">
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="4,2"/>
@@ -156,6 +399,14 @@
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
         <Setter Property="Background" Value="{DynamicResource BackgroundSurfaceBrush}"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="ComboBox.ToolbarInput:disabled">
+        <Setter Property="Opacity" Value="0.5" />
     </Style>
 
 </Styles>

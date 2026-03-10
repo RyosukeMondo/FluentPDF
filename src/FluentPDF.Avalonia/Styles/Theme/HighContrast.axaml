@@ -1,0 +1,75 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    FluentPDF High Contrast Theme Overrides
+
+    Provides maximum contrast colors for users who enable Windows High Contrast
+    or need enhanced visibility. All text meets WCAG AAA (7:1), all UI components
+    meet WCAG AA (3:1+). No transparency or acrylic effects.
+
+    Applied at runtime by ThemeService when system high contrast is detected.
+    -->
+
+    <!-- Background Colors (solid, no transparency) -->
+    <SolidColorBrush x:Key="BackgroundBaseBrush" Color="#000000" />
+    <SolidColorBrush x:Key="BackgroundSurfaceBrush" Color="#000000" />
+    <SolidColorBrush x:Key="BackgroundElevatedBrush" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="BackgroundSubtleBrush" Color="#0D0D0D" />
+
+    <!-- Foreground Colors (maximum contrast) -->
+    <SolidColorBrush x:Key="ForegroundPrimaryBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ForegroundSecondaryBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ForegroundTertiaryBrush" Color="#E0E0E0" />
+    <SolidColorBrush x:Key="ForegroundDisabledBrush" Color="#A0A0A0" />
+    <SolidColorBrush x:Key="ForegroundInverseBrush" Color="#000000" />
+
+    <!-- Accent Colors (bright, high visibility) -->
+    <SolidColorBrush x:Key="AccentPrimaryBrush" Color="#1AEBFF" />
+    <SolidColorBrush x:Key="AccentSecondaryBrush" Color="#1AEBFF" />
+    <SolidColorBrush x:Key="AccentTertiaryBrush" Color="#003340" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#80F0FF" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#BFFFFF" />
+
+    <!-- Acrylic Tint Brushes (solid, no transparency for high contrast) -->
+    <SolidColorBrush x:Key="AcrylicTintToolbarBrush" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="AcrylicTintPanelBrush" Color="#0D0D0D" />
+    <SolidColorBrush x:Key="AcrylicTintDialogBrush" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="AcrylicTintTooltipBrush" Color="#1A1A1A" />
+
+    <!-- Semantic Colors (vivid, unmistakable) -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="#54FF54" />
+    <SolidColorBrush x:Key="SuccessBackgroundBrush" Color="#002200" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#FFFF00" />
+    <SolidColorBrush x:Key="WarningBackgroundBrush" Color="#332200" />
+    <SolidColorBrush x:Key="ErrorBrush" Color="#FF5555" />
+    <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#330000" />
+    <SolidColorBrush x:Key="InfoBrush" Color="#1AEBFF" />
+    <SolidColorBrush x:Key="InfoBackgroundBrush" Color="#002233" />
+
+    <!-- Border Colors (high visibility, all meet 3:1+) -->
+    <SolidColorBrush x:Key="BorderDefaultBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="#AAAAAA" />
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="BorderFocusBrush" Color="#FFFF00" />
+
+    <!-- UI State Colors -->
+    <SolidColorBrush x:Key="HoverOverlayBrush" Color="#333333" />
+    <SolidColorBrush x:Key="PressOverlayBrush" Color="#4D4D4D" />
+    <SolidColorBrush x:Key="PressedOverlayBrush" Color="#4D4D4D" />
+    <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#003340" />
+    <SolidColorBrush x:Key="SelectedBorderBrush" Color="#1AEBFF" />
+
+    <!-- Glass/Overlay Brushes (solid replacements) -->
+    <SolidColorBrush x:Key="GlassBorderBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ElevatedBorderBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AccentGlowBorderBrush" Color="#1AEBFF" />
+    <SolidColorBrush x:Key="DialogOverlayBrush" Color="#CC000000" />
+    <SolidColorBrush x:Key="FocusGlowBrush" Color="#FFFF00" />
+
+    <!-- Shadow Brushes (no shadows in high contrast) -->
+    <SolidColorBrush x:Key="ShadowSmallBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="ShadowMediumBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="ShadowLargeBrush" Color="Transparent" />
+
+</ResourceDictionary>

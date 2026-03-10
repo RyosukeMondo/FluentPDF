@@ -129,6 +129,7 @@ public partial class App
         services.AddSingleton<INavigationService, AvaloniaNavigationService>();
         services.AddSingleton<ISettingsService, AvaloniaSettingsService>();
         services.AddSingleton<IRecentFilesService, RecentFilesService>();
+        services.AddSingleton<IThumbnailCacheService, ThumbnailCacheService>();
         services.AddSingleton<IFileDialogService, AvaloniaFileDialogService>();
         services.AddSingleton<ILogBufferService, LogBufferService>();
         services.AddSingleton<IThemeService, ThemeService>();

@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using FluentResults;
 using Microsoft.Extensions.Logging;
@@ -13,12 +14,15 @@ namespace FluentPDF.Avalonia.Services;
 /// <summary>
 /// Implements centralized theme management with hot-reload support.
 /// Detects system theme changes and provides reactive theme updates.
+/// Also supports high contrast mode with runtime resource overrides.
 /// </summary>
 public sealed class ThemeService : IThemeService, IDisposable
 {
     private readonly ILogger<ThemeService> _logger;
     private readonly BehaviorSubject<ThemeVariant> _themeSubject;
     private readonly IDisposable? _systemThemeSubscription;
+    private global::Avalonia.Controls.ResourceDictionary? _highContrastResources;
+    private bool _highContrastActive;
     private bool _disposed;
 
     /// <summary>
@@ -44,9 +48,15 @@ public sealed class ThemeService : IThemeService, IDisposable
                 .Subscribe(OnSystemThemeChanged);
         }
 
+        // Detect high contrast on startup
+        if (DetectSystemHighContrast())
+        {
+            ApplyHighContrast();
+        }
+
         var correlationId = Guid.NewGuid();
-        Log.Information("ThemeService initialized with theme: {Theme} [CorrelationId: {CorrelationId}]",
-            initialTheme, correlationId);
+        Log.Information("ThemeService initialized with theme: {Theme}, HighContrast: {HC} [CorrelationId: {CorrelationId}]",
+            initialTheme, _highContrastActive, correlationId);
     }
 
     /// <inheritdoc/>
@@ -139,6 +149,127 @@ public sealed class ThemeService : IThemeService, IDisposable
             newTheme, correlationId);
 
         _themeSubject.OnNext(newTheme);
+    }
+
+    /// <inheritdoc/>
+    public bool IsHighContrastActive => _highContrastActive;
+
+    /// <inheritdoc/>
+    public Result ApplyHighContrast()
+    {
+        try
+        {
+            if (_highContrastActive)
+            {
+                return Result.Ok();
+            }
+
+            var app = Application.Current;
+            if (app == null)
+            {
+                return Result.Fail("Application.Current is null");
+            }
+
+            // Load the HighContrast resource dictionary
+            _highContrastResources = new global::Avalonia.Controls.ResourceDictionary();
+            var source = new Uri("avares://FluentPDF.Avalonia/Styles/Theme/HighContrast.axaml");
+            var loaded = (global::Avalonia.Controls.ResourceDictionary)AvaloniaXamlLoader.Load(source);
+
+            foreach (var kvp in loaded)
+            {
+                _highContrastResources[kvp.Key] = kvp.Value;
+            }
+
+            // Merge into application resources (overrides existing keys)
+            app.Resources.MergedDictionaries.Add(_highContrastResources);
+
+            _highContrastActive = true;
+            Log.Information("High contrast theme applied");
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to apply high contrast theme");
+            return Result.Fail($"Failed to apply high contrast: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc/>
+    public Result RemoveHighContrast()
+    {
+        try
+        {
+            if (!_highContrastActive || _highContrastResources == null)
+            {
+                return Result.Ok();
+            }
+
+            var app = Application.Current;
+            if (app == null)
+            {
+                return Result.Fail("Application.Current is null");
+            }
+
+            app.Resources.MergedDictionaries.Remove(_highContrastResources);
+            _highContrastResources = null;
+            _highContrastActive = false;
+
+            Log.Information("High contrast theme removed");
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to remove high contrast theme");
+            return Result.Fail($"Failed to remove high contrast: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Detects whether the system is currently in high contrast mode.
+    /// </summary>
+    private static bool DetectSystemHighContrast()
+    {
+        try
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return SystemParametersInfoHighContrast();
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Windows-specific high contrast detection via Registry.
+    /// </summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private static bool SystemParametersInfoHighContrast()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Control Panel\Accessibility\HighContrast");
+            if (key != null)
+            {
+                var flags = key.GetValue("Flags");
+                if (flags is string flagStr && int.TryParse(flagStr, out var flagInt))
+                {
+                    // Bit 0 (HCF_HIGHCONTRASTON = 1) indicates high contrast is active
+                    return (flagInt & 1) != 0;
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>

@@ -351,6 +351,110 @@ public static class DialogHelper
         return result;
     }
 
+    /// <summary>
+    /// Shows a welcome dialog for first-time users with a 3-step feature tour.
+    /// Returns true if the user wants to open a sample PDF.
+    /// </summary>
+    public static async Task<bool> ShowWelcomeDialogAsync(Window owner)
+    {
+        var dialog = CreateDialog("Welcome to FluentPDF", 500, 400, owner);
+        var wantsOpenFile = false;
+
+        var panel = CreateDialogPanel();
+
+        // Title
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Welcome to FluentPDF",
+            FontSize = 22,
+            FontWeight = FontWeight.SemiBold,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Your AI-powered PDF viewer and editor",
+            FontSize = 14,
+            Opacity = 0.7,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 16)
+        });
+
+        // Feature highlights
+        var features = new[]
+        {
+            ("M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
+             "Smart Search", "Find text across hundreds of pages instantly with highlighted results."),
+            ("M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z",
+             "AI-Powered Tools", "Use Claude to search, summarize, and navigate your documents."),
+            ("M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
+             "Edit & Annotate", "Draw shapes, add text, insert stamps, and highlight content.")
+        };
+
+        foreach (var (iconData, title, description) in features)
+        {
+            var featureRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 12,
+                Margin = new Thickness(0, 4, 0, 4)
+            };
+
+            featureRow.Children.Add(new Viewbox
+            {
+                Width = 28,
+                Height = 28,
+                Child = new PathIcon
+                {
+                    Data = StreamGeometry.Parse(iconData),
+                    Foreground = new SolidColorBrush(Color.FromRgb(100, 160, 255))
+                }
+            });
+
+            var textStack = new StackPanel { Spacing = 2 };
+            textStack.Children.Add(new TextBlock
+            {
+                Text = title,
+                FontWeight = FontWeight.SemiBold,
+                FontSize = 14
+            });
+            textStack.Children.Add(new TextBlock
+            {
+                Text = description,
+                FontSize = 12,
+                Opacity = 0.7,
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            featureRow.Children.Add(textStack);
+            panel.Children.Add(featureRow);
+        }
+
+        // Buttons
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 8,
+            Margin = new Thickness(0, 16, 0, 0)
+        };
+
+        var openButton = new Button { Content = "Open a PDF", Width = 120, Classes = { "accent" } };
+        openButton.Click += (s, e) => { wantsOpenFile = true; dialog.Close(); };
+
+        var laterButton = new Button { Content = "Get Started", Width = 120 };
+        laterButton.Click += (s, e) => dialog.Close();
+
+        buttonPanel.Children.Add(laterButton);
+        buttonPanel.Children.Add(openButton);
+        panel.Children.Add(buttonPanel);
+        dialog.Content = panel;
+
+        await dialog.ShowDialog(owner);
+        return wantsOpenFile;
+    }
+
     private static Window CreateDialog(string title, double width, double height, Window owner)
     {
         var window = new Window

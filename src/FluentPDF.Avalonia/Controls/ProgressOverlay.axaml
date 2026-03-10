@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="FluentPDF.Avalonia.Controls.ProgressOverlay"
+             IsVisible="{Binding IsVisible, RelativeSource={RelativeSource Self}}">
+
+    <!-- Semi-transparent backdrop covering the entire window -->
+    <Border Background="#80000000">
+        <Border Background="{DynamicResource BackgroundBaseBrush}"
+                CornerRadius="8"
+                Padding="24,20"
+                MinWidth="340"
+                MaxWidth="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 4 16 0 #40000000"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="1">
+            <StackPanel Spacing="14">
+                <!-- Operation description -->
+                <TextBlock x:Name="DescriptionText"
+                           Text="Processing..."
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource ForegroundPrimaryBrush}"
+                           HorizontalAlignment="Left"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <!-- Progress bar (determinate or indeterminate) -->
+                <ProgressBar x:Name="OperationProgressBar"
+                             Minimum="0"
+                             Maximum="100"
+                             Height="6"
+                             IsIndeterminate="True"/>
+
+                <!-- Bottom row: percentage text + cancel button -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock x:Name="PercentageText"
+                               Grid.Column="0"
+                               Text=""
+                               FontSize="12"
+                               Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                    <Button x:Name="CancelButton"
+                            Grid.Column="1"
+                            Content="Cancel"
+                            Classes="Secondary"
+                            FontSize="12"
+                            AutomationProperties.Name="Cancel operation"
+                            ToolTip.Tip="Cancel the current operation"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Border>
+</UserControl>

@@ -113,8 +113,18 @@
                                         HorizontalContentAlignment="Stretch"
                                         AutomationProperties.Name="{Binding DisplayText, StringFormat='Navigate to annotation: {0}'}">
                                     <Button.Styles>
+                                        <Style Selector="Button">
+                                            <Setter Property="Transitions">
+                                                <Transitions>
+                                                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                                                </Transitions>
+                                            </Setter>
+                                        </Style>
                                         <Style Selector="Button:pointerover">
                                             <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
+                                        </Style>
+                                        <Style Selector="Button:pressed">
+                                            <Setter Property="Background" Value="{DynamicResource PressOverlayBrush}"/>
                                         </Style>
                                     </Button.Styles>
                                     <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
@@ -155,8 +165,18 @@
                                                 AutomationProperties.Name="Delete annotation"
                                                 Opacity="0.5">
                                             <Button.Styles>
+                                                <Style Selector="Button">
+                                                    <Setter Property="Transitions">
+                                                        <Transitions>
+                                                            <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                                                        </Transitions>
+                                                    </Setter>
+                                                </Style>
                                                 <Style Selector="Button:pointerover">
                                                     <Setter Property="Opacity" Value="1.0"/>
+                                                </Style>
+                                                <Style Selector="Button:pressed">
+                                                    <Setter Property="Opacity" Value="0.8"/>
                                                 </Style>
                                             </Button.Styles>
                                         </Button>

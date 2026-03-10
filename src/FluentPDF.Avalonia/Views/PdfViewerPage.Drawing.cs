@@ -56,6 +56,42 @@ public partial class PdfViewerPage
             };
         }
 
+        // Wire flyout buttons for advanced drawing tools (progressive disclosure)
+        var flyoutToolButtons = new (string FlyoutButtonName, DrawingTool Tool)[]
+        {
+            ("DrawToolCircleFlyout", DrawingTool.Circle),
+            ("DrawToolFreehandFlyout", DrawingTool.Freehand),
+            ("DrawToolLassoFlyout", DrawingTool.Lasso),
+            ("DrawToolPanFlyout", DrawingTool.None),
+        };
+
+        foreach (var (buttonName, tool) in flyoutToolButtons)
+        {
+            var btn = this.FindControl<Button>(buttonName);
+            if (btn == null) continue;
+
+            var capturedTool = tool;
+            btn.Click += (s, e) =>
+            {
+                if (_viewModel == null) return;
+
+                if (capturedTool == DrawingTool.None)
+                {
+                    _viewModel.ActiveDrawingTool = DrawingTool.None;
+                }
+                else
+                {
+                    _viewModel.SetDrawingToolCommand.Execute(capturedTool.ToString());
+                }
+                UpdateDrawingToolToggleStates();
+
+                // Close the flyout after selection
+                var moreButton = this.FindControl<Button>("DrawToolMoreButton");
+                if (moreButton?.Flyout is global::Avalonia.Controls.Flyout flyout)
+                    flyout.Hide();
+            };
+        }
+
         // Containment mode toggle (intersect vs fully contained)
         var containmentToggle = this.FindControl<global::Avalonia.Controls.Primitives.ToggleButton>("ContainmentModeToggle");
         if (containmentToggle != null)

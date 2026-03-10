@@ -33,6 +33,11 @@ public class AppSettings
     public bool CrashReportingEnabled { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets whether the user has completed the first-launch onboarding.
+    /// </summary>
+    public bool HasCompletedOnboarding { get; set; } = false;
+
+    /// <summary>
     /// Creates a new instance with default values.
     /// </summary>
     public static AppSettings CreateDefault() => new();
