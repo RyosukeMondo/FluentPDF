@@ -1,19 +1,16 @@
 using Avalonia;
-using Avalonia.Animation;
-using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
-using Avalonia.Media;
-using Avalonia.Styling;
+using Avalonia.Threading;
 using System;
-using System.Threading;
 
 namespace FluentPDF.Avalonia.Controls;
 
 /// <summary>
 /// Animated shimmer placeholder for lazy-loaded content.
-/// Provides skeleton loading visual feedback with an animated
-/// gradient sweep (like modern web skeleton loaders).
+/// Uses a DispatcherTimer to sweep a gradient rectangle across the control.
+/// Avalonia's Animation.RunAsync does not support IterationCount.Infinite,
+/// so we drive the animation manually.
 /// </summary>
 public partial class ShimmerPlaceholder : UserControl
 {
@@ -21,7 +18,8 @@ public partial class ShimmerPlaceholder : UserControl
         AvaloniaProperty.Register<ShimmerPlaceholder, CornerRadius>(
             nameof(CornerRadius), new CornerRadius(0));
 
-    private CancellationTokenSource? _animationCts;
+    private DispatcherTimer? _shimmerTimer;
+    private double _shimmerPosition = -200;
 
     public new CornerRadius CornerRadius
     {
@@ -43,9 +41,8 @@ public partial class ShimmerPlaceholder : UserControl
 
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
-        _animationCts?.Cancel();
-        _animationCts?.Dispose();
-        _animationCts = null;
+        _shimmerTimer?.Stop();
+        _shimmerTimer = null;
     }
 
     private void StartShimmerAnimation()
@@ -53,39 +50,26 @@ public partial class ShimmerPlaceholder : UserControl
         var shimmerRect = this.FindControl<Rectangle>("ShimmerRectangle");
         if (shimmerRect == null) return;
 
-        var targetWidth = Bounds.Width > 0 ? Bounds.Width : 400;
+        const double durationSeconds = 1.8;
+        const int fps = 60;
+        const double shimmerWidth = 200.0;
 
-        // Animate Canvas.Left on the shimmer rectangle (not the transform).
-        // RunAsync requires a Visual, so we animate the Rectangle directly.
-        var animation = new Animation
+        _shimmerPosition = -shimmerWidth;
+
+        _shimmerTimer?.Stop();
+        _shimmerTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000.0 / fps) };
+        _shimmerTimer.Tick += (_, _) =>
         {
-            Duration = TimeSpan.FromSeconds(1.8),
-            IterationCount = IterationCount.Infinite,
-            Easing = new LinearEasing(),
-            Children =
-            {
-                new KeyFrame
-                {
-                    Cue = new Cue(0.0),
-                    Setters =
-                    {
-                        new Setter(Canvas.LeftProperty, -200.0)
-                    }
-                },
-                new KeyFrame
-                {
-                    Cue = new Cue(1.0),
-                    Setters =
-                    {
-                        new Setter(Canvas.LeftProperty, targetWidth + 200.0)
-                    }
-                }
-            }
+            var totalWidth = Bounds.Width > 0 ? Bounds.Width : 400;
+            var totalDistance = totalWidth + 2 * shimmerWidth;
+            var step = totalDistance / (durationSeconds * fps);
+
+            _shimmerPosition += step;
+            if (_shimmerPosition > totalWidth + shimmerWidth)
+                _shimmerPosition = -shimmerWidth;
+
+            Canvas.SetLeft(shimmerRect, _shimmerPosition);
         };
-
-        _animationCts?.Cancel();
-        _animationCts = new CancellationTokenSource();
-
-        _ = animation.RunAsync(shimmerRect, _animationCts.Token);
+        _shimmerTimer.Start();
     }
 }

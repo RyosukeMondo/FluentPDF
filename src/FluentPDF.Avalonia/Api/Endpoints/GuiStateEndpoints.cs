@@ -152,6 +152,12 @@ public static class GuiStateEndpoints
                 if (window == null)
                     return (byte[]?)null;
 
+                // Let any pending layout/render passes complete before capturing.
+                // This prevents crashes when screenshot is taken during panel transitions.
+                await Task.Delay(100);
+                window.InvalidateVisual();
+                await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+
                 var pixelSize = new global::Avalonia.PixelSize(
                     (int)window.Bounds.Width,
                     (int)window.Bounds.Height);
@@ -159,12 +165,20 @@ public static class GuiStateEndpoints
                 if (pixelSize.Width <= 0 || pixelSize.Height <= 0)
                     return null;
 
-                var renderTarget = new global::Avalonia.Media.Imaging.RenderTargetBitmap(pixelSize);
-                renderTarget.Render(window);
+                try
+                {
+                    var renderTarget = new global::Avalonia.Media.Imaging.RenderTargetBitmap(pixelSize);
+                    renderTarget.Render(window);
 
-                using var ms = new MemoryStream();
-                renderTarget.Save(ms);
-                return ms.ToArray();
+                    using var ms = new MemoryStream();
+                    renderTarget.Save(ms);
+                    return ms.ToArray();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Screenshot render failed: {ex.Message}");
+                    return null;
+                }
             });
 
             if (pngBytes == null)
