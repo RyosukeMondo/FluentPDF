@@ -28,6 +28,7 @@ public static class GuiEndpoints
         GuiStateEndpoints.MapGuiStateEndpoints(group);
         GuiNavigationEndpoints.MapGuiNavigationEndpoints(group);
         GuiActionEndpoints.MapGuiActionEndpoints(group);
+        DevTestEndpoints.MapDevTestEndpoints(group);
     }
 
     /// <summary>
