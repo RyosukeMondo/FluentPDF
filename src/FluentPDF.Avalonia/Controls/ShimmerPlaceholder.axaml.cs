@@ -6,6 +6,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Avalonia.Styling;
 using System;
+using System.Threading;
 
 namespace FluentPDF.Avalonia.Controls;
 
@@ -16,27 +17,18 @@ namespace FluentPDF.Avalonia.Controls;
 /// </summary>
 public partial class ShimmerPlaceholder : UserControl
 {
-    /// <summary>
-    /// Defines the CornerRadius property for rounded skeleton shapes.
-    /// </summary>
     public static new readonly StyledProperty<CornerRadius> CornerRadiusProperty =
         AvaloniaProperty.Register<ShimmerPlaceholder, CornerRadius>(
             nameof(CornerRadius), new CornerRadius(0));
 
-    private Animation? _shimmerAnimation;
+    private CancellationTokenSource? _animationCts;
 
-    /// <summary>
-    /// Gets or sets the corner radius of the shimmer placeholder.
-    /// </summary>
     public new CornerRadius CornerRadius
     {
         get => GetValue(CornerRadiusProperty);
         set => SetValue(CornerRadiusProperty, value);
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ShimmerPlaceholder"/> class.
-    /// </summary>
     public ShimmerPlaceholder()
     {
         InitializeComponent();
@@ -44,20 +36,16 @@ public partial class ShimmerPlaceholder : UserControl
         DetachedFromVisualTree += OnDetachedFromVisualTree;
     }
 
-    /// <summary>
-    /// Starts shimmer animation when control is attached to visual tree.
-    /// </summary>
     private void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
         StartShimmerAnimation();
     }
 
-    /// <summary>
-    /// Stops shimmer animation when control is detached from visual tree.
-    /// </summary>
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
-        _shimmerAnimation = null;
+        _animationCts?.Cancel();
+        _animationCts?.Dispose();
+        _animationCts = null;
     }
 
     private void StartShimmerAnimation()
@@ -67,10 +55,13 @@ public partial class ShimmerPlaceholder : UserControl
 
         var targetWidth = Bounds.Width > 0 ? Bounds.Width : 400;
 
-        _shimmerAnimation = new Animation
+        // Animate Canvas.Left on the shimmer rectangle (not the transform).
+        // RunAsync requires a Visual, so we animate the Rectangle directly.
+        var animation = new Animation
         {
             Duration = TimeSpan.FromSeconds(1.8),
             IterationCount = IterationCount.Infinite,
+            Easing = new LinearEasing(),
             Children =
             {
                 new KeyFrame
@@ -78,7 +69,7 @@ public partial class ShimmerPlaceholder : UserControl
                     Cue = new Cue(0.0),
                     Setters =
                     {
-                        new Setter(TranslateTransform.XProperty, -200.0)
+                        new Setter(Canvas.LeftProperty, -200.0)
                     }
                 },
                 new KeyFrame
@@ -86,17 +77,15 @@ public partial class ShimmerPlaceholder : UserControl
                     Cue = new Cue(1.0),
                     Setters =
                     {
-                        new Setter(TranslateTransform.XProperty, targetWidth + 200.0)
+                        new Setter(Canvas.LeftProperty, targetWidth + 200.0)
                     }
                 }
-            },
-            Easing = new LinearEasing()
+            }
         };
 
-        var transform = shimmerRect.RenderTransform as TranslateTransform;
-        if (transform != null)
-        {
-            _ = _shimmerAnimation.RunAsync(transform);
-        }
+        _animationCts?.Cancel();
+        _animationCts = new CancellationTokenSource();
+
+        _ = animation.RunAsync(shimmerRect, _animationCts.Token);
     }
 }

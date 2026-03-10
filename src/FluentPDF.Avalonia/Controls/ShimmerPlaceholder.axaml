@@ -13,23 +13,23 @@
             <Rectangle Fill="{DynamicResource LoadingSkeletonBrush}"
                        RadiusX="0" RadiusY="0"/>
 
-            <!-- Shimmer gradient overlay with animation -->
-            <Rectangle x:Name="ShimmerRectangle"
-                       Width="200"
-                       HorizontalAlignment="Left">
-                <Rectangle.Fill>
-                    <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                        <GradientStop Color="Transparent" Offset="0"/>
-                        <GradientStop Color="#20FFFFFF" Offset="0.4"/>
-                        <GradientStop Color="#38FFFFFF" Offset="0.5"/>
-                        <GradientStop Color="#20FFFFFF" Offset="0.6"/>
-                        <GradientStop Color="Transparent" Offset="1"/>
-                    </LinearGradientBrush>
-                </Rectangle.Fill>
-                <Rectangle.RenderTransform>
-                    <TranslateTransform X="-200"/>
-                </Rectangle.RenderTransform>
-            </Rectangle>
+            <!-- Shimmer gradient overlay — animated via Canvas.Left in code-behind -->
+            <Canvas ClipToBounds="True">
+                <Rectangle x:Name="ShimmerRectangle"
+                           Width="200"
+                           Height="{Binding $parent[Canvas].Bounds.Height}"
+                           Canvas.Left="-200">
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                            <GradientStop Color="Transparent" Offset="0"/>
+                            <GradientStop Color="#20FFFFFF" Offset="0.4"/>
+                            <GradientStop Color="#38FFFFFF" Offset="0.5"/>
+                            <GradientStop Color="#20FFFFFF" Offset="0.6"/>
+                            <GradientStop Color="Transparent" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </Canvas>
         </Grid>
     </Border>
 </UserControl>
