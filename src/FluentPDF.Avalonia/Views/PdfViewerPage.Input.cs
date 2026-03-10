@@ -126,6 +126,14 @@ public partial class PdfViewerPage
 
         var properties = e.GetCurrentPoint(PdfImage).Properties;
 
+        // Right-click: show context menu when text is selected
+        if (properties.IsRightButtonPressed && _viewModel.HasSelectedText)
+        {
+            ShowTextSelectionContextMenu(e.GetCurrentPoint(PdfImage).Position);
+            e.Handled = true;
+            return;
+        }
+
         // Only start selection on left-click
         if (properties.IsLeftButtonPressed)
         {
@@ -138,6 +146,65 @@ public partial class PdfViewerPage
 
             e.Handled = true;
         }
+    }
+
+    private void ShowTextSelectionContextMenu(Point position)
+    {
+        if (_viewModel == null || PdfImage == null) return;
+
+        var menu = new global::Avalonia.Controls.ContextMenu();
+
+        // Copy
+        var copyItem = new global::Avalonia.Controls.MenuItem
+        {
+            Header = "Copy",
+            InputGesture = new KeyGesture(Key.C, KeyModifiers.Control)
+        };
+        copyItem.Click += (s, e) =>
+        {
+            if (_viewModel.HasSelectedText)
+                _ = CopyToClipboardAsync(_viewModel.SelectedText);
+        };
+        menu.Items.Add(copyItem);
+
+        menu.Items.Add(new global::Avalonia.Controls.Separator());
+
+        // Highlight colors
+        var highlightColors = new[]
+        {
+            ("Yellow", "#FFFF00", AnnotationType.Highlight),
+            ("Green", "#00FF00", AnnotationType.Highlight),
+            ("Blue", "#00BFFF", AnnotationType.Highlight),
+            ("Pink", "#FF69B4", AnnotationType.Highlight),
+        };
+
+        var highlightMenu = new global::Avalonia.Controls.MenuItem { Header = "Highlight" };
+        foreach (var (name, color, type) in highlightColors)
+        {
+            var colorItem = new global::Avalonia.Controls.MenuItem { Header = name };
+            var capturedColor = color;
+            colorItem.Click += (s, e) => _ = CreateColoredHighlightAsync(capturedColor);
+            highlightMenu.Items.Add(colorItem);
+        }
+        menu.Items.Add(highlightMenu);
+
+        // Underline
+        var underlineItem = new global::Avalonia.Controls.MenuItem { Header = "Underline" };
+        underlineItem.Click += (s, e) => _ = CreateTextMarkupAnnotationAsync(AnnotationType.Underline);
+        menu.Items.Add(underlineItem);
+
+        // Strikethrough
+        var strikethroughItem = new global::Avalonia.Controls.MenuItem { Header = "Strikethrough" };
+        strikethroughItem.Click += (s, e) => _ = CreateTextMarkupAnnotationAsync(AnnotationType.StrikeOut);
+        menu.Items.Add(strikethroughItem);
+
+        menu.Open(PdfImage);
+    }
+
+    private async Task CreateColoredHighlightAsync(string color)
+    {
+        await CreateTextMarkupAnnotationAsync(AnnotationType.Highlight);
+        // TODO: Apply color to the annotation once IAnnotationService supports color parameter
     }
 
     /// <summary>

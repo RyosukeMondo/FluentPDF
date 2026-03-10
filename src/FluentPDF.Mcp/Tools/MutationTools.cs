@@ -17,7 +17,8 @@ public sealed class MutationTools
         [Description("Horizontal position in PDF points")] double x,
         [Description("Vertical position in PDF points")] double y)
     {
-        return await client.ClickAsync(x, y);
+        var json = await client.ClickAsync(x, y);
+        return ResponseFormatter.FormatClick(json);
     }
 
     [McpServerTool(Name = "pdf_move_selection"),
@@ -29,7 +30,8 @@ public sealed class MutationTools
         [Description("Horizontal offset in PDF points (positive = right)")] double deltaX,
         [Description("Vertical offset in PDF points (positive = up)")] double deltaY)
     {
-        return await client.MoveSelectionAsync(deltaX, deltaY);
+        var json = await client.MoveSelectionAsync(deltaX, deltaY);
+        return ResponseFormatter.FormatMoveSelection(json);
     }
 
     [McpServerTool(Name = "pdf_delete_selection"),
@@ -39,7 +41,8 @@ public sealed class MutationTools
         "document objects may be protected by the lock setting.")]
     public static async Task<string> DeleteSelection(FluentPdfClient client)
     {
-        return await client.DeleteSelectionAsync();
+        var json = await client.DeleteSelectionAsync();
+        return ResponseFormatter.FormatDeleteSelection(json);
     }
 
     [McpServerTool(Name = "pdf_add_text"),
@@ -55,7 +58,8 @@ public sealed class MutationTools
         [Description("Font size in points (default: 12)")] float fontSize = 12f,
         [Description("Font name (default: Helvetica)")] string fontName = "Helvetica")
     {
-        return await client.AddTextAsync(x, y, text, fontSize, fontName);
+        var json = await client.AddTextAsync(x, y, text, fontSize, fontName);
+        return ResponseFormatter.FormatAddText(json);
     }
 
     [McpServerTool(Name = "pdf_draw_shape"),
@@ -74,7 +78,8 @@ public sealed class MutationTools
         [Description("Border color as hex code (default: #000000 black)")] string strokeColor = "#000000",
         [Description("Border line thickness in points (default: 1)")] float strokeWidth = 1f)
     {
-        return await client.DrawShapeAsync(shape, x, y, width, height, fillColor, strokeColor, strokeWidth);
+        var json = await client.DrawShapeAsync(shape, x, y, width, height, fillColor, strokeColor, strokeWidth);
+        return ResponseFormatter.FormatDrawShape(json);
     }
 
     [McpServerTool(Name = "pdf_list_shapes"),
@@ -86,7 +91,8 @@ public sealed class MutationTools
         [Description("Filter to a specific page number (optional)")] int? page = null,
         [Description("Filter by creator: 'ai' or 'user' (optional)")] string? source = null)
     {
-        return await client.ListShapesAsync(page, source);
+        var json = await client.ListShapesAsync(page, source);
+        return ResponseFormatter.FormatListShapes(json);
     }
 
     [McpServerTool(Name = "pdf_delete_shape"),
@@ -97,6 +103,7 @@ public sealed class MutationTools
         FluentPdfClient client,
         [Description("The shape ID (returned when the shape was drawn)")] string id)
     {
-        return await client.DeleteShapeAsync(id);
+        var json = await client.DeleteShapeAsync(id);
+        return ResponseFormatter.FormatDeleteShape(json);
     }
 }

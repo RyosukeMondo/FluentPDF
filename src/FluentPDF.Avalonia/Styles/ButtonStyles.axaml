@@ -153,6 +153,101 @@
     </Style>
 
     <!-- ================================================================== -->
+    <!-- Button.ToolbarAccent                                               -->
+    <!-- Compact accent-filled button for primary toolbar actions           -->
+    <!-- (Open, Save) — stands out from icon-only toolbar buttons           -->
+    <!-- States: normal, hover, pressed (scale-down), disabled, focus       -->
+    <!-- ================================================================== -->
+    <Style Selector="Button.ToolbarAccent">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="Background" Value="{DynamicResource AccentPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundInverseBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.ToolbarAccent:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+    </Style>
+    <Style Selector="Button.ToolbarAccent:pressed">
+        <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.95)" />
+    </Style>
+    <Style Selector="Button.ToolbarAccent:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="Background" Value="{DynamicResource ForegroundDisabledBrush}" />
+    </Style>
+    <Style Selector="Button.ToolbarAccent:focus-visible">
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ForegroundPrimaryBrush}" />
+    </Style>
+
+    <!-- ================================================================== -->
+    <!-- Button.ToolbarEdit                                                 -->
+    <!-- Distinguishable edit/draw toggle for toolbar — outlined accent     -->
+    <!-- States: normal, hover, pressed (scale-down), disabled, focus       -->
+    <!-- ================================================================== -->
+    <Style Selector="Button.ToolbarEdit">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="1.5" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.ToolbarEdit:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentHoverBrush}" />
+    </Style>
+    <Style Selector="Button.ToolbarEdit:pressed">
+        <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentPressedBrush}" />
+        <Setter Property="RenderTransform" Value="scale(0.95)" />
+    </Style>
+    <Style Selector="Button.ToolbarEdit:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundDisabledBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ForegroundDisabledBrush}" />
+    </Style>
+    <Style Selector="Button.ToolbarEdit:focus-visible">
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
+    </Style>
+
+    <!-- ================================================================== -->
     <!-- Button.Ghost                                                       -->
     <!-- Minimal transparent button (close tabs, dismiss actions)           -->
     <!-- States: normal, hover, pressed, disabled, focus                    -->

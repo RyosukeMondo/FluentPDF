@@ -16,7 +16,8 @@ public sealed class DocumentTools
         FluentPdfClient client,
         [Description("Full file path to the PDF (e.g. C:/Documents/report.pdf)")] string path)
     {
-        return await client.OpenAsync(path);
+        var json = await client.OpenAsync(path);
+        return ResponseFormatter.FormatOpen(json);
     }
 
     [McpServerTool(Name = "pdf_save"),
@@ -25,14 +26,16 @@ public sealed class DocumentTools
         "edits (annotations, text additions, shape drawings) to disk.")]
     public static async Task<string> Save(FluentPdfClient client)
     {
-        return await client.SaveAsync();
+        var json = await client.SaveAsync();
+        return ResponseFormatter.FormatSave(json);
     }
 
     [McpServerTool(Name = "pdf_close"),
      Description("Close the currently active document tab in FluentPDF.")]
     public static async Task<string> Close(FluentPdfClient client)
     {
-        return await client.CloseTabAsync();
+        var json = await client.CloseTabAsync();
+        return ResponseFormatter.FormatClose(json);
     }
 
     [McpServerTool(Name = "pdf_gui_state"),
@@ -42,6 +45,7 @@ public sealed class DocumentTools
         "active document info.")]
     public static async Task<string> GuiState(FluentPdfClient client)
     {
-        return await client.GetStateAsync();
+        var json = await client.GetStateAsync();
+        return ResponseFormatter.FormatGuiState(json);
     }
 }

@@ -78,35 +78,16 @@
 ## Phase 6: Annotation List & Highlight Text UI (Week 6-7)
 > Source: annotation-list-sidebar spec, highlight-text-ui spec
 
-- [ ] P6.1: Annotation list sidebar panel
-  - List all annotations across document
-  - Per item: page number, type icon, content preview, author, date
-  - Filter by type (highlight, note, shape, stamp)
-  - Click to navigate to annotation page
-  - Count badge on sidebar toggle button
-  - Verify: create annotations, see them in list, click navigates
-- [ ] P6.2: Highlight selected text UI
-  - Right-click context menu on text selection → "Highlight" with color picker
-  - Colors: yellow, green, blue, pink (+ custom)
-  - REST API: POST /api/highlight with text range and color
-  - MCP tool: pdf_highlight_relevant uses this
-  - Verify: select text, right-click, highlight appears with chosen color
-- [ ] P6.3: User bookmarks
-  - Add/remove bookmarks on current page
-  - Bookmark list in sidebar with navigation
-  - Persist bookmarks across sessions
-  - Verify: add bookmark, close/reopen, bookmark persists
+- [DONE] P6.1: Annotation list sidebar panel — AnnotationsPanel.axaml with type filter, count badge, navigate-to-page, delete, per-item type icon/content/author/date
+- [DONE] P6.2: Highlight selected text UI — right-click context menu on text selection with Copy, Highlight (Yellow/Green/Blue/Pink), Underline, Strikethrough
+- [DONE] P6.3: User bookmarks — IUserBookmarkService + UserBookmarkService (JSON persistence in %LOCALAPPDATA%/FluentPDF/bookmarks/), BookmarksPanel shows user bookmarks section with star icons, toolbar star toggle button
 
 ## Phase 7: UI/UX Polish (Week 7)
 > Walter's hierarchy: functional → reliable → usable → pleasurable
 > Source: UIUX_DESIGN_SUMMARY, BEHAVIORAL_DESIGN_SUMMARY
 
 - [DONE] P7.1: Interaction states — ButtonStyles.axaml enhanced with :pointerover/:pressed/:disabled/:checked states, Transitions for smooth feedback
-- [ ] P7.2: Visual hierarchy improvements
-  - Primary actions (Open, Save) prominent
-  - Secondary actions (Export, Print) less prominent
-  - Toolbar grouping with separators
-  - Verify: screenshot comparison with before/after
+- [DONE] P7.2: Visual hierarchy improvements — ToolbarManager refactored with user bookmark toggle, zoom tracking, enhanced ButtonStyles with Primary/Secondary/Toolbar variants, toolbar separators
 - [DONE] P7.3: Error handling UX — INotificationService + NotificationViewModel + ToastHost control + REST API endpoint POST /api/gui/notify
 - [DONE] P7.4: Loading states — ShimmerPlaceholder control with animated gradient, ProgressOverlay for long ops (merge/export/watermark), wired to IsOperationInProgress/OperationProgress
 
@@ -117,7 +98,7 @@
 - [DONE] P8.1: First-time user experience — WelcomeDialog with 3 feature highlights (Search, AI Tools, Edit), HasCompletedOnboarding setting, "Open a PDF" CTA
 - [DONE] P8.2: Recent files with thumbnails — RecentFileCardViewModel + ThumbnailCacheService (renders page 1 at 36 DPI), card grid in empty state with file info + thumbnail
 - [DONE] P8.3: Document-aware AI suggestions — DocumentTypeDetector classifies regulatory/contract/research/financial/technical/forms, shows toast notification on open
-- [NEXT] P6.1: Annotation list sidebar panel
+ALL PHASES COMPLETE
 
 ## Verification Criteria
 

@@ -150,7 +150,7 @@ public partial class MainWindow : Window
                 _logger);
 
             _menuManager.Initialize();
-            _toolbarManager = new ToolbarManager(this, ViewModel, _logger, onOpenFile: OnOpenFileClickAsync);
+            _toolbarManager = new ToolbarManager(this, ViewModel, _logger, onOpenFile: OnOpenFileClickAsync, onSave: OnSaveClickAsync);
             _toolbarManager.Initialize();
 
             _logger?.LogTrace("Menu and toolbar handlers configured successfully");
@@ -285,6 +285,13 @@ public partial class MainWindow : Window
             if (key == Key.B && modifiers == KeyModifiers.Control)
             {
                 viewer.ToggleBookmarksCommand.Execute(null);
+                return true;
+            }
+
+            if (key == Key.D && modifiers == KeyModifiers.Control)
+            {
+                if (viewer.ToggleUserBookmarkCommand.CanExecute(null))
+                    viewer.ToggleUserBookmarkCommand.Execute(null);
                 return true;
             }
 

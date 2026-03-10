@@ -16,7 +16,8 @@ public sealed class InspectionTools
         [Description("Document/session ID")] string documentId,
         [Description("Page number (starting from 1)")] int pageNumber)
     {
-        return await client.ExtractTextAsync(documentId, pageNumber);
+        var json = await client.ExtractTextAsync(documentId, pageNumber);
+        return ResponseFormatter.FormatGetText(json);
     }
 
     [McpServerTool(Name = "pdf_get_objects"),
@@ -26,7 +27,8 @@ public sealed class InspectionTools
         "coordinates. Use this to understand the page layout.")]
     public static async Task<string> GetObjects(FluentPdfClient client)
     {
-        return await client.GetObjectsAsync();
+        var json = await client.GetObjectsAsync();
+        return ResponseFormatter.FormatGetObjects(json);
     }
 
     [McpServerTool(Name = "pdf_get_object_detail"),
@@ -39,6 +41,7 @@ public sealed class InspectionTools
         FluentPdfClient client,
         [Description("Zero-based index of the object on the current page")] int objectIndex)
     {
-        return await client.GetObjectDetailAsync(objectIndex);
+        var json = await client.GetObjectDetailAsync(objectIndex);
+        return ResponseFormatter.FormatObjectDetail(json);
     }
 }

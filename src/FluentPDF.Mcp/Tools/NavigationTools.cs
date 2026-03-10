@@ -15,9 +15,12 @@ public sealed class NavigationTools
         FluentPdfClient client,
         [Description("Page number to jump to, or 'next'/'previous' to move one page")] string target)
     {
+        string json;
         if (int.TryParse(target, out var page))
-            return await client.NavigateAsync(new { page });
-        return await client.NavigateAsync(new { action = target });
+            json = await client.NavigateAsync(new { page });
+        else
+            json = await client.NavigateAsync(new { action = target });
+        return ResponseFormatter.FormatNavigate(json);
     }
 
     [McpServerTool(Name = "pdf_zoom"),
@@ -28,9 +31,12 @@ public sealed class NavigationTools
         FluentPdfClient client,
         [Description("Zoom percentage (e.g. 100, 150, 200), or 'in'/'out' to step")] string level)
     {
+        string json;
         if (double.TryParse(level, out var pct))
-            return await client.ZoomAsync(new { level = pct });
-        return await client.ZoomAsync(new { action = level });
+            json = await client.ZoomAsync(new { level = pct });
+        else
+            json = await client.ZoomAsync(new { action = level });
+        return ResponseFormatter.FormatZoom(json);
     }
 
     [McpServerTool(Name = "pdf_toggle_panel"),
@@ -42,6 +48,7 @@ public sealed class NavigationTools
         FluentPdfClient client,
         [Description("Panel to toggle: 'thumbnails', 'bookmarks', or 'search'")] string panel)
     {
-        return await client.TogglePanelAsync(panel);
+        var json = await client.TogglePanelAsync(panel);
+        return ResponseFormatter.FormatTogglePanel(json);
     }
 }

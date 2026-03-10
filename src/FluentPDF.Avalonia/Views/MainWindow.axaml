@@ -100,24 +100,40 @@
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource ToolbarItemSpacing}"
                         KeyboardNavigation.TabNavigation="Cycle">
 
-                <!-- File Operations -->
+                <!-- ======== File Operations (Primary — Accent) ======== -->
                 <Button x:Name="ToolbarOpenButton"
                         TabIndex="0"
                         AutomationProperties.AutomationId="ToolbarOpenButton"
                         AutomationProperties.Name="Open PDF file"
                         ToolTip.Tip="Open PDF file (Ctrl+O)"
-                        Classes="ToolbarIcon">
-                    <PathIcon Data="M2 6a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z" Width="14" Height="14"/>
+                        Classes="ToolbarAccent">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <PathIcon Data="M2 6a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"
+                                  Width="14" Height="14" Foreground="{DynamicResource ForegroundInverseBrush}"/>
+                        <TextBlock Text="Open" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Button>
 
-                <Separator Width="1"
-                          Height="24"
-                          Background="{DynamicResource BorderSubtleBrush}"
-                          Margin="8,0" />
-
-                <!-- Navigation -->
-                <Button x:Name="ToolbarPreviousPageButton"
+                <Button x:Name="ToolbarSaveButton"
                         TabIndex="1"
+                        AutomationProperties.AutomationId="ToolbarSaveButton"
+                        AutomationProperties.Name="Save document"
+                        ToolTip.Tip="Save document (Ctrl+S)"
+                        Classes="ToolbarAccent">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <PathIcon Data="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H7V5h8v4z"
+                                  Width="14" Height="14" Foreground="{DynamicResource ForegroundInverseBrush}"/>
+                        <TextBlock Text="Save" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Separator: File | Navigation -->
+                <Border Width="1" Height="24" Margin="6,0"
+                        Background="{DynamicResource BorderSubtleBrush}" />
+
+                <!-- ======== Navigation (Default — ToolbarIcon) ======== -->
+                <Button x:Name="ToolbarPreviousPageButton"
+                        TabIndex="2"
                         AutomationProperties.AutomationId="ToolbarPreviousPageButton"
                         AutomationProperties.Name="Previous page"
                         ToolTip.Tip="Previous page"
@@ -126,7 +142,7 @@
                 </Button>
 
                 <TextBox x:Name="ToolbarPageNumberBox"
-                        TabIndex="2"
+                        TabIndex="3"
                         Width="60"
                         Text="1"
                         TextAlignment="Center"
@@ -141,7 +157,7 @@
                           Margin="4,0" />
 
                 <Button x:Name="ToolbarNextPageButton"
-                        TabIndex="3"
+                        TabIndex="4"
                         AutomationProperties.AutomationId="ToolbarNextPageButton"
                         AutomationProperties.Name="Next page"
                         ToolTip.Tip="Next page"
@@ -149,14 +165,13 @@
                     <PathIcon Data="M8.29 4.29a1 1 0 0 1 1.42 0l7 7a1 1 0 0 1 0 1.42l-7 7a1 1 0 0 1-1.42-1.42L14.59 12 8.29 5.71a1 1 0 0 1 0-1.42z" Width="14" Height="14"/>
                 </Button>
 
-                <Separator Width="1"
-                          Height="24"
-                          Background="{DynamicResource BorderSubtleBrush}"
-                          Margin="8,0" />
+                <!-- Separator: Navigation | Zoom -->
+                <Border Width="1" Height="24" Margin="6,0"
+                        Background="{DynamicResource BorderSubtleBrush}" />
 
-                <!-- Zoom Controls -->
+                <!-- ======== Zoom Controls (Compact — ToolbarIcon) ======== -->
                 <Button x:Name="ToolbarZoomOutButton"
-                        TabIndex="4"
+                        TabIndex="5"
                         AutomationProperties.AutomationId="ToolbarZoomOutButton"
                         AutomationProperties.Name="Zoom out"
                         ToolTip.Tip="Zoom out"
@@ -165,7 +180,7 @@
                 </Button>
 
                 <ComboBox x:Name="ToolbarZoomComboBox"
-                         TabIndex="5"
+                         TabIndex="6"
                          Width="90"
                          VerticalAlignment="Center"
                          Classes="ToolbarInput"
@@ -185,7 +200,7 @@
                 </ComboBox>
 
                 <Button x:Name="ToolbarZoomInButton"
-                        TabIndex="6"
+                        TabIndex="7"
                         AutomationProperties.AutomationId="ToolbarZoomInButton"
                         AutomationProperties.Name="Zoom in"
                         ToolTip.Tip="Zoom in"
@@ -193,83 +208,72 @@
                     <PathIcon Data="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1z" Width="14" Height="14"/>
                 </Button>
 
-                <Separator Width="1"
-                          Height="24"
-                          Background="{DynamicResource BorderSubtleBrush}"
-                          Margin="8,0" />
+                <!-- Separator: Zoom | View Toggles -->
+                <Border Width="1" Height="24" Margin="6,0"
+                        Background="{DynamicResource BorderSubtleBrush}" />
 
-                <!-- View Toggles (primary) -->
+                <!-- ======== View Toggles (Compact — ToolbarIcon) ======== -->
                 <ToggleButton x:Name="ToolbarToggleThumbnailsButton"
-                             TabIndex="7"
+                             TabIndex="8"
                              AutomationProperties.AutomationId="ToolbarToggleThumbnailsButton"
                              AutomationProperties.Name="Toggle thumbnails"
-                             ToolTip.Tip="Toggle thumbnails"
+                             ToolTip.Tip="Toggle thumbnails (Ctrl+G)"
                              Classes="ToolbarIcon">
                     <PathIcon Data="M3 5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 0v4h4V5H5zm8-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4zm0 2h4v4h-4V5zM3 15a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4zm2 0v4h4v-4H5zm8-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-4zm0 2h4v4h-4v-4z" Width="14" Height="14"/>
                 </ToggleButton>
 
-                <Separator Width="1" Height="24"
-                          Background="{DynamicResource BorderSubtleBrush}"
-                          Margin="8,0" />
+                <ToggleButton x:Name="ToolbarToggleBookmarksButton"
+                             TabIndex="9"
+                             AutomationProperties.AutomationId="ToolbarToggleBookmarksButton"
+                             AutomationProperties.Name="Toggle bookmarks"
+                             ToolTip.Tip="Toggle bookmarks (Ctrl+B)"
+                             Classes="ToolbarIcon">
+                    <PathIcon Data="M6 3a2 2 0 0 0-2 2v14a1 1 0 0 0 1.55.83L12 16.2l6.45 3.63A1 1 0 0 0 20 19V5a2 2 0 0 0-2-2H6zm0 2h12v12.13l-5.45-3.07a1 1 0 0 0-.98 0L6 17.13V5z" Width="14" Height="14"/>
+                </ToggleButton>
 
-                <!-- Overflow menu for secondary actions -->
-                <Button x:Name="ToolbarOverflowButton"
-                        TabIndex="8"
-                        AutomationProperties.AutomationId="ToolbarOverflowButton"
-                        AutomationProperties.Name="More actions"
-                        ToolTip.Tip="More actions"
+                <!-- User Bookmark Toggle (star icon) -->
+                <ToggleButton x:Name="ToolbarToggleUserBookmarkButton"
+                             AutomationProperties.AutomationId="ToolbarToggleUserBookmarkButton"
+                             AutomationProperties.Name="Bookmark current page"
+                             ToolTip.Tip="Bookmark current page (Ctrl+D)"
+                             Classes="ToolbarIcon">
+                    <PathIcon Data="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" Width="14" Height="14"/>
+                </ToggleButton>
+
+                <Button x:Name="ToolbarSearchButton"
+                        TabIndex="10"
+                        AutomationProperties.AutomationId="ToolbarSearchButton"
+                        AutomationProperties.Name="Search"
+                        ToolTip.Tip="Search (Ctrl+F)"
                         Classes="ToolbarIcon">
-                    <!-- Horizontal ellipsis icon -->
-                    <PathIcon Data="M6 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" Width="14" Height="14"/>
-                    <Button.Flyout>
-                        <Flyout Placement="BottomEdgeAlignedRight" ShowMode="TransientWithDismissOnPointerMoveAway">
-                            <StackPanel Spacing="2" MinWidth="200">
-                                <!-- Bookmarks toggle -->
-                                <Button x:Name="OverflowToggleBookmarksButton"
-                                        AutomationProperties.AutomationId="OverflowToggleBookmarksButton"
-                                        AutomationProperties.Name="Toggle bookmarks"
-                                        Classes="MenuAction">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M6 3a2 2 0 0 0-2 2v14a1 1 0 0 0 1.55.83L12 16.2l6.45 3.63A1 1 0 0 0 20 19V5a2 2 0 0 0-2-2H6zm0 2h12v12.13l-5.45-3.07a1 1 0 0 0-.98 0L6 17.13V5z" Width="14" Height="14"/>
-                                        <TextBlock Text="Bookmarks" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Ctrl+B" VerticalAlignment="Center" Opacity="0.5" FontSize="11" Margin="16,0,0,0"/>
-                                    </StackPanel>
-                                </Button>
-                                <!-- Metadata toggle -->
-                                <Button x:Name="OverflowToggleMetadataButton"
-                                        AutomationProperties.AutomationId="OverflowToggleMetadataButton"
-                                        AutomationProperties.Name="Document properties"
-                                        Classes="MenuAction">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6zm2-8h8v2H8v-2zm0 4h5v2H8v-2z" Width="14" Height="14"/>
-                                        <TextBlock Text="Properties" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                                <!-- Search -->
-                                <Button x:Name="OverflowSearchButton"
-                                        AutomationProperties.AutomationId="OverflowSearchButton"
-                                        AutomationProperties.Name="Search"
-                                        Classes="MenuAction">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M10 2a8 8 0 1 0 4.93 14.32l4.38 4.37a1 1 0 0 0 1.41-1.41l-4.37-4.38A8 8 0 0 0 10 2zm-6 8a6 6 0 1 1 12 0 6 6 0 0 1-12 0z" Width="14" Height="14"/>
-                                        <TextBlock Text="Search" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Ctrl+F" VerticalAlignment="Center" Opacity="0.5" FontSize="11" Margin="16,0,0,0"/>
-                                    </StackPanel>
-                                </Button>
-                                <Separator Margin="4,2"/>
-                                <!-- Edit / Draw shapes -->
-                                <Button x:Name="OverflowEditButton"
-                                        AutomationProperties.AutomationId="OverflowEditButton"
-                                        AutomationProperties.Name="Edit and draw shapes"
-                                        Classes="MenuAction">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" Width="14" Height="14"/>
-                                        <TextBlock Text="Edit / Draw" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </Flyout>
-                    </Button.Flyout>
+                    <PathIcon Data="M10 2a8 8 0 1 0 4.93 14.32l4.38 4.37a1 1 0 0 0 1.41-1.41l-4.37-4.38A8 8 0 0 0 10 2zm-6 8a6 6 0 1 1 12 0 6 6 0 0 1-12 0z" Width="14" Height="14"/>
+                </Button>
+
+                <Button x:Name="ToolbarMetadataButton"
+                        TabIndex="11"
+                        AutomationProperties.AutomationId="ToolbarMetadataButton"
+                        AutomationProperties.Name="Document properties"
+                        ToolTip.Tip="Document properties"
+                        Classes="ToolbarIcon">
+                    <PathIcon Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6zm2-8h8v2H8v-2zm0 4h5v2H8v-2z" Width="14" Height="14"/>
+                </Button>
+
+                <!-- Separator: View Toggles | Edit/Draw -->
+                <Border Width="1" Height="24" Margin="6,0"
+                        Background="{DynamicResource BorderSubtleBrush}" />
+
+                <!-- ======== Edit / Draw (Outlined Accent — Distinguishable) ======== -->
+                <Button x:Name="ToolbarEditButton"
+                        TabIndex="12"
+                        AutomationProperties.AutomationId="ToolbarEditButton"
+                        AutomationProperties.Name="Edit and draw shapes"
+                        ToolTip.Tip="Edit / Draw shapes"
+                        Classes="ToolbarEdit">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                  Width="14" Height="14"/>
+                        <TextBlock Text="Edit" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Button>
             </StackPanel>
         </Border>

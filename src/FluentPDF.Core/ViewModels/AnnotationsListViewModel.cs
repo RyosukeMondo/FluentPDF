@@ -16,6 +16,7 @@ public partial class AnnotationsListViewModel : ViewModelBase
     private readonly ILogger<AnnotationsListViewModel> _logger;
     private PdfDocument? _document;
     private Func<int, Task>? _navigateToPageAction;
+    private List<AnnotationListItem> _allAnnotations = new();
 
     [ObservableProperty]
     private List<AnnotationListItem> _annotations = new();
@@ -37,20 +38,31 @@ public partial class AnnotationsListViewModel : ViewModelBase
 
     public bool HasAnnotations => Annotations.Count > 0;
 
+    /// <summary>
+    /// True when the document has any annotations (ignoring filter).
+    /// Used to keep the filter row visible even when a filter yields 0 results.
+    /// </summary>
+    public bool HasAnyAnnotations => _allAnnotations.Count > 0;
+
     public int AnnotationCount => Annotations.Count;
+
+    public int TotalAnnotationCount => _allAnnotations.Count;
 
     public AnnotationsListViewModel(
         IAnnotationService annotationService,
         ILogger<AnnotationsListViewModel> logger)
     {
-        _annotationService = annotationService ?? throw new ArgumentNullException(nameof(annotationService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _annotationService = annotationService
+            ?? throw new ArgumentNullException(nameof(annotationService));
+        _logger = logger
+            ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("AnnotationsListViewModel initialized");
     }
 
     public void SetNavigateToPageAction(Func<int, Task> action)
     {
-        _navigateToPageAction = action ?? throw new ArgumentNullException(nameof(action));
+        _navigateToPageAction = action
+            ?? throw new ArgumentNullException(nameof(action));
     }
 
     [RelayCommand]
@@ -63,55 +75,49 @@ public partial class AnnotationsListViewModel : ViewModelBase
         }
 
         _document = document;
-        _logger.LogInformation("Loading annotations from document: {FilePath}", document.FilePath);
+        _logger.LogInformation(
+            "Loading annotations from document: {FilePath}", document.FilePath);
         IsLoading = true;
 
         try
         {
-            var allAnnotations = new List<AnnotationListItem>();
+            var items = new List<AnnotationListItem>();
 
             for (int page = 0; page < document.PageCount; page++)
             {
-                var result = await _annotationService.GetAnnotationsAsync(document, page);
-                if (result.IsSuccess)
+                var result = await _annotationService
+                    .GetAnnotationsAsync(document, page);
+                if (!result.IsSuccess) continue;
+
+                for (int i = 0; i < result.Value.Count; i++)
                 {
-                    for (int i = 0; i < result.Value.Count; i++)
+                    var ann = result.Value[i];
+                    items.Add(new AnnotationListItem
                     {
-                        var ann = result.Value[i];
-                        allAnnotations.Add(new AnnotationListItem
-                        {
-                            PageNumber = page + 1,
-                            Type = ann.Type.ToString(),
-                            Contents = ann.Contents,
-                            Author = ann.Author,
-                            CreatedDate = ann.CreatedDate,
-                            AnnotationIndexOnPage = i,
-                            Bounds = ann.Bounds
-                        });
-                    }
+                        PageNumber = page + 1,
+                        Type = ann.Type.ToString(),
+                        Contents = ann.Contents,
+                        Author = ann.Author,
+                        CreatedDate = ann.CreatedDate,
+                        AnnotationIndexOnPage = i,
+                        Bounds = ann.Bounds
+                    });
                 }
             }
 
-            Annotations = FilterType == null
-                ? allAnnotations
-                : allAnnotations.Where(a => a.Type == FilterType).ToList();
+            _allAnnotations = items;
+            ApplyFilter();
 
-            OnPropertyChanged(nameof(HasAnnotations));
-            OnPropertyChanged(nameof(AnnotationCount));
-
-            _logger.LogInformation("Loaded {Count} annotations", Annotations.Count);
-
-            if (!HasAnnotations)
-            {
-                _logger.LogInformation("No annotations found");
-            }
+            _logger.LogInformation(
+                "Loaded {Total} annotations, showing {Visible}",
+                _allAnnotations.Count, Annotations.Count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception loading annotations");
+            _allAnnotations = new List<AnnotationListItem>();
             Annotations = new List<AnnotationListItem>();
-            OnPropertyChanged(nameof(HasAnnotations));
-            OnPropertyChanged(nameof(AnnotationCount));
+            NotifyCountProperties();
         }
         finally
         {
@@ -124,7 +130,8 @@ public partial class AnnotationsListViewModel : ViewModelBase
     {
         if (item == null || _navigateToPageAction == null) return;
 
-        _logger.LogInformation("Navigating to annotation on page {Page}", item.PageNumber);
+        _logger.LogInformation(
+            "Navigating to annotation on page {Page}", item.PageNumber);
         SelectedAnnotation = item;
         await _navigateToPageAction(item.PageNumber);
     }
@@ -134,7 +141,8 @@ public partial class AnnotationsListViewModel : ViewModelBase
     {
         if (item == null || _document == null) return;
 
-        _logger.LogInformation("Deleting annotation on page {Page}, index {Index}",
+        _logger.LogInformation(
+            "Deleting annotation on page {Page}, index {Index}",
             item.PageNumber, item.AnnotationIndexOnPage);
 
         try
@@ -149,7 +157,8 @@ public partial class AnnotationsListViewModel : ViewModelBase
             }
             else
             {
-                _logger.LogWarning("Failed to delete annotation: {Errors}",
+                _logger.LogWarning(
+                    "Failed to delete annotation: {Errors}",
                     string.Join(", ", result.Errors));
             }
         }
@@ -163,14 +172,42 @@ public partial class AnnotationsListViewModel : ViewModelBase
     private void TogglePanel()
     {
         IsPanelVisible = !IsPanelVisible;
-        _logger.LogInformation("Annotations panel toggled. Visible={Visible}", IsPanelVisible);
+        _logger.LogInformation(
+            "Annotations panel toggled. Visible={Visible}", IsPanelVisible);
     }
 
     partial void OnFilterTypeChanged(string? value)
     {
-        if (_document != null)
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        Annotations = string.IsNullOrEmpty(FilterType)
+            ? _allAnnotations.ToList()
+            : _allAnnotations.Where(a => a.Type == FilterType).ToList();
+
+        NotifyCountProperties();
+        UpdateEmptyMessage();
+    }
+
+    private void NotifyCountProperties()
+    {
+        OnPropertyChanged(nameof(HasAnnotations));
+        OnPropertyChanged(nameof(HasAnyAnnotations));
+        OnPropertyChanged(nameof(AnnotationCount));
+        OnPropertyChanged(nameof(TotalAnnotationCount));
+    }
+
+    private void UpdateEmptyMessage()
+    {
+        if (_allAnnotations.Count == 0)
         {
-            _ = LoadAnnotationsAsync(_document);
+            EmptyMessage = "No annotations in this document";
+        }
+        else if (!HasAnnotations && !string.IsNullOrEmpty(FilterType))
+        {
+            EmptyMessage = $"No {FilterType} annotations found";
         }
     }
 }
@@ -197,4 +234,29 @@ public class AnnotationListItem
     public string DateLabel => CreatedDate == default
         ? ""
         : CreatedDate.ToString("yyyy-MM-dd HH:mm");
+
+    /// <summary>
+    /// Returns a short glyph string representing the annotation type.
+    /// Used as a quick visual indicator in the sidebar list.
+    /// </summary>
+    public string TypeIcon => Type switch
+    {
+        "Highlight" => "H",
+        "Underline" => "U",
+        "StrikeOut" => "S",
+        "Text" => "T",
+        "FreeText" => "Aa",
+        "Ink" => "~",
+        "Square" => "\u25a1",   // white square
+        "Circle" => "\u25cb",   // white circle
+        "Line" => "/",
+        "Stamp" => "\u2605",    // star
+        "Link" => "\u2197",     // north-east arrow
+        "Polygon" => "\u2b21",  // hexagon
+        "PolyLine" => "\u2f00", // kangxi radical one (line-like)
+        "Caret" => "^",
+        "Popup" => "\u25ad",    // rect
+        "Redact" => "\u2588",   // full block
+        _ => "?"
+    };
 }

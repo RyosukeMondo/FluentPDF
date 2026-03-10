@@ -129,6 +129,7 @@ public partial class App
         services.AddSingleton<INavigationService, AvaloniaNavigationService>();
         services.AddSingleton<ISettingsService, AvaloniaSettingsService>();
         services.AddSingleton<IRecentFilesService, RecentFilesService>();
+        services.AddSingleton<IUserBookmarkService, UserBookmarkService>();
         services.AddSingleton<IThumbnailCacheService, ThumbnailCacheService>();
         services.AddSingleton<IFileDialogService, AvaloniaFileDialogService>();
         services.AddSingleton<ILogBufferService, LogBufferService>();
@@ -181,6 +182,7 @@ public partial class App
                 vm.AnnotationsList = sp.GetRequiredService<FluentPDF.Core.ViewModels.AnnotationsListViewModel>();
                 vm.Search = sp.GetRequiredService<FluentPDF.Core.ViewModels.SearchPanelViewModel>();
                 vm.Metadata = sp.GetRequiredService<FluentPDF.Core.ViewModels.MetadataViewModel>();
+                vm.UserBookmarkService = sp.GetRequiredService<IUserBookmarkService>();
                 return vm;
             });
 

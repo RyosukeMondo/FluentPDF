@@ -16,7 +16,8 @@ public sealed class PageTools
         FluentPdfClient client,
         [Description("Rotation direction: 'rotate_cw' (clockwise) or 'rotate_ccw' (counter-clockwise)")] string direction)
     {
-        return await client.PageOpAsync(direction);
+        var json = await client.PageOpAsync(direction);
+        return ResponseFormatter.FormatPageOp(json, direction);
     }
 
     [McpServerTool(Name = "pdf_delete_page"),
@@ -25,7 +26,8 @@ public sealed class PageTools
         "cannot be undone, so use with care.")]
     public static async Task<string> DeletePage(FluentPdfClient client)
     {
-        return await client.PageOpAsync("delete");
+        var json = await client.PageOpAsync("delete");
+        return ResponseFormatter.FormatPageOp(json, "delete");
     }
 
     [McpServerTool(Name = "pdf_insert_blank"),
@@ -34,6 +36,7 @@ public sealed class PageTools
         "adding space for notes or new content.")]
     public static async Task<string> InsertBlank(FluentPdfClient client)
     {
-        return await client.PageOpAsync("insert_blank");
+        var json = await client.PageOpAsync("insert_blank");
+        return ResponseFormatter.FormatPageOp(json, "insert_blank");
     }
 }

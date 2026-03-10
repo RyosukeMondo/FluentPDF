@@ -18,7 +18,8 @@ public sealed class RenderTools
         [Description("Page index (starting from 0)")] int pageIndex,
         [Description("Resolution in DPI, higher means sharper (default: 150)")] int dpi = 150)
     {
-        return await client.RenderPageAsync(documentId, pageIndex, dpi);
+        var json = await client.RenderPageAsync(documentId, pageIndex, dpi);
+        return ResponseFormatter.FormatRenderPage(json, pageIndex, dpi);
     }
 
     [McpServerTool(Name = "pdf_screenshot"),
@@ -28,6 +29,7 @@ public sealed class RenderTools
         "view.")]
     public static async Task<string> Screenshot(FluentPdfClient client)
     {
-        return await client.ScreenshotAsync();
+        var json = await client.ScreenshotAsync();
+        return ResponseFormatter.FormatScreenshot(json);
     }
 }

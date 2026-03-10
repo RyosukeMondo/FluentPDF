@@ -182,6 +182,7 @@ public partial class PdfViewerViewModel
         {
             OnPropertyChanged(nameof(CurrentPageNumber));
             OnPropertyChanged(nameof(CurrentPageIndex));
+            UpdateCurrentPageBookmarkState();
         }
         else if (e.PropertyName == nameof(NavigationViewModel.TotalPages))
         {

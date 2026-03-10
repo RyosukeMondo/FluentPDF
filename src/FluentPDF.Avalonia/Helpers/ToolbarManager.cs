@@ -18,16 +18,23 @@ public sealed class ToolbarManager
     private readonly Window _owner;
     private readonly MainViewModel _viewModel;
     private readonly Func<Task>? _onOpenFile;
+    private readonly Func<Task>? _onSave;
     private bool _suppressZoomSelectionChanged;
     private readonly ILogger? _logger;
     private PdfViewerViewModel? _subscribedViewer;
 
-    public ToolbarManager(Window owner, MainViewModel viewModel, ILogger? logger = null, Func<Task>? onOpenFile = null)
+    public ToolbarManager(
+        Window owner,
+        MainViewModel viewModel,
+        ILogger? logger = null,
+        Func<Task>? onOpenFile = null,
+        Func<Task>? onSave = null)
     {
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _logger = logger;
         _onOpenFile = onOpenFile;
+        _onSave = onSave;
     }
 
     /// <summary>
@@ -51,6 +58,13 @@ public sealed class ToolbarManager
                 toolbarOpenButton.Click += async (s, e) => await _onOpenFile();
             else
                 toolbarOpenButton.Click += (s, e) => _viewModel.OpenFileInNewTabCommand.Execute(null);
+        }
+
+        var toolbarSaveButton = _owner.FindControl<Button>("ToolbarSaveButton");
+        if (toolbarSaveButton != null)
+        {
+            if (_onSave != null)
+                toolbarSaveButton.Click += async (s, e) => await _onSave();
         }
     }
 
@@ -165,28 +179,46 @@ public sealed class ToolbarManager
 
     private void SetupViewToggles()
     {
-        // Primary toolbar: Thumbnails toggle
+        // Thumbnails toggle
         var thumbnailsButton = _owner.FindControl<ToggleButton>("ToolbarToggleThumbnailsButton");
         if (thumbnailsButton != null)
             thumbnailsButton.Click += OnToggleThumbnailsClick;
 
-        // Overflow flyout: Bookmarks, Metadata, Search, Edit
-        var overflowBookmarks = _owner.FindControl<Button>("OverflowToggleBookmarksButton");
-        if (overflowBookmarks != null)
-            overflowBookmarks.Click += OnToggleBookmarksClick;
+        // Bookmarks toggle
+        var bookmarksButton = _owner.FindControl<ToggleButton>("ToolbarToggleBookmarksButton");
+        if (bookmarksButton != null)
+            bookmarksButton.Click += OnToggleBookmarksClick;
 
-        var overflowMetadata = _owner.FindControl<Button>("OverflowToggleMetadataButton");
-        if (overflowMetadata != null)
-            overflowMetadata.Click += OnToggleMetadataClick;
+        // Search button
+        var searchButton = _owner.FindControl<Button>("ToolbarSearchButton");
+        if (searchButton != null)
+            searchButton.Click += OnSearchClick;
 
-        var overflowSearch = _owner.FindControl<Button>("OverflowSearchButton");
-        if (overflowSearch != null)
-            overflowSearch.Click += OnSearchClick;
+        // Metadata / Properties button
+        var metadataButton = _owner.FindControl<Button>("ToolbarMetadataButton");
+        if (metadataButton != null)
+            metadataButton.Click += OnToggleMetadataClick;
 
-        var overflowEdit = _owner.FindControl<Button>("OverflowEditButton");
-        if (overflowEdit != null)
+        // User bookmark toggle (star button)
+        var userBookmarkButton = _owner.FindControl<ToggleButton>("ToolbarToggleUserBookmarkButton");
+        if (userBookmarkButton != null)
         {
-            overflowEdit.Click += (s, e) =>
+            userBookmarkButton.Click += OnToggleUserBookmarkClick;
+        }
+
+        // Subscribe to active tab changes to track bookmark state
+        _viewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.ActiveTab))
+                SubscribeToActiveViewerBookmarkState();
+        };
+        SubscribeToActiveViewerBookmarkState();
+
+        // Edit / Draw button
+        var editButton = _owner.FindControl<Button>("ToolbarEditButton");
+        if (editButton != null)
+        {
+            editButton.Click += (s, e) =>
             {
                 var viewer = _viewModel.ActiveTab?.ViewerViewModel;
                 if (viewer == null) return;
@@ -195,6 +227,55 @@ public sealed class ToolbarManager
                     viewer.ActiveDrawingTool = DrawingTool.Rectangle;
             };
         }
+    }
+
+    private PdfViewerViewModel? _subscribedBookmarkViewer;
+
+    private void SubscribeToActiveViewerBookmarkState()
+    {
+        if (_subscribedBookmarkViewer != null)
+        {
+            _subscribedBookmarkViewer.PropertyChanged -= OnBookmarkStateChanged;
+            _subscribedBookmarkViewer = null;
+        }
+
+        var viewer = _viewModel.ActiveTab?.ViewerViewModel;
+        if (viewer != null)
+        {
+            _subscribedBookmarkViewer = viewer;
+            viewer.PropertyChanged += OnBookmarkStateChanged;
+            UpdateBookmarkToggleState(viewer.IsCurrentPageBookmarked);
+        }
+        else
+        {
+            UpdateBookmarkToggleState(false);
+        }
+    }
+
+    private void OnBookmarkStateChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PdfViewerViewModel.IsCurrentPageBookmarked))
+        {
+            var isBookmarked = _subscribedBookmarkViewer?.IsCurrentPageBookmarked ?? false;
+            UpdateBookmarkToggleState(isBookmarked);
+        }
+    }
+
+    private void UpdateBookmarkToggleState(bool isBookmarked)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            var button = _owner.FindControl<ToggleButton>("ToolbarToggleUserBookmarkButton");
+            if (button != null)
+                button.IsChecked = isBookmarked;
+        }, DispatcherPriority.Background);
+    }
+
+    private void OnToggleUserBookmarkClick(object? sender, RoutedEventArgs e)
+    {
+        var viewer = _viewModel.ActiveTab?.ViewerViewModel;
+        if (viewer?.ToggleUserBookmarkCommand is { } cmd && cmd.CanExecute(null))
+            cmd.Execute(null);
     }
 
     private void OnPreviousPageClick(object? sender, RoutedEventArgs e)
