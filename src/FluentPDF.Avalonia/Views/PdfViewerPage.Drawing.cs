@@ -187,106 +187,119 @@ public partial class PdfViewerPage
         var properties = e.GetCurrentPoint(DrawingCanvas).Properties;
         var point = e.GetCurrentPoint(PdfImage).Position;
 
-        // Right-click context menu for Select tool
-        if (properties.IsRightButtonPressed && _viewModel.ActiveDrawingTool == DrawingTool.Select && _selectedObject != null)
-        {
-            ShowShapeContextMenu(point);
-            e.Handled = true;
+        if (HandleSelectToolPressed(e, properties, point))
             return;
-        }
 
         if (!properties.IsLeftButtonPressed)
             return;
 
-        // Handle Lasso tool
-        if (_viewModel.ActiveDrawingTool == DrawingTool.Lasso && _selectionManager != null)
-        {
-            var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
-            var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
-            var modifier = SelectionManager.GetModifier(shiftHeld, altHeld);
-            _selectionManager.StartLasso(point, modifier);
-            e.Handled = true;
+        if (HandleLassoToolPressed(e, point))
             return;
-        }
-
-        // Handle Select tool (left click)
-        if (_viewModel.ActiveDrawingTool == DrawingTool.Select)
-        {
-            _isDraggingSelection = false;
-            var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
-            var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
-            _ = HandleSelectClickAsync(point, shiftHeld, altHeld);
-            e.Handled = true;
-            return;
-        }
 
         _drawStartPoint = point;
         _isDrawing = true;
         _drawingPoints.Clear();
         _drawingPoints.Add(point);
 
-        var tool = _viewModel.ActiveDrawingTool;
-        var strokeBrush = ParseBrush(_viewModel.DrawingStrokeColor);
+        StartDrawingShape(_viewModel.ActiveDrawingTool, point);
+        e.Handled = true;
+    }
+
+    private bool HandleSelectToolPressed(
+        PointerPressedEventArgs e, PointerPointProperties properties, Point point)
+    {
+        if (_viewModel!.ActiveDrawingTool != DrawingTool.Select)
+            return false;
+
+        if (properties.IsRightButtonPressed && _selectedObject != null)
+        {
+            ShowShapeContextMenu(point);
+            e.Handled = true;
+            return true;
+        }
+
+        if (!properties.IsLeftButtonPressed)
+            return true; // Not left-click on Select tool — consume but do nothing
+
+        _isDraggingSelection = false;
+        var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+        var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+        _ = HandleSelectClickAsync(point, shiftHeld, altHeld);
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleLassoToolPressed(PointerPressedEventArgs e, Point point)
+    {
+        if (_viewModel!.ActiveDrawingTool != DrawingTool.Lasso
+            || _selectionManager == null)
+            return false;
+
+        var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+        var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+        var modifier = SelectionManager.GetModifier(shiftHeld, altHeld);
+        _selectionManager.StartLasso(point, modifier);
+        e.Handled = true;
+        return true;
+    }
+
+    private void StartDrawingShape(DrawingTool tool, Point point)
+    {
+        var strokeBrush = ParseBrush(_viewModel!.DrawingStrokeColor);
         var strokeWidth = _viewModel.DrawingStrokeWidth;
 
         switch (tool)
         {
             case DrawingTool.Rectangle:
-                var rect = new Rectangle
+                _drawingPreview = new Rectangle
                 {
                     Stroke = strokeBrush,
                     Fill = new SolidColorBrush(Colors.Transparent),
                     StrokeThickness = strokeWidth,
                     Width = 0, Height = 0
                 };
-                Canvas.SetLeft(rect, point.X);
-                Canvas.SetTop(rect, point.Y);
-                DrawingCanvas.Children.Add(rect);
-                _drawingPreview = rect;
+                Canvas.SetLeft(_drawingPreview, point.X);
+                Canvas.SetTop(_drawingPreview, point.Y);
+                DrawingCanvas!.Children.Add(_drawingPreview);
                 break;
 
             case DrawingTool.Circle:
-                var ellipse = new Ellipse
+                _drawingPreview = new Ellipse
                 {
                     Stroke = strokeBrush,
                     Fill = new SolidColorBrush(Colors.Transparent),
                     StrokeThickness = strokeWidth,
                     Width = 0, Height = 0
                 };
-                Canvas.SetLeft(ellipse, point.X);
-                Canvas.SetTop(ellipse, point.Y);
-                DrawingCanvas.Children.Add(ellipse);
-                _drawingPreview = ellipse;
+                Canvas.SetLeft(_drawingPreview, point.X);
+                Canvas.SetTop(_drawingPreview, point.Y);
+                DrawingCanvas!.Children.Add(_drawingPreview);
                 break;
 
             case DrawingTool.Line:
-                var line = new Line
+                _drawingPreview = new Line
                 {
                     Stroke = strokeBrush,
                     StrokeThickness = strokeWidth,
                     StartPoint = point,
                     EndPoint = point
                 };
-                DrawingCanvas.Children.Add(line);
-                _drawingPreview = line;
+                DrawingCanvas!.Children.Add(_drawingPreview);
                 break;
 
             case DrawingTool.Freehand:
-                var polyline = new Polyline
+                _drawingPreview = new Polyline
                 {
                     Stroke = strokeBrush,
                     StrokeThickness = strokeWidth,
                     Points = new global::Avalonia.Collections.AvaloniaList<Point> { point }
                 };
-                DrawingCanvas.Children.Add(polyline);
-                _drawingPreview = polyline;
+                DrawingCanvas!.Children.Add(_drawingPreview);
                 break;
 
             case DrawingTool.Text:
                 _drawingPreview = null;
                 break;
         }
-
-        e.Handled = true;
     }
 }

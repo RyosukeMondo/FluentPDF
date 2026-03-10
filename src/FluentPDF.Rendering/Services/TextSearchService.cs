@@ -135,166 +135,180 @@ public sealed class TextSearchService : ITextSearchService
             "Searching text on page. CorrelationId={CorrelationId}, FilePath={FilePath}, PageNumber={PageNumber}, Query={Query}",
             correlationId, document.FilePath, pageNumber, query);
 
-        // Validate page number
         if (pageNumber < 1 || pageNumber > document.PageCount)
         {
-            var error = new PdfError(
-                "PDF_PAGE_INVALID",
-                $"Page number {pageNumber} is out of range. Valid range: 1-{document.PageCount}",
-                ErrorCategory.Validation,
-                ErrorSeverity.Error)
-                .WithContext("PageNumber", pageNumber)
-                .WithContext("TotalPages", document.PageCount)
-                .WithContext("FilePath", document.FilePath)
-                .WithContext("CorrelationId", correlationId);
-
-            _logger.LogWarning(
-                "Invalid page number. CorrelationId={CorrelationId}, PageNumber={PageNumber}, TotalPages={TotalPages}",
-                correlationId, pageNumber, document.PageCount);
-
-            return Result.Fail(error);
+            return FailPageOutOfRange(pageNumber, document, correlationId);
         }
 
-        // Search on background thread
-        return await Task.Run(() =>
+        return await Task.Run(() => ExecutePageSearch(
+            (SafePdfDocumentHandle)document.Handle,
+            pageNumber, query, options, document.FilePath, correlationId));
+    }
+
+    /// <summary>
+    /// Core search logic: loads page handles, finds matches, and logs performance.
+    /// Runs on a background thread via Task.Run.
+    /// </summary>
+    private Result<List<SearchMatch>> ExecutePageSearch(
+        SafePdfDocumentHandle docHandle,
+        int pageNumber,
+        string query,
+        SearchOptions options,
+        string filePath,
+        Guid correlationId)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        try
         {
-            var stopwatch = Stopwatch.StartNew();
-            var matches = new List<SearchMatch>();
-
-            try
+            using var pageHandle = PdfiumInterop.LoadPage(docHandle, pageNumber - 1);
+            if (pageHandle.IsInvalid)
             {
-                // Load page (0-based index)
-                using var pageHandle = PdfiumInterop.LoadPage(
-                    (SafePdfDocumentHandle)document.Handle,
-                    pageNumber - 1);
-
-                if (pageHandle.IsInvalid)
-                {
-                    var error = new PdfError(
-                        "PDF_TEXT_PAGE_LOAD_FAILED",
-                        $"Failed to load page {pageNumber} for text search.",
-                        ErrorCategory.Rendering,
-                        ErrorSeverity.Error)
-                        .WithContext("PageNumber", pageNumber)
-                        .WithContext("FilePath", document.FilePath)
-                        .WithContext("CorrelationId", correlationId);
-
-                    _logger.LogError(
-                        "Failed to load page for text search. CorrelationId={CorrelationId}, PageNumber={PageNumber}",
-                        correlationId, pageNumber);
-
-                    return Result.Fail(error);
-                }
-
-                // Load text page
-                using var textPageHandle = PdfiumInterop.LoadTextPage(pageHandle);
-
-                if (textPageHandle.IsInvalid)
-                {
-                    var error = new PdfError(
-                        "PDF_TEXT_PAGE_LOAD_FAILED",
-                        $"Failed to load text information for page {pageNumber}.",
-                        ErrorCategory.Rendering,
-                        ErrorSeverity.Error)
-                        .WithContext("PageNumber", pageNumber)
-                        .WithContext("FilePath", document.FilePath)
-                        .WithContext("CorrelationId", correlationId);
-
-                    _logger.LogError(
-                        "Failed to load text page. CorrelationId={CorrelationId}, PageNumber={PageNumber}",
-                        correlationId, pageNumber);
-
-                    return Result.Fail(error);
-                }
-
-                // Convert search options to PDFium flags
-                var searchFlags = ConvertSearchOptions(options);
-
-                // Start search
-                var searchHandle = PdfiumInterop.StartTextSearch(textPageHandle, query, searchFlags);
-
-                if (searchHandle == IntPtr.Zero)
-                {
-                    // Empty result is valid (no matches found)
-                    stopwatch.Stop();
-                    _logger.LogDebug(
-                        "Search completed (no matches). CorrelationId={CorrelationId}, PageNumber={PageNumber}, Query={Query}, ElapsedMs={ElapsedMs}",
-                        correlationId, pageNumber, query, stopwatch.ElapsedMilliseconds);
-
-                    return Result.Ok(matches);
-                }
-
-                try
-                {
-                    // Find all matches
-                    while (PdfiumInterop.FindNext(searchHandle))
-                    {
-                        var charIndex = PdfiumInterop.GetSearchResultIndex(searchHandle);
-                        var matchLength = PdfiumInterop.GetSearchResultCount(searchHandle);
-
-                        if (charIndex >= 0 && matchLength > 0)
-                        {
-                            // Extract the matched text
-                            var matchedText = PdfiumInterop.GetText(textPageHandle, charIndex, matchLength);
-
-                            // Calculate bounding box by combining character boxes
-                            var boundingBox = CalculateBoundingBox(textPageHandle, charIndex, matchLength);
-
-                            var match = new SearchMatch(
-                                PageNumber: pageNumber,
-                                CharIndex: charIndex,
-                                Length: matchLength,
-                                Text: matchedText,
-                                BoundingBox: boundingBox);
-
-                            matches.Add(match);
-                        }
-                    }
-                }
-                finally
-                {
-                    PdfiumInterop.CloseSearch(searchHandle);
-                }
-
-                stopwatch.Stop();
-
-                // Log performance warning for slow searches
-                if (stopwatch.ElapsedMilliseconds > SlowSearchThresholdMs)
-                {
-                    _logger.LogWarning(
-                        "Slow search detected. CorrelationId={CorrelationId}, PageNumber={PageNumber}, Query={Query}, MatchesFound={MatchesFound}, ElapsedMs={ElapsedMs}",
-                        correlationId, pageNumber, query, matches.Count, stopwatch.ElapsedMilliseconds);
-                }
-                else
-                {
-                    _logger.LogDebug(
-                        "Search completed successfully. CorrelationId={CorrelationId}, PageNumber={PageNumber}, Query={Query}, MatchesFound={MatchesFound}, ElapsedMs={ElapsedMs}",
-                        correlationId, pageNumber, query, matches.Count, stopwatch.ElapsedMilliseconds);
-                }
-
-                return Result.Ok(matches);
+                return FailPageLoad("Failed to load page {0} for text search.", pageNumber, filePath, correlationId);
             }
-            catch (Exception ex)
+
+            using var textPageHandle = PdfiumInterop.LoadTextPage(pageHandle);
+            if (textPageHandle.IsInvalid)
             {
-                stopwatch.Stop();
-                var error = new PdfError(
-                    "PDF_SEARCH_FAILED",
-                    $"Failed to search text on page {pageNumber}: {ex.Message}",
-                    ErrorCategory.System,
-                    ErrorSeverity.Error)
-                    .WithContext("PageNumber", pageNumber)
-                    .WithContext("FilePath", document.FilePath)
-                    .WithContext("Query", query)
-                    .WithContext("CorrelationId", correlationId)
-                    .WithContext("ExceptionType", ex.GetType().Name);
-
-                _logger.LogError(ex,
-                    "Failed to search text. CorrelationId={CorrelationId}, PageNumber={PageNumber}, Query={Query}",
-                    correlationId, pageNumber, query);
-
-                return Result.Fail(error);
+                return FailPageLoad("Failed to load text information for page {0}.", pageNumber, filePath, correlationId);
             }
-        });
+
+            var matches = FindMatchesOnPage(textPageHandle, pageNumber, query, options);
+
+            stopwatch.Stop();
+            LogSearchTiming(correlationId, pageNumber, query, matches.Count, stopwatch.ElapsedMilliseconds);
+
+            return Result.Ok(matches);
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            return FailSearchException(ex, pageNumber, filePath, query, correlationId);
+        }
+    }
+
+    /// <summary>
+    /// Iterates PDFium search results on a single text page and builds match objects.
+    /// </summary>
+    private static List<SearchMatch> FindMatchesOnPage(
+        SafePdfTextPageHandle textPageHandle,
+        int pageNumber,
+        string query,
+        SearchOptions options)
+    {
+        var matches = new List<SearchMatch>();
+        var searchFlags = ConvertSearchOptions(options);
+        var searchHandle = PdfiumInterop.StartTextSearch(textPageHandle, query, searchFlags);
+
+        if (searchHandle == IntPtr.Zero)
+        {
+            return matches;
+        }
+
+        try
+        {
+            while (PdfiumInterop.FindNext(searchHandle))
+            {
+                var charIndex = PdfiumInterop.GetSearchResultIndex(searchHandle);
+                var matchLength = PdfiumInterop.GetSearchResultCount(searchHandle);
+
+                if (charIndex >= 0 && matchLength > 0)
+                {
+                    var matchedText = PdfiumInterop.GetText(textPageHandle, charIndex, matchLength);
+                    var boundingBox = CalculateBoundingBox(textPageHandle, charIndex, matchLength);
+
+                    matches.Add(new SearchMatch(
+                        PageNumber: pageNumber,
+                        CharIndex: charIndex,
+                        Length: matchLength,
+                        Text: matchedText,
+                        BoundingBox: boundingBox));
+                }
+            }
+        }
+        finally
+        {
+            PdfiumInterop.CloseSearch(searchHandle);
+        }
+
+        return matches;
+    }
+
+    private Result<List<SearchMatch>> FailPageOutOfRange(
+        int pageNumber, PdfDocument document, Guid correlationId)
+    {
+        var error = new PdfError(
+            "PDF_PAGE_INVALID",
+            $"Page number {pageNumber} is out of range. Valid range: 1-{document.PageCount}",
+            ErrorCategory.Validation,
+            ErrorSeverity.Error)
+            .WithContext("PageNumber", pageNumber)
+            .WithContext("TotalPages", document.PageCount)
+            .WithContext("FilePath", document.FilePath)
+            .WithContext("CorrelationId", correlationId);
+
+        _logger.LogWarning(
+            "Invalid page number. CorrelationId={CorrelationId}, PageNumber={PageNumber}, TotalPages={TotalPages}",
+            correlationId, pageNumber, document.PageCount);
+
+        return Result.Fail(error);
+    }
+
+    private Result<List<SearchMatch>> FailPageLoad(
+        string messageTemplate, int pageNumber, string filePath, Guid correlationId)
+    {
+        var error = new PdfError(
+            "PDF_TEXT_PAGE_LOAD_FAILED",
+            string.Format(messageTemplate, pageNumber),
+            ErrorCategory.Rendering,
+            ErrorSeverity.Error)
+            .WithContext("PageNumber", pageNumber)
+            .WithContext("FilePath", filePath)
+            .WithContext("CorrelationId", correlationId);
+
+        _logger.LogError(
+            "Failed to load page for text search. CorrelationId={CorrelationId}, PageNumber={PageNumber}",
+            correlationId, pageNumber);
+
+        return Result.Fail(error);
+    }
+
+    private Result<List<SearchMatch>> FailSearchException(
+        Exception ex, int pageNumber, string filePath, string query, Guid correlationId)
+    {
+        var error = new PdfError(
+            "PDF_SEARCH_FAILED",
+            $"Failed to search text on page {pageNumber}: {ex.Message}",
+            ErrorCategory.System,
+            ErrorSeverity.Error)
+            .WithContext("PageNumber", pageNumber)
+            .WithContext("FilePath", filePath)
+            .WithContext("Query", query)
+            .WithContext("CorrelationId", correlationId)
+            .WithContext("ExceptionType", ex.GetType().Name);
+
+        _logger.LogError(ex,
+            "Failed to search text. CorrelationId={CorrelationId}, PageNumber={PageNumber}, Query={Query}",
+            correlationId, pageNumber, query);
+
+        return Result.Fail(error);
+    }
+
+    private void LogSearchTiming(
+        Guid correlationId, int pageNumber, string query, int matchCount, long elapsedMs)
+    {
+        if (elapsedMs > SlowSearchThresholdMs)
+        {
+            _logger.LogWarning(
+                "Slow search detected. CorrelationId={CorrelationId}, PageNumber={PageNumber}, Query={Query}, MatchesFound={MatchesFound}, ElapsedMs={ElapsedMs}",
+                correlationId, pageNumber, query, matchCount, elapsedMs);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "Search completed successfully. CorrelationId={CorrelationId}, PageNumber={PageNumber}, Query={Query}, MatchesFound={MatchesFound}, ElapsedMs={ElapsedMs}",
+                correlationId, pageNumber, query, matchCount, elapsedMs);
+        }
     }
 
     /// <summary>

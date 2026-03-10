@@ -20,129 +20,17 @@ public partial class PdfViewerPage
     private void OnDrawingCanvasPointerMoved(
         object? sender, PointerEventArgs e)
     {
-        // Handle lasso tool drag
-        if (_viewModel?.ActiveDrawingTool == DrawingTool.Lasso && _selectionManager?.IsLassoActive == true && PdfImage != null)
-        {
-            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
-            if (props.IsLeftButtonPressed)
-            {
-                var pt = e.GetCurrentPoint(PdfImage).Position;
-                _selectionManager.UpdateLasso(pt);
-                e.Handled = true;
-                return;
-            }
-        }
-
-        // Handle marquee selection drag (Select tool, started on empty space)
-        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectionManager?.IsMarqueeActive == true && PdfImage != null)
-        {
-            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
-            if (props.IsLeftButtonPressed)
-            {
-                var pt = e.GetCurrentPoint(PdfImage).Position;
-                _selectionManager.UpdateMarquee(pt);
-                e.Handled = true;
-                return;
-            }
-        }
-
-        // Handle multi-object move (Select tool, dragging selected objects)
-        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectionManager?.IsMultiMoving == true && PdfImage != null)
-        {
-            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
-            if (props.IsLeftButtonPressed)
-            {
-                var pt = e.GetCurrentPoint(PdfImage).Position;
-                _selectionManager.UpdateMultiMove(pt);
-                e.Handled = true;
-                return;
-            }
-        }
-
-        // Handle resize drag
-        if (_isResizing && _selectionHighlight != null && PdfImage != null)
-        {
-            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
-            if (props.IsLeftButtonPressed)
-            {
-                var pt = e.GetCurrentPoint(PdfImage).Position;
-                var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
-                var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
-                var newRect = ComputeResizedRect(pt, shiftHeld, altHeld);
-
-                // Update visual preview
-                Canvas.SetLeft(_selectionHighlight, newRect.X);
-                Canvas.SetTop(_selectionHighlight, newRect.Y);
-                _selectionHighlight.Width = newRect.Width;
-                _selectionHighlight.Height = newRect.Height;
-
-                // Update handle positions to match new rect
-                UpdateResizeHandlePositions(newRect.X, newRect.Y, newRect.Width, newRect.Height);
-                e.Handled = true;
-                return;
-            }
-        }
-
-        // Handle single-object drag-to-move for Select tool (legacy single select path)
-        if (_viewModel?.ActiveDrawingTool == DrawingTool.Select && _selectedObject != null && _selectedObjects.Count <= 1 && PdfImage != null)
-        {
-            var props = e.GetCurrentPoint(DrawingCanvas).Properties;
-            if (props.IsLeftButtonPressed)
-            {
-                var dragPoint = e.GetCurrentPoint(PdfImage).Position;
-                var dx = dragPoint.X - _dragStartPoint.X;
-                var dy = dragPoint.Y - _dragStartPoint.Y;
-                if (Math.Abs(dx) > 3 || Math.Abs(dy) > 3)
-                    _isDraggingSelection = true;
-
-                if (_isDraggingSelection && _selectionHighlight != null)
-                {
-                    Canvas.SetLeft(_selectionHighlight, Canvas.GetLeft(_selectionHighlight) + dx);
-                    Canvas.SetTop(_selectionHighlight, Canvas.GetTop(_selectionHighlight) + dy);
-                    foreach (var (h, _) in _resizeHandles)
-                    {
-                        Canvas.SetLeft(h, Canvas.GetLeft(h) + dx);
-                        Canvas.SetTop(h, Canvas.GetTop(h) + dy);
-                    }
-                    _dragStartPoint = dragPoint;
-                }
-                e.Handled = true;
-                return;
-            }
-        }
+        if (HandleLassoDrag(e)) return;
+        if (HandleMarqueeDrag(e)) return;
+        if (HandleMultiMoveDrag(e)) return;
+        if (HandleResizeDrag(e)) return;
+        if (HandleSingleObjectDrag(e)) return;
 
         if (!_isDrawing || _viewModel == null || PdfImage == null)
             return;
 
         var point = e.GetCurrentPoint(PdfImage).Position;
-        var tool = _viewModel.ActiveDrawingTool;
-
-        switch (tool)
-        {
-            case DrawingTool.Rectangle when _drawingPreview is Rectangle rect:
-                rect.Width = Math.Abs(point.X - _drawStartPoint.X);
-                rect.Height = Math.Abs(point.Y - _drawStartPoint.Y);
-                Canvas.SetLeft(rect, Math.Min(_drawStartPoint.X, point.X));
-                Canvas.SetTop(rect, Math.Min(_drawStartPoint.Y, point.Y));
-                break;
-
-            case DrawingTool.Circle when _drawingPreview is Ellipse ellipse:
-                ellipse.Width = Math.Abs(point.X - _drawStartPoint.X);
-                ellipse.Height = Math.Abs(point.Y - _drawStartPoint.Y);
-                Canvas.SetLeft(ellipse, Math.Min(_drawStartPoint.X, point.X));
-                Canvas.SetTop(ellipse, Math.Min(_drawStartPoint.Y, point.Y));
-                break;
-
-            case DrawingTool.Line when _drawingPreview is Line line:
-                line.EndPoint = point;
-                break;
-
-            case DrawingTool.Freehand when _drawingPreview is Polyline pl:
-                _drawingPoints.Add(point);
-                ((global::Avalonia.Collections.AvaloniaList<Point>)pl.Points).Add(point);
-                break;
-        }
-
+        UpdateDrawingPreview(point);
         e.Handled = true;
     }
 
@@ -153,106 +41,11 @@ public partial class PdfViewerPage
 
         var releasePoint = e.GetCurrentPoint(PdfImage).Position;
 
-        // Finish lasso selection
-        if (_selectionManager?.IsLassoActive == true && _viewModel != null)
-        {
-            _ = FinishLassoSelectionAsync();
-            e.Handled = true;
-            return;
-        }
-
-        // Finish marquee selection
-        if (_selectionManager?.IsMarqueeActive == true && _viewModel != null)
-        {
-            _ = FinishMarqueeSelectionAsync(releasePoint);
-            e.Handled = true;
-            return;
-        }
-
-        // Finish multi-object move
-        if (_selectionManager?.IsMultiMoving == true && _viewModel != null)
-        {
-            var delta = _selectionManager.FinishMultiMove(releasePoint);
-            if (delta != null)
-                _ = MoveSelectedObjectsAsync(delta.Value.deltaPdfX, delta.Value.deltaPdfY);
-            e.Handled = true;
-            return;
-        }
-
-        // Commit resize
-        if (_isResizing && _selectedObject != null && _viewModel != null && _selectionHighlight != null)
-        {
-            _isResizing = false;
-            var origW = _resizeOriginalRect.Width;
-            var origH = _resizeOriginalRect.Height;
-            var newW = _selectionHighlight.Width;
-            var newH = _selectionHighlight.Height;
-
-            if (origW > 0 && origH > 0 && (Math.Abs(newW - origW) > 1 || Math.Abs(newH - origH) > 1))
-            {
-                var scaleX = (float)(newW / origW);
-                var scaleY = (float)(newH / origH);
-
-                // Determine anchor in PDF coords (opposite corner of dragged handle)
-                var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
-                float anchorPdfX, anchorPdfY;
-
-                if (altHeld)
-                {
-                    // Alt: anchor at center
-                    anchorPdfX = (_selectedObject.Left + _selectedObject.Right) / 2;
-                    anchorPdfY = (_selectedObject.Bottom + _selectedObject.Top) / 2;
-                }
-                else
-                {
-                    // Anchor at opposite corner
-                    (anchorPdfX, anchorPdfY) = _activeHandle switch
-                    {
-                        HandlePosition.TopLeft => (_selectedObject.Right, _selectedObject.Bottom),
-                        HandlePosition.TopRight => (_selectedObject.Left, _selectedObject.Bottom),
-                        HandlePosition.BottomLeft => (_selectedObject.Right, _selectedObject.Top),
-                        HandlePosition.BottomRight => (_selectedObject.Left, _selectedObject.Top),
-                        HandlePosition.MiddleLeft => (_selectedObject.Right, (_selectedObject.Bottom + _selectedObject.Top) / 2),
-                        HandlePosition.MiddleRight => (_selectedObject.Left, (_selectedObject.Bottom + _selectedObject.Top) / 2),
-                        HandlePosition.TopMiddle => ((_selectedObject.Left + _selectedObject.Right) / 2, _selectedObject.Bottom),
-                        HandlePosition.BottomMiddle => ((_selectedObject.Left + _selectedObject.Right) / 2, _selectedObject.Top),
-                        _ => (_selectedObject.Left, _selectedObject.Bottom)
-                    };
-                }
-
-                _ = CommitResizeAsync(scaleX, scaleY, anchorPdfX, anchorPdfY);
-            }
-            e.Handled = true;
-            return;
-        }
-
-        // Commit single-object drag-to-move for Select tool
-        if (_isDraggingSelection && _selectedObject != null && _viewModel != null)
-        {
-            _isDraggingSelection = false;
-            if (_selectedObject != null)
-            {
-                var currentTL = PdfCoordsToScreen(_selectedObject.Left, _selectedObject.Top);
-                if (currentTL != null && _selectionHighlight != null)
-                {
-                    var actualX = Canvas.GetLeft(_selectionHighlight);
-                    var actualY = Canvas.GetTop(_selectionHighlight);
-                    var screenDx = (float)(actualX - currentTL.Value.X);
-                    var screenDy = (float)(actualY - currentTL.Value.Y);
-
-                    var pdfOrigin = ScreenPointToPdfCoords(new Point(0, 0));
-                    var pdfDelta = ScreenPointToPdfCoords(new Point(screenDx, screenDy));
-                    if (pdfOrigin != null && pdfDelta != null)
-                    {
-                        var deltaPdfX = pdfDelta.Value.pdfX - pdfOrigin.Value.pdfX;
-                        var deltaPdfY = pdfDelta.Value.pdfY - pdfOrigin.Value.pdfY;
-                        _ = MoveSelectedObjectAsync(deltaPdfX, deltaPdfY);
-                    }
-                }
-            }
-            e.Handled = true;
-            return;
-        }
+        if (HandleLassoRelease(e)) return;
+        if (HandleMarqueeRelease(e, releasePoint)) return;
+        if (HandleMultiMoveRelease(e, releasePoint)) return;
+        if (HandleResizeRelease(e)) return;
+        if (HandleSingleObjectMoveRelease(e)) return;
 
         if (!_isDrawing || _viewModel == null || PdfImage == null)
             return;
@@ -285,99 +78,28 @@ public partial class PdfViewerPage
             if (pdfStart == null || pdfEnd == null)
                 return;
 
-            bool success = false;
+            var start = pdfStart.Value;
+            var end = pdfEnd.Value;
 
-            switch (tool)
-            {
-                case DrawingTool.Rectangle:
-                    var rx = Math.Min(pdfStart.Value.X, pdfEnd.Value.X);
-                    var ry = Math.Min(pdfStart.Value.Y, pdfEnd.Value.Y);
-                    var rw = Math.Abs(pdfEnd.Value.X - pdfStart.Value.X);
-                    var rh = Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y);
-                    if (rw > 1 && rh > 1)
-                        success = await shapeService.AddRectangleAsync(
-                            docId, pageIndex, rx, ry, rw, rh,
-                            fillColor, strokeColor, strokeWidth) != null;
-                    break;
-
-                case DrawingTool.Circle:
-                    var cx = (pdfStart.Value.X + pdfEnd.Value.X) / 2;
-                    var cy = (pdfStart.Value.Y + pdfEnd.Value.Y) / 2;
-                    var radX = Math.Abs(pdfEnd.Value.X - pdfStart.Value.X) / 2;
-                    var radY = Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y) / 2;
-                    var radius = Math.Max(radX, radY);
-                    if (radius > 1)
-                        success = await shapeService.AddCircleAsync(
-                            docId, pageIndex, cx, cy, radius,
-                            fillColor, strokeColor, strokeWidth) != null;
-                    break;
-
-                case DrawingTool.Line:
-                    success = await shapeService.AddLineAsync(
-                        docId, pageIndex,
-                        pdfStart.Value.X, pdfStart.Value.Y,
-                        pdfEnd.Value.X, pdfEnd.Value.Y,
-                        strokeColor, strokeWidth) != null;
-                    break;
-
-                case DrawingTool.Freehand:
-                    if (_drawingPoints.Count >= 2)
-                    {
-                        var pdfPts = ConvertPointsToPdfArray(_drawingPoints);
-                        if (pdfPts != null && pdfPts.Length >= 4)
-                            success = await shapeService.AddFreehandPathAsync(
-                                docId, pageIndex, pdfPts,
-                                strokeColor, strokeWidth) != null;
-                    }
-                    break;
-
-                case DrawingTool.Text:
-                    success = await shapeService.AddTextAsync(
-                        docId, pageIndex,
-                        pdfStart.Value.X, pdfStart.Value.Y,
-                        "Text", 12f, "Helvetica", strokeColor) != null;
-                    break;
-            }
+            bool success = await CommitShapeAsync(
+                shapeService, tool, docId, pageIndex,
+                start, end,
+                fillColor, strokeColor, strokeWidth);
 
             if (success)
             {
-                _logger.LogInformation("Shape {Tool} committed on page {Page}", tool, pageIndex);
-
-                // Record undo action
-                var undoService = App.GetService<IUndoRedoService>();
-                var creationData = new ShapeCreationData
-                {
-                    ShapeType = tool switch
-                    {
-                        DrawingTool.Rectangle => DrawingShapeType.Rectangle,
-                        DrawingTool.Circle => DrawingShapeType.Circle,
-                        DrawingTool.Line => DrawingShapeType.Line,
-                        DrawingTool.Freehand => DrawingShapeType.Freehand,
-                        DrawingTool.Text => DrawingShapeType.Text,
-                        _ => DrawingShapeType.Rectangle
-                    },
-                    X = pdfStart.Value.X,
-                    Y = pdfStart.Value.Y,
-                    X2 = pdfEnd.Value.X,
-                    Y2 = pdfEnd.Value.Y,
-                    Width = Math.Abs(pdfEnd.Value.X - pdfStart.Value.X),
-                    Height = Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y),
-                    Radius = Math.Max(Math.Abs(pdfEnd.Value.X - pdfStart.Value.X),
-                                      Math.Abs(pdfEnd.Value.Y - pdfStart.Value.Y)) / 2,
-                    FillColor = fillColor,
-                    StrokeColor = strokeColor,
-                    StrokeWidth = strokeWidth,
-                    Points = tool == DrawingTool.Freehand ? ConvertPointsToPdfArray(_drawingPoints) : null,
-                    Text = tool == DrawingTool.Text ? "Text" : null,
-                };
-                undoService.Push(new AddShapeAction(docId, pageIndex, creationData));
-
-                // Silent refresh: re-render without showing loading overlay to avoid flicker
+                _logger.LogInformation(
+                    "Shape {Tool} committed on page {Page}", tool, pageIndex);
+                RecordUndoForShape(
+                    tool, docId, pageIndex,
+                    start, end,
+                    fillColor, strokeColor, strokeWidth);
                 await _viewModel.RefreshCurrentPageSilentAsync();
             }
             else
             {
-                _logger.LogWarning("Shape {Tool} failed on page {Page} (docId={DocId})",
+                _logger.LogWarning(
+                    "Shape {Tool} failed on page {Page} (docId={DocId})",
                     tool, pageIndex, docId);
             }
         }
@@ -387,12 +109,351 @@ public partial class PdfViewerPage
         }
         finally
         {
-            // Remove drawing preview now that re-render is complete
             if (_drawingPreview != null && DrawingCanvas != null)
             {
                 DrawingCanvas.Children.Remove(_drawingPreview);
                 _drawingPreview = null;
             }
         }
+    }
+
+    // ── PointerMoved helpers ─────────────────────────────────────────
+
+    private bool HandleLassoDrag(PointerEventArgs e)
+    {
+        if (_viewModel?.ActiveDrawingTool != DrawingTool.Lasso
+            || _selectionManager?.IsLassoActive != true
+            || PdfImage == null)
+            return false;
+
+        var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+        if (!props.IsLeftButtonPressed) return false;
+
+        _selectionManager.UpdateLasso(e.GetCurrentPoint(PdfImage).Position);
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleMarqueeDrag(PointerEventArgs e)
+    {
+        if (_viewModel?.ActiveDrawingTool != DrawingTool.Select
+            || _selectionManager?.IsMarqueeActive != true
+            || PdfImage == null)
+            return false;
+
+        var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+        if (!props.IsLeftButtonPressed) return false;
+
+        _selectionManager.UpdateMarquee(e.GetCurrentPoint(PdfImage).Position);
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleMultiMoveDrag(PointerEventArgs e)
+    {
+        if (_viewModel?.ActiveDrawingTool != DrawingTool.Select
+            || _selectionManager?.IsMultiMoving != true
+            || PdfImage == null)
+            return false;
+
+        var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+        if (!props.IsLeftButtonPressed) return false;
+
+        _selectionManager.UpdateMultiMove(e.GetCurrentPoint(PdfImage).Position);
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleResizeDrag(PointerEventArgs e)
+    {
+        if (!_isResizing || _selectionHighlight == null || PdfImage == null)
+            return false;
+
+        var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+        if (!props.IsLeftButtonPressed) return false;
+
+        var pt = e.GetCurrentPoint(PdfImage).Position;
+        var shiftHeld = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+        var altHeld = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
+        var newRect = ComputeResizedRect(pt, shiftHeld, altHeld);
+
+        Canvas.SetLeft(_selectionHighlight, newRect.X);
+        Canvas.SetTop(_selectionHighlight, newRect.Y);
+        _selectionHighlight.Width = newRect.Width;
+        _selectionHighlight.Height = newRect.Height;
+        UpdateResizeHandlePositions(newRect.X, newRect.Y, newRect.Width, newRect.Height);
+
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleSingleObjectDrag(PointerEventArgs e)
+    {
+        if (_viewModel?.ActiveDrawingTool != DrawingTool.Select
+            || _selectedObject == null
+            || _selectedObjects.Count > 1
+            || PdfImage == null)
+            return false;
+
+        var props = e.GetCurrentPoint(DrawingCanvas).Properties;
+        if (!props.IsLeftButtonPressed) return false;
+
+        var dragPoint = e.GetCurrentPoint(PdfImage).Position;
+        var dx = dragPoint.X - _dragStartPoint.X;
+        var dy = dragPoint.Y - _dragStartPoint.Y;
+        if (Math.Abs(dx) > 3 || Math.Abs(dy) > 3)
+            _isDraggingSelection = true;
+
+        if (_isDraggingSelection && _selectionHighlight != null)
+        {
+            Canvas.SetLeft(_selectionHighlight, Canvas.GetLeft(_selectionHighlight) + dx);
+            Canvas.SetTop(_selectionHighlight, Canvas.GetTop(_selectionHighlight) + dy);
+            foreach (var (h, _) in _resizeHandles)
+            {
+                Canvas.SetLeft(h, Canvas.GetLeft(h) + dx);
+                Canvas.SetTop(h, Canvas.GetTop(h) + dy);
+            }
+            _dragStartPoint = dragPoint;
+        }
+
+        e.Handled = true;
+        return true;
+    }
+
+    private void UpdateDrawingPreview(Point point)
+    {
+        var tool = _viewModel!.ActiveDrawingTool;
+        switch (tool)
+        {
+            case DrawingTool.Rectangle when _drawingPreview is Rectangle rect:
+                rect.Width = Math.Abs(point.X - _drawStartPoint.X);
+                rect.Height = Math.Abs(point.Y - _drawStartPoint.Y);
+                Canvas.SetLeft(rect, Math.Min(_drawStartPoint.X, point.X));
+                Canvas.SetTop(rect, Math.Min(_drawStartPoint.Y, point.Y));
+                break;
+
+            case DrawingTool.Circle when _drawingPreview is Ellipse ellipse:
+                ellipse.Width = Math.Abs(point.X - _drawStartPoint.X);
+                ellipse.Height = Math.Abs(point.Y - _drawStartPoint.Y);
+                Canvas.SetLeft(ellipse, Math.Min(_drawStartPoint.X, point.X));
+                Canvas.SetTop(ellipse, Math.Min(_drawStartPoint.Y, point.Y));
+                break;
+
+            case DrawingTool.Line when _drawingPreview is Line line:
+                line.EndPoint = point;
+                break;
+
+            case DrawingTool.Freehand when _drawingPreview is Polyline pl:
+                _drawingPoints.Add(point);
+                ((global::Avalonia.Collections.AvaloniaList<Point>)pl.Points).Add(point);
+                break;
+        }
+    }
+
+    // ── PointerReleased helpers ──────────────────────────────────────
+
+    private bool HandleLassoRelease(PointerReleasedEventArgs e)
+    {
+        if (_selectionManager?.IsLassoActive != true || _viewModel == null)
+            return false;
+
+        _ = FinishLassoSelectionAsync();
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleMarqueeRelease(
+        PointerReleasedEventArgs e, Point releasePoint)
+    {
+        if (_selectionManager?.IsMarqueeActive != true || _viewModel == null)
+            return false;
+
+        _ = FinishMarqueeSelectionAsync(releasePoint);
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleMultiMoveRelease(
+        PointerReleasedEventArgs e, Point releasePoint)
+    {
+        if (_selectionManager?.IsMultiMoving != true || _viewModel == null)
+            return false;
+
+        var delta = _selectionManager.FinishMultiMove(releasePoint);
+        if (delta != null)
+            _ = MoveSelectedObjectsAsync(delta.Value.deltaPdfX, delta.Value.deltaPdfY);
+        e.Handled = true;
+        return true;
+    }
+
+    private bool HandleResizeRelease(PointerReleasedEventArgs e)
+    {
+        if (!_isResizing || _selectedObject == null
+            || _viewModel == null || _selectionHighlight == null)
+            return false;
+
+        _isResizing = false;
+        var origW = _resizeOriginalRect.Width;
+        var origH = _resizeOriginalRect.Height;
+        var newW = _selectionHighlight.Width;
+        var newH = _selectionHighlight.Height;
+
+        if (origW > 0 && origH > 0
+            && (Math.Abs(newW - origW) > 1 || Math.Abs(newH - origH) > 1))
+        {
+            var scaleX = (float)(newW / origW);
+            var scaleY = (float)(newH / origH);
+            var (anchorX, anchorY) = ComputeResizeAnchor(e);
+            _ = CommitResizeAsync(scaleX, scaleY, anchorX, anchorY);
+        }
+
+        e.Handled = true;
+        return true;
+    }
+
+    private (float anchorPdfX, float anchorPdfY) ComputeResizeAnchor(
+        PointerReleasedEventArgs e)
+    {
+        var obj = _selectedObject!;
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Alt))
+        {
+            return (
+                (obj.Left + obj.Right) / 2,
+                (obj.Bottom + obj.Top) / 2);
+        }
+
+        return _activeHandle switch
+        {
+            HandlePosition.TopLeft => (obj.Right, obj.Bottom),
+            HandlePosition.TopRight => (obj.Left, obj.Bottom),
+            HandlePosition.BottomLeft => (obj.Right, obj.Top),
+            HandlePosition.BottomRight => (obj.Left, obj.Top),
+            HandlePosition.MiddleLeft => (obj.Right, (obj.Bottom + obj.Top) / 2),
+            HandlePosition.MiddleRight => (obj.Left, (obj.Bottom + obj.Top) / 2),
+            HandlePosition.TopMiddle => ((obj.Left + obj.Right) / 2, obj.Bottom),
+            HandlePosition.BottomMiddle => ((obj.Left + obj.Right) / 2, obj.Top),
+            _ => (obj.Left, obj.Bottom)
+        };
+    }
+
+    private bool HandleSingleObjectMoveRelease(PointerReleasedEventArgs e)
+    {
+        if (!_isDraggingSelection || _selectedObject == null || _viewModel == null)
+            return false;
+
+        _isDraggingSelection = false;
+        var currentTL = PdfCoordsToScreen(_selectedObject.Left, _selectedObject.Top);
+        if (currentTL != null && _selectionHighlight != null)
+        {
+            var actualX = Canvas.GetLeft(_selectionHighlight);
+            var actualY = Canvas.GetTop(_selectionHighlight);
+            var screenDx = (float)(actualX - currentTL.Value.X);
+            var screenDy = (float)(actualY - currentTL.Value.Y);
+
+            var pdfOrigin = ScreenPointToPdfCoords(new Point(0, 0));
+            var pdfDelta = ScreenPointToPdfCoords(new Point(screenDx, screenDy));
+            if (pdfOrigin != null && pdfDelta != null)
+            {
+                var deltaPdfX = pdfDelta.Value.pdfX - pdfOrigin.Value.pdfX;
+                var deltaPdfY = pdfDelta.Value.pdfY - pdfOrigin.Value.pdfY;
+                _ = MoveSelectedObjectAsync(deltaPdfX, deltaPdfY);
+            }
+        }
+
+        e.Handled = true;
+        return true;
+    }
+
+    // ── CommitDrawingAsync helpers ────────────────────────────────────
+
+    private async Task<bool> CommitShapeAsync(
+        IShapeService shapeService, DrawingTool tool,
+        string docId, PageIndex pageIndex,
+        System.Drawing.PointF pdfStart, System.Drawing.PointF pdfEnd,
+        string fillColor, string strokeColor, float strokeWidth)
+    {
+        switch (tool)
+        {
+            case DrawingTool.Rectangle:
+                var rx = Math.Min(pdfStart.X, pdfEnd.X);
+                var ry = Math.Min(pdfStart.Y, pdfEnd.Y);
+                var rw = Math.Abs(pdfEnd.X - pdfStart.X);
+                var rh = Math.Abs(pdfEnd.Y - pdfStart.Y);
+                return rw > 1 && rh > 1
+                    && await shapeService.AddRectangleAsync(
+                        docId, pageIndex, rx, ry, rw, rh,
+                        fillColor, strokeColor, strokeWidth) != null;
+
+            case DrawingTool.Circle:
+                var cx = (pdfStart.X + pdfEnd.X) / 2;
+                var cy = (pdfStart.Y + pdfEnd.Y) / 2;
+                var radX = Math.Abs(pdfEnd.X - pdfStart.X) / 2;
+                var radY = Math.Abs(pdfEnd.Y - pdfStart.Y) / 2;
+                var radius = Math.Max(radX, radY);
+                return radius > 1
+                    && await shapeService.AddCircleAsync(
+                        docId, pageIndex, cx, cy, radius,
+                        fillColor, strokeColor, strokeWidth) != null;
+
+            case DrawingTool.Line:
+                return await shapeService.AddLineAsync(
+                    docId, pageIndex,
+                    pdfStart.X, pdfStart.Y,
+                    pdfEnd.X, pdfEnd.Y,
+                    strokeColor, strokeWidth) != null;
+
+            case DrawingTool.Freehand:
+                if (_drawingPoints.Count < 2) return false;
+                var pdfPts = ConvertPointsToPdfArray(_drawingPoints);
+                return pdfPts != null && pdfPts.Length >= 4
+                    && await shapeService.AddFreehandPathAsync(
+                        docId, pageIndex, pdfPts,
+                        strokeColor, strokeWidth) != null;
+
+            case DrawingTool.Text:
+                return await shapeService.AddTextAsync(
+                    docId, pageIndex,
+                    pdfStart.X, pdfStart.Y,
+                    "Text", 12f, "Helvetica", strokeColor) != null;
+
+            default:
+                return false;
+        }
+    }
+
+    private void RecordUndoForShape(
+        DrawingTool tool, string docId, PageIndex pageIndex,
+        System.Drawing.PointF pdfStart, System.Drawing.PointF pdfEnd,
+        string fillColor, string strokeColor, float strokeWidth)
+    {
+        var undoService = App.GetService<IUndoRedoService>();
+        var creationData = new ShapeCreationData
+        {
+            ShapeType = tool switch
+            {
+                DrawingTool.Rectangle => DrawingShapeType.Rectangle,
+                DrawingTool.Circle => DrawingShapeType.Circle,
+                DrawingTool.Line => DrawingShapeType.Line,
+                DrawingTool.Freehand => DrawingShapeType.Freehand,
+                DrawingTool.Text => DrawingShapeType.Text,
+                _ => DrawingShapeType.Rectangle
+            },
+            X = pdfStart.X,
+            Y = pdfStart.Y,
+            X2 = pdfEnd.X,
+            Y2 = pdfEnd.Y,
+            Width = Math.Abs(pdfEnd.X - pdfStart.X),
+            Height = Math.Abs(pdfEnd.Y - pdfStart.Y),
+            Radius = Math.Max(
+                Math.Abs(pdfEnd.X - pdfStart.X),
+                Math.Abs(pdfEnd.Y - pdfStart.Y)) / 2,
+            FillColor = fillColor,
+            StrokeColor = strokeColor,
+            StrokeWidth = strokeWidth,
+            Points = tool == DrawingTool.Freehand
+                ? ConvertPointsToPdfArray(_drawingPoints) : null,
+            Text = tool == DrawingTool.Text ? "Text" : null,
+        };
+        undoService.Push(new AddShapeAction(docId, pageIndex, creationData));
     }
 }

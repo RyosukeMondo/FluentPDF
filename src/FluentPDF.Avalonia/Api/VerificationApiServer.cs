@@ -79,15 +79,23 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         }
 
         var builder = WebApplication.CreateBuilder();
+        builder.WebHost.ConfigureKestrel(options => options.ListenLocalhost(port));
 
-        // Configure Kestrel
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.ListenLocalhost(port);
-        });
+        ConfigureServices(builder);
 
-        // Configure minimal logging
+        _webApp = builder.Build();
 
+        ConfigureMiddlewareAndEndpoints(_webApp);
+
+        _baseUrl = $"http://{bindAddress}:{port}";
+        await _webApp.StartAsync(ct);
+        _isRunning = true;
+
+        LogStartupInfo();
+    }
+
+    private void ConfigureServices(WebApplicationBuilder builder)
+    {
         // Register API-specific services
         builder.Services.AddSingleton<IDocumentSessionManager, DocumentSessionManager>();
         builder.Services.AddSingleton<IHashingService, HashingService>();
@@ -130,7 +138,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
             options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         });
 
-        // Configure Swagger/OpenAPI (development mode only)
+        // Configure Swagger/OpenAPI
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
@@ -159,12 +167,13 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
                 options.IncludeXmlComments(xmlPath);
             }
         });
+    }
 
-        _webApp = builder.Build();
-
+    private static void ConfigureMiddlewareAndEndpoints(WebApplication app)
+    {
         // Enable Swagger UI (serves at root URL for convenience)
-        _webApp.UseSwagger();
-        _webApp.UseSwaggerUI(options =>
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "FluentPDF Verification API v1");
             options.RoutePrefix = string.Empty; // Serve Swagger UI at root URL
@@ -177,7 +186,7 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         });
 
         // Add correlation ID middleware
-        _webApp.Use(async (context, next) =>
+        app.Use(async (context, next) =>
         {
             var correlationId = context.Request.Headers["X-Correlation-Id"].FirstOrDefault()
                 ?? Guid.NewGuid().ToString("N");
@@ -190,23 +199,21 @@ public sealed class VerificationApiServer : IVerificationApiServer, IAsyncDispos
         });
 
         // Map endpoints
-        HealthEndpoints.Map(_webApp);
-        DocumentEndpoints.Map(_webApp);
-        RenderEndpoints.Map(_webApp);
-        VerifyEndpoints.Map(_webApp);
-        GuiEndpoints.Map(_webApp);
-        PdfOperationsEndpoints.Map(_webApp);
-        ShapeEndpoints.Map(_webApp);
-        DiagnosticEndpoints.Map(_webApp);
-        InteractionEndpoints.Map(_webApp);
-        SearchEndpoints.Map(_webApp);
-        HighlightEndpoints.Map(_webApp);
+        HealthEndpoints.Map(app);
+        DocumentEndpoints.Map(app);
+        RenderEndpoints.Map(app);
+        VerifyEndpoints.Map(app);
+        GuiEndpoints.Map(app);
+        PdfOperationsEndpoints.Map(app);
+        ShapeEndpoints.Map(app);
+        DiagnosticEndpoints.Map(app);
+        InteractionEndpoints.Map(app);
+        SearchEndpoints.Map(app);
+        HighlightEndpoints.Map(app);
+    }
 
-        _baseUrl = $"http://{bindAddress}:{port}";
-
-        await _webApp.StartAsync(ct);
-        _isRunning = true;
-
+    private void LogStartupInfo()
+    {
         _logger.LogInformation("Verification API server started at {BaseUrl}", _baseUrl);
         _logger.LogInformation("  Swagger UI:  {BaseUrl}/", _baseUrl);
         _logger.LogInformation("  OpenAPI:     {BaseUrl}/swagger/v1/swagger.json", _baseUrl);

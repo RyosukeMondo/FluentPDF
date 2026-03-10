@@ -49,62 +49,76 @@ public sealed class DocxConverterService : IDocxConverterService
             "Starting DOCX to PDF conversion. CorrelationId={CorrelationId}, InputPath={InputPath}, OutputPath={OutputPath}, Timeout={Timeout}",
             correlationId, inputPath, outputPath, options.Timeout);
 
-        // Validate input file exists
+        var inputValidation = ValidateInputFile(inputPath, correlationId);
+        if (inputValidation.IsFailed)
+            return inputValidation.ToResult<ConversionResult>();
+
+        var outputValidation = ValidateOutputPath(outputPath, correlationId);
+        if (outputValidation.IsFailed)
+            return outputValidation.ToResult<ConversionResult>();
+
+        var sizeResult = GetSourceFileSize(inputPath, correlationId);
+        if (sizeResult.IsFailed)
+            return sizeResult.ToResult<ConversionResult>();
+
+        return await ExecuteConversionPipelineAsync(
+            inputPath, outputPath, options,
+            sizeResult.Value, stopwatch, correlationId, cancellationToken);
+    }
+
+    private Result ValidateInputFile(string inputPath, Guid correlationId)
+    {
         if (!File.Exists(inputPath))
         {
-            var error = new PdfError(
+            _logger.LogError(
+                "Source DOCX file not found. CorrelationId={CorrelationId}, InputPath={InputPath}",
+                correlationId, inputPath);
+
+            return Result.Fail(new PdfError(
                 "DOCX_FILE_NOT_FOUND",
                 $"Source DOCX file not found: {inputPath}",
                 ErrorCategory.IO,
                 ErrorSeverity.Error)
                 .WithContext("InputPath", inputPath)
-                .WithContext("CorrelationId", correlationId);
-
-            _logger.LogError(
-                "Source DOCX file not found. CorrelationId={CorrelationId}, InputPath={InputPath}",
-                correlationId, inputPath);
-
-            return Result.Fail(error);
+                .WithContext("CorrelationId", correlationId));
         }
 
-        // Validate input file is DOCX
         var extension = Path.GetExtension(inputPath).ToLowerInvariant();
         if (extension != ".docx")
         {
-            var error = new PdfError(
+            _logger.LogError(
+                "Invalid input file format. CorrelationId={CorrelationId}, InputPath={InputPath}, Extension={Extension}",
+                correlationId, inputPath, extension);
+
+            return Result.Fail(new PdfError(
                 "DOCX_INVALID_FORMAT",
                 $"Input file is not a DOCX document. Extension: {extension}",
                 ErrorCategory.Validation,
                 ErrorSeverity.Error)
                 .WithContext("InputPath", inputPath)
                 .WithContext("Extension", extension)
-                .WithContext("CorrelationId", correlationId);
-
-            _logger.LogError(
-                "Invalid input file format. CorrelationId={CorrelationId}, InputPath={InputPath}, Extension={Extension}",
-                correlationId, inputPath, extension);
-
-            return Result.Fail(error);
+                .WithContext("CorrelationId", correlationId));
         }
 
-        // Validate output path
+        return Result.Ok();
+    }
+
+    private Result ValidateOutputPath(string outputPath, Guid correlationId)
+    {
         if (string.IsNullOrWhiteSpace(outputPath))
         {
-            var error = new PdfError(
-                "OUTPUT_PATH_INVALID",
-                "Output path cannot be null or empty",
-                ErrorCategory.Validation,
-                ErrorSeverity.Error)
-                .WithContext("CorrelationId", correlationId);
-
             _logger.LogError(
                 "Output path is invalid. CorrelationId={CorrelationId}",
                 correlationId);
 
-            return Result.Fail(error);
+            return Result.Fail(new PdfError(
+                "OUTPUT_PATH_INVALID",
+                "Output path cannot be null or empty",
+                ErrorCategory.Validation,
+                ErrorSeverity.Error)
+                .WithContext("CorrelationId", correlationId));
         }
 
-        // Ensure output directory exists
         var outputDirectory = Path.GetDirectoryName(outputPath);
         if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
         {
@@ -117,177 +131,219 @@ public sealed class DocxConverterService : IDocxConverterService
             }
             catch (Exception ex)
             {
-                var error = new PdfError(
+                _logger.LogError(ex,
+                    "Failed to create output directory. CorrelationId={CorrelationId}, Directory={Directory}",
+                    correlationId, outputDirectory);
+
+                return Result.Fail(new PdfError(
                     "OUTPUT_DIRECTORY_CREATE_FAILED",
                     $"Failed to create output directory: {ex.Message}",
                     ErrorCategory.IO,
                     ErrorSeverity.Error)
                     .WithContext("Directory", outputDirectory)
                     .WithContext("CorrelationId", correlationId)
-                    .WithContext("ExceptionType", ex.GetType().Name);
-
-                _logger.LogError(ex,
-                    "Failed to create output directory. CorrelationId={CorrelationId}, Directory={Directory}",
-                    correlationId, outputDirectory);
-
-                return Result.Fail(error);
+                    .WithContext("ExceptionType", ex.GetType().Name));
             }
         }
 
-        // Get source file size
-        long sourceSizeBytes;
+        return Result.Ok();
+    }
+
+    private Result<long> GetSourceFileSize(string inputPath, Guid correlationId)
+    {
         try
         {
-            sourceSizeBytes = new FileInfo(inputPath).Length;
+            return Result.Ok(new FileInfo(inputPath).Length);
         }
         catch (Exception ex)
         {
-            var error = new PdfError(
+            _logger.LogError(ex,
+                "Failed to read source file information. CorrelationId={CorrelationId}, InputPath={InputPath}",
+                correlationId, inputPath);
+
+            return Result.Fail(new PdfError(
                 "DOCX_READ_FAILED",
                 $"Failed to read source file information: {ex.Message}",
                 ErrorCategory.IO,
                 ErrorSeverity.Error)
                 .WithContext("InputPath", inputPath)
                 .WithContext("CorrelationId", correlationId)
-                .WithContext("ExceptionType", ex.GetType().Name);
-
-            _logger.LogError(ex,
-                "Failed to read source file information. CorrelationId={CorrelationId}, InputPath={InputPath}",
-                correlationId, inputPath);
-
-            return Result.Fail(error);
+                .WithContext("ExceptionType", ex.GetType().Name));
         }
+    }
 
+    private async Task<Result<ConversionResult>> ExecuteConversionPipelineAsync(
+        string inputPath,
+        string outputPath,
+        ConversionOptions options,
+        long sourceSizeBytes,
+        Stopwatch stopwatch,
+        Guid correlationId,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            // Create timeout cancellation token source
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(options.Timeout);
 
-            // Step 1: Parse DOCX to HTML
-            _logger.LogDebug(
-                "Step 1: Parsing DOCX to HTML. CorrelationId={CorrelationId}",
-                correlationId);
+            var htmlResult = await ParseDocxToHtmlAsync(inputPath, correlationId);
+            if (htmlResult.IsFailed)
+                return Result.Fail(htmlResult.Errors);
 
-            var parseResult = await _docxParser.ParseDocxToHtmlAsync(inputPath);
-            if (parseResult.IsFailed)
-            {
-                _logger.LogError(
-                    "DOCX parsing failed. CorrelationId={CorrelationId}, Errors={Errors}",
-                    correlationId, parseResult.Errors);
-
-                return Result.Fail(parseResult.Errors);
-            }
-
-            var htmlContent = parseResult.Value;
-            _logger.LogDebug(
-                "DOCX parsed successfully. CorrelationId={CorrelationId}, HtmlLength={HtmlLength}",
-                correlationId, htmlContent.Length);
-
-            // Step 2: Convert HTML to PDF
-            _logger.LogDebug(
-                "Step 2: Converting HTML to PDF. CorrelationId={CorrelationId}",
-                correlationId);
-
-            var renderResult = await _htmlToPdf.ConvertHtmlToPdfAsync(
-                htmlContent,
-                outputPath,
-                timeoutCts.Token);
-
+            var renderResult = await RenderHtmlToPdfAsync(
+                htmlResult.Value, outputPath, correlationId, timeoutCts.Token);
             if (renderResult.IsFailed)
-            {
-                _logger.LogError(
-                    "HTML to PDF conversion failed. CorrelationId={CorrelationId}, Errors={Errors}",
-                    correlationId, renderResult.Errors);
-
                 return Result.Fail(renderResult.Errors);
-            }
-
-            // Get output file size
-            long outputSizeBytes;
-            try
-            {
-                outputSizeBytes = new FileInfo(outputPath).Length;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "Failed to read output file size. CorrelationId={CorrelationId}, OutputPath={OutputPath}",
-                    correlationId, outputPath);
-                outputSizeBytes = 0;
-            }
 
             stopwatch.Stop();
-
-            // Build conversion result
-            var result = new ConversionResult
-            {
-                OutputPath = outputPath,
-                SourcePath = inputPath,
-                ConversionTime = stopwatch.Elapsed,
-                OutputSizeBytes = outputSizeBytes,
-                SourceSizeBytes = sourceSizeBytes,
-                CompletedAt = DateTime.UtcNow
-            };
-
-            _logger.LogInformation(
-                "DOCX to PDF conversion completed successfully. CorrelationId={CorrelationId}, " +
-                "InputPath={InputPath}, OutputPath={OutputPath}, ConversionTime={ConversionTime}, " +
-                "SourceSize={SourceSize}, OutputSize={OutputSize}",
-                correlationId, inputPath, outputPath, result.ConversionTime,
-                sourceSizeBytes, outputSizeBytes);
-
-            return Result.Ok(result);
+            return BuildConversionResult(
+                inputPath, outputPath, sourceSizeBytes, stopwatch.Elapsed, correlationId);
         }
         catch (OperationCanceledException ex)
         {
             stopwatch.Stop();
-
-            var errorCode = cancellationToken.IsCancellationRequested
-                ? "CONVERSION_CANCELLED"
-                : "CONVERSION_TIMEOUT";
-
-            var errorMessage = cancellationToken.IsCancellationRequested
-                ? "Conversion was cancelled by user"
-                : $"Conversion timed out after {options.Timeout.TotalSeconds} seconds";
-
-            var error = new PdfError(
-                errorCode,
-                errorMessage,
-                ErrorCategory.Conversion,
-                ErrorSeverity.Error)
-                .WithContext("InputPath", inputPath)
-                .WithContext("OutputPath", outputPath)
-                .WithContext("Timeout", options.Timeout)
-                .WithContext("ElapsedTime", stopwatch.Elapsed)
-                .WithContext("CorrelationId", correlationId);
-
-            _logger.LogError(ex,
-                "Conversion cancelled or timed out. CorrelationId={CorrelationId}, ErrorCode={ErrorCode}, ElapsedTime={ElapsedTime}",
-                correlationId, errorCode, stopwatch.Elapsed);
-
-            return Result.Fail(error);
+            return HandleCancellation(
+                ex, inputPath, outputPath, options, stopwatch.Elapsed,
+                correlationId, cancellationToken);
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-
-            var error = new PdfError(
-                "CONVERSION_FAILED",
-                $"Unexpected error during conversion: {ex.Message}",
-                ErrorCategory.Conversion,
-                ErrorSeverity.Error)
-                .WithContext("InputPath", inputPath)
-                .WithContext("OutputPath", outputPath)
-                .WithContext("ElapsedTime", stopwatch.Elapsed)
-                .WithContext("CorrelationId", correlationId)
-                .WithContext("ExceptionType", ex.GetType().Name);
-
-            _logger.LogError(ex,
-                "Unexpected error during conversion. CorrelationId={CorrelationId}, ElapsedTime={ElapsedTime}",
-                correlationId, stopwatch.Elapsed);
-
-            return Result.Fail(error);
+            return HandleUnexpectedError(
+                ex, inputPath, outputPath, stopwatch.Elapsed, correlationId);
         }
+    }
+
+    private async Task<Result<string>> ParseDocxToHtmlAsync(
+        string inputPath, Guid correlationId)
+    {
+        _logger.LogDebug(
+            "Step 1: Parsing DOCX to HTML. CorrelationId={CorrelationId}",
+            correlationId);
+
+        var parseResult = await _docxParser.ParseDocxToHtmlAsync(inputPath);
+        if (parseResult.IsFailed)
+        {
+            _logger.LogError(
+                "DOCX parsing failed. CorrelationId={CorrelationId}, Errors={Errors}",
+                correlationId, parseResult.Errors);
+            return Result.Fail(parseResult.Errors);
+        }
+
+        _logger.LogDebug(
+            "DOCX parsed successfully. CorrelationId={CorrelationId}, HtmlLength={HtmlLength}",
+            correlationId, parseResult.Value.Length);
+
+        return parseResult;
+    }
+
+    private async Task<Result> RenderHtmlToPdfAsync(
+        string htmlContent, string outputPath,
+        Guid correlationId, CancellationToken ct)
+    {
+        _logger.LogDebug(
+            "Step 2: Converting HTML to PDF. CorrelationId={CorrelationId}",
+            correlationId);
+
+        var renderResult = await _htmlToPdf.ConvertHtmlToPdfAsync(
+            htmlContent, outputPath, ct);
+
+        if (renderResult.IsFailed)
+        {
+            _logger.LogError(
+                "HTML to PDF conversion failed. CorrelationId={CorrelationId}, Errors={Errors}",
+                correlationId, renderResult.Errors);
+            return Result.Fail(renderResult.Errors);
+        }
+
+        return Result.Ok();
+    }
+
+    private Result<ConversionResult> BuildConversionResult(
+        string inputPath, string outputPath, long sourceSizeBytes,
+        TimeSpan elapsed, Guid correlationId)
+    {
+        long outputSizeBytes;
+        try
+        {
+            outputSizeBytes = new FileInfo(outputPath).Length;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to read output file size. CorrelationId={CorrelationId}, OutputPath={OutputPath}",
+                correlationId, outputPath);
+            outputSizeBytes = 0;
+        }
+
+        var result = new ConversionResult
+        {
+            OutputPath = outputPath,
+            SourcePath = inputPath,
+            ConversionTime = elapsed,
+            OutputSizeBytes = outputSizeBytes,
+            SourceSizeBytes = sourceSizeBytes,
+            CompletedAt = DateTime.UtcNow
+        };
+
+        _logger.LogInformation(
+            "DOCX to PDF conversion completed successfully. CorrelationId={CorrelationId}, " +
+            "InputPath={InputPath}, OutputPath={OutputPath}, ConversionTime={ConversionTime}, " +
+            "SourceSize={SourceSize}, OutputSize={OutputSize}",
+            correlationId, inputPath, outputPath, elapsed,
+            sourceSizeBytes, outputSizeBytes);
+
+        return Result.Ok(result);
+    }
+
+    private Result<ConversionResult> HandleCancellation(
+        OperationCanceledException ex,
+        string inputPath, string outputPath,
+        ConversionOptions options, TimeSpan elapsed,
+        Guid correlationId, CancellationToken cancellationToken)
+    {
+        var errorCode = cancellationToken.IsCancellationRequested
+            ? "CONVERSION_CANCELLED"
+            : "CONVERSION_TIMEOUT";
+
+        var errorMessage = cancellationToken.IsCancellationRequested
+            ? "Conversion was cancelled by user"
+            : $"Conversion timed out after {options.Timeout.TotalSeconds} seconds";
+
+        _logger.LogError(ex,
+            "Conversion cancelled or timed out. CorrelationId={CorrelationId}, ErrorCode={ErrorCode}, ElapsedTime={ElapsedTime}",
+            correlationId, errorCode, elapsed);
+
+        return Result.Fail(new PdfError(
+            errorCode,
+            errorMessage,
+            ErrorCategory.Conversion,
+            ErrorSeverity.Error)
+            .WithContext("InputPath", inputPath)
+            .WithContext("OutputPath", outputPath)
+            .WithContext("Timeout", options.Timeout)
+            .WithContext("ElapsedTime", elapsed)
+            .WithContext("CorrelationId", correlationId));
+    }
+
+    private Result<ConversionResult> HandleUnexpectedError(
+        Exception ex,
+        string inputPath, string outputPath,
+        TimeSpan elapsed, Guid correlationId)
+    {
+        _logger.LogError(ex,
+            "Unexpected error during conversion. CorrelationId={CorrelationId}, ElapsedTime={ElapsedTime}",
+            correlationId, elapsed);
+
+        return Result.Fail(new PdfError(
+            "CONVERSION_FAILED",
+            $"Unexpected error during conversion: {ex.Message}",
+            ErrorCategory.Conversion,
+            ErrorSeverity.Error)
+            .WithContext("InputPath", inputPath)
+            .WithContext("OutputPath", outputPath)
+            .WithContext("ElapsedTime", elapsed)
+            .WithContext("CorrelationId", correlationId)
+            .WithContext("ExceptionType", ex.GetType().Name));
     }
 }
