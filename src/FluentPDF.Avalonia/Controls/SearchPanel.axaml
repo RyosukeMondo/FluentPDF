@@ -34,7 +34,8 @@
         <Border BorderBrush="{DynamicResource BorderSubtleBrush}"
                 BorderThickness="0,0,0,1">
 
-        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto">
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto"
+              KeyboardNavigation.TabNavigation="Cycle">
 
             <!-- Search Icon -->
             <PathIcon Grid.Column="0"
@@ -47,6 +48,7 @@
 
             <!-- Search TextBox -->
             <TextBox Grid.Column="1"
+                     TabIndex="0"
                      Text="{Binding SearchText, Mode=TwoWay}"
                      Watermark="Search in document..."
                      MinWidth="200"
@@ -65,6 +67,7 @@
 
             <!-- Previous Match Button -->
             <Button Grid.Column="3"
+                    TabIndex="1"
                     Command="{Binding PreviousMatchCommand}"
                     IsEnabled="{Binding HasMatches}"
                     ToolTip.Tip="Previous match (Shift+F3)"
@@ -76,6 +79,7 @@
 
             <!-- Next Match Button -->
             <Button Grid.Column="4"
+                    TabIndex="2"
                     Command="{Binding NextMatchCommand}"
                     IsEnabled="{Binding HasMatches}"
                     ToolTip.Tip="Next match (F3)"
@@ -92,7 +96,8 @@
                         Margin="0,0,12,0">
 
                 <!-- Case Sensitive Toggle -->
-                <ToggleButton IsChecked="{Binding CaseSensitive, Mode=TwoWay}"
+                <ToggleButton TabIndex="3"
+                              IsChecked="{Binding CaseSensitive, Mode=TwoWay}"
                               ToolTip.Tip="Match case"
                               Classes="ToolbarIcon"
                               Width="32"
@@ -104,7 +109,8 @@
                 </ToggleButton>
 
                 <!-- Whole Word Toggle -->
-                <ToggleButton IsChecked="{Binding WholeWord, Mode=TwoWay}"
+                <ToggleButton TabIndex="4"
+                              IsChecked="{Binding WholeWord, Mode=TwoWay}"
                               ToolTip.Tip="Match whole word"
                               Classes="ToolbarIcon"
                               Width="32"
@@ -121,19 +127,22 @@
                         Orientation="Horizontal"
                         Spacing="4"
                         Margin="0,0,12,0">
-                <TextBox Text="{Binding ReplaceText, Mode=TwoWay}"
+                <TextBox TabIndex="5"
+                         Text="{Binding ReplaceText, Mode=TwoWay}"
                          Watermark="Replace with..."
                          Width="150"
                          VerticalContentAlignment="Center"
                          IsVisible="{Binding HasMatches}"
                          AutomationProperties.Name="Replace text input"/>
-                <Button Content="Replace"
+                <Button TabIndex="6"
+                        Content="Replace"
                         Command="{Binding ReplaceCommand}"
                         IsEnabled="{Binding HasMatches}"
                         IsVisible="{Binding HasMatches}"
                         ToolTip.Tip="Replace current match"
                         AutomationProperties.Name="Replace current match"/>
-                <Button Content="Replace All"
+                <Button TabIndex="7"
+                        Content="Replace All"
                         Classes="accent"
                         Command="{Binding ReplaceAllCommand}"
                         IsEnabled="{Binding HasMatches}"
@@ -144,6 +153,7 @@
 
             <!-- Close Button -->
             <Button Grid.Column="7"
+                    TabIndex="8"
                     Command="{Binding CloseSearchCommand}"
                     ToolTip.Tip="Close search (Esc)"
                     Classes="ToolbarIcon"

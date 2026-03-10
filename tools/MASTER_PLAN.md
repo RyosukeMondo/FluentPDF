@@ -128,11 +128,7 @@
   - Secondary actions (Export, Print) less prominent
   - Toolbar grouping with separators
   - Verify: screenshot comparison with before/after
-- [ ] P7.3: Error handling UX
-  - Friendly error messages (not stack traces)
-  - Toast notifications for transient errors
-  - Dialog for blocking errors
-  - Verify: trigger error, see friendly message
+- [DONE] P7.3: Error handling UX — INotificationService + NotificationViewModel + ToastHost control + REST API endpoint POST /api/gui/notify
 - [ ] P7.4: Loading states
   - Skeleton/shimmer for page rendering
   - Progress bar for long operations (merge, export)

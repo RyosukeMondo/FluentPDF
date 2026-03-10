@@ -165,6 +165,11 @@ public partial class App
         services.AddTransient<FluentPDF.Avalonia.ViewModels.LogViewerViewModel>();
         services.AddTransient<FluentPDF.Core.ViewModels.MetadataViewModel>();
 
+        // Notification service (singleton — shared toast host)
+        services.AddSingleton<FluentPDF.Core.ViewModels.NotificationViewModel>();
+        services.AddSingleton<FluentPDF.Core.Services.INotificationService>(sp =>
+            sp.GetRequiredService<FluentPDF.Core.ViewModels.NotificationViewModel>());
+
         // Register factory functions for ViewModels that require dynamic creation
         services.AddSingleton<Func<FluentPDF.Core.ViewModels.PdfViewerViewModel>>(sp =>
             () =>

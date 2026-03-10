@@ -97,10 +97,12 @@
                 BorderThickness="0,0,0,1"
                 Padding="{StaticResource ToolbarPadding}"
                 CornerRadius="0">
-            <StackPanel Orientation="Horizontal" Spacing="{StaticResource ToolbarItemSpacing}">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource ToolbarItemSpacing}"
+                        KeyboardNavigation.TabNavigation="Cycle">
 
                 <!-- File Operations -->
                 <Button x:Name="ToolbarOpenButton"
+                        TabIndex="0"
                         AutomationProperties.AutomationId="ToolbarOpenButton"
                         AutomationProperties.Name="Open PDF file"
                         ToolTip.Tip="Open PDF file (Ctrl+O)"
@@ -115,6 +117,7 @@
 
                 <!-- Navigation -->
                 <Button x:Name="ToolbarPreviousPageButton"
+                        TabIndex="1"
                         AutomationProperties.AutomationId="ToolbarPreviousPageButton"
                         AutomationProperties.Name="Previous page"
                         ToolTip.Tip="Previous page"
@@ -123,6 +126,7 @@
                 </Button>
 
                 <TextBox x:Name="ToolbarPageNumberBox"
+                        TabIndex="2"
                         Width="60"
                         Text="1"
                         TextAlignment="Center"
@@ -137,6 +141,7 @@
                           Margin="4,0" />
 
                 <Button x:Name="ToolbarNextPageButton"
+                        TabIndex="3"
                         AutomationProperties.AutomationId="ToolbarNextPageButton"
                         AutomationProperties.Name="Next page"
                         ToolTip.Tip="Next page"
@@ -151,6 +156,7 @@
 
                 <!-- Zoom Controls -->
                 <Button x:Name="ToolbarZoomOutButton"
+                        TabIndex="4"
                         AutomationProperties.AutomationId="ToolbarZoomOutButton"
                         AutomationProperties.Name="Zoom out"
                         ToolTip.Tip="Zoom out"
@@ -159,6 +165,7 @@
                 </Button>
 
                 <ComboBox x:Name="ToolbarZoomComboBox"
+                         TabIndex="5"
                          Width="90"
                          VerticalAlignment="Center"
                          Classes="ToolbarInput"
@@ -178,6 +185,7 @@
                 </ComboBox>
 
                 <Button x:Name="ToolbarZoomInButton"
+                        TabIndex="6"
                         AutomationProperties.AutomationId="ToolbarZoomInButton"
                         AutomationProperties.Name="Zoom in"
                         ToolTip.Tip="Zoom in"
@@ -192,6 +200,7 @@
 
                 <!-- View Toggles -->
                 <ToggleButton x:Name="ToolbarToggleThumbnailsButton"
+                             TabIndex="7"
                              AutomationProperties.AutomationId="ToolbarToggleThumbnailsButton"
                              AutomationProperties.Name="Toggle thumbnails"
                              ToolTip.Tip="Toggle thumbnails"
@@ -200,6 +209,7 @@
                 </ToggleButton>
 
                 <ToggleButton x:Name="ToolbarToggleBookmarksButton"
+                             TabIndex="8"
                              AutomationProperties.AutomationId="ToolbarToggleBookmarksButton"
                              AutomationProperties.Name="Toggle bookmarks"
                              ToolTip.Tip="Toggle bookmarks"
@@ -208,6 +218,7 @@
                 </ToggleButton>
 
                 <ToggleButton x:Name="ToolbarToggleMetadataButton"
+                             TabIndex="9"
                              AutomationProperties.AutomationId="ToolbarToggleMetadataButton"
                              AutomationProperties.Name="Toggle document properties"
                              ToolTip.Tip="Document properties"
@@ -216,6 +227,7 @@
                 </ToggleButton>
 
                 <Button x:Name="ToolbarSearchButton"
+                        TabIndex="10"
                         AutomationProperties.AutomationId="ToolbarSearchButton"
                         AutomationProperties.Name="Search"
                         ToolTip.Tip="Search (Ctrl+F)"
@@ -228,6 +240,7 @@
                           Background="{DynamicResource BorderSubtleBrush}"
                           Margin="8,0" />
                 <Button x:Name="ToolbarEditButton"
+                        TabIndex="11"
                         AutomationProperties.AutomationId="ToolbarEditButton"
                         AutomationProperties.Name="Edit and draw shapes"
                         ToolTip.Tip="Edit / Draw shapes"
@@ -350,7 +363,8 @@
 
                         <StackPanel Grid.Column="1"
                                     Orientation="Horizontal"
-                                    Spacing="8">
+                                    Spacing="8"
+                                    KeyboardNavigation.TabNavigation="Cycle">
                             <Button Content="Copy Last 50"
                                     x:Name="CopyLogsButton"
                                     AutomationProperties.AutomationId="CopyLogsButton"
@@ -433,5 +447,14 @@
                                Grid.RowSpan="4"
                                x:Name="DiagnosticsPanelOverlay"
                                AutomationProperties.AutomationId="DiagnosticsPanelOverlay" />
+
+        <!-- Toast Notifications Overlay (bottom-right) -->
+        <controls:ToastHost Grid.Row="0"
+                            Grid.RowSpan="4"
+                            x:Name="ToastNotificationHost"
+                            VerticalAlignment="Bottom"
+                            HorizontalAlignment="Right"
+                            IsHitTestVisible="True"
+                            AutomationProperties.Name="Notifications" />
     </Grid>
 </Window>

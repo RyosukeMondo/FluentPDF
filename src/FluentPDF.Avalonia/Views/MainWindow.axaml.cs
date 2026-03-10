@@ -65,6 +65,13 @@ public partial class MainWindow : Window
                 diagnosticsOverlay.DataContext = DiagnosticsPanelViewModel;
             }
 
+            // Set ToastHost DataContext to the singleton NotificationViewModel
+            var toastHost = this.FindControl<Controls.ToastHost>("ToastNotificationHost");
+            if (toastHost != null)
+            {
+                toastHost.DataContext = App.GetService<NotificationViewModel>();
+            }
+
             this.Loaded += OnWindowLoaded;
 
             _logger?.LogInformation("MainWindow constructor completed successfully");

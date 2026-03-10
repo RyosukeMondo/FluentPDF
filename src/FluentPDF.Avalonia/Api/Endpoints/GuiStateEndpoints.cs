@@ -19,6 +19,7 @@ public static class GuiStateEndpoints
         MapToggleEndpoint(group);
         MapCloseTabEndpoint(group);
         MapScreenshotEndpoint(group);
+        MapNotifyEndpoint(group);
     }
 
     private static void MapStateEndpoint(RouteGroupBuilder group)
@@ -176,5 +177,32 @@ public static class GuiStateEndpoints
         .WithDescription("Captures a PNG screenshot of the main application window.");
     }
 
+    private static void MapNotifyEndpoint(RouteGroupBuilder group)
+    {
+        group.MapPost("/notify", (NotifyRequest request) =>
+        {
+            var notificationService = App.GetService<FluentPDF.Core.Services.INotificationService>();
+            if (notificationService == null)
+                return Results.Problem("Notification service not available");
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                switch (request.Level?.ToLowerInvariant())
+                {
+                    case "success": notificationService.ShowSuccess(request.Message ?? ""); break;
+                    case "warning": notificationService.ShowWarning(request.Message ?? ""); break;
+                    case "error": notificationService.ShowError(request.Message ?? ""); break;
+                    default: notificationService.ShowInfo(request.Message ?? ""); break;
+                }
+            });
+
+            return Results.Ok(new { sent = true });
+        })
+        .WithName("Notify")
+        .WithSummary("Show a toast notification")
+        .WithDescription("Displays a non-blocking toast notification in the UI. Levels: success, info, warning, error.");
+    }
+
     private record ToggleRequest(string? Panel);
+    private record NotifyRequest(string? Message, string? Level);
 }

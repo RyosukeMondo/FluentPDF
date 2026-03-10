@@ -62,6 +62,8 @@
                               IsVisible="{Binding HasBookmarks}">
                     <TreeView ItemsSource="{Binding Bookmarks}"
                               SelectedItem="{Binding SelectedBookmark, Mode=TwoWay}"
+                              IsTabStop="True"
+                              KeyboardNavigation.TabNavigation="Continue"
                               AutomationProperties.Name="Document bookmarks">
                         <TreeView.ItemTemplate>
                             <TreeDataTemplate ItemsSource="{Binding Children}" DataType="models:BookmarkNode">

@@ -44,6 +44,7 @@
                           HorizontalAlignment="Stretch"
                           FontSize="12"
                           SelectedIndex="0"
+                          IsTabStop="True"
                           AutomationProperties.Name="Filter annotations by type">
                     <ComboBoxItem Content="All Types" Tag="{x:Null}"/>
                     <ComboBoxItem Content="Highlight" Tag="Highlight"/>
@@ -96,6 +97,8 @@
                               IsVisible="{Binding HasAnnotations}">
                     <ListBox ItemsSource="{Binding Annotations}"
                              SelectedItem="{Binding SelectedAnnotation, Mode=TwoWay}"
+                             IsTabStop="True"
+                             KeyboardNavigation.TabNavigation="Continue"
                              AutomationProperties.Name="Document annotations"
                              Background="Transparent">
                         <ListBox.ItemTemplate>
