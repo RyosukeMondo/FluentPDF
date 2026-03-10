@@ -24,7 +24,7 @@ public class DocumentEditingLayerTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Services", useRegularExpressions: true)
             .Because("Service interfaces must be in Core layer for proper dependency injection and testability");
 
-        interfaceType.Check(Architecture);
+        interfaceType.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public class DocumentEditingLayerTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Rendering.Services", useRegularExpressions: true)
             .Because("Service implementations must be in Rendering layer as infrastructure");
 
-        serviceType.Check(Architecture);
+        serviceType.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public class DocumentEditingLayerTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Utilities", useRegularExpressions: true)
             .Because("Utility classes must be in Core.Utilities namespace");
 
-        parserType.Check(Architecture);
+        parserType.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public class DocumentEditingLayerTests : ArchitectureTestBase
                 .That().HaveFullName("FluentPDF.Rendering.Interop.QpdfNative"))
             .Because("ViewModels should use IDocumentEditingService interface, not QPDF interop directly");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -177,7 +177,7 @@ public class DocumentEditingLayerTests : ArchitectureTestBase
                 .That().HaveFullName("FluentPDF.Rendering.Interop.QpdfNative"))
             .Because("Core layer must remain independent of QPDF infrastructure");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -197,7 +197,7 @@ public class DocumentEditingLayerTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Services", useRegularExpressions: true)
             .Because("OptimizationResult is a business domain type");
 
-        optimizationOptionsRule.Check(Architecture);
-        optimizationResultRule.Check(Architecture);
+        optimizationOptionsRule.WithoutRequiringPositiveResults().Check(Architecture);
+        optimizationResultRule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 }

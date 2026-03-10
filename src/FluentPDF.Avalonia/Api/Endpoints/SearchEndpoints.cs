@@ -68,14 +68,16 @@ public static class SearchEndpoints
             }
         })
         .WithName("Search")
-        .WithSummary("Trigger a text search")
+        .WithSummary("Search for text with bounding boxes and context snippets")
         .WithDescription(
-            "Searches the active document for text matches.");
+            "Searches the active document for text matches. " +
+            "Returns each match with bounding box coordinates and surrounding text context.");
     }
 
     /// <summary>
     /// Runs PDFium search directly on the calling thread (must be UI thread).
     /// Bypasses TextSearchService which uses Task.Run internally.
+    /// Returns per-match bounding boxes and context snippets.
     /// </summary>
     private static IResult RunSearchDirect(string query, bool caseSensitive, bool wholeWord)
     {
@@ -89,12 +91,13 @@ public static class SearchEndpoints
         if (caseSensitive) flags |= PdfiumInterop.SearchFlags.MatchCase;
         if (wholeWord) flags |= PdfiumInterop.SearchFlags.MatchWholeWord;
 
-        var allMatches = new List<object>();
+        var allMatches = new List<MatchResult>();
 
         for (int pageIdx = 0; pageIdx < document.PageCount; pageIdx++)
         {
             using var pageHandle = PdfiumInterop.LoadPage(docHandle, pageIdx);
             using var textPage = PdfiumInterop.LoadTextPage(pageHandle);
+            var totalChars = PdfiumInterop.GetTextCharCount(textPage);
 
             var searchHandle = PdfiumInterop.StartTextSearch(textPage, query, flags);
             if (searchHandle == IntPtr.Zero)
@@ -108,13 +111,11 @@ public static class SearchEndpoints
                     var matchLength = PdfiumInterop.GetSearchResultCount(searchHandle);
                     var text = PdfiumInterop.GetText(textPage, charIndex, matchLength);
 
-                    allMatches.Add(new
-                    {
-                        pageNumber = pageIdx,
-                        charIndex,
-                        length = matchLength,
-                        text
-                    });
+                    var bbox = GetMatchBoundingBox(textPage, charIndex, matchLength);
+                    var snippet = GetContextSnippet(textPage, charIndex, matchLength, totalChars);
+
+                    allMatches.Add(new MatchResult(
+                        pageIdx + 1, charIndex, matchLength, text, snippet, bbox));
                 }
             }
             finally
@@ -123,13 +124,26 @@ public static class SearchEndpoints
             }
         }
 
+        var matches = allMatches.Select(m => new
+        {
+            m.PageNumber,
+            m.Text,
+            m.Snippet,
+            boundingBox = new
+            {
+                m.BoundingBox.Left,
+                m.BoundingBox.Top,
+                m.BoundingBox.Right,
+                m.BoundingBox.Bottom
+            }
+        }).ToArray();
+
         var pageGroups = allMatches
-            .GroupBy(m => ((dynamic)m).pageNumber)
+            .GroupBy(m => m.PageNumber)
             .Select(g => new
             {
-                pageNumber = (int)g.Key + 1,
-                matchCount = g.Count(),
-                snippets = g.Select(m => ((dynamic)m).text as string).ToArray()
+                pageNumber = g.Key,
+                matchCount = g.Count()
             })
             .OrderBy(p => p.pageNumber)
             .ToArray();
@@ -138,8 +152,69 @@ public static class SearchEndpoints
         {
             success = true,
             totalMatches = allMatches.Count,
-            pages = pageGroups
+            query,
+            matches,
+            pageGroups
         });
+    }
+
+    private static BoundingBox GetMatchBoundingBox(
+        SafePdfTextPageHandle textPage, int charIndex, int matchLength)
+    {
+        // Use CountTextRects/GetTextRect for multi-character bounding box
+        var rectCount = PdfiumInterop.CountTextRects(textPage.DangerousGetHandle(), charIndex, matchLength);
+
+        if (rectCount > 0)
+        {
+            double unionLeft = double.MaxValue, unionTop = double.MinValue;
+            double unionRight = double.MinValue, unionBottom = double.MaxValue;
+
+            for (int r = 0; r < rectCount; r++)
+            {
+                if (PdfiumInterop.GetTextRect(textPage.DangerousGetHandle(), r,
+                        out var rLeft, out var rTop, out var rRight, out var rBottom))
+                {
+                    unionLeft = Math.Min(unionLeft, rLeft);
+                    unionTop = Math.Max(unionTop, rTop);
+                    unionRight = Math.Max(unionRight, rRight);
+                    unionBottom = Math.Min(unionBottom, rBottom);
+                }
+            }
+
+            if (unionLeft < double.MaxValue)
+                return new BoundingBox(unionLeft, unionTop, unionRight, unionBottom);
+        }
+
+        // Fallback: use first/last character boxes
+        if (PdfiumInterop.GetCharBox(textPage, charIndex,
+                out var left, out var top, out var right, out var bottom))
+        {
+            if (matchLength > 1 && PdfiumInterop.GetCharBox(textPage, charIndex + matchLength - 1,
+                    out _, out var lastTop, out var lastRight, out var lastBottom))
+            {
+                return new BoundingBox(left, Math.Max(top, lastTop), lastRight, Math.Min(bottom, lastBottom));
+            }
+            return new BoundingBox(left, top, right, bottom);
+        }
+
+        return new BoundingBox(0, 0, 0, 0);
+    }
+
+    private static string GetContextSnippet(
+        SafePdfTextPageHandle textPage, int charIndex, int matchLength, int totalChars)
+    {
+        const int contextChars = 30;
+        var snippetStart = Math.Max(0, charIndex - contextChars);
+        var snippetEnd = Math.Min(totalChars, charIndex + matchLength + contextChars);
+        var snippetLength = snippetEnd - snippetStart;
+
+        if (snippetLength <= 0)
+            return string.Empty;
+
+        var snippet = PdfiumInterop.GetText(textPage, snippetStart, snippetLength);
+        var prefix = snippetStart > 0 ? "..." : "";
+        var suffix = snippetEnd < totalChars ? "..." : "";
+        return prefix + snippet.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ") + suffix;
     }
 
     private static void MapSearchResultsEndpoint(RouteGroupBuilder group)
@@ -188,4 +263,14 @@ public static class SearchEndpoints
         string? Query,
         bool CaseSensitive = false,
         bool WholeWord = false);
+
+    private record BoundingBox(double Left, double Top, double Right, double Bottom);
+
+    private record MatchResult(
+        int PageNumber,
+        int CharIndex,
+        int Length,
+        string Text,
+        string Snippet,
+        BoundingBox BoundingBox);
 }

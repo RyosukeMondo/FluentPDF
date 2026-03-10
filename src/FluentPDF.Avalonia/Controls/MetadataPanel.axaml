@@ -1,0 +1,234 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FluentPDF.Core.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="600"
+             x:Class="FluentPDF.Avalonia.Controls.MetadataPanel"
+             x:DataType="vm:MetadataViewModel">
+
+    <Border Background="{DynamicResource AcrylicTintPanelBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}"
+            BorderThickness="1,0,0,0">
+
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource AcrylicTintPanelBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="12,8">
+                <TextBlock Text="Document Properties"
+                           FontWeight="SemiBold"
+                           FontSize="13"
+                           AutomationProperties.Name="Document properties header"/>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Row="1">
+
+                <!-- Empty State -->
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12"
+                            IsVisible="{Binding !HasMetadata}"
+                            Margin="16">
+                    <PathIcon Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"
+                              Width="40"
+                              Height="40"
+                              Foreground="{DynamicResource ForegroundTertiaryBrush}"/>
+                    <TextBlock Text="No document loaded"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               MaxWidth="200"
+                               Foreground="{DynamicResource ForegroundTertiaryBrush}"/>
+                </StackPanel>
+
+                <!-- Metadata Content -->
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto"
+                              IsVisible="{Binding HasMetadata}">
+                    <StackPanel Margin="12,8" Spacing="2">
+
+                        <!-- File Info Section -->
+                        <TextBlock Text="FILE"
+                                   FontWeight="SemiBold"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                                   Margin="0,4,0,4"
+                                   AutomationProperties.Name="File information section"/>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2">
+                            <TextBlock Grid.Column="0" Text="File Name" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="File name label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="12"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip.Tip="{Binding FileName}"
+                                       AutomationProperties.Name="File name value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2">
+                            <TextBlock Grid.Column="0" Text="File Size" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="File size label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding FileSize}" FontSize="12"
+                                       AutomationProperties.Name="File size value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2">
+                            <TextBlock Grid.Column="0" Text="Pages" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Page count label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding PageCount}" FontSize="12"
+                                       AutomationProperties.Name="Page count value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding PdfVersion, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="PDF Version" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="PDF version label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding PdfVersion}" FontSize="12"
+                                       AutomationProperties.Name="PDF version value"/>
+                        </Grid>
+
+                        <!-- Separator -->
+                        <Separator Margin="0,8,0,4" Background="{DynamicResource BorderSubtleBrush}"/>
+
+                        <!-- Document Info Section -->
+                        <TextBlock Text="DOCUMENT"
+                                   FontWeight="SemiBold"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                                   Margin="0,4,0,4"
+                                   AutomationProperties.Name="Document information section"/>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Title" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Title label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Title value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding Author, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Author" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Author label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Author}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Author value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding Subject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Subject" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Subject label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Subject}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Subject value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding Keywords, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Keywords" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Keywords label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Keywords}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Keywords value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding Creator, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Creator" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Creator label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Creator}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Creator value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding Producer, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Producer" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Producer label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Producer}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Producer value"/>
+                        </Grid>
+
+                        <!-- Separator -->
+                        <Separator Margin="0,8,0,4" Background="{DynamicResource BorderSubtleBrush}"/>
+
+                        <!-- Dates Section -->
+                        <TextBlock Text="DATES"
+                                   FontWeight="SemiBold"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                                   Margin="0,4,0,4"
+                                   AutomationProperties.Name="Dates section"/>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding CreationDate, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Created" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Creation date label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding CreationDate}" FontSize="12"
+                                       AutomationProperties.Name="Creation date value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding ModificationDate, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Modified" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Modification date label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding ModificationDate}" FontSize="12"
+                                       AutomationProperties.Name="Modification date value"/>
+                        </Grid>
+
+                        <!-- Separator -->
+                        <Separator Margin="0,8,0,4" Background="{DynamicResource BorderSubtleBrush}"/>
+
+                        <!-- Security Section -->
+                        <TextBlock Text="SECURITY"
+                                   FontWeight="SemiBold"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                                   Margin="0,4,0,4"
+                                   AutomationProperties.Name="Security section"/>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2">
+                            <TextBlock Grid.Column="0" Text="Encrypted" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Encrypted label"/>
+                            <TextBlock Grid.Column="1" x:Name="EncryptedText" FontSize="12"
+                                       AutomationProperties.Name="Encrypted value"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="90,*" Margin="0,2"
+                              IsVisible="{Binding Permissions, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Text="Permissions" FontSize="12"
+                                       Foreground="{DynamicResource ForegroundSecondaryBrush}"
+                                       AutomationProperties.Name="Permissions label"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Permissions}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Permissions value"/>
+                        </Grid>
+
+                        <!-- Bottom Spacer -->
+                        <Border Height="12"/>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

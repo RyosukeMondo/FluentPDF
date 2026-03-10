@@ -43,7 +43,8 @@
                 <ComboBox x:Name="FilterComboBox"
                           HorizontalAlignment="Stretch"
                           FontSize="12"
-                          SelectedIndex="0">
+                          SelectedIndex="0"
+                          AutomationProperties.Name="Filter annotations by type">
                     <ComboBoxItem Content="All Types" Tag="{x:Null}"/>
                     <ComboBoxItem Content="Highlight" Tag="Highlight"/>
                     <ComboBoxItem Content="Underline" Tag="Underline"/>
@@ -106,7 +107,8 @@
                                         Padding="8,6"
                                         CornerRadius="4"
                                         HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Stretch">
+                                        HorizontalContentAlignment="Stretch"
+                                        AutomationProperties.Name="{Binding DisplayText, StringFormat='Navigate to annotation: {0}'}">
                                     <Button.Styles>
                                         <Style Selector="Button:pointerover">
                                             <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>
@@ -147,6 +149,7 @@
                                                 Padding="4,0"
                                                 VerticalAlignment="Center"
                                                 ToolTip.Tip="Delete annotation"
+                                                AutomationProperties.Name="Delete annotation"
                                                 Opacity="0.5">
                                             <Button.Styles>
                                                 <Style Selector="Button:pointerover">

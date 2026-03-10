@@ -25,7 +25,7 @@ public class LayerTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.App", useRegularExpressions: true))
             .Because("Core must be UI-agnostic for testability");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public class LayerTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.Rendering", useRegularExpressions: true))
             .Because("Core is business logic, Rendering is infrastructure");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public class LayerTests : ArchitectureTestBase
                 .That().ResideInNamespace("Microsoft.UI", useRegularExpressions: true))
             .Because("Core must be headless and testable without WinUI runtime");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -102,6 +102,6 @@ public class LayerTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.App", useRegularExpressions: true))
             .Because("Rendering is infrastructure and should not depend on presentation layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 }

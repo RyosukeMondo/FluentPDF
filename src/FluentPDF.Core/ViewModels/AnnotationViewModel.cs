@@ -37,35 +37,6 @@ public partial class AnnotationViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Gets or sets the currently active annotation tool.
-    /// </summary>
-    [ObservableProperty]
-    private AnnotationTool _activeTool = AnnotationTool.None;
-
-    /// <summary>
-    /// Gets or sets the selected color for new annotations (ARGB format).
-    /// </summary>
-    [ObservableProperty]
-    private Color _selectedColor = Color.Yellow;
-
-    /// <summary>
-    /// Gets or sets the stroke width for drawing annotations.
-    /// </summary>
-    [ObservableProperty]
-    private double _strokeWidth = 2.0;
-
-    /// <summary>
-    /// Gets or sets the opacity for new annotations (0.0 to 1.0).
-    /// </summary>
-    [ObservableProperty]
-    private double _opacity = 0.5;
-
-    /// <summary>
-    /// Gets the collection of annotations on the current page.
-    /// </summary>
-    public ObservableCollection<Annotation> Annotations { get; } = new();
-
-    /// <summary>
     /// Gets or sets the currently selected annotation.
     /// </summary>
     [ObservableProperty]
@@ -90,82 +61,9 @@ public partial class AnnotationViewModel : ObservableObject
     private bool _hasUnsavedChanges;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the tool should stay active after creating an annotation.
-    /// When true, the tool remains selected; when false, it returns to None after annotation creation.
+    /// Gets the collection of annotations on the current page.
     /// </summary>
-    [ObservableProperty]
-    private bool _toolStaysActive = true;
-
-    /// <summary>
-    /// Gets or sets the status message for the current tool or operation.
-    /// </summary>
-    [ObservableProperty]
-    private string _statusMessage = string.Empty;
-
-    /// <summary>
-    /// Selects an annotation tool for creating new annotations.
-    /// </summary>
-    /// <param name="tool">The tool to activate (can be AnnotationTool enum or string).</param>
-    [RelayCommand]
-    private void SelectTool(object tool)
-    {
-        AnnotationTool toolEnum;
-
-        if (tool is AnnotationTool enumValue)
-        {
-            toolEnum = enumValue;
-        }
-        else if (tool is string toolString && Enum.TryParse<AnnotationTool>(toolString, out var parsedTool))
-        {
-            toolEnum = parsedTool;
-        }
-        else
-        {
-            _logger.LogWarning("Invalid annotation tool parameter: {Tool}", tool);
-            return;
-        }
-
-        _logger.LogInformation("Selected annotation tool: {Tool}", toolEnum);
-
-        // Toggle tool if clicking the same tool
-        if (ActiveTool == toolEnum && toolEnum != AnnotationTool.None)
-        {
-            ActiveTool = AnnotationTool.None;
-            StatusMessage = string.Empty;
-        }
-        else
-        {
-            ActiveTool = toolEnum;
-            StatusMessage = GetToolStatusMessage(toolEnum);
-        }
-
-        // Deselect current annotation when switching tools
-        if (SelectedAnnotation != null)
-        {
-            SelectedAnnotation.IsSelected = false;
-            SelectedAnnotation = null;
-        }
-    }
-
-    /// <summary>
-    /// Gets the status message for the specified annotation tool.
-    /// </summary>
-    /// <param name="tool">The annotation tool.</param>
-    /// <returns>A user-friendly status message describing the tool's action.</returns>
-    private static string GetToolStatusMessage(AnnotationTool tool)
-    {
-        return tool switch
-        {
-            AnnotationTool.Highlight => "Select text to highlight",
-            AnnotationTool.Underline => "Select text to underline",
-            AnnotationTool.Strikethrough => "Select text to strikethrough",
-            AnnotationTool.Comment => "Click to add a comment",
-            AnnotationTool.Rectangle => "Click and drag to draw a rectangle",
-            AnnotationTool.Circle => "Click and drag to draw a circle",
-            AnnotationTool.Freehand => "Click and drag to draw",
-            _ => string.Empty
-        };
-    }
+    public ObservableCollection<Annotation> Annotations { get; } = new();
 
     /// <summary>
     /// Creates a new annotation at the specified bounds.
@@ -313,222 +211,6 @@ public partial class AnnotationViewModel : ObservableObject
     }
 
     private bool CanCreateInkAnnotation() => _currentDocument != null && !IsLoading;
-
-    /// <summary>
-    /// Creates a highlight annotation from a text selection.
-    /// </summary>
-    /// <param name="selection">The text selection with bounds and character information.</param>
-    public async Task CreateHighlightFromSelectionAsync(TextSelection selection)
-    {
-        if (_currentDocument == null || selection == null || !selection.HasText)
-        {
-            _logger.LogWarning("Cannot create highlight: invalid parameters");
-            return;
-        }
-
-        _logger.LogInformation(
-            "Creating highlight annotation from selection. Page={Page}, TextLength={Length}",
-            selection.PageNumber, selection.Text.Length);
-
-        try
-        {
-            IsLoading = true;
-
-            var annotation = new Annotation
-            {
-                Type = AnnotationType.Highlight,
-                PageNumber = selection.PageNumber + 1, // Convert from 0-based to 1-based
-                Bounds = new PdfRectangle
-                {
-                    Left = selection.SelectionBounds.Left,
-                    Top = selection.SelectionBounds.Top,
-                    Right = selection.SelectionBounds.Right,
-                    Bottom = selection.SelectionBounds.Bottom
-                },
-                FillColor = Color.FromArgb(
-                    SelectedColor.R,
-                    SelectedColor.G,
-                    SelectedColor.B),
-                Opacity = Opacity,
-                Contents = selection.Text,
-                QuadPoints = selection.ToQuadPoints()
-            };
-
-            var result = await _annotationService.CreateAnnotationAsync(_currentDocument, annotation);
-
-            if (result.IsSuccess)
-            {
-                Annotations.Add(result.Value);
-                HasUnsavedChanges = true;
-                _logger.LogInformation(
-                    "Highlight annotation created successfully. Id={Id}",
-                    result.Value.Id);
-
-                // Deactivate tool if ToolStaysActive is false
-                if (!ToolStaysActive)
-                {
-                    ActiveTool = AnnotationTool.None;
-                    StatusMessage = string.Empty;
-                }
-            }
-            else
-            {
-                _logger.LogError("Failed to create highlight annotation: {Errors}", result.Errors);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error while creating highlight annotation");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    /// <summary>
-    /// Creates an underline annotation from a text selection.
-    /// </summary>
-    /// <param name="selection">The text selection with bounds and character information.</param>
-    public async Task CreateUnderlineFromSelectionAsync(TextSelection selection)
-    {
-        if (_currentDocument == null || selection == null || !selection.HasText)
-        {
-            _logger.LogWarning("Cannot create underline: invalid parameters");
-            return;
-        }
-
-        _logger.LogInformation(
-            "Creating underline annotation from selection. Page={Page}, TextLength={Length}",
-            selection.PageNumber, selection.Text.Length);
-
-        try
-        {
-            IsLoading = true;
-
-            var annotation = new Annotation
-            {
-                Type = AnnotationType.Underline,
-                PageNumber = selection.PageNumber + 1,
-                Bounds = new PdfRectangle
-                {
-                    Left = selection.SelectionBounds.Left,
-                    Top = selection.SelectionBounds.Top,
-                    Right = selection.SelectionBounds.Right,
-                    Bottom = selection.SelectionBounds.Bottom
-                },
-                FillColor = Color.FromArgb(
-                    SelectedColor.R,
-                    SelectedColor.G,
-                    SelectedColor.B),
-                Opacity = Opacity,
-                Contents = selection.Text,
-                QuadPoints = selection.ToQuadPoints()
-            };
-
-            var result = await _annotationService.CreateAnnotationAsync(_currentDocument, annotation);
-
-            if (result.IsSuccess)
-            {
-                Annotations.Add(result.Value);
-                HasUnsavedChanges = true;
-                _logger.LogInformation(
-                    "Underline annotation created successfully. Id={Id}",
-                    result.Value.Id);
-
-                // Deactivate tool if ToolStaysActive is false
-                if (!ToolStaysActive)
-                {
-                    ActiveTool = AnnotationTool.None;
-                    StatusMessage = string.Empty;
-                }
-            }
-            else
-            {
-                _logger.LogError("Failed to create underline annotation: {Errors}", result.Errors);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error while creating underline annotation");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    /// <summary>
-    /// Creates a strikethrough annotation from a text selection.
-    /// </summary>
-    /// <param name="selection">The text selection with bounds and character information.</param>
-    public async Task CreateStrikethroughFromSelectionAsync(TextSelection selection)
-    {
-        if (_currentDocument == null || selection == null || !selection.HasText)
-        {
-            _logger.LogWarning("Cannot create strikethrough: invalid parameters");
-            return;
-        }
-
-        _logger.LogInformation(
-            "Creating strikethrough annotation from selection. Page={Page}, TextLength={Length}",
-            selection.PageNumber, selection.Text.Length);
-
-        try
-        {
-            IsLoading = true;
-
-            var annotation = new Annotation
-            {
-                Type = AnnotationType.StrikeOut,
-                PageNumber = selection.PageNumber + 1,
-                Bounds = new PdfRectangle
-                {
-                    Left = selection.SelectionBounds.Left,
-                    Top = selection.SelectionBounds.Top,
-                    Right = selection.SelectionBounds.Right,
-                    Bottom = selection.SelectionBounds.Bottom
-                },
-                FillColor = Color.FromArgb(
-                    SelectedColor.R,
-                    SelectedColor.G,
-                    SelectedColor.B),
-                Opacity = Opacity,
-                Contents = selection.Text,
-                QuadPoints = selection.ToQuadPoints()
-            };
-
-            var result = await _annotationService.CreateAnnotationAsync(_currentDocument, annotation);
-
-            if (result.IsSuccess)
-            {
-                Annotations.Add(result.Value);
-                HasUnsavedChanges = true;
-                _logger.LogInformation(
-                    "Strikethrough annotation created successfully. Id={Id}",
-                    result.Value.Id);
-
-                // Deactivate tool if ToolStaysActive is false
-                if (!ToolStaysActive)
-                {
-                    ActiveTool = AnnotationTool.None;
-                    StatusMessage = string.Empty;
-                }
-            }
-            else
-            {
-                _logger.LogError("Failed to create strikethrough annotation: {Errors}", result.Errors);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error while creating strikethrough annotation");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
 
     /// <summary>
     /// Deletes the currently selected annotation.
@@ -690,88 +372,8 @@ public partial class AnnotationViewModel : ObservableObject
     private bool CanSaveAnnotations() => _currentDocument != null && !IsLoading;
 
     /// <summary>
-    /// Toggles the visibility of the annotation toolbar.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleToolbar()
-    {
-        _logger.LogInformation("Toggling annotation toolbar. Current={Current}", IsToolbarVisible);
-        IsToolbarVisible = !IsToolbarVisible;
-
-        // Clear tool selection when hiding toolbar
-        if (!IsToolbarVisible)
-        {
-            ActiveTool = AnnotationTool.None;
-        }
-    }
-
-    /// <summary>
-    /// Handles keyboard shortcuts for annotation tools.
-    /// H = Highlight, U = Underline, S = Strikethrough, Esc = Clear tool
-    /// </summary>
-    /// <param name="key">The key that was pressed.</param>
-    [RelayCommand]
-    private void HandleKeyboardShortcut(string key)
-    {
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            return;
-        }
-
-        _logger.LogInformation("Keyboard shortcut pressed: {Key}", key);
-
-        var tool = key.ToUpperInvariant() switch
-        {
-            "H" => AnnotationTool.Highlight,
-            "U" => AnnotationTool.Underline,
-            "S" => AnnotationTool.Strikethrough,
-            "ESC" or "ESCAPE" => AnnotationTool.None,
-            _ => ActiveTool
-        };
-
-        if (tool != ActiveTool)
-        {
-            SelectTool(tool);
-        }
-    }
-
-    /// <summary>
-    /// Selects an annotation for editing or deletion.
-    /// </summary>
-    /// <param name="annotation">The annotation to select.</param>
-    [RelayCommand]
-    private void SelectAnnotation(Annotation? annotation)
-    {
-        _logger.LogInformation(
-            "Selecting annotation. Id={Id}, Type={Type}",
-            annotation?.Id, annotation?.Type);
-
-        // Deselect previous annotation
-        if (SelectedAnnotation != null)
-        {
-            SelectedAnnotation.IsSelected = false;
-        }
-
-        SelectedAnnotation = annotation;
-
-        // Mark new annotation as selected
-        if (SelectedAnnotation != null)
-        {
-            SelectedAnnotation.IsSelected = true;
-        }
-
-        // Clear active tool when selecting an annotation
-        if (SelectedAnnotation != null)
-        {
-            ActiveTool = AnnotationTool.None;
-        }
-    }
-
-    /// <summary>
     /// Converts an AnnotationTool to an AnnotationType.
     /// </summary>
-    /// <param name="tool">The annotation tool.</param>
-    /// <returns>The corresponding annotation type.</returns>
     private static AnnotationType ConvertToolToAnnotationType(AnnotationTool tool)
     {
         return tool switch
@@ -793,43 +395,20 @@ public partial class AnnotationViewModel : ObservableObject
 /// </summary>
 public enum AnnotationTool
 {
-    /// <summary>
-    /// No tool selected (selection mode).
-    /// </summary>
+    /// <summary>No tool selected (selection mode).</summary>
     None,
-
-    /// <summary>
-    /// Highlight text tool.
-    /// </summary>
+    /// <summary>Highlight text tool.</summary>
     Highlight,
-
-    /// <summary>
-    /// Underline text tool.
-    /// </summary>
+    /// <summary>Underline text tool.</summary>
     Underline,
-
-    /// <summary>
-    /// Strikethrough text tool.
-    /// </summary>
+    /// <summary>Strikethrough text tool.</summary>
     Strikethrough,
-
-    /// <summary>
-    /// Comment (sticky note) tool.
-    /// </summary>
+    /// <summary>Comment (sticky note) tool.</summary>
     Comment,
-
-    /// <summary>
-    /// Rectangle drawing tool.
-    /// </summary>
+    /// <summary>Rectangle drawing tool.</summary>
     Rectangle,
-
-    /// <summary>
-    /// Circle drawing tool.
-    /// </summary>
+    /// <summary>Circle drawing tool.</summary>
     Circle,
-
-    /// <summary>
-    /// Freehand drawing tool.
-    /// </summary>
+    /// <summary>Freehand drawing tool.</summary>
     Freehand
 }

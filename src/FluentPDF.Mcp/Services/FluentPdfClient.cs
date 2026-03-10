@@ -109,9 +109,17 @@ public sealed class FluentPdfClient
     public Task<string> GetMetadataAsync(string documentId) =>
         GetAsync($"/api/document/{documentId}/metadata");
 
-    // Annotations
+    // Annotations (single page)
     public Task<string> ListAnnotationsAsync(string documentId, int pageNumber) =>
         GetAsync($"/api/annotations/{documentId}/{pageNumber}");
+
+    // Annotations (all pages)
+    public Task<string> ListAllAnnotationsAsync(string documentId) =>
+        GetAsync($"/api/annotations/{documentId}");
+
+    // Object detail by index
+    public Task<string> GetObjectDetailAsync(int objectIndex) =>
+        GetAsync($"/api/gui/interact/objects/{objectIndex}");
 
     // Text extraction (all pages)
     public Task<string> ExtractAllTextAsync(string documentId) =>

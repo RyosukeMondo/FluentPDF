@@ -7,27 +7,38 @@ namespace FluentPDF.Mcp.Tools;
 [McpServerToolType]
 public sealed class InspectionTools
 {
-    [McpServerTool(Name = "pdf_get_text"), Description("Extract text from a page.")]
+    [McpServerTool(Name = "pdf_get_text"),
+     Description(
+        "Extract all text from a specific page of the document. Returns the " +
+        "raw text content which you can read, summarize, or analyze.")]
     public static async Task<string> GetText(
         FluentPdfClient client,
         [Description("Document/session ID")] string documentId,
-        [Description("1-based page number")] int pageNumber)
+        [Description("Page number (starting from 1)")] int pageNumber)
     {
         return await client.ExtractTextAsync(documentId, pageNumber);
     }
 
-    [McpServerTool(Name = "pdf_get_objects"), Description("Get all objects on the current page.")]
+    [McpServerTool(Name = "pdf_get_objects"),
+     Description(
+        "List all objects (text blocks, images, shapes, paths) on the " +
+        "current page. Returns each object's index, type, and bounding box " +
+        "coordinates. Use this to understand the page layout.")]
     public static async Task<string> GetObjects(FluentPdfClient client)
     {
         return await client.GetObjectsAsync();
     }
 
-    [McpServerTool(Name = "pdf_get_object_detail"), Description("Hit-test at PDF coordinates to get object details.")]
+    [McpServerTool(Name = "pdf_get_object_detail"),
+     Description(
+        "Get detailed information about a specific object on the current " +
+        "page by its index. Returns the object type (text, image, path, " +
+        "shading, form), bounding box with width and height. Use " +
+        "pdf_get_objects first to discover available object indices.")]
     public static async Task<string> GetObjectDetail(
         FluentPdfClient client,
-        [Description("X coordinate in PDF points")] double x,
-        [Description("Y coordinate in PDF points")] double y)
+        [Description("Zero-based index of the object on the current page")] int objectIndex)
     {
-        return await client.HitTestAsync(x, y);
+        return await client.GetObjectDetailAsync(objectIndex);
     }
 }

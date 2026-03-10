@@ -50,7 +50,8 @@
                     Content="OK"
                     HorizontalAlignment="Center"
                     MinWidth="100"
-                    Click="OnOkClick"/>
+                    Click="OnOkClick"
+                    AutomationProperties.Name="OK"/>
         </Border>
     </Grid>
 </Window>

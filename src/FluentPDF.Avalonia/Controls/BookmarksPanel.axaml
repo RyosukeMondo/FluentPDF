@@ -75,7 +75,8 @@
                                         FontSize="13"
                                         HorizontalAlignment="Stretch"
                                         HorizontalContentAlignment="Left"
-                                        ToolTip.Tip="{Binding PageNumber, StringFormat='Page {0}'}">
+                                        ToolTip.Tip="{Binding PageNumber, StringFormat='Page {0}'}"
+                                        AutomationProperties.Name="{Binding Title}">
                                     <Button.Styles>
                                         <Style Selector="Button:pointerover">
                                             <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}"/>

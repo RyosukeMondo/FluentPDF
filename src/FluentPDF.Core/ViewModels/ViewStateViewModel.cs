@@ -48,6 +48,12 @@ public partial class ViewStateViewModel : ViewModelBase
     private bool _isSearchPanelVisible;
 
     /// <summary>
+    /// Gets or sets a value indicating whether the metadata panel is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isMetadataPanelVisible;
+
+    /// <summary>
     /// Gets or sets the current page view mode.
     /// </summary>
     [ObservableProperty]
@@ -99,6 +105,19 @@ public partial class ViewStateViewModel : ViewModelBase
         _logger.LogInformation("Annotations visibility toggled to: {IsVisible}", IsAnnotationsPanelVisible);
         RaiseAccessibilityNotification(
             IsAnnotationsPanelVisible ? "Annotations panel shown" : "Annotations panel hidden");
+    }
+
+    /// <summary>
+    /// Toggles the visibility of the metadata panel.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleMetadata()
+    {
+        _logger.LogInformation("ToggleMetadata command invoked");
+        IsMetadataPanelVisible = !IsMetadataPanelVisible;
+        _logger.LogInformation("Metadata visibility toggled to: {IsVisible}", IsMetadataPanelVisible);
+        RaiseAccessibilityNotification(
+            IsMetadataPanelVisible ? "Metadata panel shown" : "Metadata panel hidden");
     }
 
     /// <summary>

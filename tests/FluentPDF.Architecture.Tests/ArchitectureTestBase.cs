@@ -15,7 +15,7 @@ public abstract class ArchitectureTestBase
     /// </summary>
     protected static readonly ArchUnitNET.Domain.Architecture Architecture =
         new ArchLoader().LoadAssemblies(
-            typeof(FluentPDF.Core.Placeholder).Assembly,
+            typeof(FluentPDF.Core.Utilities.PageRangeParser).Assembly,
             // Note: App assembly temporarily disabled - requires pdfium.dll native dependency
             // typeof(FluentPDF.App.App).Assembly,
             typeof(FluentPDF.Rendering.Services.PdfRenderingService).Assembly

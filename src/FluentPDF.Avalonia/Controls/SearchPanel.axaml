@@ -125,18 +125,21 @@
                          Watermark="Replace with..."
                          Width="150"
                          VerticalContentAlignment="Center"
-                         IsVisible="{Binding HasMatches}"/>
+                         IsVisible="{Binding HasMatches}"
+                         AutomationProperties.Name="Replace text input"/>
                 <Button Content="Replace"
                         Command="{Binding ReplaceCommand}"
                         IsEnabled="{Binding HasMatches}"
                         IsVisible="{Binding HasMatches}"
-                        ToolTip.Tip="Replace current match"/>
+                        ToolTip.Tip="Replace current match"
+                        AutomationProperties.Name="Replace current match"/>
                 <Button Content="Replace All"
                         Classes="accent"
                         Command="{Binding ReplaceAllCommand}"
                         IsEnabled="{Binding HasMatches}"
                         IsVisible="{Binding HasMatches}"
-                        ToolTip.Tip="Replace all matches"/>
+                        ToolTip.Tip="Replace all matches"
+                        AutomationProperties.Name="Replace all matches"/>
             </StackPanel>
 
             <!-- Close Button -->
@@ -175,7 +178,8 @@
                                         HorizontalContentAlignment="Left"
                                         Padding="8,4"
                                         Background="Transparent"
-                                        Cursor="Hand">
+                                        Cursor="Hand"
+                                        AutomationProperties.Name="{Binding PageNumber, StringFormat='Go to match on page {0}'}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <TextBlock Text="{Binding PageNumber, StringFormat='Page {0}:'}"
                                                    FontSize="11"

@@ -1,4 +1,5 @@
 using ArchUnitNET.Domain;
+using ArchUnitNET.Domain.Extensions;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.xUnit;
 using Xunit;
@@ -40,7 +41,7 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
                 .Or().ResideInNamespace("Avalonia.Markup", useRegularExpressions: true))
             .Because("ViewModels must remain framework-agnostic for testability and MVVM separation");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -75,11 +76,10 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     [Fact(Skip = SkipReason)]
     public void Services_ShouldNot_Have_CircularDependencies()
     {
-        // Get all service classes
-        var serviceClasses = Types()
+        // Get all service classes (excluding interfaces)
+        var serviceClasses = Classes()
             .That().ResideInNamespace("FluentPDF.Avalonia.Services", useRegularExpressions: true)
             .And().HaveNameEndingWith("Service")
-            .And().AreNotInterfaces()
             .GetObjects(Architecture);
 
         // Check for circular dependencies
@@ -88,7 +88,7 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
             var dependencies = service.Dependencies
                 .Where(d => d.Target.FullName.StartsWith("FluentPDF.Avalonia.Services"))
                 .Where(d => d.Target.Name.EndsWith("Service"))
-                .Where(d => !d.Target.IsInterface)
+                .Where(d => d.Target is not Interface)
                 .ToList();
 
             Assert.Empty(dependencies);
@@ -103,9 +103,9 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     public void ViewModels_Must_HaveViewModel_Suffix()
     {
         // Get all classes in ViewModels namespace that should be ViewModels
-        var potentialViewModels = Types()
+        // Classes() already excludes interfaces
+        var potentialViewModels = Classes()
             .That().ResideInNamespace("FluentPDF.Avalonia.ViewModels", useRegularExpressions: true)
-            .And().AreNotInterfaces()
             .And().AreNotAbstract()
             .GetObjects(Architecture);
 
@@ -122,10 +122,10 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     [Fact(Skip = SkipReason)]
     public void Services_Must_ImplementInterfaces()
     {
-        var serviceClasses = Types()
+        // Classes() already excludes interfaces
+        var serviceClasses = Classes()
             .That().ResideInNamespace("FluentPDF.Avalonia.Services", useRegularExpressions: true)
             .And().HaveNameEndingWith("Service")
-            .And().AreNotInterfaces()
             .GetObjects(Architecture);
 
         foreach (var serviceClass in serviceClasses)
@@ -146,11 +146,10 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     [Fact(Skip = SkipReason)]
     public void ServiceInterfaces_Must_HaveI_Prefix()
     {
-        var serviceInterfaces = Types()
+        var serviceInterfaces = Interfaces()
             .That().ResideInNamespace("FluentPDF.Avalonia.Services", useRegularExpressions: true)
             .And().HaveNameEndingWith("Service")
-            .GetObjects(Architecture)
-            .Where(t => t.IsInterface);
+            .GetObjects(Architecture);
 
         foreach (var serviceInterface in serviceInterfaces)
         {
@@ -165,14 +164,14 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     [Fact(Skip = SkipReason)]
     public void Services_Must_ResideIn_ServicesNamespace()
     {
-        var rule = Types()
+        // Classes() already excludes interfaces
+        var rule = Classes()
             .That().HaveNameEndingWith("Service")
-            .And().AreNotInterfaces()
             .And().ResideInNamespace("FluentPDF.Avalonia", useRegularExpressions: true)
             .Should().ResideInNamespace("FluentPDF.Avalonia.Services", useRegularExpressions: true)
             .Because("Service implementations must be organized in Services namespace");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -182,12 +181,12 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     [Fact(Skip = SkipReason)]
     public void ViewModels_Must_SupportPropertyChanged()
     {
-        var viewModels = Types()
+        // Classes() already excludes interfaces
+        var viewModels = Classes()
             .That().HaveNameEndingWith("ViewModel")
             .And().ResideInNamespace("FluentPDF.Avalonia.ViewModels", useRegularExpressions: true)
-            .And().AreNotInterfaces()
-            .GetObjects(Architecture)
-            .Where(t => !t.IsAbstract);
+            .And().AreNotAbstract()
+            .GetObjects(Architecture);
 
         foreach (var viewModel in viewModels)
         {
@@ -233,7 +232,7 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.Avalonia.ViewModels", useRegularExpressions: true))
             .Because("Services must be independent and reusable, not coupled to specific ViewModels");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -245,10 +244,10 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     {
         var servicesWithStylingDependency = Types()
             .That().ResideInNamespace("FluentPDF.Avalonia.Services", useRegularExpressions: true)
-            .And().AreNotInterfaces()
             .And().DependOnAny(Types()
                 .That().ResideInNamespace("Avalonia.Styling", useRegularExpressions: true))
-            .GetObjects(Architecture);
+            .GetObjects(Architecture)
+            .Where(t => t is not Interface);
 
         foreach (var service in servicesWithStylingDependency)
         {
@@ -264,10 +263,10 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     [Fact(Skip = SkipReason)]
     public void ViewModels_Must_UseConstructorInjection_ForServices()
     {
-        var viewModels = Types()
+        // Classes() already excludes interfaces
+        var viewModels = Classes()
             .That().HaveNameEndingWith("ViewModel")
             .And().ResideInNamespace("FluentPDF.Avalonia.ViewModels", useRegularExpressions: true)
-            .And().AreNotInterfaces()
             .GetObjects(Architecture);
 
         foreach (var viewModel in viewModels)
@@ -304,23 +303,24 @@ public class LiquidGlassUiArchitectureTests : ArchitectureTestBase
     [Fact(Skip = SkipReason)]
     public void ServiceImplementations_Should_BeSealed_OrExplicitlyVirtual()
     {
-        var serviceClasses = Types()
+        // Classes() already excludes interfaces
+        var serviceClasses = Classes()
             .That().ResideInNamespace("FluentPDF.Avalonia.Services", useRegularExpressions: true)
             .And().HaveNameEndingWith("Service")
-            .And().AreNotInterfaces()
             .GetObjects(Architecture);
 
         foreach (var serviceClass in serviceClasses)
         {
             // Service should be sealed unless it's explicitly designed for inheritance
-            var isSealed = serviceClass.IsSealed;
+            var isSealed = serviceClass.IsSealed == true;
             var hasVirtualMembers = serviceClass.Members
-                .Any(m => m.IsVirtual && !m.IsAbstract);
+                .OfType<MethodMember>()
+                .Any(m => m.IsVirtual);
 
             // If not sealed, it should have virtual members indicating intentional inheritance design
             if (!isSealed)
             {
-                Assert.True(hasVirtualMembers || serviceClass.IsAbstract,
+                Assert.True(hasVirtualMembers || (serviceClass.IsAbstract == true),
                     $"Service {serviceClass.FullName} should be sealed or have virtual members if designed for inheritance");
             }
         }

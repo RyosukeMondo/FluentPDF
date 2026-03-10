@@ -173,6 +173,10 @@ public sealed class ToolbarManager
         if (bookmarksButton != null)
             bookmarksButton.Click += OnToggleBookmarksClick;
 
+        var metadataButton = _owner.FindControl<ToggleButton>("ToolbarToggleMetadataButton");
+        if (metadataButton != null)
+            metadataButton.Click += OnToggleMetadataClick;
+
         var searchButton = _owner.FindControl<Button>("ToolbarSearchButton");
         if (searchButton != null)
             searchButton.Click += OnSearchClick;
@@ -258,6 +262,12 @@ public sealed class ToolbarManager
     private void OnToggleBookmarksClick(object? sender, RoutedEventArgs e)
     {
         if (_viewModel.ActiveTab?.ViewerViewModel?.ToggleBookmarksCommand is { } cmd && cmd.CanExecute(null))
+            cmd.Execute(null);
+    }
+
+    private void OnToggleMetadataClick(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModel.ActiveTab?.ViewerViewModel?.ToggleMetadataCommand is { } cmd && cmd.CanExecute(null))
             cmd.Execute(null);
     }
 

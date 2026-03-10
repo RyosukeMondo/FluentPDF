@@ -7,30 +7,40 @@ namespace FluentPDF.Mcp.Tools;
 [McpServerToolType]
 public sealed class NavigationTools
 {
-    [McpServerTool(Name = "pdf_navigate"), Description("Navigate to a page number or use next/previous.")]
+    [McpServerTool(Name = "pdf_navigate"),
+     Description(
+        "Go to a specific page in the document, or move to the next or " +
+        "previous page. The page change is reflected live in the UI.")]
     public static async Task<string> Navigate(
         FluentPdfClient client,
-        [Description("Page number, or 'next'/'previous'")] string target)
+        [Description("Page number to jump to, or 'next'/'previous' to move one page")] string target)
     {
         if (int.TryParse(target, out var page))
             return await client.NavigateAsync(new { page });
         return await client.NavigateAsync(new { action = target });
     }
 
-    [McpServerTool(Name = "pdf_zoom"), Description("Set zoom level or use in/out.")]
+    [McpServerTool(Name = "pdf_zoom"),
+     Description(
+        "Change the zoom level of the document view. You can set an exact " +
+        "percentage or zoom in/out incrementally.")]
     public static async Task<string> Zoom(
         FluentPdfClient client,
-        [Description("Zoom percentage (e.g. 150), or 'in'/'out'")] string level)
+        [Description("Zoom percentage (e.g. 100, 150, 200), or 'in'/'out' to step")] string level)
     {
         if (double.TryParse(level, out var pct))
             return await client.ZoomAsync(new { level = pct });
         return await client.ZoomAsync(new { action = level });
     }
 
-    [McpServerTool(Name = "pdf_toggle_panel"), Description("Toggle a UI panel: thumbnails, bookmarks, or search.")]
+    [McpServerTool(Name = "pdf_toggle_panel"),
+     Description(
+        "Show or hide a side panel in the FluentPDF interface. Available " +
+        "panels: thumbnails (page previews), bookmarks (document outline), " +
+        "search (search results).")]
     public static async Task<string> TogglePanel(
         FluentPdfClient client,
-        [Description("Panel name: thumbnails, bookmarks, or search")] string panel)
+        [Description("Panel to toggle: 'thumbnails', 'bookmarks', or 'search'")] string panel)
     {
         return await client.TogglePanelAsync(panel);
     }

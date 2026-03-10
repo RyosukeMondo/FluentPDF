@@ -29,6 +29,11 @@
     <Style Selector="Button.ToolbarIcon:disabled">
         <Setter Property="Opacity" Value="0.4" />
     </Style>
+    <!-- Focus indicator: 2px accent border for keyboard navigation (WCAG 2.4.7) -->
+    <Style Selector="Button.ToolbarIcon:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
 
     <!-- ToggleButton.ToolbarIcon - Same as Button.ToolbarIcon with checked state -->
     <Style Selector="ToggleButton.ToolbarIcon">
@@ -58,6 +63,11 @@
     <Style Selector="ToggleButton.ToolbarIcon:disabled">
         <Setter Property="Opacity" Value="0.4" />
     </Style>
+    <!-- Focus indicator for keyboard navigation -->
+    <Style Selector="ToggleButton.ToolbarIcon:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
     <Style Selector="ToggleButton.ToolbarIcon:checked">
         <Setter Property="Background" Value="{DynamicResource AccentTertiaryBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
@@ -78,6 +88,10 @@
     <Style Selector="Button.accent:pressed">
         <Setter Property="Background" Value="{DynamicResource AccentPressedBrush}" />
     </Style>
+    <Style Selector="Button.accent:focus-visible">
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ForegroundPrimaryBrush}" />
+    </Style>
 
     <!-- Button.Ghost - Minimal transparent button -->
     <Style Selector="Button.Ghost">
@@ -90,6 +104,19 @@
     <Style Selector="Button.Ghost:pointerover">
         <Setter Property="Opacity" Value="1" />
         <Setter Property="Background" Value="{DynamicResource HoverOverlayBrush}" />
+    </Style>
+    <Style Selector="Button.Ghost:focus-visible">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+    <!-- Global focus-visible style for all Buttons and ToggleButtons not covered above -->
+    <Style Selector="Button:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
+    </Style>
+    <Style Selector="ToggleButton:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderFocusBrush}" />
     </Style>
 
     <!-- Tab styling for compact, modern look -->

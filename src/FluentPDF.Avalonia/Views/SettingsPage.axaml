@@ -34,13 +34,16 @@
                         <StackPanel Spacing="8">
                             <RadioButton Content="Light"
                                          IsChecked="{Binding IsLightTheme, Mode=TwoWay}"
-                                         GroupName="Theme"/>
+                                         GroupName="Theme"
+                                         AutomationProperties.Name="Light theme"/>
                             <RadioButton Content="Dark"
                                          IsChecked="{Binding IsDarkTheme, Mode=TwoWay}"
-                                         GroupName="Theme"/>
+                                         GroupName="Theme"
+                                         AutomationProperties.Name="Dark theme"/>
                             <RadioButton Content="Use system setting"
                                          IsChecked="{Binding IsSystemTheme, Mode=TwoWay}"
-                                         GroupName="Theme"/>
+                                         GroupName="Theme"
+                                         AutomationProperties.Name="System theme"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -62,7 +65,8 @@
                         <ComboBox ItemsSource="{Binding QualityOptions}"
                                   SelectedItem="{Binding SelectedQualityOption, Mode=TwoWay}"
                                   MinWidth="300"
-                                  HorizontalAlignment="Left">
+                                  HorizontalAlignment="Left"
+                                  AutomationProperties.Name="Rendering quality">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding DisplayName}"/>
@@ -101,7 +105,8 @@
                         <Button Content="Apply Quality Settings"
                                 Command="{Binding ApplyQualityCommand}"
                                 HorizontalAlignment="Left"
-                                Margin="0,8,0,0"/>
+                                Margin="0,8,0,0"
+                                AutomationProperties.Name="Apply quality settings"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -122,7 +127,8 @@
                         <ComboBox ItemsSource="{Binding ZoomLevels}"
                                   SelectedItem="{Binding DefaultZoom, Mode=TwoWay}"
                                   MinWidth="200"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left"
+                                  AutomationProperties.Name="Default zoom level"/>
                     </StackPanel>
 
                     <!-- Scroll Mode -->
@@ -132,7 +138,8 @@
                         <ComboBox ItemsSource="{Binding ScrollModes}"
                                   SelectedItem="{Binding ScrollMode, Mode=TwoWay}"
                                   MinWidth="200"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left"
+                                  AutomationProperties.Name="Scroll mode"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -148,7 +155,8 @@
 
                     <!-- Telemetry -->
                     <CheckBox Content="Send anonymous usage telemetry"
-                              IsChecked="{Binding TelemetryEnabled, Mode=TwoWay}">
+                              IsChecked="{Binding TelemetryEnabled, Mode=TwoWay}"
+                              AutomationProperties.Name="Send anonymous usage telemetry">
                         <ToolTip.Tip>
                             <TextBlock Text="Helps improve FluentPDF by sharing anonymous usage data"
                                        TextWrapping="Wrap"
@@ -158,7 +166,8 @@
 
                     <!-- Crash Reporting -->
                     <CheckBox Content="Send anonymous crash reports"
-                              IsChecked="{Binding CrashReportingEnabled, Mode=TwoWay}">
+                              IsChecked="{Binding CrashReportingEnabled, Mode=TwoWay}"
+                              AutomationProperties.Name="Send anonymous crash reports">
                         <ToolTip.Tip>
                             <TextBlock Text="Helps fix bugs by automatically reporting crashes"
                                        TextWrapping="Wrap"
@@ -188,7 +197,8 @@
                 <Button Content="Reset All Settings to Defaults"
                         Command="{Binding ResetToDefaultsCommand}"
                         HorizontalAlignment="Left"
-                        Margin="0,8,0,0"/>
+                        Margin="0,8,0,0"
+                        AutomationProperties.Name="Reset all settings to defaults"/>
             </StackPanel>
 
         </StackPanel>

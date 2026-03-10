@@ -54,11 +54,13 @@
                         Content="Yes"
                         MinWidth="100"
                         Click="OnYesClick"
-                        Classes="accent"/>
+                        Classes="accent"
+                        AutomationProperties.Name="Yes"/>
                 <Button x:Name="NoButton"
                         Content="No"
                         MinWidth="100"
-                        Click="OnNoClick"/>
+                        Click="OnNoClick"
+                        AutomationProperties.Name="No"/>
             </StackPanel>
         </Border>
     </Grid>

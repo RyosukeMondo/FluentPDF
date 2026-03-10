@@ -7,17 +7,25 @@ namespace FluentPDF.Mcp.Tools;
 [McpServerToolType]
 public sealed class RenderTools
 {
-    [McpServerTool(Name = "pdf_render_page"), Description("Render a page to PNG. Returns image data.")]
+    [McpServerTool(Name = "pdf_render_page"),
+     Description(
+        "Render a page of the document as a PNG image. Use this to visually " +
+        "inspect page content, verify layout, or check how annotations and " +
+        "edits look.")]
     public static async Task<string> RenderPage(
         FluentPdfClient client,
         [Description("Document/session ID")] string documentId,
-        [Description("0-based page index")] int pageIndex,
-        [Description("DPI (default 150)")] int dpi = 150)
+        [Description("Page index (starting from 0)")] int pageIndex,
+        [Description("Resolution in DPI, higher means sharper (default: 150)")] int dpi = 150)
     {
         return await client.RenderPageAsync(documentId, pageIndex, dpi);
     }
 
-    [McpServerTool(Name = "pdf_screenshot"), Description("Capture a screenshot of the live FluentPDF UI.")]
+    [McpServerTool(Name = "pdf_screenshot"),
+     Description(
+        "Take a screenshot of the entire FluentPDF application window as " +
+        "it appears right now, including toolbars, panels, and the document " +
+        "view.")]
     public static async Task<string> Screenshot(FluentPdfClient client)
     {
         return await client.ScreenshotAsync();

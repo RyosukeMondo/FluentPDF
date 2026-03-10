@@ -177,25 +177,52 @@ public static class DocumentEndpoints
             }
             catch { /* ignore */ }
 
-            return Results.Ok(new
+            string pdfVersion = string.Empty;
+            if (PdfiumInterop.GetFileVersion(docHandle, out int version))
             {
+                pdfVersion = $"{version / 10}.{version % 10}";
+            }
+
+            uint permFlags = PdfiumInterop.GetDocPermissions(docHandle);
+            bool isEncrypted = permFlags != 0 && permFlags != 0xFFFFFFFF;
+
+            var permParts = new System.Collections.Generic.List<string>();
+            if (!isEncrypted)
+            {
+                permParts.Add("All");
+            }
+            else
+            {
+                if ((permFlags & (1 << 2)) != 0) permParts.Add("Print");
+                if ((permFlags & (1 << 4)) != 0) permParts.Add("Copy");
+                if ((permFlags & (1 << 3)) != 0) permParts.Add("Modify");
+                if ((permFlags & (1 << 5)) != 0) permParts.Add("Annotate");
+            }
+
+            string fileSize = FluentPDF.Core.ViewModels.MetadataViewModel.FormatFileSize(fileSizeBytes);
+
+            return Results.Ok(new FullDocumentMetadataDto(
                 title,
                 author,
                 subject,
                 keywords,
                 creator,
                 producer,
-                pageCount = document.PageCount,
+                document.PageCount,
                 fileSizeBytes,
+                fileSize,
                 creationDate,
-                modificationDate = modDate
-            });
+                modDate,
+                pdfVersion,
+                isEncrypted,
+                string.Join(", ", permParts)
+            ));
         })
         .WithName("GetDocumentMetadata")
         .WithTags("Document")
         .WithSummary("Get document metadata")
-        .WithDescription("Retrieves PDF metadata (Title, Author, Subject, Keywords, Creator, Producer, dates) via PDFium.")
-        .Produces(StatusCodes.Status200OK, contentType: "application/json")
+        .WithDescription("Retrieves PDF metadata (Title, Author, Subject, Keywords, Creator, Producer, dates, version, security) via PDFium.")
+        .Produces<FullDocumentMetadataDto>(StatusCodes.Status200OK, "application/json")
         .Produces<ErrorResponse>(StatusCodes.Status404NotFound, "application/json");
     }
 }

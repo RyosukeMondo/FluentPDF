@@ -36,6 +36,7 @@ public static class InteractionEndpoints
         MapResizeSelectionEndpoint(group);
         MapSelectionHandlesEndpoint(group);
         MapLockToggleEndpoint(group);
+        MapObjectDetailEndpoint(group);
     }
 
     private static PdfViewerPage? GetActiveViewerPage()
@@ -438,6 +439,56 @@ public static class InteractionEndpoints
             });
             return Results.Json(result);
         }).WithName("InteractLockToggle");
+    }
+
+    private static void MapObjectDetailEndpoint(RouteGroupBuilder group)
+    {
+        group.MapGet("/objects/{objectIndex:int}", async (int objectIndex, HttpContext ctx) =>
+        {
+            var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Dispatcher.UIThread.Post(() =>
+            {
+                _ = RunOnUiThread(async () =>
+                {
+                    var page = GetActiveViewerPage();
+                    if (page == null) return new { success = false, error = "No active viewer" } as object;
+
+                    var objects = await page.GetCurrentPageObjectsAsync();
+                    var obj = objects.FirstOrDefault(o => o.Index == objectIndex);
+                    if (obj == null)
+                        return new { success = false, error = $"Object at index {objectIndex} not found" } as object;
+
+                    var typeName = obj.Type switch
+                    {
+                        1 => "text",
+                        2 => "path",
+                        3 => "image",
+                        4 => "shading",
+                        5 => "form",
+                        _ => "unknown"
+                    };
+
+                    return new
+                    {
+                        success = true,
+                        index = obj.Index,
+                        type = typeName,
+                        typeCode = obj.Type,
+                        boundingBox = new
+                        {
+                            left = obj.Left,
+                            bottom = obj.Bottom,
+                            right = obj.Right,
+                            top = obj.Top,
+                            width = obj.Right - obj.Left,
+                            height = obj.Top - obj.Bottom
+                        }
+                    } as object;
+                }, tcs);
+            });
+
+            return Results.Json(await tcs.Task);
+        }).WithName("InteractObjectDetail");
     }
 
     private static async Task RunOnUiThread(Func<Task<object>> action, TaskCompletionSource<object> tcs)

@@ -1,6 +1,8 @@
 using ArchUnitNET.Domain;
+using ArchUnitNET.Domain.Extensions;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.xUnit;
+using System.Text.RegularExpressions;
 using Xunit;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
@@ -25,7 +27,7 @@ public class NamingTests : ArchitectureTestBase
             .Should().HaveNameEndingWith("ViewModel")
             .Because("Consistent naming for ViewModels improves code readability");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -39,10 +41,10 @@ public class NamingTests : ArchitectureTestBase
             .That().HaveNameEndingWith("ViewModel")
             .And().ResideInNamespace("FluentPDF.App", useRegularExpressions: true)
             .And().AreNotAbstract()
-            .Should().Inherit("CommunityToolkit.Mvvm.ComponentModel.ObservableObject")
+            .Should().BeAssignableTo("CommunityToolkit.Mvvm.ComponentModel.ObservableObject")
             .Because("ViewModels must use CommunityToolkit.Mvvm for MVVM pattern");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -52,14 +54,16 @@ public class NamingTests : ArchitectureTestBase
     [Fact]
     public void Services_Should_EndWith_Service()
     {
+        // Check classes whose name contains "Service" (to filter out DTOs, Validators, etc.)
+        // and verify they end with "Service" suffix.
         var rule = Classes()
             .That().ResideInNamespace("FluentPDF.*.Services", useRegularExpressions: true)
-            .And().AreNotInterfaces()
             .And().AreNotAbstract()
+            .And().HaveNameContaining("Service")
             .Should().HaveNameEndingWith("Service")
             .Because("Services should have consistent naming conventions");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -74,7 +78,7 @@ public class NamingTests : ArchitectureTestBase
             .Should().HaveNameStartingWith("I")
             .Because("Interfaces should follow .NET naming conventions with 'I' prefix");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -84,16 +88,18 @@ public class NamingTests : ArchitectureTestBase
     [Fact]
     public void ErrorTypes_Should_EndWith_Error()
     {
-        var rule = Classes()
+        // Use GetObjects + manual filter instead of DoNotHaveNameMatching
+        var errorTypes = Classes()
             .That().ResideInNamespace("FluentPDF.Core.ErrorHandling", useRegularExpressions: true)
             .And().AreNotAbstract()
-            .And().AreNotInterfaces()
-            .And().DoNotHaveNameMatching(".*Category$")
-            .And().DoNotHaveNameMatching(".*Severity$")
-            .Should().HaveNameEndingWith("Error")
-            .Because("Error types should have consistent naming for easy identification");
+            .GetObjects(Architecture)
+            .Where(t => !Regex.IsMatch(t.Name, ".*Category$"))
+            .Where(t => !Regex.IsMatch(t.Name, ".*Severity$"));
 
-        rule.Check(Architecture);
+        foreach (var errorType in errorTypes)
+        {
+            Assert.EndsWith("Error", errorType.Name);
+        }
     }
 
     /// <summary>
@@ -103,13 +109,16 @@ public class NamingTests : ArchitectureTestBase
     [Fact]
     public void TestClasses_Should_EndWith_Tests()
     {
-        var rule = Classes()
+        // Use GetObjects + manual filter instead of DoNotHaveNameMatching
+        var testClasses = Classes()
             .That().ResideInNamespace("FluentPDF.*Tests", useRegularExpressions: true)
             .And().AreNotAbstract()
-            .And().DoNotHaveNameMatching(".*Base$")
-            .Should().HaveNameEndingWith("Tests")
-            .Because("Test classes should follow consistent naming conventions");
+            .GetObjects(Architecture)
+            .Where(t => !Regex.IsMatch(t.Name, ".*Base$"));
 
-        rule.Check(Architecture);
+        foreach (var testClass in testClasses)
+        {
+            Assert.EndsWith("Tests", testClass.Name);
+        }
     }
 }

@@ -137,6 +137,26 @@ public record HealthResponse(
 public record CloseDocumentResponse(bool Closed);
 
 /// <summary>
+/// Full document metadata response DTO.
+/// </summary>
+public record FullDocumentMetadataDto(
+    string? Title,
+    string? Author,
+    string? Subject,
+    string? Keywords,
+    string? Creator,
+    string? Producer,
+    int PageCount,
+    long FileSizeBytes,
+    string FileSize,
+    string? CreationDate,
+    string? ModificationDate,
+    string? PdfVersion,
+    bool IsEncrypted,
+    string? Permissions
+);
+
+/// <summary>
 /// Structured error response.
 /// </summary>
 /// <param name="Error">Error code.</param>

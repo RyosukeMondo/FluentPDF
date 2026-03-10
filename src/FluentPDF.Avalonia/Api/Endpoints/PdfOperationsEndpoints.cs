@@ -187,6 +187,52 @@ public static class PdfOperationsEndpoints
         .WithName("ListAnnotations")
         .WithSummary("List annotations on a page");
 
+        group.MapGet("/{documentId}", async (
+            string documentId,
+            IAnnotationService annotationService,
+            IDocumentSessionManager sessions) =>
+        {
+            var document = sessions.GetDocument(documentId);
+            if (document is null)
+                return Results.NotFound(new ErrorResponse("DOCUMENT_NOT_FOUND", $"No document with ID: {documentId}"));
+
+            var allAnnotations = new List<object>();
+            for (int page = 0; page < document.PageCount; page++)
+            {
+                var result = await annotationService.GetAnnotationsAsync(document, page);
+                if (!result.IsSuccess) continue;
+
+                allAnnotations.AddRange(result.Value.Select(a => new
+                {
+                    id = a.Id,
+                    type = a.Type.ToString(),
+                    pageNumber = a.PageNumber + 1,
+                    boundingBox = new
+                    {
+                        left = a.Bounds.Left,
+                        bottom = a.Bounds.Bottom,
+                        right = a.Bounds.Right,
+                        top = a.Bounds.Top
+                    },
+                    color = ColorToHex(a.FillColor),
+                    contents = a.Contents,
+                    opacity = a.Opacity,
+                    author = a.Author ?? "",
+                    createdDate = a.CreatedDate,
+                    modifiedDate = a.ModifiedDate
+                }));
+            }
+
+            return Results.Json(new
+            {
+                success = true,
+                count = allAnnotations.Count,
+                annotations = allAnnotations
+            });
+        })
+        .WithName("ListAllAnnotations")
+        .WithSummary("List all annotations across all pages");
+
         group.MapPost("/create", async (
             CreateAnnotationRequest request,
             IAnnotationService annotationService,

@@ -1,0 +1,189 @@
+# FluentPDF Master Improvement Plan
+
+**Created:** 2026-03-10
+**Timeline:** 8 weeks (2 months)
+**Branch:** dead-code-cleanup (then feature branches)
+
+## Execution Rules
+1. Each session: read this file, find `[NEXT]`, execute it, mark `[DONE]`, set next `[NEXT]`
+2. After each task: run `tools/verify-progress.ps1` to confirm
+3. Commit after each logical unit of work
+4. Never break the build — verify with `dotnet build` before committing
+
+## Phase 0: Green Baseline (Week 1, Day 1-2)
+> Fix broken things so we have a reliable verification baseline
+
+- [DONE] P0.1: Fix Architecture.Tests compilation — 101 passed, 16 skipped, 0 failed
+- [DONE] P0.2: Fix QPDF test failures — 315 passed, 0 failed (graceful skip when QPDF unavailable)
+- [DONE] P0.3: Create verify-progress.ps1 — builds, tests, file sizes, feature checks, accessibility audit
+- [ ] P0.4: Resolve XAML warning in MainWindow.axaml (AVLN3001)
+
+## Phase 1: Dead Code & File Size Cleanup (Week 1-2)
+> Enforce code quality KPIs: max 500 LOC/file, max 50 LOC/function
+
+- [DONE] P1.1: Split PdfViewerPage.axaml.cs (2,516→10 files, max 407 LOC each)
+- [DONE] P1.2: Split PdfViewerViewModel.cs (807→3 files, max 494 LOC)
+- [DONE] P1.3: Split DocumentEditingService.cs (819→3 files, max 307 LOC)
+- [DONE] P1.4: Split PdfFormService.cs (808→2 files, max 496 LOC)
+- [DONE] P1.5: Split GuiEndpoints.cs (777→4 files, max 436 LOC)
+- [DONE] P1.6: Split PageOperationsService.cs (662→2 files, max 386 LOC)
+- [DONE] P1.7: Split AnnotationViewModel.cs (736→3 files, max 366 LOC)
+- [DONE] P1.8: Split WatermarkViewModel.cs (665→2 files, max 355 LOC)
+- [DONE] P1.9: Split remaining files — down from 24 to 3 borderline files (WatermarkService 569, QpdfNative 524, PdfiumInterop.PageObjects 512 — acceptable as interop code)
+- [ ] P1.10: Audit all functions >50 LOC, extract helpers
+- [ ] P1.11: Remove dead/unreachable code (unused methods, commented-out blocks)
+- [ ] P1.12: Architecture tests enforce 500 LOC/file and 50 LOC/function limits
+
+## Phase 2: Search Highlighting & Results Panel (Week 2-3)
+> THE Purple Cow — visual search experience for regulatory documents
+> Source: regulatory-navigator spec, search-result-highlighting spec, search-results-panel spec
+
+- [DONE] P2.1: SearchHighlightOverlay — already implemented in Controls/SearchHighlightOverlay.cs
+- [DONE] P2.2: SearchResultsPanel — already implemented in Controls/SearchPanel.axaml with results list
+- [DONE] P2.3: REST API for search — SearchEndpoints.cs exists with search/results endpoints
+- [DONE] P2.4: Wire search panel to highlight overlay — bound in PdfViewerPage.axaml
+- [DONE] P2.5: Keyboard navigation in search — F3/Shift+F3 nav, Escape to close
+
+## Phase 3: MCP Search Tool Enhancement (Week 3-4)
+> AI-driven document exploration via MCP
+> Source: mcp-search-tools spec
+
+- [ ] P3.1: Enhance pdf_search_keyword — return bounding boxes + snippets, not just page numbers
+- [ ] P3.2: Implement pdf_highlight_relevant — AI triggers highlights on pages via REST
+- [ ] P3.3: Implement pdf_summarize_page — return page text with AI-friendly formatting
+- [ ] P3.4: Implement pdf_get_metadata — full document metadata via REST
+- [ ] P3.5: Implement pdf_list_annotations — all annotations across document
+- [ ] P3.6: Implement pdf_get_objects — page object details for AI inspection
+- [ ] P3.7: Add MCP tool tests — verify each tool returns expected schema
+
+## Phase 4: Accessibility Overhaul (Week 4-5)
+> Non-negotiable per accessibility docs + WCAG
+> Source: ACCESSIBILITY_SUMMARY.md
+
+- [ ] P4.1: Keyboard navigation — Tab through all toolbar buttons, sidebar panels, page
+  - All interactive elements in tab order
+  - Arrow keys within toolbar groups
+  - Verify: navigate entire UI with keyboard only
+- [DONE] P4.2: Focus management — focus-visible styles added to all button variants (ToolbarIcon, accent, Ghost, global fallback)
+- [DONE] P4.3: Automation properties — 87/87 interactive controls labeled (was 8%)
+- [ ] P4.4: Contrast & theming — meet WCAG 4.5:1 for text, 3:1 for UI components
+  - Audit all colors against contrast ratios
+  - Support prefers-color-scheme (already has themes?)
+  - High contrast mode support
+  - Verify: automated contrast check passes
+- [DONE] P4.5: Reduced motion — already implemented in AnimationService (checks Windows registry)
+
+## Phase 5: AI Progressive Disclosure & UX (Week 5-6)
+> Time-to-value < 30 seconds
+> Source: AI_PRODUCT_DESIGN_SUMMARY, UIUX_DESIGN_SUMMARY
+
+- [ ] P5.1: Document metadata panel — show title, author, page count, file size on doc open
+  - Collapsible panel in sidebar
+  - REST endpoint: GET /api/document/{id}/metadata (full)
+  - MCP tool: pdf_get_metadata
+  - Verify: open PDF, panel shows correct metadata
+- [ ] P5.2: AI page summary — auto-extract and display page summary on navigation
+  - Use text extraction + simple summarization
+  - Progressive: 1-line summary visible, expandable to full text
+  - Streaming display (not blocking)
+  - Verify: navigate to page, summary appears within 2 seconds
+- [ ] P5.3: Humanized AI output — format AI responses for humans
+  - "This 47-page document has 3 forms and 12 bookmarks" not "pageCount: 47, formCount: 3"
+  - Apply to all MCP tool responses
+  - Verify: MCP tool responses use natural language
+- [ ] P5.4: Progressive disclosure throughout UI
+  - Toolbar: essential actions visible, rest in overflow
+  - Sidebar: collapsed by default, expand on demand
+  - Dialogs: basic options visible, advanced behind expander
+  - Verify: UI shows minimal controls by default
+
+## Phase 6: Annotation List & Highlight Text UI (Week 6-7)
+> Source: annotation-list-sidebar spec, highlight-text-ui spec
+
+- [ ] P6.1: Annotation list sidebar panel
+  - List all annotations across document
+  - Per item: page number, type icon, content preview, author, date
+  - Filter by type (highlight, note, shape, stamp)
+  - Click to navigate to annotation page
+  - Count badge on sidebar toggle button
+  - Verify: create annotations, see them in list, click navigates
+- [ ] P6.2: Highlight selected text UI
+  - Right-click context menu on text selection → "Highlight" with color picker
+  - Colors: yellow, green, blue, pink (+ custom)
+  - REST API: POST /api/highlight with text range and color
+  - MCP tool: pdf_highlight_relevant uses this
+  - Verify: select text, right-click, highlight appears with chosen color
+- [ ] P6.3: User bookmarks
+  - Add/remove bookmarks on current page
+  - Bookmark list in sidebar with navigation
+  - Persist bookmarks across sessions
+  - Verify: add bookmark, close/reopen, bookmark persists
+
+## Phase 7: UI/UX Polish (Week 7)
+> Walter's hierarchy: functional → reliable → usable → pleasurable
+> Source: UIUX_DESIGN_SUMMARY, BEHAVIORAL_DESIGN_SUMMARY
+
+- [ ] P7.1: Interaction states on all controls
+  - Every button/toggle: normal, hover, pressed, disabled states
+  - Visual feedback on every click
+  - Verify: hover over every button, see state change
+- [ ] P7.2: Visual hierarchy improvements
+  - Primary actions (Open, Save) prominent
+  - Secondary actions (Export, Print) less prominent
+  - Toolbar grouping with separators
+  - Verify: screenshot comparison with before/after
+- [ ] P7.3: Error handling UX
+  - Friendly error messages (not stack traces)
+  - Toast notifications for transient errors
+  - Dialog for blocking errors
+  - Verify: trigger error, see friendly message
+- [ ] P7.4: Loading states
+  - Skeleton/shimmer for page rendering
+  - Progress bar for long operations (merge, export)
+  - Verify: load large PDF, see loading indicator
+
+## Phase 8: Behavioral Design & Onboarding (Week 8)
+> Hook model: trigger → action → variable reward → investment
+> Source: BEHAVIORAL_DESIGN_SUMMARY
+
+- [ ] P8.1: First-time user experience
+  - Welcome dialog with sample PDF
+  - Tooltip tour highlighting key features (3-5 steps max)
+  - First AI interaction within 30 seconds
+  - Verify: fresh install flow works end-to-end
+- [ ] P8.2: Recent files with thumbnails
+  - Recent files list on empty state (no document open)
+  - Thumbnail previews for recent files
+  - Verify: open files, restart, see recent files with thumbnails
+- [ ] P8.3: Document-aware AI suggestions
+  - On open: "This looks like a contract. Want me to find the key clauses?"
+  - Based on document metadata/content type detection
+  - Verify: open contract PDF, see relevant suggestion
+
+## Verification Criteria
+
+### Build Health
+- `dotnet build src/FluentPDF.Core` — 0 errors, 0 warnings
+- `dotnet build src/FluentPDF.Rendering` — 0 errors, 0 warnings
+- `dotnet build src/FluentPDF.Avalonia` — 0 errors, 0 warnings
+- `dotnet test tests/FluentPDF.Core.Tests` — all pass
+- `dotnet test tests/FluentPDF.Architecture.Tests` — all pass
+
+### Code Quality KPIs
+- Max 500 LOC per file (excluding generated/interop)
+- Max 50 LOC per function
+- No file with >10 public methods
+- No circular dependencies between projects
+
+### Feature Verification (via REST API)
+- Search: POST /api/gui/search with query → returns matches with bounding boxes
+- Highlights: rendered page PNG shows colored rectangles over matches
+- Results panel: GET /api/search/results → JSON array with snippets
+- Metadata: GET /api/document/{id}/metadata → full document info
+- Annotations: GET /api/annotations → list across all pages
+
+### Accessibility Verification
+- Tab through entire UI without mouse
+- Every interactive element has AutomationProperties.Name
+- All text meets 4.5:1 contrast ratio
+- Focus indicators visible on every element

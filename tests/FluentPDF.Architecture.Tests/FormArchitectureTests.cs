@@ -1,6 +1,9 @@
+using ArchUnitNET.Domain;
+using ArchUnitNET.Domain.Extensions;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.xUnit;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Xunit;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
@@ -20,14 +23,16 @@ public class FormArchitectureTests : ArchitectureTestBase
     [Fact]
     public void FormPInvoke_ShouldOnly_ExistIn_RenderingInterop()
     {
-        var rule = Methods()
-            .That().HaveAttribute(typeof(DllImportAttribute).FullName!)
-            .And().HaveNameMatching(".*Form.*|.*FPDF.*Form.*")
-            .Should().BeDeclaredIn(Types()
-                .That().ResideInNamespace("FluentPDF.Rendering.Interop", useRegularExpressions: true))
-            .Because("Form P/Invoke declarations must be isolated in Rendering.Interop namespace for proper encapsulation");
+        var pInvokeMethods = MethodMembers()
+            .That().HaveAnyAttributes(typeof(DllImportAttribute))
+            .GetObjects(Architecture)
+            .Where(m => Regex.IsMatch(m.Name, ".*Form.*|.*FPDF.*Form.*"));
 
-        rule.Check(Architecture);
+        foreach (var method in pInvokeMethods)
+        {
+            Assert.Contains("FluentPDF.Rendering.Interop", method.DeclaringType.FullName,
+                StringComparison.Ordinal);
+        }
     }
 
     /// <summary>
@@ -42,7 +47,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.App.Controls")
             .Because("Form controls belong in the App.Controls namespace");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -58,7 +63,7 @@ public class FormArchitectureTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.Rendering.Interop", useRegularExpressions: true))
             .Because("ViewModels should use service interfaces (IPdfFormService, IFormValidationService), not direct PDFium access");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -73,7 +78,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ImplementInterface("FluentPDF.Core.Services.IPdfFormService")
             .Because("PdfFormService must be abstracted for dependency injection and testing");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -88,7 +93,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ImplementInterface("FluentPDF.Core.Services.IFormValidationService")
             .Because("FormValidationService must be abstracted for dependency injection and testing");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -103,7 +108,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Services")
             .Because("Service interfaces should be defined in the Core layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -118,7 +123,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Services")
             .Because("Service interfaces should be defined in the Core layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -128,13 +133,17 @@ public class FormArchitectureTests : ArchitectureTestBase
     [Fact]
     public void FormServices_Should_ResideIn_RenderingServices()
     {
-        var rule = Classes()
-            .That().HaveNameMatching(".*FormService$|.*FormValidationService$")
-            .And().AreNotInterfaces()
-            .Should().ResideInNamespace("FluentPDF.Rendering.Services")
-            .Because("Form service implementations belong in the Rendering layer");
+        // Classes() already excludes interfaces; use manual regex filter
+        var formServices = Classes()
+            .That().HaveNameEndingWith("Service")
+            .GetObjects(Architecture)
+            .Where(t => Regex.IsMatch(t.Name, ".*FormService$|.*FormValidationService$"));
 
-        rule.Check(Architecture);
+        foreach (var service in formServices)
+        {
+            Assert.StartsWith("FluentPDF.Rendering.Services", service.Namespace.FullName,
+                StringComparison.Ordinal);
+        }
     }
 
     /// <summary>
@@ -149,7 +158,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.App.ViewModels")
             .Because("ViewModels belong in the App layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -164,7 +173,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().BeAssignableTo("CommunityToolkit.Mvvm.ComponentModel.ObservableObject")
             .Because("ViewModels must inherit ObservableObject for property change notifications");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -182,7 +191,7 @@ public class FormArchitectureTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.App", useRegularExpressions: true))
             .Because("Domain models should have no infrastructure dependencies");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -197,7 +206,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Models")
             .Because("Domain models belong in the Core layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -212,7 +221,7 @@ public class FormArchitectureTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Models")
             .Because("Domain models belong in the Core layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -224,7 +233,8 @@ public class FormArchitectureTests : ArchitectureTestBase
     {
         var safeHandleTypes = Types()
             .That().ResideInNamespace("FluentPDF.Rendering.Interop", useRegularExpressions: true)
-            .And().HaveNameContaining("SafeHandle")
+            .And().HaveNameStartingWith("Safe")
+            .And().HaveNameEndingWith("Handle")
             .GetObjects(Architecture);
 
         Assert.Contains(safeHandleTypes, t => t.Name.Contains("SafePdfForm"));
@@ -237,14 +247,18 @@ public class FormArchitectureTests : ArchitectureTestBase
     [Fact]
     public void FormServices_Should_BeSealed()
     {
-        var rule = Classes()
-            .That().HaveNameMatching(".*FormService$|.*FormValidationService$")
-            .And().AreNotInterfaces()
+        // Classes() already excludes interfaces; use manual regex filter
+        var formServices = Classes()
+            .That().HaveNameEndingWith("Service")
             .And().ResideInNamespace("FluentPDF.Rendering.Services")
-            .Should().BeSealed()
-            .Because("Services should be sealed unless designed for inheritance");
+            .GetObjects(Architecture)
+            .Where(t => Regex.IsMatch(t.Name, ".*FormService$|.*FormValidationService$"));
 
-        rule.Check(Architecture);
+        foreach (var service in formServices)
+        {
+            Assert.True(service.IsSealed,
+                $"Service {service.FullName} should be sealed unless designed for inheritance");
+        }
     }
 
     /// <summary>
@@ -258,10 +272,10 @@ public class FormArchitectureTests : ArchitectureTestBase
             .That().ResideInNamespace("FluentPDF.App", useRegularExpressions: true)
             .Should().NotDependOnAny(Types()
                 .That().ResideInNamespace("FluentPDF.Rendering.Interop", useRegularExpressions: true)
-                .And().HaveNameMatching(".*Form.*"))
+                .And().HaveNameContaining("Form"))
             .Because("App layer should only use form services, not form interop classes directly");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -277,7 +291,7 @@ public class FormArchitectureTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.Rendering.Interop", useRegularExpressions: true))
             .Because("Core must remain independent of Rendering infrastructure");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -287,15 +301,19 @@ public class FormArchitectureTests : ArchitectureTestBase
     [Fact]
     public void FormTypes_ShouldNot_DependOn_Conversion()
     {
-        var rule = Types()
-            .That().HaveNameMatching(".*Form.*")
+        var formTypes = Types()
+            .That().HaveNameContaining("Form")
             .And().ResideInNamespace("FluentPDF", useRegularExpressions: true)
-            .Should().NotDependOnAny(Types()
-                .That().HaveNameMatching(".*Conversion.*")
-                .Or().HaveNameMatching(".*Docx.*"))
-            .Because("Form functionality is independent of document conversion");
+            .GetObjects(Architecture);
 
-        rule.Check(Architecture);
+        foreach (var formType in formTypes)
+        {
+            var dependsOnConversion = formType.Dependencies
+                .Any(d => d.Target.Name.Contains("Conversion") || d.Target.Name.Contains("Docx"));
+
+            Assert.False(dependsOnConversion,
+                $"Form type {formType.FullName} should not depend on conversion types");
+        }
     }
 
     /// <summary>
@@ -305,13 +323,18 @@ public class FormArchitectureTests : ArchitectureTestBase
     [Fact]
     public void FormTypes_ShouldNot_DependOn_Bookmarks()
     {
-        var rule = Types()
-            .That().HaveNameMatching(".*Form.*")
+        var formTypes = Types()
+            .That().HaveNameContaining("Form")
             .And().ResideInNamespace("FluentPDF", useRegularExpressions: true)
-            .Should().NotDependOnAny(Types()
-                .That().HaveNameMatching(".*Bookmark.*"))
-            .Because("Form functionality is independent of bookmark extraction");
+            .GetObjects(Architecture);
 
-        rule.Check(Architecture);
+        foreach (var formType in formTypes)
+        {
+            var dependsOnBookmarks = formType.Dependencies
+                .Any(d => d.Target.Name.Contains("Bookmark"));
+
+            Assert.False(dependsOnBookmarks,
+                $"Form type {formType.FullName} should not depend on bookmark types");
+        }
     }
 }

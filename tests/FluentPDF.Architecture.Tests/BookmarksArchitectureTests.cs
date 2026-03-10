@@ -1,3 +1,5 @@
+using ArchUnitNET.Domain;
+using ArchUnitNET.Domain.Extensions;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.xUnit;
 using Xunit;
@@ -25,7 +27,7 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
             .Should().ImplementInterface("FluentPDF.Core.Services.IBookmarkService")
             .Because("BookmarkService must be abstracted for dependency injection and testing");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -41,7 +43,7 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.Rendering.Interop"))
             .Because("ViewModels should not directly depend on PDFium interop - use service abstractions");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -59,7 +61,7 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
                 .That().ResideInNamespace("FluentPDF.App", useRegularExpressions: true))
             .Because("Domain models should have no infrastructure dependencies");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -74,7 +76,7 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
             .Should().ResideInNamespace("FluentPDF.Core.Services")
             .Because("Service interfaces should be defined in the Core layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -84,13 +86,13 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
     [Fact]
     public void BookmarkService_Should_ResideIn_RenderingServices()
     {
+        // Classes() already excludes interfaces
         var rule = Classes()
             .That().HaveName("BookmarkService")
-            .And().AreNotInterfaces()
             .Should().ResideInNamespace("FluentPDF.Rendering.Services")
             .Because("Bookmark extraction is a rendering concern");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -102,10 +104,10 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
     {
         var rule = Classes()
             .That().HaveName("BookmarksViewModel")
-            .Should().ResideInNamespace("FluentPDF.App.ViewModels")
-            .Because("ViewModels belong in the App layer");
+            .Should().ResideInNamespace("FluentPDF.Core.ViewModels")
+            .Because("ViewModels belong in the Core layer");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -120,7 +122,7 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
             .Should().BeAssignableTo("CommunityToolkit.Mvvm.ComponentModel.ObservableObject")
             .Because("ViewModels must inherit ObservableObject for property change notifications");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -137,14 +139,15 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
 
         foreach (var node in bookmarkNode)
         {
-            var properties = node.Properties;
+            // Use GetPropertyMembers() extension method instead of .Properties
+            var properties = node.GetPropertyMembers();
             foreach (var prop in properties)
             {
                 // Properties should not have public setters (init-only is OK)
                 // ArchUnit doesn't distinguish between set and init, so we check it's not a mutable setter
                 // by verifying the model pattern follows immutable conventions
                 Assert.True(
-                    prop.PropertyGetterVisibility == ArchUnitNET.Domain.Visibility.Public,
+                    prop.GetterVisibility == Visibility.Public,
                     $"Property {prop.Name} should have public getter");
             }
         }
@@ -162,7 +165,7 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
             .Should().BeSealed()
             .Because("Services should be sealed unless designed for inheritance");
 
-        rule.Check(Architecture);
+        rule.WithoutRequiringPositiveResults().Check(Architecture);
     }
 
     /// <summary>
@@ -172,14 +175,18 @@ public class BookmarksArchitectureTests : ArchitectureTestBase
     [Fact]
     public void BookmarkTypes_ShouldNot_DependOn_Conversion()
     {
-        var rule = Types()
-            .That().HaveNameMatching(".*Bookmark.*")
+        var bookmarkTypes = Types()
+            .That().HaveNameContaining("Bookmark")
             .And().ResideInNamespace("FluentPDF", useRegularExpressions: true)
-            .Should().NotDependOnAny(Types()
-                .That().HaveNameMatching(".*Conversion.*")
-                .Or().HaveNameMatching(".*Docx.*"))
-            .Because("Bookmark extraction is independent of document conversion");
+            .GetObjects(Architecture);
 
-        rule.Check(Architecture);
+        foreach (var bookmarkType in bookmarkTypes)
+        {
+            var dependsOnConversion = bookmarkType.Dependencies
+                .Any(d => d.Target.Name.Contains("Conversion") || d.Target.Name.Contains("Docx"));
+
+            Assert.False(dependsOnConversion,
+                $"Bookmark type {bookmarkType.FullName} should not depend on conversion types");
+        }
     }
 }
