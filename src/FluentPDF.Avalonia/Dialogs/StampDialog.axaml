@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FluentPDF.Avalonia.Dialogs.StampDialog"
+        Title="Add Stamp"
+        Width="400" MinHeight="220" MaxHeight="500"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        RequestedThemeVariant="Dark"
+        Background="{DynamicResource BackgroundSurfaceBrush}"
+        CornerRadius="8">
+
+    <Window.Styles>
+        <StyleInclude Source="avares://FluentPDF.Avalonia/Dialogs/DialogStyles.axaml" />
+    </Window.Styles>
+
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock Text="Stamp Type:"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <ComboBox x:Name="StampCombo" SelectedIndex="0">
+            <ComboBoxItem Content="Approved" />
+            <ComboBoxItem Content="Rejected" />
+            <ComboBoxItem Content="Draft" />
+            <ComboBoxItem Content="Final" />
+            <ComboBoxItem Content="Confidential" />
+            <ComboBoxItem Content="For Review" />
+            <ComboBoxItem Content="Copy" />
+        </ComboBox>
+
+        <TextBlock Text="Page (current page will be used)"
+                   Foreground="{DynamicResource ForegroundTertiaryBrush}"
+                   FontSize="12" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="8" Margin="0,8,0,0">
+            <Button Content="Cancel" Width="100"
+                    Click="OnCancelClick" />
+            <Button Content="Apply" Width="100" Classes="accent"
+                    Click="OnApplyClick" />
+        </StackPanel>
+    </StackPanel>
+</Window>

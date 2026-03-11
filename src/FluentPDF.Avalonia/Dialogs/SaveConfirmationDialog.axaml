@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FluentPDF.Avalonia.Dialogs.SaveConfirmationDialog"
+        Title="Unsaved Changes"
+        Width="420" MinHeight="180" MaxHeight="500"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        RequestedThemeVariant="Dark"
+        Background="{DynamicResource BackgroundSurfaceBrush}"
+        CornerRadius="8">
+
+    <Window.Styles>
+        <StyleInclude Source="avares://FluentPDF.Avalonia/Dialogs/DialogStyles.axaml" />
+    </Window.Styles>
+
+    <StackPanel Margin="24" Spacing="16">
+        <TextBlock x:Name="MessageText"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" Width="100"
+                    Click="OnCancelClick" />
+            <Button Content="Don't Save" Width="100"
+                    Click="OnDontSaveClick" />
+            <Button Content="Save" Width="100" Classes="accent"
+                    Click="OnSaveClick" />
+        </StackPanel>
+    </StackPanel>
+</Window>

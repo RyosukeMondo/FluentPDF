@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FluentPDF.Avalonia.Dialogs.ErrorDialog"
+        Title="Error"
+        Width="400" MinHeight="180" MaxHeight="500"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        RequestedThemeVariant="Dark"
+        Background="{DynamicResource BackgroundSurfaceBrush}"
+        CornerRadius="8">
+
+    <Window.Styles>
+        <StyleInclude Source="avares://FluentPDF.Avalonia/Dialogs/DialogStyles.axaml" />
+    </Window.Styles>
+
+    <StackPanel Margin="24" Spacing="16">
+        <TextBlock x:Name="MessageText"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+
+        <Button Content="OK" Width="100" Classes="accent"
+                HorizontalAlignment="Right"
+                Click="OnOkClick" />
+    </StackPanel>
+</Window>

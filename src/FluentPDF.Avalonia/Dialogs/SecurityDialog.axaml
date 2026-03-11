@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FluentPDF.Avalonia.Dialogs.SecurityDialog"
+        Title="Document Security"
+        Width="420" MinHeight="380" MaxHeight="700"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        RequestedThemeVariant="Dark"
+        Background="{DynamicResource BackgroundSurfaceBrush}"
+        CornerRadius="8">
+
+    <Window.Styles>
+        <StyleInclude Source="avares://FluentPDF.Avalonia/Dialogs/DialogStyles.axaml" />
+    </Window.Styles>
+
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock Text="Owner Password (required):"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <TextBox x:Name="OwnerPasswordBox" PasswordChar="*"
+                 Watermark="Required" />
+
+        <TextBlock Text="User Password (optional, to open):"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <TextBox x:Name="UserPasswordBox" PasswordChar="*" />
+
+        <TextBlock Text="Encryption Strength:"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <ComboBox x:Name="StrengthCombo" SelectedIndex="1">
+            <ComboBoxItem Content="AES-128" />
+            <ComboBoxItem Content="AES-256" />
+        </ComboBox>
+
+        <CheckBox x:Name="AllowPrintCheck" Content="Allow Printing" IsChecked="True" />
+        <CheckBox x:Name="AllowCopyCheck" Content="Allow Copying" IsChecked="True" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="8" Margin="0,8,0,0">
+            <Button Content="Cancel" Width="100"
+                    Click="OnCancelClick" />
+            <Button Content="Encrypt" Width="100" Classes="accent"
+                    Click="OnEncryptClick" />
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FluentPDF.Avalonia.Dialogs.WatermarkDialog"
+        Title="Add Text Watermark"
+        Width="420" MinHeight="420" MaxHeight="700"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        RequestedThemeVariant="Dark"
+        Background="{DynamicResource BackgroundSurfaceBrush}"
+        CornerRadius="8">
+
+    <Window.Styles>
+        <StyleInclude Source="avares://FluentPDF.Avalonia/Dialogs/DialogStyles.axaml" />
+    </Window.Styles>
+
+    <StackPanel Margin="24" Spacing="12">
+        <TextBlock Text="Watermark Text:"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <TextBox x:Name="WatermarkText" Text="CONFIDENTIAL" />
+
+        <TextBlock Text="Opacity (0.1 - 1.0):"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <Slider x:Name="OpacitySlider"
+                Minimum="0.1" Maximum="1.0" Value="0.3"
+                TickFrequency="0.1" />
+
+        <TextBlock Text="Font Size:"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <NumericUpDown x:Name="FontSizeInput"
+                       Minimum="12" Maximum="144" Value="72" Increment="6" />
+
+        <TextBlock Text="Position:"
+                   Foreground="{DynamicResource ForegroundPrimaryBrush}" />
+        <ComboBox x:Name="PositionCombo" SelectedIndex="0">
+            <ComboBoxItem Content="Center" />
+            <ComboBoxItem Content="Top Left" />
+            <ComboBoxItem Content="Top Right" />
+            <ComboBoxItem Content="Bottom Left" />
+            <ComboBoxItem Content="Bottom Right" />
+        </ComboBox>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="8" Margin="0,8,0,0">
+            <Button Content="Cancel" Width="100"
+                    Click="OnCancelClick" />
+            <Button Content="Apply" Width="100" Classes="accent"
+                    Click="OnApplyClick" />
+        </StackPanel>
+    </StackPanel>
+</Window>
