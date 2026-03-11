@@ -349,7 +349,8 @@
                     <!-- Hero section -->
                     <StackPanel Spacing="12" HorizontalAlignment="Center">
                         <Viewbox Width="72" Height="72">
-                            <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                            <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
+                                      Foreground="{DynamicResource ForegroundSecondaryBrush}" />
                         </Viewbox>
 
                         <TextBlock Text="Welcome to FluentPDF"
@@ -358,7 +359,7 @@
                                    HorizontalAlignment="Center" />
                         <TextBlock Text="AI-powered PDF viewer for regulatory documents"
                                    FontSize="14"
-                                   Opacity="0.7"
+                                   Foreground="{DynamicResource ForegroundSecondaryBrush}"
                                    HorizontalAlignment="Center" />
 
                         <Button Content="Open File"
@@ -384,7 +385,7 @@
                                        FontSize="13" FontWeight="SemiBold"
                                        HorizontalAlignment="Center" />
                             <TextBlock Text="Find text across hundreds of pages with highlighted results."
-                                       FontSize="12" Opacity="0.6"
+                                       FontSize="12" Foreground="{DynamicResource ForegroundTertiaryBrush}"
                                        TextWrapping="Wrap" TextAlignment="Center" />
                         </StackPanel>
 
@@ -398,7 +399,7 @@
                                        FontSize="13" FontWeight="SemiBold"
                                        HorizontalAlignment="Center" />
                             <TextBlock Text="AI finds relevant pages in regulations — you see them live."
-                                       FontSize="12" Opacity="0.6"
+                                       FontSize="12" Foreground="{DynamicResource ForegroundTertiaryBrush}"
                                        TextWrapping="Wrap" TextAlignment="Center" />
                         </StackPanel>
 
@@ -412,7 +413,7 @@
                                        FontSize="13" FontWeight="SemiBold"
                                        HorizontalAlignment="Center" />
                             <TextBlock Text="Draw shapes, add stamps, highlight content, and save changes."
-                                       FontSize="12" Opacity="0.6"
+                                       FontSize="12" Foreground="{DynamicResource ForegroundTertiaryBrush}"
                                        TextWrapping="Wrap" TextAlignment="Center" />
                         </StackPanel>
                     </UniformGrid>
@@ -420,7 +421,7 @@
                     <!-- Keyboard hint -->
                     <TextBlock Text="Tip: Ctrl+O to open, Ctrl+F to search, Ctrl+G to go to page"
                                FontSize="12"
-                               Opacity="0.4"
+                               Foreground="{DynamicResource ForegroundTertiaryBrush}"
                                HorizontalAlignment="Center" />
 
                     <!-- Recent files section -->
@@ -429,7 +430,7 @@
                         <TextBlock Text="Recent Files"
                                    FontSize="16"
                                    FontWeight="SemiBold"
-                                   Opacity="0.8" />
+                                   Foreground="{DynamicResource ForegroundSecondaryBrush}" />
 
                         <ItemsControl ItemsSource="{Binding RecentFileCards}">
                             <ItemsControl.ItemsPanel>
@@ -480,7 +481,7 @@
                                                                MaxLines="1" />
                                                     <TextBlock Text="{Binding LastAccessedText}"
                                                                FontSize="11"
-                                                               Opacity="0.6" />
+                                                               Foreground="{DynamicResource ForegroundTertiaryBrush}" />
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>

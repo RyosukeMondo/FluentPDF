@@ -368,6 +368,7 @@ public static class DialogHelper
             Text = "Welcome to FluentPDF",
             FontSize = 22,
             FontWeight = FontWeight.SemiBold,
+            Foreground = new SolidColorBrush(Colors.White),
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 0, 0, 8)
         });
@@ -376,7 +377,7 @@ public static class DialogHelper
         {
             Text = "Your AI-powered PDF viewer and editor",
             FontSize = 14,
-            Opacity = 0.7,
+            Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 0, 0, 16)
         });
@@ -417,13 +418,14 @@ public static class DialogHelper
             {
                 Text = title,
                 FontWeight = FontWeight.SemiBold,
-                FontSize = 14
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Colors.White)
             });
             textStack.Children.Add(new TextBlock
             {
                 Text = description,
                 FontSize = 12,
-                Opacity = 0.7,
+                Foreground = new SolidColorBrush(Color.FromRgb(190, 190, 190)),
                 TextWrapping = TextWrapping.Wrap
             });
 
