@@ -9,11 +9,12 @@ on:
 jobs:
   test:
     runs-on: windows-2022
-    needs: build
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -74,11 +75,6 @@ jobs:
           echo "WEBVIEW2_AVAILABLE=false" >> $env:GITHUB_ENV
         }
 
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: FluentPDF-Build
-
     - name: Install PDF validation tools
       shell: pwsh
       run: |
@@ -88,6 +84,9 @@ jobs:
 
     - name: Restore NuGet packages
       run: dotnet restore FluentPDF.sln
+
+    - name: Build solution
+      run: dotnet build FluentPDF.sln --configuration Debug --no-restore
 
     - name: Ensure PDFium DLLs are in test directories
       shell: pwsh
